@@ -1,0 +1,7 @@
+{
+  "name": "Stunt364: The Rolling Hype Machine",
+  "description": "A high-octane content planning and AI-generation dashboard for managing a 364-day stunt countdown campaign across Instagram and TikTok.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
