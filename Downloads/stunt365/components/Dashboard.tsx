@@ -4,10 +4,10 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tool
 import { COLORS, ARCHIVE_CLIPS } from '../constants';
 import { ContentPillar } from '../types';
 
-// Taurus World Stunt Awards 2027 — estimated June 2027
-const TAURUS_2027 = new Date('2027-06-14T19:00:00');
-// Campaign start: set to a fixed kickoff date (update when campaign officially launches)
-const CAMPAIGN_START = new Date('2026-03-01T00:00:00');
+// Taurus World Stunt Awards 2027 — Feb 21, 2027
+const TAURUS_2027 = new Date('2027-02-21T19:00:00');
+// Campaign start: 364 days before the event (Feb 22, 2026)
+const CAMPAIGN_START = new Date('2026-02-22T00:00:00');
 const CAMPAIGN_DAYS = 364;
 
 const growthData = [
@@ -94,15 +94,15 @@ const Dashboard: React.FC = () => {
       </header>
 
       {/* ── Live Countdown ── */}
-      <div className="bg-black border border-[#C5A059]/20 p-12 cinematic-glow relative overflow-hidden">
+      <div className="bg-black border border-[#C5A059]/20 p-12 cinematic-glow relative">
         <div className="absolute inset-0 bg-gradient-to-r from-[#C5A059]/3 via-transparent to-transparent pointer-events-none"></div>
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative z-10">
           <div className="space-y-2">
             <p className="text-[9px] font-black text-[#C5A059] uppercase tracking-[0.4em] italic">Countdown to Taurus 2027</p>
-            <p className="text-xs text-zinc-600 font-bold uppercase tracking-widest">Est. June 14, 2027 · Hollywood, CA</p>
+            <p className="text-xs text-zinc-600 font-bold uppercase tracking-widest">Feb 21, 2027 · Hollywood, CA</p>
           </div>
 
-          <div className="flex items-center gap-6 md:gap-10">
+          <div className="flex items-center gap-6 md:gap-10 pr-2">
             {[
               { label: 'Days',    value: String(countdown.days).padStart(3, '0') },
               { label: 'Hours',   value: String(countdown.hours).padStart(2, '0') },
@@ -112,7 +112,7 @@ const Dashboard: React.FC = () => {
               <React.Fragment key={unit.label}>
                 {i > 0 && <span className="text-zinc-800 text-2xl font-black">:</span>}
                 <div className="text-center">
-                  <div className="text-4xl md:text-5xl oswald font-black italic taurus-text-gold tabular-nums leading-none">
+                  <div className="text-4xl md:text-5xl oswald font-black italic taurus-text-gold tabular-nums leading-none pl-1">
                     {unit.value}
                   </div>
                   <div className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mt-2">{unit.label}</div>

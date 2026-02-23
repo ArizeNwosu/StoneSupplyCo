@@ -22,7 +22,7 @@ const Strategy: React.FC = () => {
             <div className="taurus-gradient p-1 rounded-none inline-block">
               <div className="bg-black px-10 py-8">
                 <p className="font-black oswald text-3xl uppercase taurus-text-gold tracking-tight italic">The Rolling Hype Machine</p>
-                <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mt-3">Countdown to the Taurus World Stunt Awards 2027</p>
+                <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mt-3">Countdown to the Taurus World Stunt Awards · Feb 21, 2027</p>
               </div>
             </div>
           </div>
