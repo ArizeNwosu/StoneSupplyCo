@@ -216,6 +216,7 @@ const Dashboard: React.FC = () => {
                 <XAxis dataKey="name" stroke="#333" fontSize={8} tickLine={false} axisLine={false} tick={{ fill: '#555' }} />
                 <YAxis stroke="#333" fontSize={9} tickLine={false} axisLine={false} tick={{ fill: '#555' }} />
                 <Tooltip
+                  cursor={false}
                   contentStyle={{ backgroundColor: '#000', border: '1px solid #333', borderRadius: '0', padding: '10px' }}
                   itemStyle={{ color: '#C5A059', fontSize: '10px', fontWeight: '900' }}
                 />
