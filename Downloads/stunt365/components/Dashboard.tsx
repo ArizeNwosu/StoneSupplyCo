@@ -102,7 +102,7 @@ const Dashboard: React.FC = () => {
             <p className="text-xs text-zinc-600 font-bold uppercase tracking-widest">Feb 21, 2027 · Hollywood, CA</p>
           </div>
 
-          <div className="flex items-center gap-6 md:gap-10 pr-2">
+          <div className="flex items-center gap-6 md:gap-10">
             {[
               { label: 'Days',    value: String(countdown.days).padStart(3, '0') },
               { label: 'Hours',   value: String(countdown.hours).padStart(2, '0') },
@@ -112,7 +112,7 @@ const Dashboard: React.FC = () => {
               <React.Fragment key={unit.label}>
                 {i > 0 && <span className="text-zinc-800 text-2xl font-black">:</span>}
                 <div className="text-center">
-                  <div className="text-4xl md:text-5xl oswald font-black italic taurus-text-gold tabular-nums leading-none pl-1">
+                  <div className="text-4xl md:text-5xl oswald font-black italic text-[#EAD196] tabular-nums leading-none">
                     {unit.value}
                   </div>
                   <div className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mt-2">{unit.label}</div>
