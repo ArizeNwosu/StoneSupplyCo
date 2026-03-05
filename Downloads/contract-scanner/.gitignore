@@ -1,0 +1,6 @@
+.env
+.DS_Store
+score_cache.json
+__pycache__/
+*.pyc
+.claude/

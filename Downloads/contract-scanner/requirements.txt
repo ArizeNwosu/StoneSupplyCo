@@ -1,0 +1,16 @@
+# CONTRACT INTEL — Python Backend Dependencies
+# No external packages required — uses Python standard library only.
+# Python 3.8+ recommended.
+#
+# Usage:
+#   python3 server.py
+#
+# SAM.gov API key is loaded automatically from .env in the same directory.
+# Format: SAM_API_KEY=your_key_here
+#
+# Get a free SAM.gov API key (instant, no approval):
+#   1. Go to https://sam.gov/profile/details
+#   2. Click "Public API Key"
+#   3. Add to .env: SAM_API_KEY=SAM-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+#
+# Anthropic API key: entered in the browser UI — never touches the server.
