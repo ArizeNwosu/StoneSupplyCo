@@ -27,6 +27,9 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { Tone, CallScript, SAFE_LINES, PANIC_OPTIONS, PanicOption, COMMON_CALL_TYPES, Persona, Reflection, Tier, CallPerspective } from './types';
 import { generateCallScript, generatePanicResponse, generateTTS, generateVoicemailScript, generateEmailFallback, generateBranch } from './services/gemini';
+import { signUp, signIn, signInWithApple, signInWithGoogle, signOut, onAuthStateChange, sendPasswordReset } from './services/auth';
+import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection, savePersona, deleteScript as dbDeleteScript, deletePersona as dbDeletePersona } from './services/db';
+import type { User } from '@supabase/supabase-js';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -205,6 +208,7 @@ const IMPACT_AREAS = [
 ];
 
 export default function App() {
+  const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
   const [view, setView] = useState<'splash' | 'explainer' | 'onboarding' | 'reviews' | 'account' | 'setup' | 'home' | 'history' | 'dashboard' | 'script' | 'settings'>('splash');
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [description, setDescription] = useState('');
@@ -391,6 +395,61 @@ export default function App() {
     const timer = setTimeout(() => { if (view === 'splash') setView('explainer'); }, 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  // ─── Supabase session management ──────────────────────────────────────────
+  useEffect(() => {
+    // Restore existing session on mount
+    const restoreSession = async () => {
+      const { data: { session } } = await (await import('./services/supabase')).supabase.auth.getSession();
+      if (session?.user) {
+        setSupabaseUser(session.user);
+        await loadUserDataFromSupabase(session.user.id);
+      }
+    };
+    restoreSession();
+
+    // Listen for future auth state changes (login / logout)
+    const { data: { subscription } } = onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setSupabaseUser(session.user);
+        if (event === 'SIGNED_IN') {
+          await loadUserDataFromSupabase(session.user.id);
+        }
+      } else {
+        setSupabaseUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const loadUserDataFromSupabase = async (userId: string) => {
+    const [remoteScripts, remoteReflections, remotePersonas, profile] = await Promise.all([
+      fetchScripts(userId),
+      fetchReflections(userId),
+      fetchPersonas(userId),
+      fetchProfile(userId),
+    ]);
+
+    if (remoteScripts.length) {
+      setHistory(remoteScripts);
+      localStorage.setItem('ringtone_history', JSON.stringify(remoteScripts));
+    }
+    if (remoteReflections.length) {
+      setReflections(remoteReflections);
+      localStorage.setItem('ringtone_reflections', JSON.stringify(remoteReflections));
+    }
+    if (remotePersonas.length) {
+      setPersonas(remotePersonas);
+      localStorage.setItem('callmate_personas', JSON.stringify(remotePersonas));
+    }
+    if (profile) {
+      if (profile.name) { setUserName(profile.name); localStorage.setItem('callmate_user_name', profile.name); }
+      if (profile.tier) { setTier(profile.tier as Tier); localStorage.setItem('ringtone_tier', profile.tier); }
+      if (profile.trial_start_date) { setTrialStartDate(profile.trial_start_date); localStorage.setItem('callmate_trial_start', String(profile.trial_start_date)); }
+      setTheme(profile.dark_mode ? 'dark' : 'light');
+    }
+  };
 
   // Keep screen awake during active call
   useEffect(() => {
@@ -978,10 +1037,24 @@ export default function App() {
     userName={userName}
     tier={tier}
     trialStartDate={trialStartDate}
-    onComplete={(email) => {
+    onComplete={async (email, isNewUser) => {
       setUserEmail(email);
       localStorage.setItem('callmate_user_email', email);
-      setView('setup');
+      // Push local data to Supabase on first signup
+      if (isNewUser && supabaseUser) {
+        await pushLocalDataToSupabase(supabaseUser.id, {
+          scripts: history,
+          reflections,
+          anxietyRatings: callAnxietyRatings,
+          personas,
+          name: userName,
+          tier,
+          trialStartDate,
+          darkMode: isDark,
+        });
+      }
+      // New user → setup animation; returning user → home directly
+      setView(isNewUser ? 'setup' : 'home');
     }}
   />;
 
@@ -1328,7 +1401,7 @@ export default function App() {
                 <section className="space-y-3">
                   <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Profile</h3>
                   {userEmail ? (
-                    <Card isDark={isDark} className="p-5">
+                    <Card isDark={isDark} className="p-5 space-y-4">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white font-black text-lg shrink-0 select-none">
                           {(userName || userEmail)[0].toUpperCase()}
@@ -1336,8 +1409,20 @@ export default function App() {
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-lg">{userName || 'Callmate User'}</p>
                           <p className={cn("text-sm truncate", isDark ? "text-zinc-400" : "text-zinc-500")}>{userEmail}</p>
+                          <p className="text-xs text-emerald-500 font-semibold mt-0.5">✓ Synced to cloud</p>
                         </div>
                       </div>
+                      <button
+                        onClick={async () => {
+                          await signOut();
+                          setSupabaseUser(null);
+                          setUserEmail('');
+                          localStorage.removeItem('callmate_user_email');
+                        }}
+                        className={cn("w-full py-2.5 rounded-xl border text-sm font-semibold transition-colors", isDark ? "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300" : "border-zinc-200 text-zinc-500 hover:border-zinc-400 hover:text-zinc-700")}
+                      >
+                        Sign Out
+                      </button>
                     </Card>
                   ) : (
                     <Card isDark={isDark} className="p-5 space-y-4">
@@ -2953,13 +3038,14 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
   userName: string;
   tier: string;
   trialStartDate: number | null;
-  onComplete: (email: string) => void;
+  onComplete: (email: string, isNewUser: boolean) => void;
 }) {
   const [mode, setMode] = React.useState<'signup' | 'login'>('signup');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
   const [emailError, setEmailError] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
 
   const trialEndDate = trialStartDate
     ? new Date(trialStartDate + 3 * 86400000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
@@ -2972,7 +3058,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
     setEmailError('');
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!email.trim() || !email.includes('@')) {
       setEmailError('Please enter a valid email address.');
       return;
@@ -2981,7 +3067,43 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
       setEmailError('Password must be at least 6 characters.');
       return;
     }
-    onComplete(email.trim().toLowerCase());
+    setLoading(true);
+    setEmailError('');
+    try {
+      if (mode === 'signup') {
+        const { error } = await signUp(email.trim().toLowerCase(), password, userName || undefined);
+        if (error) { setEmailError(error.message); setLoading(false); return; }
+        onComplete(email.trim().toLowerCase(), true);
+      } else {
+        const { error } = await signIn(email.trim().toLowerCase(), password);
+        if (error) { setEmailError('Incorrect email or password.'); setLoading(false); return; }
+        onComplete(email.trim().toLowerCase(), false);
+      }
+    } catch {
+      setEmailError('Something went wrong. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim() || !email.includes('@')) {
+      setEmailError('Enter your email above first.');
+      return;
+    }
+    await sendPasswordReset(email.trim().toLowerCase());
+    setEmailError('Password reset email sent — check your inbox.');
+  };
+
+  const handleApple = async () => {
+    setLoading(true);
+    const { error } = await signInWithApple();
+    if (error) { setEmailError(error.message); setLoading(false); }
+  };
+
+  const handleGoogle = async () => {
+    setLoading(true);
+    const { error } = await signInWithGoogle();
+    if (error) { setEmailError(error.message); setLoading(false); }
   };
 
   return (
@@ -3013,15 +3135,15 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
 
         {/* Social auth */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="space-y-3 mb-5">
-          <button className={cn(
-            "w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border font-semibold text-sm transition-all active:scale-[0.99]",
+          <button onClick={handleApple} disabled={loading} className={cn(
+            "w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border font-semibold text-sm transition-all active:scale-[0.99] disabled:opacity-50",
             isDark ? "bg-white text-black border-white hover:bg-zinc-100" : "bg-black text-white border-black hover:bg-zinc-800"
           )}>
             <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
             {mode === 'login' ? 'Sign in with Apple' : 'Continue with Apple'}
           </button>
-          <button className={cn(
-            "w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border font-semibold text-sm transition-all active:scale-[0.99]",
+          <button onClick={handleGoogle} disabled={loading} className={cn(
+            "w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border font-semibold text-sm transition-all active:scale-[0.99] disabled:opacity-50",
             isDark ? "bg-zinc-900 text-white border-zinc-700 hover:border-zinc-500" : "bg-white text-black border-zinc-200 hover:border-zinc-400"
           )}>
             <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
@@ -3071,6 +3193,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
             <div className="flex justify-end px-1">
               <button
                 type="button"
+                onClick={handleForgotPassword}
                 className={cn("text-xs font-semibold", isDark ? "text-indigo-400 hover:text-indigo-300" : "text-indigo-600 hover:text-indigo-500")}
               >
                 Forgot password?
@@ -3086,8 +3209,10 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.28 }} className="space-y-3">
           <button
             onClick={handleSubmit}
-            className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-indigo-600/25"
+            disabled={loading}
+            className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-indigo-600/25 disabled:opacity-60 flex items-center justify-center gap-2"
           >
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             {mode === 'login' ? 'Sign In' : 'Create Account & Start Free Trial'}
           </button>
           {mode === 'signup' && trialEndDate && (
