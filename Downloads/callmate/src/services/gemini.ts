@@ -17,8 +17,17 @@ Always respond with valid JSON matching exactly this structure:
   "close": "string"
 }`;
 
-export async function generateCallScript(description: string, tone: Tone, perspective: CallPerspective, persona?: Persona): Promise<CallScript> {
+export async function generateCallScript(
+  description: string,
+  tone: Tone,
+  perspective: CallPerspective,
+  persona?: Persona,
+  userProfile?: { name?: string; gender?: string; ageRange?: string }
+): Promise<CallScript> {
   const personaContext = persona ? `\nPersona Context: "${persona.context}" (The person you are calling is ${persona.name})` : "";
+  const profileContext = userProfile?.name
+    ? `\nCaller Profile: The caller's name is "${userProfile.name}"${userProfile.gender ? `, gender: ${userProfile.gender}` : ''}${userProfile.ageRange ? `, age range: ${userProfile.ageRange}` : ''}. Use "${userProfile.name}" naturally in the script (e.g. "Hi, my name is ${userProfile.name}") instead of any generic placeholder like [Your Name].`
+    : "";
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -30,7 +39,7 @@ export async function generateCallScript(description: string, tone: Tone, perspe
         content: `Generate a 5-section branching phone call script for the following situation:
 Situation: "${description}"
 Tone: "${tone}"
-Perspective: "${perspective === 'outgoing' ? 'The user is INITIATING the call.' : 'The user is RECEIVING the call.'}"${personaContext}
+Perspective: "${perspective === 'outgoing' ? 'The user is INITIATING the call.' : 'The user is RECEIVING the call.'}"${personaContext}${profileContext}
 
 CRITICAL:
 1. Incorporate specific details from the description (names, durations, specific asks).
@@ -38,7 +47,8 @@ CRITICAL:
 3. "branchX" and "branchY" should cover the most likely pushbacks or follow-up questions.
 4. Keep it concise, conversational, and human. No corporate language.
 5. Use contractions (I'm, don't, won't) to sound like a real person.
-6. If Perspective is 'incoming', the opening should be a natural way to answer and acknowledge the caller.`
+6. If Perspective is 'incoming', the opening should be a natural way to answer and acknowledge the caller.
+7. If a caller name is provided in the profile, use it naturally in the opening line.`
       }
     ]
   });
@@ -60,17 +70,17 @@ export async function generatePanicResponse(originalScript: CallScript, situatio
     messages: [
       {
         role: "system",
-        content: "You are a real-time call coach. Provide a single, short, human-sounding response to an unexpected turn in a phone call. Use natural, conversational language. Return only the response line — no quotes, no labels, no explanation."
+        content: "You are a real-time call coach writing words for the USER to speak out loud. You are NOT writing what the other person says — you are writing the USER'S reply in the first person (e.g. 'I understand...', 'That's fair, but...', 'Actually, what I need is...'). One to three short sentences max. Natural, calm, conversational. Return only the spoken line — no quotes, no labels, no explanation."
       },
       {
         role: "user",
-        content: `The user is on a phone call using this script:
+        content: `The user is on a phone call. Here is their script context:
 Opening: ${originalScript.opening}
 Main Ask: ${originalScript.mainAsk}
 
-The other person just said something unexpected: "${situation}"
+Situation they need to handle: "${situation}"
 
-Generate a single, concise, natural response the user can read right now to handle this pivot.`
+Write the exact words the USER should say out loud right now — in the first person, as if you are giving them their next line to speak. Do NOT write what the other person would say.`
       }
     ]
   });

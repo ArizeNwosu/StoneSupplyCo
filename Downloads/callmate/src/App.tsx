@@ -226,6 +226,9 @@ export default function App() {
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalForced, setUpgradeModalForced] = useState(false);
+  const [showPreCallCheck, setShowPreCallCheck] = useState(false);
+  const [showPostCallReinforcement, setShowPostCallReinforcement] = useState(false);
+  const [postCallRating, setPostCallRating] = useState<number | undefined>(undefined);
   const [showPanicPanel, setShowPanicPanel] = useState(false);
   const [panicLoading, setPanicLoading] = useState(false);
   const [panicResponse, setPanicResponse] = useState<string | null>(null);
@@ -283,6 +286,12 @@ export default function App() {
   const isPremium = tier === 'monthly' || tier === 'annual' || isTrialActive;
   const showComebackNudge = isTrialActive && lastScriptDate !== null &&
     (Date.now() - lastScriptDate) > 48 * 3600000 && !comebackNudgeDismissed;
+  const isMedicalCall = useMemo(() => {
+    if (!currentScript) return false;
+    const d = currentScript.description.toLowerCase();
+    return ['doctor', 'medical', 'dentist', 'hospital', 'clinic', 'physician', 'nurse', 'pharmacy', 'appointment'].some(kw => d.includes(kw));
+  }, [currentScript]);
+
   const nextMilestone = useMemo(() => {
     const count = history.length;
     if (count < 1) return { title: 'Ice Breaker', icon: '📞', needed: 1 };
@@ -556,6 +565,10 @@ export default function App() {
       }
     }
     setShowReflectionPrompt(false);
+    if (anxietyRating !== undefined) {
+      setPostCallRating(anxietyRating);
+      setTimeout(() => setShowPostCallReinforcement(true), 350);
+    }
   };
 
   const clearHistory = () => {
@@ -1675,11 +1688,11 @@ export default function App() {
                     >
                       <div className="flex justify-between items-start mb-6">
                         <div className="space-y-1 flex-1">
-                          <h3 className="text-2xl font-bold tracking-tight leading-none">
-                            {s.tone} Call
-                          </h3>
-                          <p className="text-black/50 font-medium line-clamp-1 text-sm mt-1">
+                          <h3 className="text-2xl font-bold tracking-tight leading-snug line-clamp-2">
                             {s.description}
+                          </h3>
+                          <p className="text-black/50 font-medium text-sm mt-1">
+                            {s.tone} Call
                           </p>
                         </div>
                         <div className="text-right shrink-0 ml-4">
@@ -1711,6 +1724,39 @@ export default function App() {
 
           {view === 'script' && currentScript && (
             <motion.div key="script" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+
+              {/* Medical Call Extra Help Banner */}
+              {isMedicalCall && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={cn("rounded-2xl border p-4 transition-colors", isDark ? "bg-blue-950/50 border-blue-500/25" : "bg-blue-50 border-blue-200")}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-base">🏥</span>
+                    <p className={cn("text-xs font-black uppercase tracking-widest", isDark ? "text-blue-400" : "text-blue-600")}>Medical Call Prep</p>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      "Write down your symptoms and when they started",
+                      "Have your insurance card and pharmacy info ready",
+                      "Note any current medications or allergies",
+                      "State your main concern clearly in the first sentence",
+                      "It's okay to ask them to repeat or slow down — they're used to it",
+                    ].map((tip, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <div className={cn("w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5", isDark ? "border-blue-500/40" : "border-blue-300")}>
+                          <span className="text-[9px] font-black text-blue-400">{i + 1}</span>
+                        </div>
+                        <p className={cn("text-xs leading-snug", isDark ? "text-zinc-300" : "text-zinc-700")}>{tip}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <p className={cn("text-[10px] mt-3 leading-relaxed", isDark ? "text-zinc-500" : "text-zinc-400")}>
+                    They deal with these calls all day. You are not bothering them.
+                  </p>
+                </motion.div>
+              )}
 
               {/* Speaker Mode Prompt — shown first 5 script sessions */}
               <AnimatePresence>
@@ -1911,9 +1957,20 @@ export default function App() {
               </div>
               <div className="fixed bottom-[100px] left-0 right-0 px-6 max-w-2xl mx-auto z-[60] flex flex-col gap-3">
                 {isPremium && (
-                  <Button 
-                    variant="accent" 
-                    size="lg" 
+                  <button
+                    onClick={() => setShowPreCallCheck(true)}
+                    className={cn(
+                      "w-full py-3.5 rounded-2xl border-2 font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99]",
+                      isDark ? "border-indigo-500/50 text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20" : "border-indigo-400/50 text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
+                    )}
+                  >
+                    <span>🧘</span> Pre-Call Check — Ready to Make the Call?
+                  </button>
+                )}
+                {isPremium && (
+                  <Button
+                    variant="accent"
+                    size="lg"
                     className="w-full h-14 rounded-2xl shadow-xl"
                     onClick={() => setShowReflectionPrompt(true)}
                   >
@@ -2342,6 +2399,21 @@ export default function App() {
           </>
         )}
 
+        {showPostCallReinforcement && (
+          <PostCallReinforcement
+            isDark={isDark}
+            rating={postCallRating}
+            onClose={() => { setShowPostCallReinforcement(false); setPostCallRating(undefined); }}
+          />
+        )}
+
+        {showPreCallCheck && (
+          <PreCallCheck
+            isDark={isDark}
+            onClose={() => setShowPreCallCheck(false)}
+          />
+        )}
+
         {showReflectionPrompt && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowReflectionPrompt(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]" />
@@ -2418,6 +2490,343 @@ function ReviewSlideshow({ isDark }: { isDark: boolean }) {
   );
 }
 
+function BreathingGuide({ onComplete }: { onComplete: () => void }) {
+  type Phase = 'ready' | 'inhale' | 'hold' | 'exhale' | 'done';
+  const [phase, setPhase] = React.useState<Phase>('ready');
+  const [cycle, setCycle] = React.useState(0);
+
+  const TOTAL = 3;
+  const INHALE = 4000, HOLD = 2000, EXHALE = 6000;
+  const CYCLE = INHALE + HOLD + EXHALE; // 12000ms
+
+  React.useEffect(() => {
+    const t: ReturnType<typeof setTimeout>[] = [];
+    // Small delay before first inhale so user sees the UI
+    t.push(setTimeout(() => { setPhase('inhale'); setCycle(0); }, 600));
+    for (let c = 0; c < TOTAL; c++) {
+      const base = 600 + c * CYCLE;
+      t.push(setTimeout(() => setPhase('hold'), base + INHALE));
+      t.push(setTimeout(() => setPhase('exhale'), base + INHALE + HOLD));
+      if (c < TOTAL - 1) {
+        t.push(setTimeout(() => { setPhase('inhale'); setCycle(c + 1); }, base + CYCLE));
+      }
+    }
+    t.push(setTimeout(() => setPhase('done'), 600 + TOTAL * CYCLE));
+    return () => t.forEach(clearTimeout);
+  }, []);
+
+  const cfg: Record<Phase, { label: string; sub: string; color: string; scale: number; dur: number }> = {
+    ready:  { label: 'Get ready',      sub: 'Find a comfortable position',               color: '#6366f1', scale: 0.38, dur: 0.5 },
+    inhale: { label: 'Breathe In',     sub: 'Slowly inhale through your nose',           color: '#6366f1', scale: 1.0,  dur: INHALE / 1000 },
+    hold:   { label: 'Hold',           sub: 'Hold it gently',                            color: '#8b5cf6', scale: 1.0,  dur: 0.4 },
+    exhale: { label: 'Breathe Out',    sub: 'Slowly exhale through your mouth',          color: '#06b6d4', scale: 0.38, dur: EXHALE / 1000 },
+    done:   { label: 'Well done ✓',   sub: "You're calmer. Your body is ready.",        color: '#22c55e', scale: 0.38, dur: 0.5 },
+  };
+
+  const c = cfg[phase];
+
+  return (
+    <div className="flex flex-col items-center gap-6 py-2">
+      {/* Animated breathing circle */}
+      <div className="relative flex items-center justify-center" style={{ width: 180, height: 180 }}>
+        {/* Outer glow */}
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          animate={{ scale: c.scale * 1.5, opacity: 0.06, backgroundColor: c.color }}
+          transition={{ duration: c.dur, ease: 'easeInOut' }}
+        />
+        {/* Mid ring */}
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          animate={{ scale: c.scale * 1.18, opacity: 0.12, backgroundColor: c.color }}
+          transition={{ duration: c.dur, ease: 'easeInOut' }}
+        />
+        {/* Inner ring */}
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          animate={{ scale: c.scale * 1.05, opacity: 0.22, backgroundColor: c.color }}
+          transition={{ duration: c.dur, ease: 'easeInOut' }}
+        />
+        {/* Main circle */}
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          animate={{ scale: c.scale, opacity: 0.88, backgroundColor: c.color }}
+          transition={{ duration: c.dur, ease: 'easeInOut' }}
+        />
+        {/* Label inside */}
+        <div className="relative z-10 text-center px-2">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={phase}
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              transition={{ duration: 0.25 }}
+              className="text-white font-black text-sm drop-shadow-lg leading-tight"
+            >
+              {c.label}
+            </motion.p>
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Subtitle */}
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={phase + 'sub'}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.3 }}
+          className="text-zinc-400 text-sm text-center"
+        >
+          {c.sub}
+        </motion.p>
+      </AnimatePresence>
+
+      {/* Cycle dots */}
+      {phase !== 'done' && phase !== 'ready' && (
+        <div className="flex gap-2">
+          {Array.from({ length: TOTAL }).map((_, i) => (
+            <motion.div
+              key={i}
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-500",
+                i < cycle ? "bg-indigo-400 w-4" :
+                i === cycle ? "bg-indigo-500 w-6" : "bg-zinc-700 w-1.5"
+              )}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Done CTA */}
+      {phase === 'done' && (
+        <motion.button
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          onClick={onComplete}
+          className="mt-1 px-8 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold text-sm transition-all"
+        >
+          Continue →
+        </motion.button>
+      )}
+    </div>
+  );
+}
+
+function PreCallCheck({ isDark, onClose }: { isDark: boolean; onClose: () => void }) {
+  const [step, setStep] = React.useState(0);
+  const [mantraTaps, setMantraTaps] = React.useState(0);
+
+  return (
+    <div className={cn("fixed inset-0 z-[130] flex flex-col transition-colors", isDark ? "bg-black" : "bg-zinc-950")}>
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 pt-12 pb-5 shrink-0">
+        <div className="flex gap-1.5 items-center">
+          {[0, 1, 2].map(i => (
+            <motion.div
+              key={i}
+              animate={{ width: i === step ? 28 : 8, opacity: i <= step ? 1 : 0.3 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+              className={cn("h-1.5 rounded-full", i <= step ? "bg-indigo-500" : "bg-zinc-700")}
+            />
+          ))}
+        </div>
+        <button onClick={onClose} className="text-zinc-500 hover:text-zinc-400 text-sm font-semibold transition-colors">
+          Skip
+        </button>
+      </div>
+
+      {/* Step content */}
+      <div className="flex-1 overflow-y-auto px-6">
+        <AnimatePresence mode="wait">
+
+          {/* Step 0 — Smile */}
+          {step === 0 && (
+            <motion.div key="smile" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.22 }} className="flex flex-col items-center text-center pt-4 pb-6 gap-5">
+              <div className="text-7xl">😊</div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-2">Step 1 of 3 — Smile</p>
+                <h2 className="text-2xl font-black text-white leading-tight mb-3">Turn on your smile before the call starts.</h2>
+                <p className="text-zinc-400 text-sm leading-relaxed">
+                  Smiling — even a small, deliberate one — triggers a real biological response. It activates your parasympathetic nervous system, lowers cortisol, and shifts your brain's perception of the situation from threat to manageable.
+                </p>
+              </div>
+              <div className={cn("w-full rounded-2xl border p-4 text-left", isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-800 border-zinc-700")}>
+                <p className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-2">Try this right now</p>
+                <p className="text-zinc-300 text-sm leading-relaxed">Take a moment to smile — a real one. Hold it for 5 seconds. Notice how your shoulders drop a little. Keep that smile when the call starts. It works even if the other person can't see you.</p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 1 — Breathing */}
+          {step === 1 && (
+            <motion.div key="breath" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.22 }} className="flex flex-col items-center text-center pt-4 pb-6 gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-2">Step 2 of 3 — Breathe</p>
+                <h2 className="text-2xl font-black text-white leading-tight mb-1">3 deep breaths.</h2>
+                <p className="text-zinc-500 text-sm">Follow the circle. Let it guide you.</p>
+              </div>
+              <BreathingGuide onComplete={() => setStep(2)} />
+            </motion.div>
+          )}
+
+          {/* Step 2 — Mindset */}
+          {step === 2 && (
+            <motion.div key="mindset" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.22 }} className="flex flex-col items-center text-center pt-4 pb-6 gap-5">
+              <div className="text-7xl">🧠</div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-2">Step 3 of 3 — Reframe</p>
+                <h2 className="text-2xl font-black text-white leading-tight mb-3">They're not thinking about you.</h2>
+                <p className="text-zinc-400 text-sm leading-relaxed">
+                  The person on the other end is focused on their own day, their own tasks. They're not analyzing your voice, judging your words, or waiting for you to stumble. Most people are understanding — they just want to resolve the same thing you do.
+                </p>
+              </div>
+              <div className={cn("w-full rounded-2xl border p-5 text-left", isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-800 border-zinc-700")}>
+                <p className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-3">Tap the mantra 5 times</p>
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => setMantraTaps(t => Math.min(t + 1, 5))}
+                  className={cn(
+                    "w-full py-4 rounded-2xl text-center font-black text-base transition-all border-2",
+                    mantraTaps >= 5
+                      ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
+                      : "bg-indigo-500/10 border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/20"
+                  )}
+                >
+                  {mantraTaps >= 5 ? '✓ This is going to be a great call.' : '"This is going to be a great call."'}
+                </motion.button>
+                <div className="flex justify-center gap-2 mt-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <motion.div
+                      key={i}
+                      animate={{ scale: i < mantraTaps ? 1 : 0.7, opacity: i < mantraTaps ? 1 : 0.25 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                      className={cn("w-2.5 h-2.5 rounded-full", i < mantraTaps ? "bg-indigo-400" : "bg-zinc-700")}
+                    />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </div>
+
+      {/* CTA */}
+      <div className="px-6 pb-10 shrink-0 pt-3">
+        {step < 2 ? (
+          <button
+            onClick={() => setStep(s => s + 1)}
+            disabled={step === 1} // auto-advances from breathing step
+            className={cn(
+              "w-full py-4 rounded-2xl font-bold text-base transition-all",
+              step === 1
+                ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white shadow-lg shadow-indigo-600/25"
+            )}
+          >
+            {step === 1 ? 'Follow the breathing guide above →' : 'Next →'}
+          </button>
+        ) : (
+          <button
+            onClick={onClose}
+            className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-emerald-600/25"
+          >
+            I'm Ready — Start the Call 📞
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PostCallReinforcement({ isDark, rating, onClose }: { isDark: boolean; rating: number | undefined; onClose: () => void }) {
+  const r = rating ?? 3;
+  const isCalm = r <= 2;
+  const isHard = r >= 4;
+
+  const emoji = isCalm ? '🌟' : isHard ? '💪' : '✅';
+  const headline = isCalm
+    ? 'You handled that beautifully.'
+    : isHard
+    ? 'You showed up. That takes real courage.'
+    : 'Call complete. You did it.';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[130] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center px-8"
+    >
+      {/* Ambient glow */}
+      <motion.div
+        animate={{ scale: [1, 1.15, 1], opacity: [0.06, 0.12, 0.06] }}
+        transition={{ duration: 6, repeat: Infinity }}
+        className={cn("absolute top-[-20%] left-[-10%] w-[80vw] h-[80vw] rounded-full blur-[120px] pointer-events-none", isCalm ? "bg-emerald-500" : isHard ? "bg-orange-500" : "bg-indigo-500")}
+      />
+
+      <motion.div
+        initial={{ scale: 0.88, y: 24 }}
+        animate={{ scale: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 280, damping: 22, delay: 0.1 }}
+        className="relative z-10 flex flex-col items-center text-center max-w-sm gap-5"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 320, damping: 14, delay: 0.2 }}
+          className="text-6xl"
+        >
+          {emoji}
+        </motion.div>
+
+        <div>
+          <p className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-2">Post-Call</p>
+          <h2 className="text-2xl font-black text-white leading-tight mb-3">{headline}</h2>
+          <p className="text-zinc-400 text-sm leading-relaxed">
+            Take a deep breath — it's over. They've already moved on to their next call and they are not thinking about you. Don't spend one more second of your energy on it.
+          </p>
+        </div>
+
+        <div className="w-full rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 text-left space-y-2">
+          <p className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-2">Your post-call ritual</p>
+          {[
+            { icon: '🌬️', text: 'Take one long, slow breath out.' },
+            { icon: '🎉', text: 'Give yourself actual credit — out loud if you can. "I did that."' },
+            { icon: '📈', text: 'Every call you face makes the next one easier. This one counts.' },
+          ].map(({ icon, text }, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.35 + i * 0.1 }}
+              className="flex items-start gap-3"
+            >
+              <span className="text-base shrink-0">{icon}</span>
+              <p className="text-zinc-300 text-sm leading-snug">{text}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          onClick={onClose}
+          className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-indigo-600/25 mt-1"
+        >
+          Close
+        </motion.button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function SetupAnimation({ isDark, userName, onDone }: { isDark: boolean; userName: string; onDone: () => void }) {
   const [step, setStep] = React.useState(-1); // -1 = none started yet
   const [showFinale, setShowFinale] = React.useState(false);
@@ -2433,10 +2842,10 @@ function SetupAnimation({ isDark, userName, onDone }: { isDark: boolean; userNam
     const timers: ReturnType<typeof setTimeout>[] = [];
     // Kick off each step completing sequentially, 700ms apart
     steps.forEach((_, i) => {
-      timers.push(setTimeout(() => setStep(i), i * 700 + 300));
+      timers.push(setTimeout(() => setStep(i), i * 1050 + 300));
     });
     // Show finale after all steps done
-    timers.push(setTimeout(() => setShowFinale(true), steps.length * 700 + 600));
+    timers.push(setTimeout(() => setShowFinale(true), steps.length * 1050 + 600));
     return () => timers.forEach(clearTimeout);
   }, []);
 
