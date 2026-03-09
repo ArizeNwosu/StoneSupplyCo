@@ -29,6 +29,7 @@ import { Tone, CallScript, SAFE_LINES, PANIC_OPTIONS, PanicOption, COMMON_CALL_T
 import { generateCallScript, generatePanicResponse, generateTTS, generateVoicemailScript, generateEmailFallback, generateBranch } from './services/gemini';
 import { signUp, signIn, signInWithApple, signInWithGoogle, signOut, onAuthStateChange, sendPasswordReset } from './services/auth';
 import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection, savePersona, deleteScript as dbDeleteScript, deletePersona as dbDeletePersona } from './services/db';
+import { hapticLight, hapticMedium, hapticSuccess, hapticError, setStatusBarDark, setStatusBarLight, openInAppBrowser } from './services/native';
 import type { User } from '@supabase/supabase-js';
 
 function cn(...inputs: ClassValue[]) {
@@ -275,6 +276,12 @@ export default function App() {
   const [comebackNudgeDismissed, setComebackNudgeDismissed] = useState(false);
 
   const isDark = theme === 'dark';
+
+  // Sync native status bar with theme
+  useEffect(() => {
+    if (isDark) setStatusBarDark(); else setStatusBarLight();
+  }, [isDark]);
+
   const TRIAL_SCRIPT_LIMIT = 5;
   const TRIAL_DAYS = 3;
 
@@ -525,6 +532,7 @@ export default function App() {
         localStorage.setItem('callmate_trial_scripts', String(next));
       }
 
+      hapticSuccess();
       setVoicemailScript(null);
       setEmailFallback(null);
       setShowAddBranch(false);
@@ -543,6 +551,7 @@ export default function App() {
         }
       }
     } catch (error) {
+      hapticError();
       alert('Failed to generate script.');
     } finally {
       setLoading(false);
@@ -2057,7 +2066,7 @@ export default function App() {
                     variant="accent"
                     size="lg"
                     className="w-full h-14 rounded-2xl shadow-xl"
-                    onClick={() => setShowReflectionPrompt(true)}
+                    onClick={() => { hapticLight(); setShowReflectionPrompt(true); }}
                   >
                     <Check className="w-5 h-5" /> Call Complete — Log It
                   </Button>
@@ -2068,7 +2077,7 @@ export default function App() {
                     "w-full h-20 rounded-[2rem] shadow-2xl border-4 transition-all bg-red-600 text-white hover:bg-red-500 shadow-red-600/40 hover:shadow-red-500/60",
                     isDark ? "border-red-900" : "border-red-300"
                   )}
-                  onClick={() => { setShowPanicPanel(true); setPanicCategory(null); setPanicResponse(null); }}
+                  onClick={() => { hapticMedium(); setShowPanicPanel(true); setPanicCategory(null); setPanicResponse(null); }}
                 >
                   <AlertCircle className="w-8 h-8" /> They said something unexpected
                 </Button>
@@ -2415,12 +2424,12 @@ export default function App() {
 
                 {/* Footer links */}
                 <div className="flex items-center justify-center gap-4 flex-wrap">
-                  <a href="/terms" className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors underline underline-offset-2">Terms of Service</a>
+                  <button onClick={() => openInAppBrowser('https://callmate.app/terms')} className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors underline underline-offset-2">Terms of Service</button>
                   <span className="text-zinc-700 text-xs">·</span>
-                  <a href="/privacy" className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors underline underline-offset-2">Privacy Policy</a>
+                  <button onClick={() => openInAppBrowser('https://callmate.app/privacy')} className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors underline underline-offset-2">Privacy Policy</button>
                   <span className="text-zinc-700 text-xs">·</span>
                   <button
-                    onClick={() => {/* restore purchase handler */}}
+                    onClick={() => {/* restore purchase handler — wire StoreKit here */}}
                     className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors underline underline-offset-2"
                   >
                     Restore Purchase
@@ -3097,13 +3106,29 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
   const handleApple = async () => {
     setLoading(true);
     const { error } = await signInWithApple();
-    if (error) { setEmailError(error.message); setLoading(false); }
+    if (error) {
+      const msg = error.message?.toLowerCase() ?? '';
+      setEmailError(
+        msg.includes('client') || msg.includes('provider') || msg.includes('enabled')
+          ? 'Apple Sign In is not configured yet — use email below.'
+          : error.message
+      );
+      setLoading(false);
+    }
   };
 
   const handleGoogle = async () => {
     setLoading(true);
     const { error } = await signInWithGoogle();
-    if (error) { setEmailError(error.message); setLoading(false); }
+    if (error) {
+      const msg = error.message?.toLowerCase() ?? '';
+      setEmailError(
+        msg.includes('client') || msg.includes('provider') || msg.includes('enabled')
+          ? 'Google Sign In is not configured yet — use email below.'
+          : error.message
+      );
+      setLoading(false);
+    }
   };
 
   return (
@@ -3223,9 +3248,9 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
           {mode === 'signup' && (
             <p className={cn("text-center text-[11px] leading-relaxed", isDark ? "text-zinc-600" : "text-zinc-400")}>
               By creating an account you agree to our{' '}
-              <a href="/terms" className={cn("underline underline-offset-2 transition-colors", isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-black")}>Terms of Service</a>
+              <button type="button" onClick={() => openInAppBrowser('https://callmate.app/terms')} className={cn("underline underline-offset-2 transition-colors", isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-black")}>Terms of Service</button>
               {' '}and{' '}
-              <a href="/privacy" className={cn("underline underline-offset-2 transition-colors", isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-black")}>Privacy Policy</a>.
+              <button type="button" onClick={() => openInAppBrowser('https://callmate.app/privacy')} className={cn("underline underline-offset-2 transition-colors", isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-black")}>Privacy Policy</button>.
             </p>
           )}
           <p className={cn("text-center text-sm pt-1", isDark ? "text-zinc-500" : "text-zinc-400")}>
