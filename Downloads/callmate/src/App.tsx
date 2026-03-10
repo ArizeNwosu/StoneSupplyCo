@@ -57,7 +57,7 @@ const Button = ({
     ghost: isDark ? 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700',
     danger: 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20',
     accent: 'bg-emerald-500 text-white hover:bg-emerald-400 shadow-lg shadow-emerald-500/20',
-    glass: isDark ? 'bg-white/10 backdrop-blur-md text-white border border-white/20 hover:bg-white/20 hover:border-white/30' : 'bg-black/5 backdrop-blur-md text-black border border-black/10 hover:bg-black/10 hover:border-black/20'
+    glass: isDark ? 'bg-zinc-800 text-white border border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600' : 'bg-zinc-100 text-black border border-zinc-200 hover:bg-zinc-200 hover:border-zinc-300'
   };
   
   const sizes = {
@@ -68,9 +68,7 @@ const Button = ({
   };
 
   return (
-    <motion.button 
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.98 }}
+    <button
       className={cn(
         'rounded-2xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer',
         variants[variant],
@@ -80,24 +78,22 @@ const Button = ({
       {...props as any}
     >
       {children}
-    </motion.button>
+    </button>
   );
 };
 
 const Card = ({ children, className, onClick, isDark = true }: { children: React.ReactNode, className?: string, onClick?: () => void, key?: React.Key, isDark?: boolean }) => (
-  <motion.div 
+  <div
     onClick={onClick}
-    whileHover={onClick ? { scale: 1.01, y: -2 } : undefined}
-    whileTap={onClick ? { scale: 0.99 } : undefined}
     className={cn(
-      isDark ? 'bg-zinc-900/85 backdrop-blur-md border-white/10 hover:border-white/20' : 'bg-white/90 backdrop-blur-md border-black/10 hover:border-black/15',
+      isDark ? 'bg-zinc-900 border-white/10 hover:border-white/20' : 'bg-white border-black/10 hover:border-black/15',
       'border rounded-3xl p-5 shadow-md hover:shadow-xl transition-all duration-300',
       onClick && 'cursor-pointer',
       className
     )}
   >
     {children}
-  </motion.div>
+  </div>
 );
 
 const CallTypeGrid = ({
@@ -117,9 +113,8 @@ const CallTypeGrid = ({
   )}>
     <div className="p-3 flex flex-wrap gap-2 max-h-[220px] overflow-y-auto scrollbar-hide">
       {items.map((item, i) => (
-        <motion.button
+        <button
           key={i}
-          whileTap={{ scale: 0.96 }}
           onClick={() => onSelect(item)}
           className={cn(
             "px-4 py-2.5 rounded-2xl text-sm font-medium transition-all",
@@ -131,7 +126,7 @@ const CallTypeGrid = ({
           )}
         >
           {item}
-        </motion.button>
+        </button>
       ))}
     </div>
   </div>
@@ -183,12 +178,12 @@ type AnxietySeverity = 'mild' | 'moderate' | 'severe' | 'debilitating';
 type AnxietyRating = { scriptId: string; rating: number; timestamp: number };
 
 const MILESTONES = [
-  { id: 'first_call',   title: 'Ice Breaker',       desc: 'Completed your first scripted call',   icon: '📞' },
-  { id: 'five_calls',   title: 'Getting Warmer',     desc: '5 calls completed',                   icon: '🔥' },
-  { id: 'ten_calls',    title: 'Call Confident',     desc: '10 calls completed',                  icon: '💪' },
-  { id: 'first_low',    title: 'Easy Does It',       desc: 'Finished a call feeling calm',        icon: '😌' },
-  { id: 'anxiety_drop', title: 'Turning the Corner', desc: 'Anxiety score measurably improved',   icon: '📉' },
-  { id: 'streak_7',     title: 'Week Strong',        desc: '7-day call streak',                   icon: '🏆' },
+  { id: 'first_call',   title: 'Broke the Silence', desc: 'Completed your first scripted call',   icon: '📞' },
+  { id: 'five_calls',   title: 'Faced the Ring',    desc: '5 calls completed',                   icon: '🔥' },
+  { id: 'ten_calls',    title: 'Held the Line',     desc: '10 calls completed',                  icon: '💪' },
+  { id: 'first_low',    title: 'Kept Your Cool',    desc: 'Finished a call feeling calm',        icon: '😌' },
+  { id: 'anxiety_drop', title: 'Found Your Voice',  desc: 'Anxiety score measurably improved',   icon: '📉' },
+  { id: 'streak_7',     title: 'On a Roll',         desc: '7-day call streak',                   icon: '🏆' },
 ];
 
 const TRIGGERS = [
@@ -207,6 +202,8 @@ const IMPACT_AREAS = [
   { icon: '💔', label: 'Personal relationships' },
   { icon: '💰', label: "Money (can't negotiate)" },
 ];
+
+const HAS_SEEN_ONBOARDING_KEY = 'callmate_has_seen_onboarding';
 
 export default function App() {
   const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
@@ -260,13 +257,13 @@ export default function App() {
   const [userName, setUserName] = useState(() => localStorage.getItem('callmate_user_name') || '');
   const [userGender, setUserGender] = useState(() => localStorage.getItem('callmate_user_gender') || '');
   const [userAgeRange, setUserAgeRange] = useState(() => localStorage.getItem('callmate_user_age_range') || '');
-  const [userEmail, setUserEmail] = useState(() => localStorage.getItem('callmate_user_email') || '');
+  const [userEmail, setUserEmail] = useState('');
   const [starredScripts, setStarredScripts] = useState<string[]>(() => {
     const saved = localStorage.getItem('callmate_starred');
     return saved ? JSON.parse(saved) : [];
   });
   const [shareToast, setShareToast] = useState(false);
-  const [copiedLineIndex, setCopiedLineIndex] = useState<number | null>(null);
+  const [expandedSafeLineIndex, setExpandedSafeLineIndex] = useState<number | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     opening: true, mainAsk: true, branchX: true, branchY: true, close: true
   });
@@ -284,6 +281,15 @@ export default function App() {
 
   const TRIAL_SCRIPT_LIMIT = 5;
   const TRIAL_DAYS = 3;
+  const getEffectiveTier = () => (localStorage.getItem('ringtone_tier') as Tier) || tier;
+  const enforceAccessGate = (candidateTier = getEffectiveTier()) => {
+    if (candidateTier === 'free') {
+      setShowUpgradeModal(true);
+      setUpgradeModalForced(true);
+      return false;
+    }
+    return true;
+  };
 
   const trialDaysRemaining = useMemo(() => {
     if (tier !== 'trial' || !trialStartDate) return null;
@@ -292,6 +298,12 @@ export default function App() {
   }, [tier, trialStartDate]);
 
   useEffect(() => { if (!showUpgradeModal) setUpgradeModalForced(false); }, [showUpgradeModal]);
+
+  useEffect(() => {
+    if (supabaseUser) {
+      enforceAccessGate();
+    }
+  }, [supabaseUser, tier]);
 
   const isTrialActive = tier === 'trial' && (trialDaysRemaining ?? 0) > 0;
   const isPremium = tier === 'monthly' || tier === 'annual' || isTrialActive;
@@ -305,9 +317,9 @@ export default function App() {
 
   const nextMilestone = useMemo(() => {
     const count = history.length;
-    if (count < 1) return { title: 'Ice Breaker', icon: '📞', needed: 1 };
-    if (count < 5) return { title: 'Getting Warmer', icon: '🔥', needed: 5 - count };
-    if (count < 10) return { title: 'Call Confident', icon: '💪', needed: 10 - count };
+    if (count < 1) return { title: 'Broke the Silence', icon: '📞', needed: 1 };
+    if (count < 5) return { title: 'Faced the Ring', icon: '🔥', needed: 5 - count };
+    if (count < 10) return { title: 'Held the Line', icon: '💪', needed: 10 - count };
     return null;
   }, [history]);
 
@@ -398,12 +410,14 @@ export default function App() {
     const savedAge = localStorage.getItem('callmate_user_age_range');
     if (savedAge) setUserAgeRange(savedAge);
 
-    const savedEmail = localStorage.getItem('callmate_user_email');
-    if (savedEmail) setUserEmail(savedEmail);
-
     const savedLastScript = localStorage.getItem('callmate_last_script_date');
     if (savedLastScript) setLastScriptDate(parseInt(savedLastScript));
   }, []);
+
+  const viewRef = React.useRef(view);
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
 
   // ─── Supabase session management ──────────────────────────────────────────
   useEffect(() => {
@@ -414,7 +428,6 @@ export default function App() {
         sb.auth.getSession(),
         new Promise<void>(resolve => setTimeout(resolve, 2000)),
       ]);
-      const savedEmail = localStorage.getItem('callmate_user_email');
       if (session?.user) {
         setSupabaseUser(session.user);
         if (session.user.email) {
@@ -423,11 +436,15 @@ export default function App() {
         }
         setView('home');
         loadUserDataFromSupabase(session.user.id);
-      } else if (savedEmail) {
-        setUserEmail(savedEmail);
-        setView('home');
+        enforceAccessGate();
       } else {
-        setView('explainer');
+        const hasSeenOnboarding = localStorage.getItem(HAS_SEEN_ONBOARDING_KEY) === 'true';
+        if (hasSeenOnboarding) {
+          setView('account');
+        } else {
+          localStorage.setItem(HAS_SEEN_ONBOARDING_KEY, 'true');
+          setView('explainer');
+        }
       }
     };
     init();
@@ -443,10 +460,11 @@ export default function App() {
         }
         if (event === 'SIGNED_IN') {
           await loadUserDataFromSupabase(session.user.id);
+          const hasAccess = enforceAccessGate();
           
           // Only automatically set view if we are currently in an onboarding/auth view
           // This avoids interrupting the user if they are already using the app
-          if (['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(view)) {
+          if (hasAccess && ['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
             const isNewUser = Date.now() - new Date(session.user.created_at).getTime() < 30000;
             setView(isNewUser ? 'setup' : 'home');
           }
@@ -471,12 +489,21 @@ export default function App() {
         // Close the browser immediately so the user is back in the app
         const { Browser } = await import('@capacitor/browser');
         await Browser.close();
-        // Exchange the auth code for a session — onAuthStateChange handles the rest
+        // Support both PKCE code callbacks and token-based email redirects.
         const { supabase: sb } = await import('./services/supabase');
-        const params = new URLSearchParams(url.split('?')[1] ?? '');
+        const params = new URLSearchParams(url.replace('#', '?').split('?')[1] ?? '');
         const code = params.get('code');
         if (code) {
           await sb.auth.exchangeCodeForSession(code);
+          return;
+        }
+
+        const accessToken = params.get('access_token');
+        if (accessToken) {
+          await sb.auth.setSession({
+            access_token: accessToken,
+            refresh_token: params.get('refresh_token') ?? '',
+          });
         }
       });
     };
@@ -804,20 +831,12 @@ export default function App() {
     document.body.removeChild(el);
   };
 
-  const handleCopyLine = async (text: string, index: number) => {
-    await copyText(text);
-    setCopiedLineIndex(index);
-    setTimeout(() => setCopiedLineIndex(null), 2000);
+  const toggleSafeLine = (index: number) => {
+    setExpandedSafeLineIndex(current => (current === index ? null : index));
   };
 
   if (view === 'splash') return (
     <div className={cn("h-screen flex flex-col items-center justify-center p-6 transition-colors duration-500 relative overflow-hidden", isDark ? "bg-black text-white" : "bg-white text-black")}>
-      {/* Splash Blobs */}
-      <motion.div 
-        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: 4, repeat: Infinity }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px]"
-      />
       <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative">
         <motion.div
           animate={{ scale: [1, 1.6, 1], opacity: [0.35, 0, 0.35] }}
@@ -840,9 +859,6 @@ export default function App() {
 
   if (view === 'explainer') return (
     <div className={cn("h-screen flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-black text-white" : "bg-white text-black")}>
-      <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.3, 0.15] }} transition={{ duration: 8, repeat: Infinity }} className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-600/25 rounded-full blur-[130px] pointer-events-none" />
-      <motion.div animate={{ x: [0, 40, 0], y: [0, -30, 0] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }} className="absolute -bottom-32 -right-32 w-80 h-80 bg-blue-600/15 rounded-full blur-[100px] pointer-events-none" />
-
       <div className="relative z-10 flex-1 flex flex-col justify-between px-7 pt-14 pb-10 max-w-md mx-auto w-full">
 
         {/* Top section */}
@@ -899,9 +915,6 @@ export default function App() {
 
     return (
       <div className={cn("h-screen flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-black text-white" : "bg-white text-black")}>
-        <motion.div animate={{ x: [0, 50, 0], y: [0, -50, 0] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }} className="absolute -top-24 -right-24 w-96 h-96 bg-purple-600/20 rounded-full blur-[100px] pointer-events-none" />
-        <motion.div animate={{ x: [0, -50, 0], y: [0, 50, 0] }} transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }} className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-600/20 rounded-full blur-[100px] pointer-events-none" />
-
         {/* Progress dots */}
         <div className="relative z-10 flex items-center justify-center gap-2 pt-10 pb-2 shrink-0">
           {[1, 2, 3, 4, 5].map(s => (
@@ -1135,34 +1148,34 @@ export default function App() {
     tier={tier}
     trialStartDate={trialStartDate}
     onComplete={async (email, isNewUser) => {
-      if (email) {
-        setUserEmail(email);
-        localStorage.setItem('callmate_user_email', email);
-      }
       // Get fresh session — supabaseUser closure may be stale at this point
       const { supabase: sb } = await import('./services/supabase');
       const { data: { session: freshSession } } = await sb.auth.getSession();
-      if (freshSession?.user) {
-        setSupabaseUser(freshSession.user);
-        if (freshSession.user.email && !email) {
-          setUserEmail(freshSession.user.email);
-          localStorage.setItem('callmate_user_email', freshSession.user.email);
-        }
-        // Push local data to Supabase on first signup
-        if (isNewUser) {
-          await pushLocalDataToSupabase(freshSession.user.id, {
-            scripts: history,
-            reflections,
-            anxietyRatings: callAnxietyRatings,
-            personas,
-            name: userName,
-            tier,
-            trialStartDate,
-            darkMode: isDark,
-          });
-        }
+      if (!freshSession?.user) {
+        throw new Error('No active auth session found.');
       }
-      // Navigation is handled exclusively by onAuthStateChange to avoid double-redirect
+
+      setSupabaseUser(freshSession.user);
+      const resolvedEmail = freshSession.user.email ?? email;
+      if (resolvedEmail) {
+        setUserEmail(resolvedEmail);
+        localStorage.setItem('callmate_user_email', resolvedEmail);
+      }
+
+      // Push local data to Supabase on first signup
+      if (isNewUser) {
+        await pushLocalDataToSupabase(freshSession.user.id, {
+          scripts: history,
+          reflections,
+          anxietyRatings: callAnxietyRatings,
+          personas,
+          name: userName,
+          tier,
+          trialStartDate,
+          darkMode: isDark,
+        });
+      }
+      setView(isNewUser ? 'setup' : 'home');
     }}
   />;
 
@@ -1174,10 +1187,6 @@ export default function App() {
 
   if (view === 'reviews') return (
     <div className={cn("h-screen flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-black text-white" : "bg-white text-black")}>
-      {/* Subtle background blob */}
-      <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.12, 0.18, 0.12] }} transition={{ duration: 8, repeat: Infinity }}
-        className="absolute top-[-20%] left-[-20%] w-[70vw] h-[70vw] rounded-full blur-[120px] bg-emerald-500 pointer-events-none" />
-
       <div className="flex-1 flex flex-col px-6 py-10 overflow-y-auto max-w-lg mx-auto w-full">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-center mb-8">
@@ -1220,7 +1229,19 @@ export default function App() {
 
         {/* CTA */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="pt-6 space-y-3">
-          <Button size="xl" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25" onClick={() => { setView('home'); setShowUpgradeModal(true); setUpgradeModalForced(true); }}>
+          <Button
+            size="xl"
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25"
+            onClick={() => {
+              if (supabaseUser) {
+                setView('home');
+                setShowUpgradeModal(true);
+                setUpgradeModalForced(true);
+                return;
+              }
+              setView('account');
+            }}
+          >
             Let's get started <ChevronRight className="w-5 h-5" />
           </Button>
         </motion.div>
@@ -1230,47 +1251,7 @@ export default function App() {
 
   return (
     <div className={cn("min-h-screen transition-colors duration-500 selection:bg-white/10 relative overflow-hidden", isDark ? "bg-black text-white" : "bg-white text-black")}>
-      {/* Background Blobs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <motion.div 
-          animate={{ 
-            x: [0, 40, 0], 
-            y: [0, 60, 0],
-            scale: [1, 1.1, 1]
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className={cn(
-            "absolute -top-24 -left-24 w-[500px] h-[500px] rounded-full blur-[120px] opacity-[0.15]",
-            isDark ? "bg-blue-600" : "bg-blue-200"
-          )}
-        />
-        <motion.div 
-          animate={{ 
-            x: [0, -60, 0], 
-            y: [0, -40, 0],
-            scale: [1, 1.2, 1]
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className={cn(
-            "absolute -bottom-24 -right-24 w-[500px] h-[500px] rounded-full blur-[120px] opacity-[0.15]",
-            isDark ? "bg-emerald-600" : "bg-emerald-200"
-          )}
-        />
-        <motion.div 
-          animate={{ 
-            x: [0, 30, 0], 
-            y: [0, -30, 0],
-            scale: [1, 1.15, 1]
-          }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          className={cn(
-            "absolute top-1/4 right-1/4 w-[400px] h-[400px] rounded-full blur-[150px] opacity-[0.1]",
-            isDark ? "bg-purple-600" : "bg-purple-200"
-          )}
-        />
-      </div>
-
-      <header className={cn("sticky top-0 z-40 backdrop-blur-md border-b px-6 py-4 flex items-center justify-between transition-colors", isDark ? "bg-black/40 border-white/5" : "bg-white/40 border-black/5")}>
+      <header className={cn("sticky top-0 z-40 border-b px-6 py-4 flex items-center justify-between transition-colors", isDark ? "bg-black border-white/5" : "bg-white border-black/5")}>
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setCurrentScript(null); setActiveTab('home'); setView('home'); }}>
           <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-black">
             <Logo className="w-6 h-6 text-white" />
@@ -1296,7 +1277,7 @@ export default function App() {
       <main className="max-w-2xl mx-auto p-6 pb-48">
         <AnimatePresence mode="wait">
           {view === 'home' && (
-            <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
+            <div key="home" className="space-y-8">
 
               {/* Comeback nudge — avoidance detection */}
               {showComebackNudge && (
@@ -1322,9 +1303,7 @@ export default function App() {
 
               {/* Milestone proximity card */}
               {nextMilestone && history.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                <div
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-2xl border transition-colors",
                     isDark ? "bg-zinc-900/60 border-zinc-800" : "bg-zinc-50 border-zinc-200"
@@ -1334,14 +1313,12 @@ export default function App() {
                   <p className={cn("text-xs flex-1", isDark ? "text-zinc-400" : "text-zinc-600")}>
                     <span className="font-black">{nextMilestone.needed} more {nextMilestone.needed === 1 ? 'script' : 'scripts'}</span> until you unlock <span className={cn("font-semibold", isDark ? "text-zinc-200" : "text-zinc-800")}>{nextMilestone.title}</span>
                   </p>
-                </motion.div>
+                </div>
               )}
 
               {/* Resume active script banner */}
               {currentScript && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
+                <div
                   onClick={() => setView('script')}
                   className={cn(
                     "p-4 rounded-2xl border cursor-pointer flex items-center justify-between gap-3 transition-all",
@@ -1353,7 +1330,7 @@ export default function App() {
                     <p className={cn("text-sm font-semibold truncate", isDark ? "text-zinc-200" : "text-zinc-800")}>{currentScript.description}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-blue-500 shrink-0" />
-                </motion.div>
+                </div>
               )}
 
               <section>
@@ -1463,39 +1440,44 @@ export default function App() {
                 <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Incoming Call Kit</h2>
                 <div className="grid grid-cols-1 gap-2">
                   {SAFE_LINES.map((line, i) => {
-                    const copied = copiedLineIndex === i;
+                    const expanded = expandedSafeLineIndex === i;
                     return (
-                      <motion.button
+                      <button
                         key={i}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => handleCopyLine(line.line, i)}
+                        onClick={() => toggleSafeLine(i)}
                         className={cn(
                           "text-left p-4 rounded-2xl border transition-all flex items-start justify-between gap-3",
-                          copied
-                            ? (isDark ? "bg-emerald-500/10 border-emerald-500/40" : "bg-emerald-50 border-emerald-300")
+                          expanded
+                            ? (isDark ? "bg-blue-500/10 border-blue-500/40" : "bg-blue-50 border-blue-300")
                             : (isDark ? "bg-zinc-900/80 border-white/8 hover:border-white/20 hover:bg-zinc-900" : "bg-zinc-100/80 border-black/8 hover:border-black/20 hover:bg-zinc-100")
                         )}
                       >
                         <div className="flex-1">
                           <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">{line.situation}</p>
-                          <p className={cn("text-sm font-semibold leading-snug", isDark ? "text-zinc-100" : "text-zinc-900")}>"{line.line}"</p>
+                          <p className={cn(
+                            "font-semibold leading-snug transition-all",
+                            expanded ? "text-xl leading-relaxed" : "text-sm",
+                            isDark ? "text-zinc-100" : "text-zinc-900"
+                          )}>
+                            "{line.line}"
+                          </p>
                         </div>
-                        {copied
-                          ? <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                          : <Share2 className="w-3.5 h-3.5 text-zinc-600 shrink-0 mt-0.5" />
+                        {expanded
+                          ? <ChevronUp className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                          : <ChevronDown className="w-4 h-4 text-zinc-600 shrink-0 mt-0.5" />
                         }
-                      </motion.button>
+                      </button>
                     );
                   })}
                 </div>
-                <p className="text-[10px] text-zinc-600 mt-2 text-center">Tap any line to copy · Use when the phone is already ringing</p>
+                <p className="text-[10px] text-zinc-600 mt-2 text-center">Tap any line to expand it for easier reading during the call</p>
               </section>
 
-            </motion.div>
+            </div>
           )}
 
           {view === 'settings' && (
-            <motion.div key="settings" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+            <div key="settings" className="space-y-8">
               <div className="flex items-center gap-4">
                 <Button variant="ghost" size="sm" isDark={isDark} onClick={() => setView(activeTab)}>
                   <ArrowLeft className="w-4 h-4" /> Back
@@ -1554,10 +1536,10 @@ export default function App() {
                 {!isPremium && (
                   <Card isDark={isDark} className="bg-gradient-to-br from-blue-600 to-indigo-600 border-none p-6 text-white overflow-hidden relative">
                     <div className="relative z-10">
-                      <h3 className="text-2xl font-bold mb-2">Go Premium</h3>
-                      <p className="text-blue-100 text-sm mb-4">Unlimited scripts, practice mode, custom personas, and more.</p>
+                      <h3 className="text-2xl font-bold mb-2">Complete Your Trial Setup</h3>
+                      <p className="text-blue-100 text-sm mb-4">Choose a plan to unlock full access and start your 3-day free trial.</p>
                       <Button variant="glass" isDark={true} className="w-full bg-white text-blue-600 border-none" onClick={() => setShowUpgradeModal(true)}>
-                        Upgrade Now
+                        Start Free Trial
                       </Button>
                     </div>
                     <div className="absolute -right-8 -bottom-8 opacity-20">
@@ -1635,11 +1617,13 @@ export default function App() {
                   <Card isDark={isDark} className="p-6 space-y-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-bold text-lg">Current Tier</p>
-                        <p className="text-zinc-500 text-sm capitalize">{tier} Plan</p>
+                        <p className="font-bold text-lg">Current Plan</p>
+                        <p className="text-zinc-500 text-sm">
+                          {tier === 'annual' ? 'Annual Plan' : tier === 'monthly' ? 'Monthly Plan' : tier === 'trial' ? '3-Day Free Trial' : 'Trial required'}
+                        </p>
                       </div>
                       <Button variant="outline" size="sm" isDark={isDark} onClick={() => setShowUpgradeModal(true)}>
-                        Change
+                        {tier === 'free' ? 'Start Trial' : 'Manage'}
                       </Button>
                     </div>
                   </Card>
@@ -1677,11 +1661,11 @@ export default function App() {
                   </div>
                 </section>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {view === 'dashboard' && (
-            <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5 pb-32">
+            <div key="dashboard" className="space-y-5 pb-32">
               {/* Header */}
               <div>
                 <h2 className="text-3xl font-bold tracking-tight">Recovery Progress</h2>
@@ -1771,18 +1755,17 @@ export default function App() {
                   {MILESTONES.map((m) => {
                     const unlocked = unlockedMilestones.has(m.id);
                     return (
-                      <motion.div
+                      <div
                         key={m.id}
-                        animate={{ opacity: unlocked ? 1 : 0.35, scale: unlocked ? 1 : 0.97 }}
                         className={cn("flex flex-col items-center gap-1.5 p-3 rounded-2xl border text-center transition-all",
                           unlocked
-                            ? isDark ? "bg-emerald-500/10 border-emerald-500/30" : "bg-emerald-50 border-emerald-200"
-                            : isDark ? "bg-zinc-800/40 border-zinc-800" : "bg-zinc-100 border-zinc-200"
+                            ? isDark ? "bg-emerald-500/10 border-emerald-500/30 opacity-100 scale-100" : "bg-emerald-50 border-emerald-200 opacity-100 scale-100"
+                            : isDark ? "bg-zinc-800/40 border-zinc-800 opacity-35 scale-[0.97]" : "bg-zinc-100 border-zinc-200 opacity-35 scale-[0.97]"
                         )}
                       >
                         <span className="text-2xl">{unlocked ? m.icon : '🔒'}</span>
                         <p className={cn("text-[9px] font-bold leading-tight uppercase tracking-wide", unlocked ? (isDark ? "text-emerald-400" : "text-emerald-700") : "text-zinc-600")}>{m.title}</p>
-                      </motion.div>
+                      </div>
                     );
                   })}
                 </div>
@@ -1796,11 +1779,11 @@ export default function App() {
                   {lifeImpact.length > 0 && <p className="text-xs text-zinc-500 mt-1">Focus areas: {lifeImpact.join(' · ')}</p>}
                 </div>
               )}
-            </motion.div>
+            </div>
           )}
 
           {view === 'history' && (
-            <motion.div key="history" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-[-140px] pt-4">
+            <div key="history" className="space-y-[-140px] pt-4">
               <div className="flex flex-col gap-6 mb-12 px-2 relative z-[100]">
                 <div className="flex items-center justify-between">
                   <h2 className="text-4xl font-bold tracking-tight">History</h2>
@@ -1813,9 +1796,7 @@ export default function App() {
 
                 {/* Active script resume banner */}
                 {currentScript && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
+                  <div
                     onClick={() => setView('script')}
                     className={cn(
                       "p-4 rounded-2xl border cursor-pointer flex items-center justify-between gap-3 transition-all",
@@ -1827,7 +1808,7 @@ export default function App() {
                       <p className={cn("text-sm font-semibold truncate", isDark ? "text-zinc-200" : "text-zinc-800")}>{currentScript.description}</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-blue-500 shrink-0" />
-                  </motion.div>
+                  </div>
                 )}
                 
                 {isPremium && (
@@ -1867,11 +1848,8 @@ export default function App() {
                   const bgColor = colors[i % colors.length];
                   
                   return (
-                    <motion.div
+                    <div
                       key={s.id}
-                      initial={{ y: 50, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: i * 0.05, type: 'spring', stiffness: 100 }}
                       onClick={() => { setCurrentScript(s); setPreviousView('history'); setView('script'); }}
                       className={cn(
                         "relative p-8 rounded-[2.5rem] cursor-pointer shadow-[0_-4px_16px_rgba(0,0,0,0.12)] transition-all hover:translate-y-[-20px] active:scale-[0.98] group min-h-[220px]",
@@ -1907,25 +1885,21 @@ export default function App() {
                           <Star className={cn("w-5 h-5", starredScripts.includes(s.id) ? "text-amber-500 fill-amber-500" : "text-black/40")} />
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   );
                 })
               )}
               {/* Extra spacer for the last card to be fully visible */}
               <div className="h-40" />
-            </motion.div>
+            </div>
           )}
 
           {view === 'script' && currentScript && (
-            <motion.div key="script" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            <div key="script" className="space-y-6">
 
               {/* Medical Call Extra Help Banner */}
               {isMedicalCall && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={cn("rounded-2xl border p-4 transition-colors", isDark ? "bg-blue-950/50 border-blue-500/25" : "bg-blue-50 border-blue-200")}
-                >
+                <div className={cn("rounded-2xl border p-4 transition-colors", isDark ? "bg-blue-950/50 border-blue-500/25" : "bg-blue-50 border-blue-200")}>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-base">🏥</span>
                     <p className={cn("text-xs font-black uppercase tracking-widest", isDark ? "text-blue-400" : "text-blue-600")}>Medical Call Prep</p>
@@ -1949,7 +1923,7 @@ export default function App() {
                   <p className={cn("text-[10px] mt-3 leading-relaxed", isDark ? "text-zinc-500" : "text-zinc-400")}>
                     They deal with these calls all day. You are not bothering them.
                   </p>
-                </motion.div>
+                </div>
               )}
 
               {/* Speaker Mode Prompt — shown first 5 script sessions */}
@@ -2028,7 +2002,7 @@ export default function App() {
               </div>
 
               {/* Alter Ego Mode */}
-              <motion.div layout className={cn("rounded-3xl border overflow-hidden transition-all", showAlterEgo ? (isDark ? "bg-indigo-950/50 border-indigo-500/30" : "bg-indigo-50 border-indigo-200") : (isDark ? "bg-zinc-900/50 border-zinc-800" : "bg-zinc-50 border-zinc-200"))}>
+              <div className={cn("rounded-3xl border overflow-hidden transition-all", showAlterEgo ? (isDark ? "bg-indigo-950/50 border-indigo-500/30" : "bg-indigo-50 border-indigo-200") : (isDark ? "bg-zinc-900/50 border-zinc-800" : "bg-zinc-50 border-zinc-200"))}>
                 <button onClick={() => setShowAlterEgo(p => !p)} className="w-full flex items-center justify-between p-4 text-left">
                   <div className="flex items-center gap-3">
                     <span className="text-xl">🎭</span>
@@ -2038,14 +2012,17 @@ export default function App() {
                     </div>
                   </div>
                   <div className={cn("w-11 h-6 rounded-full transition-colors relative shrink-0", showAlterEgo ? "bg-indigo-500" : (isDark ? "bg-zinc-700" : "bg-zinc-300"))}>
-                    <motion.div layout animate={{ x: showAlterEgo ? 22 : 2 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }} className="absolute top-1 w-4 h-4 rounded-full bg-white shadow" />
+                    <div
+                      className="absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200"
+                      style={{ transform: `translateX(${showAlterEgo ? 22 : 2}px)` }}
+                    />
                   </div>
                 </button>
                 <AnimatePresence>
                   {showAlterEgo && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
                       <div className={cn("mx-4 mb-4 p-4 rounded-2xl border", isDark ? "bg-indigo-900/30 border-indigo-500/20" : "bg-indigo-100 border-indigo-200")}>
-                        <p className={cn("text-sm font-bold mb-1", isDark ? "text-indigo-200" : "text-indigo-900")}>You are Alex Chen.</p>
+                        <p className={cn("text-sm font-bold mb-1", isDark ? "text-indigo-200" : "text-indigo-900")}>You are Alex Stone.</p>
                         <p className={cn("text-sm leading-relaxed", isDark ? "text-indigo-300/80" : "text-indigo-800")}>
                           A confident public speaker who makes phone calls every single day. Calls are just conversations — you start them, guide them, and end them on your terms. This is just another call.
                         </p>
@@ -2053,7 +2030,7 @@ export default function App() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </motion.div>
+              </div>
 
               {isPremium && (
                 <div className="flex gap-3">
@@ -2182,19 +2159,18 @@ export default function App() {
                   <AlertCircle className="w-8 h-8" /> They said something unexpected
                 </Button>
               </div>
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>
       </main>
 
-      <nav className={cn("fixed bottom-0 left-0 right-0 backdrop-blur-xl border-t px-4 py-3 pb-8 z-50 flex items-center justify-around max-w-2xl mx-auto shadow-2xl transition-colors", isDark ? "bg-black/80 border-white/5" : "bg-white/80 border-black/5")}>
+      <nav className={cn("fixed bottom-0 left-0 right-0 border-t px-4 py-3 pb-8 z-50 flex items-center justify-around max-w-2xl mx-auto shadow-2xl transition-colors", isDark ? "bg-black border-white/5" : "bg-white border-black/5")}>
         {/* New Call */}
         <button onClick={() => { setCurrentScript(null); setActiveTab('home'); setView('home'); }}
           className={cn("flex flex-col items-center gap-1 transition-all relative group", activeTab === 'home' ? (isDark ? "text-white" : "text-black") : "text-zinc-500 hover:text-zinc-400")}>
           <div className={cn("p-2 rounded-2xl transition-all duration-300 relative",
             activeTab === 'home' ? (isDark ? "bg-blue-600/20 shadow-[0_0_20px_rgba(37,99,235,0.2)]" : "bg-blue-500/10") : "group-hover:bg-zinc-800/50")}>
             <Plus className={cn("w-6 h-6", activeTab === 'home' ? (isDark ? "text-blue-400" : "text-blue-600") : "")} />
-            {activeTab === 'home' && <motion.div layoutId="nav-glow" className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full" />}
           </div>
           <span className="text-[10px] font-black uppercase tracking-[0.2em]">Prepare</span>
         </button>
@@ -2204,7 +2180,6 @@ export default function App() {
           <div className={cn("p-2 rounded-2xl transition-all duration-300 relative",
             activeTab === 'dashboard' ? (isDark ? "bg-emerald-600/20 shadow-[0_0_20px_rgba(16,185,129,0.2)]" : "bg-emerald-500/10") : "group-hover:bg-zinc-800/50")}>
             <RotateCcw className={cn("w-6 h-6", activeTab === 'dashboard' ? (isDark ? "text-emerald-400" : "text-emerald-600") : "")} />
-            {activeTab === 'dashboard' && <motion.div layoutId="nav-glow" className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full" />}
           </div>
           <span className="text-[10px] font-black uppercase tracking-[0.2em]">Progress</span>
         </button>
@@ -2214,7 +2189,6 @@ export default function App() {
           <div className={cn("p-2 rounded-2xl transition-all duration-300 relative",
             activeTab === 'history' ? (isDark ? "bg-purple-600/20 shadow-[0_0_20px_rgba(147,51,234,0.2)]" : "bg-purple-500/10") : "group-hover:bg-zinc-800/50")}>
             <History className={cn("w-6 h-6", activeTab === 'history' ? (isDark ? "text-purple-400" : "text-purple-600") : "")} />
-            {activeTab === 'history' && <motion.div layoutId="nav-glow" className="absolute inset-0 bg-purple-500/20 blur-xl rounded-full" />}
           </div>
           <span className="text-[10px] font-black uppercase tracking-[0.2em]">Journal</span>
         </button>
@@ -2223,8 +2197,8 @@ export default function App() {
       <AnimatePresence>
         {showPanicPanel && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setShowPanicPanel(false); setPanicResponse(null); }} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60]" />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} className={cn("fixed bottom-0 left-0 right-0 rounded-t-[3rem] z-[70] max-h-[90vh] overflow-y-auto shadow-2xl max-w-2xl mx-auto border-t transition-colors", isDark ? "bg-zinc-900 border-white/5" : "bg-white border-black/5")}>
+            <div onClick={() => { setShowPanicPanel(false); setPanicResponse(null); }} className="fixed inset-0 bg-black/80 z-[60]" />
+            <div className={cn("fixed bottom-0 left-0 right-0 rounded-t-[3rem] z-[70] max-h-[90vh] overflow-y-auto shadow-2xl max-w-2xl mx-auto border-t transition-colors", isDark ? "bg-zinc-900 border-white/5" : "bg-white border-black/5")}>
               <div className="p-8">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-3">
@@ -2237,14 +2211,12 @@ export default function App() {
                       {panicResponse ? 'Say This Now' : panicCategory ? panicCategory : 'Live Response'}
                     </h2>
                   </div>
-                  <motion.button
-                    whileHover={{ scale: 1.1, rotate: 90 }}
-                    whileTap={{ scale: 0.9 }}
+                  <button
                     onClick={() => { setShowPanicPanel(false); setPanicResponse(null); setPanicCategory(null); }}
                     className={cn("p-2 rounded-full transition-colors", isDark ? "bg-zinc-800" : "bg-zinc-100")}
                   >
                     <X className="w-6 h-6" />
-                  </motion.button>
+                  </button>
                 </div>
 
                 {panicLoading ? (
@@ -2253,7 +2225,7 @@ export default function App() {
                     <p className="text-zinc-500 text-sm">Generating response...</p>
                   </div>
                 ) : panicResponse ? (
-                  <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
+                  <div className="space-y-4">
                     <div className="bg-emerald-500/10 border-2 border-emerald-500/20 rounded-3xl p-8">
                       <p className="text-xs font-bold text-emerald-500 uppercase mb-3">Say this now:</p>
                       <p className={cn("text-2xl font-medium italic leading-relaxed transition-colors", isDark ? "text-emerald-100" : "text-emerald-900")}>"{panicResponse}"</p>
@@ -2264,7 +2236,7 @@ export default function App() {
                     <Button variant="ghost" size="sm" isDark={isDark} className="w-full" onClick={() => { setShowPanicPanel(false); setPanicResponse(null); setPanicCategory(null); }}>
                       Dismiss without saving
                     </Button>
-                  </motion.div>
+                  </div>
                 ) : !panicCategory ? (
                   /* Step 1: Choose category */
                   <div className="space-y-3">
@@ -2278,10 +2250,8 @@ export default function App() {
                         Exit: 'Need to end the call'
                       };
                       return (
-                        <motion.button
+                        <button
                           key={cat}
-                          whileHover={{ scale: 1.01 }}
-                          whileTap={{ scale: 0.98 }}
                           onClick={() => setPanicCategory(cat)}
                           className={cn("w-full p-5 border rounded-2xl text-left flex items-center gap-4 transition-all", isDark ? "bg-black border-zinc-800 hover:border-white/20" : "bg-zinc-50 border-zinc-200 hover:border-black/20")}
                         >
@@ -2291,7 +2261,7 @@ export default function App() {
                             <p className="text-xs text-zinc-500 mt-0.5">{catDescriptions[cat]}</p>
                           </div>
                           <ChevronRight className="w-4 h-4 text-zinc-500 ml-auto" />
-                        </motion.button>
+                        </button>
                       );
                     })}
                   </div>
@@ -2300,16 +2270,14 @@ export default function App() {
                   <div className="space-y-8">
                     <div className="space-y-2">
                       {PANIC_OPTIONS.filter(o => o.category === panicCategory).map((opt, i) => (
-                        <motion.button
+                        <button
                           key={i}
                           onClick={() => handlePanicAction(opt)}
-                          whileHover={{ scale: 1.01 }}
-                          whileTap={{ scale: 0.98 }}
                           className={cn("w-full p-5 border rounded-2xl text-left transition-all", isDark ? "bg-black border-zinc-800 hover:border-white/20" : "bg-zinc-50 border-zinc-200 hover:border-black/20")}
                         >
                           <p className={cn("text-base font-semibold transition-colors", isDark ? "text-zinc-200" : "text-zinc-800")}>{opt.label}</p>
                           <p className="text-xs text-zinc-500 mt-1">{opt.description}</p>
-                        </motion.button>
+                        </button>
                       ))}
                     </div>
                     <div className={cn("rounded-2xl border p-1 transition-colors", isDark ? "border-zinc-800" : "border-zinc-200")}>
@@ -2330,7 +2298,7 @@ export default function App() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
@@ -2338,14 +2306,8 @@ export default function App() {
       <AnimatePresence>
         {showReviewModal && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowReviewModal(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]" />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className={cn("fixed bottom-0 left-0 right-0 rounded-t-[2.5rem] z-[110] shadow-2xl border-t max-w-2xl mx-auto transition-colors", isDark ? "bg-zinc-900 border-white/5" : "bg-white border-black/5")}
-            >
+            <div onClick={() => setShowReviewModal(false)} className="fixed inset-0 bg-black/80 z-[100]" />
+            <div className={cn("fixed bottom-0 left-0 right-0 rounded-t-[2.5rem] z-[110] shadow-2xl border-t max-w-2xl mx-auto transition-colors", isDark ? "bg-zinc-900 border-white/5" : "bg-white border-black/5")}>
               <div className="p-8 space-y-6 max-h-[90vh] overflow-y-auto pb-10">
                 {/* Header */}
                 <div className="text-center space-y-2">
@@ -2362,13 +2324,7 @@ export default function App() {
                     { name: "Priya K.", location: "New York", quote: "I used to let every work call go to voicemail and make up excuses. Not anymore.", tag: "Work Call" },
                     { name: "Marcus R.", location: "Seattle", quote: "I'm autistic and phone calls are my nightmare. This app is genuinely life-changing. Nothing else comes close.", tag: "Customer Service" },
                   ].map((r, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.08 }}
-                      className={cn("p-4 rounded-2xl border transition-colors", isDark ? "bg-zinc-800/60 border-zinc-700/50" : "bg-zinc-50 border-zinc-200")}
-                    >
+                    <div key={i} className={cn("p-4 rounded-2xl border transition-colors", isDark ? "bg-zinc-800/60 border-zinc-700/50" : "bg-zinc-50 border-zinc-200")}>
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div>
                           <p className={cn("text-sm font-bold", isDark ? "text-zinc-100" : "text-zinc-900")}>{r.name}</p>
@@ -2379,7 +2335,7 @@ export default function App() {
                         </div>
                       </div>
                       <p className={cn("text-sm leading-relaxed", isDark ? "text-zinc-300" : "text-zinc-700")}>"{r.quote}"</p>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
 
@@ -2403,7 +2359,7 @@ export default function App() {
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
@@ -2411,14 +2367,8 @@ export default function App() {
       <AnimatePresence>
         {showUpgradeModal && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { if (!upgradeModalForced) setShowUpgradeModal(false); }} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]" />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className={cn("fixed bottom-0 left-0 right-0 rounded-t-[2.5rem] z-[110] shadow-2xl border-t max-w-2xl mx-auto max-h-[94dvh] overflow-y-auto transition-colors", isDark ? "bg-zinc-900 border-white/5" : "bg-white border-black/5")}
-            >
+            <div onClick={() => { if (!upgradeModalForced) setShowUpgradeModal(false); }} className="fixed inset-0 bg-black/80 z-[100]" />
+            <div className={cn("fixed bottom-0 left-0 right-0 rounded-t-[2.5rem] z-[110] shadow-2xl border-t max-w-2xl mx-auto max-h-[94dvh] overflow-y-auto transition-colors", isDark ? "bg-zinc-900 border-white/5" : "bg-white border-black/5")}>
               <div className="flex justify-center pt-4 pb-2">
                 <div className={cn("w-10 h-1 rounded-full", isDark ? "bg-zinc-700" : "bg-zinc-300")} />
               </div>
@@ -2450,6 +2400,7 @@ export default function App() {
                     { icon: '📚', text: 'Full call history — every script saved forever' },
                     { icon: '📉', text: 'Anxiety progress tracking — see your telephobia improve' },
                     { icon: '🚨', text: 'Panic mode — real-time help when calls go sideways' },
+                    { icon: '🧘', text: 'Pre-call prep and breathing exercise' },
                     { icon: '🔊', text: 'Practice mode — hear your script read aloud by AI' },
                     { icon: '🎭', text: 'Alter ego mode, custom personas & more' },
                   ].map(({ icon, text }) => (
@@ -2540,14 +2491,14 @@ export default function App() {
                   <button onClick={() => setShowUpgradeModal(false)} className="w-full text-zinc-500 text-sm font-medium py-1 hover:text-zinc-400 transition-colors">Maybe later</button>
                 )}
               </div>
-            </motion.div>
+            </div>
           </>
         )}
 
         {showPersonaModal && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowPersonaModal(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]" />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} className={cn("fixed bottom-0 left-0 right-0 p-8 rounded-t-[3rem] z-[110] shadow-2xl border-t transition-colors max-w-2xl mx-auto", isDark ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200")}>
+            <div onClick={() => setShowPersonaModal(false)} className="fixed inset-0 bg-black/80 z-[100]" />
+            <div className={cn("fixed bottom-0 left-0 right-0 p-8 rounded-t-[3rem] z-[110] shadow-2xl border-t transition-colors max-w-2xl mx-auto", isDark ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200")}>
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold">{selectedPersona ? 'Edit Persona' : 'New Persona'}</h2>
@@ -2589,7 +2540,7 @@ export default function App() {
                   Save Persona
                 </Button>
               </div>
-            </motion.div>
+            </div>
           </>
         )}
 
@@ -2610,9 +2561,8 @@ export default function App() {
 
         {showReflectionPrompt && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowReflectionPrompt(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]" />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className={cn("fixed bottom-0 left-0 right-0 rounded-t-[2.5rem] z-[110] shadow-2xl border-t p-8 max-w-2xl mx-auto transition-colors", isDark ? "bg-zinc-900 border-white/5" : "bg-white border-black/5")}>
+            <div onClick={() => setShowReflectionPrompt(false)} className="fixed inset-0 bg-black/80 z-[100]" />
+            <div className={cn("fixed bottom-0 left-0 right-0 rounded-t-[2.5rem] z-[110] shadow-2xl border-t p-8 max-w-2xl mx-auto transition-colors", isDark ? "bg-zinc-900 border-white/5" : "bg-white border-black/5")}>
               <div className="space-y-6">
                 <div className="text-center">
                   <div className="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -2631,18 +2581,18 @@ export default function App() {
                       { rating: 4, label: 'Anxious',     emoji: '😰', color: 'border-orange-500/60 bg-orange-500/10 text-orange-400' },
                       { rating: 5, label: 'Near panic',  emoji: '🚨', color: 'border-red-500/60 bg-red-500/10 text-red-400' },
                     ].map(opt => (
-                      <motion.button key={opt.rating} whileTap={{ scale: 0.94 }}
+                      <button key={opt.rating}
                         onClick={() => saveReflection(`Anxiety: ${opt.rating}/5 — ${opt.label}`, opt.rating)}
                         className={cn("flex-1 flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all", opt.color)}>
                         <span className="text-2xl">{opt.emoji}</span>
                         <span className="text-[9px] font-black uppercase tracking-wide">{opt.label}</span>
-                      </motion.button>
+                      </button>
                     ))}
                   </div>
                 </div>
                 <button onClick={() => setShowReflectionPrompt(false)} className="w-full text-center text-zinc-500 text-sm py-1 hover:text-zinc-400 transition-colors">Skip</button>
               </div>
-            </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
@@ -3045,13 +2995,6 @@ function SetupAnimation({ isDark, userName, onDone }: { isDark: boolean; userNam
 
   return (
     <div className={cn("h-screen flex flex-col items-center justify-center px-8 transition-colors relative overflow-hidden", isDark ? "bg-black text-white" : "bg-white text-black")}>
-      {/* Ambient glow */}
-      <motion.div
-        animate={{ scale: [1, 1.12, 1], opacity: [0.08, 0.15, 0.08] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-[-20%] left-[10%] w-[80vw] h-[80vw] rounded-full blur-[140px] bg-indigo-500 pointer-events-none"
-      />
-
       <div className="w-full max-w-sm relative z-10">
         {/* Logo + heading */}
         <motion.div
@@ -3111,32 +3054,25 @@ function SetupAnimation({ isDark, userName, onDone }: { isDark: boolean; userNam
         </div>
 
         {/* Finale */}
-        <AnimatePresence>
-          {showFinale && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-4"
-            >
-              <div>
-                <p className={cn("text-xs font-black uppercase tracking-widest mb-1.5", isDark ? "text-indigo-400" : "text-indigo-600")}>All set</p>
-                <h2 className="text-2xl font-black leading-tight">
-                  {userName ? `Your Callmate is ready, ${userName}.` : 'Your Callmate is ready.'}
-                </h2>
-              </div>
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.25 }}
-                onClick={onDone}
-                className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-indigo-600/25"
-              >
-                Start Making Calls →
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <motion.div
+          animate={{ opacity: showFinale ? 1 : 0, y: showFinale ? 0 : 20 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          style={{ pointerEvents: showFinale ? 'auto' : 'none' }}
+          className="space-y-4"
+        >
+          <div>
+            <p className={cn("text-xs font-black uppercase tracking-widest mb-1.5", isDark ? "text-indigo-400" : "text-indigo-600")}>All set</p>
+            <h2 className="text-2xl font-black leading-tight">
+              {userName ? `Your Callmate is ready, ${userName}.` : 'Your Callmate is ready.'}
+            </h2>
+          </div>
+          <button
+            onClick={onDone}
+            className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-indigo-600/25"
+          >
+            Start Making Calls →
+          </button>
+        </motion.div>
       </div>
     </div>
   );
@@ -3147,13 +3083,14 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
   userName: string;
   tier: string;
   trialStartDate: number | null;
-  onComplete: (email: string, isNewUser: boolean) => void;
+  onComplete: (email: string, isNewUser: boolean) => Promise<void>;
 }) {
   const [mode, setMode] = React.useState<'signup' | 'login'>('signup');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
   const [emailError, setEmailError] = React.useState('');
+  const [pendingConfirmationEmail, setPendingConfirmationEmail] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [appleLoading, setAppleLoading] = React.useState(false);
 
@@ -3166,6 +3103,35 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
     setEmail('');
     setPassword('');
     setEmailError('');
+    setPendingConfirmationEmail('');
+  };
+
+  const formatAuthError = (message?: string, fallback = 'Something went wrong. Please try again.') => {
+    const normalized = message?.toLowerCase() ?? '';
+    if (!normalized) return fallback;
+    if (normalized.includes('email rate limit exceeded') || normalized.includes('over_email_send_rate_limit') || normalized.includes('429')) {
+      return 'Too many email attempts. Try again in a few minutes or use Apple Sign In.';
+    }
+    return message ?? fallback;
+  };
+
+  const finishSignedInUser = async (
+    user: { email?: string | null; created_at?: string } | null | undefined,
+    authIntent: 'signup' | 'login' = mode
+  ) => {
+    if (!user) {
+      setEmailError('Authentication did not complete. Please try again.');
+      return false;
+    }
+
+    const authEmail = user.email ?? '';
+    const inferredNewUser = user.created_at
+      ? Date.now() - new Date(user.created_at).getTime() < 30000
+      : false;
+    const isNewUser = authIntent === 'signup' || inferredNewUser;
+
+    await onComplete(authEmail, isNewUser);
+    return true;
   };
 
   const handleSubmit = async () => {
@@ -3179,18 +3145,31 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
     }
     setLoading(true);
     setEmailError('');
+    setPendingConfirmationEmail('');
     try {
       if (mode === 'signup') {
-        const { error } = await signUp(email.trim().toLowerCase(), password, userName || undefined);
-        if (error) { setEmailError(error.message); setLoading(false); return; }
-        onComplete(email.trim().toLowerCase(), true);
+        const normalizedEmail = email.trim().toLowerCase();
+        const { data, error } = await signUp(normalizedEmail, password, userName || undefined);
+        if (error) {
+          setEmailError(formatAuthError(error.message));
+          return;
+        }
+        if (data.session?.user) {
+          await onComplete(data.session.user.email ?? normalizedEmail, true);
+          return;
+        }
+        setPendingConfirmationEmail(normalizedEmail);
       } else {
         const { error } = await signIn(email.trim().toLowerCase(), password);
-        if (error) { setEmailError('Incorrect email or password.'); setLoading(false); return; }
-        onComplete(email.trim().toLowerCase(), false);
+        if (error) {
+          setEmailError('Incorrect email or password.');
+          return;
+        }
+        await onComplete(email.trim().toLowerCase(), false);
       }
     } catch {
       setEmailError('Something went wrong. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -3200,12 +3179,19 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
       setEmailError('Enter your email above first.');
       return;
     }
-    await sendPasswordReset(email.trim().toLowerCase());
+    const { error } = await sendPasswordReset(email.trim().toLowerCase());
+    if (error) {
+      setEmailError(formatAuthError(error.message));
+      return;
+    }
     setEmailError('Password reset email sent — check your inbox.');
   };
 
+  const showConfirmationState = mode === 'signup' && !!pendingConfirmationEmail;
+
   const handleApple = async () => {
     setAppleLoading(true);
+    setEmailError('');
     try {
       const result = await signInWithApple();
       const { error, data } = result as { error: any; data: any };
@@ -3214,23 +3200,18 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
         setEmailError(
           msg.includes('client') || msg.includes('provider') || msg.includes('enabled')
             ? 'Apple Sign In is not configured yet — use email below.'
-            : error.message
+            : formatAuthError(error.message)
         );
       } else {
-        // Call onComplete directly — don't rely solely on onAuthStateChange firing SIGNED_IN
-        // (it may fire TOKEN_REFRESHED instead for returning users)
         const appleUser = data?.user ?? data?.session?.user;
-        const appleEmail = appleUser?.email ?? '';
-        // If user was created in the last 30 seconds, treat as new
-        const isNewAppleUser = appleUser?.created_at
-          ? Date.now() - new Date(appleUser.created_at).getTime() < 30000
-          : false;
-        onComplete(appleEmail, isNewAppleUser);
+        if (appleUser) {
+          await finishSignedInUser(appleUser, mode);
+        }
       }
     } catch (e: any) {
       const msg = e?.message ?? '';
       if (!msg.toLowerCase().includes('cancel')) {
-        setEmailError(`Apple Sign In failed: ${msg}`);
+        setEmailError(`Apple Sign In failed: ${formatAuthError(msg)}`);
       }
     } finally {
       setAppleLoading(false);
@@ -3239,6 +3220,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
 
   const handleGoogle = async () => {
     setLoading(true);
+    setEmailError('');
     try {
       const { data, error } = await signInWithGoogle();
       if (error) {
@@ -3246,21 +3228,18 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
         setEmailError(
           msg.includes('client') || msg.includes('provider') || msg.includes('enabled')
             ? 'Google Sign In is not configured yet — use email below.'
-            : error.message
+            : formatAuthError(error.message)
         );
       } else {
         const googleUser = data?.user ?? data?.session?.user;
-        const googleEmail = googleUser?.email ?? '';
-        // If user was created in the last 30 seconds, treat as new
-        const isNewGoogleUser = googleUser?.created_at
-          ? Date.now() - new Date(googleUser.created_at).getTime() < 30000
-          : false;
-        onComplete(googleEmail, isNewGoogleUser);
+        if (googleUser) {
+          await finishSignedInUser(googleUser, mode);
+        }
       }
     } catch (e: any) {
       const msg = e?.message ?? '';
       if (!msg.toLowerCase().includes('cancel')) {
-        setEmailError(`Google Sign In failed: ${msg}`);
+        setEmailError(`Google Sign In failed: ${formatAuthError(msg)}`);
       }
     } finally {
       setLoading(false);
@@ -3294,6 +3273,8 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
           </p>
         </motion.div>
 
+        {!showConfirmationState && (
+          <>
         {/* Social auth */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="space-y-3 mb-5">
           <button onClick={handleApple} disabled={loading || appleLoading} className={cn(
@@ -3322,8 +3303,32 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
           <span className={cn("text-xs font-bold", isDark ? "text-zinc-600" : "text-zinc-400")}>{mode === 'login' ? 'or sign in with email' : 'or sign up with email'}</span>
           <div className={cn("flex-1 h-px", isDark ? "bg-zinc-800" : "bg-zinc-200")} />
         </motion.div>
+          </>
+        )}
 
-        {/* Email + password form */}
+        {showConfirmationState ? (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+            className={cn(
+              "rounded-3xl border p-5 space-y-4 mb-5",
+              isDark ? "bg-zinc-900/80 border-zinc-800" : "bg-zinc-50 border-zinc-200"
+            )}
+          >
+            <div className="space-y-2">
+              <p className={cn("text-xs font-black uppercase tracking-[0.25em]", isDark ? "text-emerald-400" : "text-emerald-600")}>Account Created</p>
+              <h2 className="text-2xl font-bold leading-tight">Check your email to finish signing up.</h2>
+              <p className={cn("text-sm leading-relaxed", isDark ? "text-zinc-400" : "text-zinc-600")}>
+                We sent a confirmation link to <span className={cn("font-semibold", isDark ? "text-white" : "text-black")}>{pendingConfirmationEmail}</span>.
+                Tap that link and we&apos;ll finish bringing you into Callmate.
+              </p>
+            </div>
+            <div className={cn("rounded-2xl p-4 text-sm leading-relaxed", isDark ? "bg-zinc-950 border border-zinc-800 text-zinc-300" : "bg-white border border-zinc-200 text-zinc-700")}>
+              If you don&apos;t see it, check spam or promotions. If you already confirmed, continue below.
+            </div>
+          </motion.div>
+        ) : (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="space-y-3 mb-4">
           <input
             type="email"
@@ -3369,16 +3374,50 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
             <p className="text-red-400 text-xs px-1">{emailError}</p>
           )}
         </motion.div>
+        )}
 
         {/* CTA */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.28 }} className="space-y-3">
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-indigo-600/25 disabled:opacity-60 flex items-center justify-center gap-2"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (mode === 'login' ? 'Sign In' : 'Create Account & Start Free Trial')}
-          </button>
+          {showConfirmationState ? (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('login');
+                  setEmail(pendingConfirmationEmail);
+                  setPassword('');
+                  setEmailError('');
+                  setPendingConfirmationEmail('');
+                }}
+                className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-indigo-600/25"
+              >
+                I already confirmed my email
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingConfirmationEmail('');
+                  setEmail('');
+                  setPassword('');
+                  setEmailError('');
+                }}
+                className={cn(
+                  "w-full py-3 rounded-2xl border text-sm font-semibold transition-colors",
+                  isDark ? "border-zinc-700 text-zinc-300 hover:border-zinc-500" : "border-zinc-200 text-zinc-700 hover:border-zinc-400"
+                )}
+              >
+                Use a different email
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-indigo-600/25 disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (mode === 'login' ? 'Sign In' : 'Create Account & Start Free Trial')}
+            </button>
+          )}
           {mode === 'signup' && trialEndDate && (
             <p className={cn("text-center text-xs leading-relaxed", isDark ? "text-zinc-500" : "text-zinc-400")}>
               Your 3-day free trial starts today. No charge until {trialEndDate}.<br />Cancel anytime.
@@ -3437,11 +3476,11 @@ function OnboardingDemoDashboard({ isDark }: { isDark: boolean }) {
   }, []);
 
   const demoMilestones = [
-    { icon: '📞', title: 'Ice Breaker', unlocked: phase >= 2 },
-    { icon: '🔥', title: 'Getting Warmer', unlocked: phase >= 2 },
+    { icon: '📞', title: 'Broke the Silence', unlocked: phase >= 2 },
+    { icon: '🔥', title: 'Faced the Ring', unlocked: phase >= 2 },
     { icon: '😌', title: 'Easy Does It', unlocked: phase >= 3 },
     { icon: '📉', title: 'Turning the Corner', unlocked: false },
-    { icon: '💪', title: 'Call Confident', unlocked: false },
+    { icon: '💪', title: 'Held the Line', unlocked: false },
     { icon: '🏆', title: 'Week Strong', unlocked: false },
   ];
 
