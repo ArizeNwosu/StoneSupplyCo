@@ -1,8 +1,10 @@
 import OpenAI from "openai";
 import { Tone, CallScript, Persona, CallPerspective } from "../types";
 
+declare const __OPENAI_API_KEY__: string;
+
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "",
+  apiKey: __OPENAI_API_KEY__ || "",
   dangerouslyAllowBrowser: true
 });
 
@@ -16,6 +18,26 @@ Always respond with valid JSON matching exactly this structure:
   "branchY": { "condition": "string", "response": "string" },
   "close": "string"
 }`;
+
+function parseJsonObject(content: string | null | undefined) {
+  if (!content) return {};
+  const cleaned = content
+    .trim()
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/, '');
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start >= 0 && end > start) {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    }
+    throw new Error('Model returned invalid JSON.');
+  }
+}
 
 export async function generateCallScript(
   description: string,
@@ -31,6 +53,10 @@ export async function generateCallScript(
     lifeImpact?: string[];
   }
 ): Promise<CallScript> {
+  if (!__OPENAI_API_KEY__) {
+    throw new Error('OpenAI API key is missing.');
+  }
+
   const personaContext = persona ? `\nPersona Context: "${persona.context}" (The person you are calling is ${persona.name})` : "";
   const profileContext = userProfile?.name
     ? `\nCaller Profile: The caller's name is "${userProfile.name}"${userProfile.gender ? `, gender: ${userProfile.gender}` : ''}${userProfile.ageRange ? `, age range: ${userProfile.ageRange}` : ''}. Use "${userProfile.name}" naturally in the script (e.g. "Hi, my name is ${userProfile.name}") instead of any generic placeholder like [Your Name].`
@@ -79,13 +105,33 @@ CRITICAL:
     ]
   });
 
-  const data = JSON.parse(response.choices[0].message.content || "{}");
+  const data = parseJsonObject(response.choices[0].message.content);
+
+  const opening = typeof data.opening === 'string' ? data.opening.trim() : '';
+  const mainAsk = typeof data.mainAsk === 'string' ? data.mainAsk.trim() : '';
+  const close = typeof data.close === 'string' ? data.close.trim() : '';
+  const branchX = data.branchX && typeof data.branchX === 'object' ? data.branchX : {};
+  const branchY = data.branchY && typeof data.branchY === 'object' ? data.branchY : {};
+
+  if (!opening || !mainAsk || !close) {
+    throw new Error('Generated script was incomplete.');
+  }
 
   return {
     id: crypto.randomUUID(),
     description,
     tone,
-    ...data,
+    opening,
+    mainAsk,
+    close,
+    branchX: {
+      condition: typeof branchX.condition === 'string' && branchX.condition.trim() ? branchX.condition.trim() : 'If they push back',
+      response: typeof branchX.response === 'string' && branchX.response.trim() ? branchX.response.trim() : 'I understand. Let me explain what I need.'
+    },
+    branchY: {
+      condition: typeof branchY.condition === 'string' && branchY.condition.trim() ? branchY.condition.trim() : 'If you need to pause',
+      response: typeof branchY.response === 'string' && branchY.response.trim() ? branchY.response.trim() : 'Let me take a moment and come back to that.'
+    },
     timestamp: Date.now()
   };
 }
@@ -165,18 +211,22 @@ export async function generateBranch(description: string, scenario: string, tone
     messages: [
       {
         role: "system",
-        content: `You are an expert communication coach. Generate a natural, concise IF/THEN branch for a phone call script. The response must sound like a real person talking. Return JSON: { "condition": "short version of what they say (10 words max)", "response": "natural response to read aloud (1-3 sentences)" }`
+        content: `You are an expert communication coach writing a phone call script for the USER to speak. Generate a natural, concise IF/THEN branch. CRITICAL: "condition" is a short summary of what the OTHER PERSON says. "response" is the exact words the USER speaks in reply — written in the first person (e.g. "I understand...", "That's fair, but...", "What I need is..."). The response must sound like a real human talking out loud. Return JSON: { "condition": "short version of what the other person says (10 words max)", "response": "what the USER says out loud in reply (1-3 sentences, first person)" }`
       },
       {
         role: "user",
         content: `Call context: "${description}" (Tone: ${tone})
 Scenario to handle: "${scenario}"
-Generate one IF/THEN branch.`
+Generate one IF/THEN branch where the response is what the USER says out loud.`
       }
     ]
   });
 
-  return JSON.parse(response.choices[0].message.content || "{}");
+  const data = parseJsonObject(response.choices[0].message.content);
+  return {
+    condition: typeof data.condition === 'string' && data.condition.trim() ? data.condition.trim() : 'If they ask a follow-up',
+    response: typeof data.response === 'string' && data.response.trim() ? data.response.trim() : 'That makes sense. Here is what I need.'
+  };
 }
 
 export async function generateTTS(text: string): Promise<string> {
