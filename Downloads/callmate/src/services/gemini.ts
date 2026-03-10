@@ -22,12 +22,37 @@ export async function generateCallScript(
   tone: Tone,
   perspective: CallPerspective,
   persona?: Persona,
-  userProfile?: { name?: string; gender?: string; ageRange?: string }
+  userProfile?: {
+    name?: string;
+    gender?: string;
+    ageRange?: string;
+    anxietySeverity?: string;
+    anxietyTriggers?: string[];
+    lifeImpact?: string[];
+  }
 ): Promise<CallScript> {
   const personaContext = persona ? `\nPersona Context: "${persona.context}" (The person you are calling is ${persona.name})` : "";
   const profileContext = userProfile?.name
     ? `\nCaller Profile: The caller's name is "${userProfile.name}"${userProfile.gender ? `, gender: ${userProfile.gender}` : ''}${userProfile.ageRange ? `, age range: ${userProfile.ageRange}` : ''}. Use "${userProfile.name}" naturally in the script (e.g. "Hi, my name is ${userProfile.name}") instead of any generic placeholder like [Your Name].`
     : "";
+
+  const severityInstructions: Record<string, string> = {
+    mild: 'The user has MILD phone anxiety. Write a natural, confident script with normal sentence length.',
+    moderate: 'The user has MODERATE phone anxiety. Use shorter sentences. Add a "(pause)" note at 1-2 natural transition points to let them breathe.',
+    severe: 'The user has SEVERE phone anxiety. Keep EVERY line very short (max 8 words). Add explicit "(breathe)" cues before key moments. branchY must be a graceful exit: something they can say if they freeze or need to end the call.',
+    debilitating: 'The user has DEBILITATING phone anxiety. Lines must be 5 words or fewer — no exceptions. Start the opening with a grounding note in parentheses (e.g. "(feet on floor, breathe out)"). branchX and branchY must both be safety exits the user can use to end the call without embarrassment.',
+  };
+
+  let anxietyContext = '';
+  if (userProfile?.anxietySeverity && severityInstructions[userProfile.anxietySeverity]) {
+    anxietyContext += `\nAnxiety Context: ${severityInstructions[userProfile.anxietySeverity]}`;
+  }
+  if (userProfile?.anxietyTriggers?.length) {
+    anxietyContext += `\nUser's specific fears: ${userProfile.anxietyTriggers.join('; ')}. Where possible, write branches that directly address these scenarios and include calming, reassuring language around them.`;
+  }
+  if (userProfile?.lifeImpact?.length) {
+    anxietyContext += `\nThis call matters most for: ${userProfile.lifeImpact.join(', ')}. Keep that stakes context in mind when writing the main ask.`;
+  }
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -39,16 +64,17 @@ export async function generateCallScript(
         content: `Generate a 5-section branching phone call script for the following situation:
 Situation: "${description}"
 Tone: "${tone}"
-Perspective: "${perspective === 'outgoing' ? 'The user is INITIATING the call.' : 'The user is RECEIVING the call.'}"${personaContext}${profileContext}
+Perspective: "${perspective === 'outgoing' ? 'The user is INITIATING the call.' : 'The user is RECEIVING the call.'}"${personaContext}${profileContext}${anxietyContext}
 
 CRITICAL:
 1. Incorporate specific details from the description (names, durations, specific asks).
 2. The script must be structured for a live call — short, scannable lines.
-3. "branchX" and "branchY" should cover the most likely pushbacks or follow-up questions.
+3. "branchX" and "branchY" should cover the most likely pushbacks or follow-up questions (shaped by the user's specific fears if provided).
 4. Keep it concise, conversational, and human. No corporate language.
 5. Use contractions (I'm, don't, won't) to sound like a real person.
 6. If Perspective is 'incoming', the opening should be a natural way to answer and acknowledge the caller.
-7. If a caller name is provided in the profile, use it naturally in the opening line.`
+7. If a caller name is provided in the profile, use it naturally in the opening line.
+8. If anxiety context is provided, it OVERRIDES default script length and structure — follow it strictly.`
       }
     ]
   });

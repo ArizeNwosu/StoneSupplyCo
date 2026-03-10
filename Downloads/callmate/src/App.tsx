@@ -381,6 +381,11 @@ export default function App() {
     const savedSeverity = localStorage.getItem('callmate_severity') as AnxietySeverity;
     if (savedSeverity) setAnxietySeverity(savedSeverity);
 
+    const savedTriggers = localStorage.getItem('callmate_triggers');
+    if (savedTriggers) try { setAnxietyTriggers(JSON.parse(savedTriggers)); } catch {}
+    const savedImpact = localStorage.getItem('callmate_impact');
+    if (savedImpact) try { setLifeImpact(JSON.parse(savedImpact)); } catch {}
+
     const savedTrialStart = localStorage.getItem('callmate_trial_start');
     if (savedTrialStart) setTrialStartDate(parseInt(savedTrialStart));
     const savedTrialScripts = localStorage.getItem('callmate_trial_scripts');
@@ -572,7 +577,14 @@ export default function App() {
     if (!targetDescription.trim()) return;
     if (overrideTone) setIsRewriting(true); else setLoading(true);
     try {
-      const userProfile = { name: userName || undefined, gender: userGender || undefined, ageRange: userAgeRange || undefined };
+      const userProfile = {
+        name: userName || undefined,
+        gender: userGender || undefined,
+        ageRange: userAgeRange || undefined,
+        anxietySeverity: anxietySeverity || undefined,
+        anxietyTriggers: anxietyTriggers.length > 0 ? anxietyTriggers : undefined,
+        lifeImpact: lifeImpact.length > 0 ? lifeImpact : undefined,
+      };
       const script = await generateCallScript(targetDescription, targetTone, perspective, selectedPersona || undefined, userProfile);
       setCurrentScript(script);
 
@@ -1016,7 +1028,11 @@ export default function App() {
                     const selected = anxietyTriggers.includes(trigger);
                     return (
                       <motion.button key={trigger} whileTap={{ scale: 0.98 }}
-                        onClick={() => setAnxietyTriggers(p => selected ? p.filter(t => t !== trigger) : [...p, trigger])}
+                        onClick={() => {
+                          const next = selected ? anxietyTriggers.filter(t => t !== trigger) : [...anxietyTriggers, trigger];
+                          setAnxietyTriggers(next);
+                          localStorage.setItem('callmate_triggers', JSON.stringify(next));
+                        }}
                         className={cn("w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-3",
                           selected ? "border-blue-500/50 bg-blue-500/10" : isDark ? "border-zinc-800 bg-zinc-900/50 hover:border-zinc-600" : "border-zinc-200 bg-zinc-50 hover:border-zinc-400"
                         )}>
@@ -1051,7 +1067,12 @@ export default function App() {
                     const maxed = lifeImpact.length >= 2 && !selected;
                     return (
                       <motion.button key={area.label} whileTap={{ scale: 0.98 }}
-                        onClick={() => !maxed && setLifeImpact(p => selected ? p.filter(i => i !== area.label) : [...p, area.label])}
+                        onClick={() => {
+                          if (maxed) return;
+                          const next = selected ? lifeImpact.filter(i => i !== area.label) : [...lifeImpact, area.label];
+                          setLifeImpact(next);
+                          localStorage.setItem('callmate_impact', JSON.stringify(next));
+                        }}
                         className={cn("w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-4",
                           selected ? "border-blue-500/50 bg-blue-500/10" : maxed ? "opacity-40 border-zinc-800 bg-zinc-900/30 cursor-not-allowed"
                           : isDark ? "border-zinc-800 bg-zinc-900/50 hover:border-zinc-600" : "border-zinc-200 bg-zinc-50 hover:border-zinc-400"
@@ -1141,8 +1162,7 @@ export default function App() {
           });
         }
       }
-      // New user → setup animation; returning user → home directly
-      setView(isNewUser ? 'setup' : 'home');
+      // Navigation is handled exclusively by onAuthStateChange to avoid double-redirect
     }}
   />;
 
