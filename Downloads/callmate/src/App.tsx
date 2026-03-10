@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Phone, 
-  ChevronRight, 
-  AlertCircle, 
-  History, 
-  Check, 
-  Volume2, 
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import {
+  Phone,
+  ChevronRight,
+  AlertCircle,
+  History,
+  Check,
+  Volume2,
   ArrowLeft,
   Loader2,
   Star,
@@ -19,118 +19,21 @@ import {
   Settings,
   Trash2,
   Sun,
-  Moon
+  Moon,
+  Square,
+  Copy,
+  WifiOff
 } from 'lucide-react';
 import { Logo } from './components/Logo';
 import { motion, AnimatePresence } from 'motion/react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { Button, Card, CallTypeGrid, cn } from './components/ui';
+import { DashboardScreen, HistoryScreen, HomeScreen, ScriptScreen, SettingsScreen } from './components/main-screens';
 import { Tone, CallScript, SAFE_LINES, PANIC_OPTIONS, PanicOption, COMMON_CALL_TYPES, Persona, Reflection, Tier, CallPerspective } from './types';
 import { generateCallScript, generatePanicResponse, generateTTS, generateVoicemailScript, generateEmailFallback, generateBranch } from './services/gemini';
 import { signUp, signIn, signInWithApple, signInWithGoogle, signOut, onAuthStateChange, sendPasswordReset } from './services/auth';
-import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection, savePersona, deleteScript as dbDeleteScript, deletePersona as dbDeletePersona } from './services/db';
+import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchAnxietyRatings, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection as dbSaveReflection, savePersona, syncAnxietyRatings, deleteScript as dbDeleteScript, deletePersona as dbDeletePersona } from './services/db';
 import { hapticLight, hapticMedium, hapticSuccess, hapticError, setStatusBarDark, setStatusBarLight, openInAppBrowser } from './services/native';
 import type { User } from '@supabase/supabase-js';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-// --- Components ---
-
-const Button = ({ 
-  children, 
-  className, 
-  variant = 'primary', 
-  size = 'md',
-  isDark = true,
-  ...props 
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { 
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'accent' | 'glass';
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  isDark?: boolean;
-}) => {
-  const variants = {
-    primary: isDark ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-xl shadow-blue-600/30 ring-1 ring-blue-500/20' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-xl shadow-blue-600/25 ring-1 ring-blue-400/20',
-    secondary: isDark ? 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700 border border-white/5' : 'bg-zinc-200 text-zinc-900 hover:bg-zinc-300 border border-black/5',
-    outline: isDark ? 'border border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-600' : 'border border-zinc-300 text-zinc-700 hover:bg-zinc-100 hover:border-zinc-400',
-    ghost: isDark ? 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700',
-    danger: 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20',
-    accent: 'bg-emerald-500 text-white hover:bg-emerald-400 shadow-lg shadow-emerald-500/20',
-    glass: isDark ? 'bg-zinc-800 text-white border border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600' : 'bg-zinc-100 text-black border border-zinc-200 hover:bg-zinc-200 hover:border-zinc-300'
-  };
-  
-  const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2',
-    lg: 'px-6 py-3 text-lg font-medium',
-    xl: 'px-8 py-4 text-xl font-semibold'
-  };
-
-  return (
-    <button
-      className={cn(
-        'rounded-2xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer',
-        variants[variant],
-        sizes[size],
-        className
-      )}
-      {...props as any}
-    >
-      {children}
-    </button>
-  );
-};
-
-const Card = ({ children, className, onClick, isDark = true }: { children: React.ReactNode, className?: string, onClick?: () => void, key?: React.Key, isDark?: boolean }) => (
-  <div
-    onClick={onClick}
-    className={cn(
-      isDark ? 'bg-zinc-900 border-white/10 hover:border-white/20' : 'bg-white border-black/10 hover:border-black/15',
-      'border rounded-3xl p-5 shadow-md hover:shadow-xl transition-all duration-300',
-      onClick && 'cursor-pointer',
-      className
-    )}
-  >
-    {children}
-  </div>
-);
-
-const CallTypeGrid = ({
-  items,
-  onSelect,
-  selectedItem,
-  isDark = true
-}: {
-  items: string[],
-  onSelect: (item: string) => void,
-  selectedItem?: string,
-  isDark?: boolean
-}) => (
-  <div className={cn(
-    "rounded-3xl border overflow-hidden transition-colors",
-    isDark ? "bg-zinc-950 border-zinc-800" : "bg-zinc-50 border-zinc-200"
-  )}>
-    <div className="p-3 flex flex-wrap gap-2 max-h-[220px] overflow-y-auto scrollbar-hide">
-      {items.map((item, i) => (
-        <button
-          key={i}
-          onClick={() => onSelect(item)}
-          className={cn(
-            "px-4 py-2.5 rounded-2xl text-sm font-medium transition-all",
-            selectedItem === item
-              ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-              : isDark
-              ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white"
-              : "bg-white text-zinc-700 hover:bg-zinc-100 border border-zinc-200"
-          )}
-        >
-          {item}
-        </button>
-      ))}
-    </div>
-  </div>
-);
 
 const RotatingText = () => {
   const words = ["putting off?", "dreading?", "avoiding?"];
@@ -175,7 +78,32 @@ const RotatingText = () => {
 };
 
 type AnxietySeverity = 'mild' | 'moderate' | 'severe' | 'debilitating';
-type AnxietyRating = { scriptId: string; rating: number; timestamp: number };
+type AnxietyRating = { id?: string; scriptId: string; rating: number; timestamp: number };
+
+const isCallScript = (value: unknown): value is CallScript => {
+  if (!value || typeof value !== 'object') return false;
+  const script = value as Partial<CallScript>;
+  return (
+    typeof script.id === 'string' &&
+    typeof script.description === 'string' &&
+    typeof script.tone === 'string' &&
+    typeof script.opening === 'string' &&
+    typeof script.mainAsk === 'string' &&
+    typeof script.close === 'string' &&
+    typeof script.timestamp === 'number' &&
+    !!script.branchX &&
+    typeof script.branchX.condition === 'string' &&
+    typeof script.branchX.response === 'string' &&
+    !!script.branchY &&
+    typeof script.branchY.condition === 'string' &&
+    typeof script.branchY.response === 'string'
+  );
+};
+
+const sanitizeHistory = (value: unknown): CallScript[] => {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isCallScript);
+};
 
 const MILESTONES = [
   { id: 'first_call',   title: 'Broke the Silence', desc: 'Completed your first scripted call',   icon: '📞' },
@@ -204,6 +132,7 @@ const IMPACT_AREAS = [
 ];
 
 const HAS_SEEN_ONBOARDING_KEY = 'callmate_has_seen_onboarding';
+const AUTH_INTENT_KEY = 'callmate_auth_intent';
 
 export default function App() {
   const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
@@ -264,6 +193,7 @@ export default function App() {
   });
   const [shareToast, setShareToast] = useState(false);
   const [expandedSafeLineIndex, setExpandedSafeLineIndex] = useState<number | null>(null);
+  const [showMedicalPrep, setShowMedicalPrep] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     opening: true, mainAsk: true, branchX: true, branchY: true, close: true
   });
@@ -271,6 +201,12 @@ export default function App() {
   const [hasBeenReviewPrompted, setHasBeenReviewPrompted] = useState(() => localStorage.getItem('callmate_review_prompted') === 'true');
   const [lastScriptDate, setLastScriptDate] = useState<number | null>(null);
   const [comebackNudgeDismissed, setComebackNudgeDismissed] = useState(false);
+  const [isPracticePlaying, setIsPracticePlaying] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [milestoneToast, setMilestoneToast] = useState<{ icon: string; title: string } | null>(null);
+  const [customTriggerInput, setCustomTriggerInput] = useState('');
+  const practiceAudioRef = useRef<HTMLAudioElement | null>(null);
+  const prevMilestoneIdsRef = useRef<Set<string>>(new Set());
 
   const isDark = theme === 'dark';
 
@@ -278,6 +214,18 @@ export default function App() {
   useEffect(() => {
     if (isDark) setStatusBarDark(); else setStatusBarLight();
   }, [isDark]);
+
+  // Online / offline detection
+  useEffect(() => {
+    const onOnline = () => setIsOnline(true);
+    const onOffline = () => setIsOnline(false);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
 
   const TRIAL_SCRIPT_LIMIT = 5;
   const TRIAL_DAYS = 3;
@@ -314,6 +262,10 @@ export default function App() {
     const d = currentScript.description.toLowerCase();
     return ['doctor', 'medical', 'dentist', 'hospital', 'clinic', 'physician', 'nurse', 'pharmacy', 'appointment'].some(kw => d.includes(kw));
   }, [currentScript]);
+
+  useEffect(() => {
+    setShowMedicalPrep(true);
+  }, [currentScript?.id]);
 
   const nextMilestone = useMemo(() => {
     const count = history.length;
@@ -361,9 +313,40 @@ export default function App() {
     return ids;
   }, [history, callAnxietyRatings, callStreak]);
 
+  // Milestone unlock toast
+  useEffect(() => {
+    const MILESTONE_DEFS = [
+      { id: 'first_call', icon: '📞', title: 'Broke the Silence' },
+      { id: 'five_calls', icon: '🔥', title: 'Faced the Ring' },
+      { id: 'ten_calls', icon: '💪', title: 'Held the Line' },
+      { id: 'first_low', icon: '😌', title: 'Easy Does It' },
+      { id: 'anxiety_drop', icon: '📉', title: 'Turning the Corner' },
+      { id: 'streak_7', icon: '🏆', title: 'Week Strong' },
+    ];
+    MILESTONE_DEFS.forEach(m => {
+      if (unlockedMilestones.has(m.id) && !prevMilestoneIdsRef.current.has(m.id)) {
+        setMilestoneToast({ icon: m.icon, title: m.title });
+        setTimeout(() => setMilestoneToast(null), 3500);
+      }
+    });
+    prevMilestoneIdsRef.current = new Set(unlockedMilestones);
+  }, [unlockedMilestones]);
+
   useEffect(() => {
     const savedHistory = localStorage.getItem('ringtone_history');
-    if (savedHistory) setHistory(JSON.parse(savedHistory));
+    if (savedHistory) {
+      try {
+        const rawParsedHistory = JSON.parse(savedHistory);
+        const parsedHistory = sanitizeHistory(rawParsedHistory);
+        setHistory(parsedHistory);
+        if (!Array.isArray(rawParsedHistory) || rawParsedHistory.length !== parsedHistory.length) {
+          localStorage.setItem('ringtone_history', JSON.stringify(parsedHistory));
+        }
+      } catch {
+        localStorage.removeItem('ringtone_history');
+        setHistory([]);
+      }
+    }
 
     const savedTheme = localStorage.getItem('ringtone_theme') as 'dark' | 'light';
     if (savedTheme) setTheme(savedTheme);
@@ -419,32 +402,148 @@ export default function App() {
     viewRef.current = view;
   }, [view]);
 
+  useEffect(() => {
+    const editableSelector = 'input, textarea, select, [contenteditable="true"]';
+    const ensureTimers = new Set<number>();
+
+    const isEditable = (element: Element | null): element is HTMLElement => {
+      return !!element && element instanceof HTMLElement && element.matches(editableSelector);
+    };
+
+    const findScrollableParent = (element: HTMLElement) => {
+      let current: HTMLElement | null = element.parentElement;
+      while (current) {
+        const style = window.getComputedStyle(current);
+        const canScroll = /(auto|scroll)/.test(style.overflowY) && current.scrollHeight > current.clientHeight;
+        if (canScroll) return current;
+        current = current.parentElement;
+      }
+      return null;
+    };
+
+    const setViewportMetrics = () => {
+      const visualViewport = window.visualViewport;
+      const height = visualViewport?.height ?? window.innerHeight;
+      const keyboardInset = Math.max(0, window.innerHeight - height - (visualViewport?.offsetTop ?? 0));
+      document.documentElement.style.setProperty('--app-vh', `${height}px`);
+      document.documentElement.style.setProperty('--keyboard-inset', `${keyboardInset}px`);
+    };
+
+    const ensureVisible = (target: Element | null, behavior: ScrollBehavior) => {
+      if (!isEditable(target)) return;
+
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      const rect = target.getBoundingClientRect();
+      const topPadding = 24;
+      const bottomPadding = 16;
+      const visibleTop = topPadding;
+      const visibleBottom = Math.max(visibleTop + rect.height + bottomPadding, viewportHeight - bottomPadding);
+
+      if (rect.top >= visibleTop && rect.bottom <= visibleBottom) {
+        return;
+      }
+
+      const scrollParent = findScrollableParent(target);
+      if (scrollParent) {
+        const parentRect = scrollParent.getBoundingClientRect();
+        const parentVisibleTop = Math.max(parentRect.top + topPadding, visibleTop);
+        const parentVisibleBottom = Math.min(parentRect.bottom - bottomPadding, visibleBottom);
+
+        if (rect.bottom > parentVisibleBottom) {
+          scrollParent.scrollBy({ top: rect.bottom - parentVisibleBottom + 20, behavior });
+          return;
+        }
+
+        if (rect.top < parentVisibleTop) {
+          scrollParent.scrollBy({ top: rect.top - parentVisibleTop - 20, behavior });
+          return;
+        }
+
+        return;
+      }
+
+      target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior });
+      const adjustedRect = target.getBoundingClientRect();
+      if (adjustedRect.bottom > visibleBottom) {
+        window.scrollBy({ top: adjustedRect.bottom - visibleBottom + 20, behavior });
+      } else if (adjustedRect.top < visibleTop) {
+        window.scrollBy({ top: adjustedRect.top - visibleTop - 20, behavior });
+      }
+    };
+
+    const scheduleEnsureVisible = (target: Element | null, behavior: ScrollBehavior = 'smooth') => {
+      ensureTimers.forEach(timer => window.clearTimeout(timer));
+      ensureTimers.clear();
+      [0, 120, 280, 520].forEach(delay => {
+        const timer = window.setTimeout(() => {
+          ensureVisible(target, behavior);
+          ensureTimers.delete(timer);
+        }, delay);
+        ensureTimers.add(timer);
+      });
+    };
+
+    const handleFocusIn = (event: FocusEvent) => {
+      scheduleEnsureVisible(event.target as Element | null);
+    };
+
+    const handleViewportChange = () => {
+      setViewportMetrics();
+      scheduleEnsureVisible(document.activeElement, 'auto');
+    };
+
+    setViewportMetrics();
+
+    document.addEventListener('focusin', handleFocusIn);
+    window.addEventListener('resize', handleViewportChange);
+    window.visualViewport?.addEventListener('resize', handleViewportChange);
+    window.visualViewport?.addEventListener('scroll', handleViewportChange);
+
+    return () => {
+      ensureTimers.forEach(timer => window.clearTimeout(timer));
+      document.removeEventListener('focusin', handleFocusIn);
+      window.removeEventListener('resize', handleViewportChange);
+      window.visualViewport?.removeEventListener('resize', handleViewportChange);
+      window.visualViewport?.removeEventListener('scroll', handleViewportChange);
+    };
+  }, []);
+
   // ─── Supabase session management ──────────────────────────────────────────
   useEffect(() => {
     // Check for existing session and enforce minimum splash duration in parallel.
     const init = async () => {
-      const { supabase: sb } = await import('./services/supabase');
-      const [{ data: { session } }] = await Promise.all([
-        sb.auth.getSession(),
-        new Promise<void>(resolve => setTimeout(resolve, 2000)),
-      ]);
-      if (session?.user) {
-        setSupabaseUser(session.user);
-        if (session.user.email) {
-          setUserEmail(session.user.email);
-          localStorage.setItem('callmate_user_email', session.user.email);
-        }
-        setView('home');
-        loadUserDataFromSupabase(session.user.id);
-        enforceAccessGate();
-      } else {
-        const hasSeenOnboarding = localStorage.getItem(HAS_SEEN_ONBOARDING_KEY) === 'true';
-        if (hasSeenOnboarding) {
-          setView('account');
+      try {
+        const { supabase: sb } = await import('./services/supabase');
+        const [{ data: { session } }] = await Promise.all([
+          sb.auth.getSession(),
+          new Promise<void>(resolve => setTimeout(resolve, 2000)),
+        ]);
+        if (session?.user) {
+          setSupabaseUser(session.user);
+          if (session.user.email) {
+            setUserEmail(session.user.email);
+            localStorage.setItem('callmate_user_email', session.user.email);
+          }
+          const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
+          await loadUserDataFromSupabase(session.user.id);
+          localStorage.removeItem(AUTH_INTENT_KEY);
+          setView(authIntent === 'signup' ? 'setup' : 'home');
+          enforceAccessGate();
         } else {
-          localStorage.setItem(HAS_SEEN_ONBOARDING_KEY, 'true');
-          setView('explainer');
+          const hasSeenOnboarding = localStorage.getItem(HAS_SEEN_ONBOARDING_KEY) === 'true';
+          if (hasSeenOnboarding) {
+            setView('account');
+          } else {
+            localStorage.setItem(HAS_SEEN_ONBOARDING_KEY, 'true');
+            setView('explainer');
+          }
         }
+      } catch (error) {
+        console.error('App init failed', error);
+        localStorage.removeItem(AUTH_INTENT_KEY);
+        setSupabaseUser(null);
+        setUserEmail('');
+        setView('account');
       }
     };
     init();
@@ -459,13 +558,21 @@ export default function App() {
           localStorage.setItem('callmate_user_email', session.user.email);
         }
         if (event === 'SIGNED_IN') {
-          await loadUserDataFromSupabase(session.user.id);
+          try {
+            await loadUserDataFromSupabase(session.user.id);
+          } catch (error) {
+            console.error('Failed to load user data after sign in', error);
+          }
           const hasAccess = enforceAccessGate();
+          const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
+          if (authIntent) {
+            localStorage.removeItem(AUTH_INTENT_KEY);
+          }
           
           // Only automatically set view if we are currently in an onboarding/auth view
           // This avoids interrupting the user if they are already using the app
           if (hasAccess && ['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
-            const isNewUser = Date.now() - new Date(session.user.created_at).getTime() < 30000;
+            const isNewUser = authIntent === 'signup' || Date.now() - new Date(session.user.created_at).getTime() < 30000;
             setView(isNewUser ? 'setup' : 'home');
           }
         }
@@ -484,8 +591,35 @@ export default function App() {
       const { Capacitor } = await import('@capacitor/core');
       if (!Capacitor.isNativePlatform()) return;
       const { App: CapApp } = await import('@capacitor/app');
-      CapApp.addListener('appUrlOpen', async ({ url }) => {
-        if (!url.startsWith('com.trycallmate.app://')) return;
+      const completePendingAuthIfNeeded = async () => {
+        const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
+        if (!authIntent) return;
+        const { supabase: sb } = await import('./services/supabase');
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+          const { data: { session } } = await sb.auth.getSession();
+          if (session?.user) {
+            setSupabaseUser(session.user);
+            if (session.user.email) {
+              setUserEmail(session.user.email);
+              localStorage.setItem('callmate_user_email', session.user.email);
+            }
+            await loadUserDataFromSupabase(session.user.id);
+            localStorage.removeItem(AUTH_INTENT_KEY);
+            const hasAccess = enforceAccessGate();
+            if (hasAccess) {
+              setView(authIntent === 'signup' ? 'setup' : 'home');
+            }
+            return;
+          }
+
+          await new Promise(resolve => window.setTimeout(resolve, 250));
+        }
+
+        console.error('Pending auth session was not available after callback.');
+      };
+
+      const handleAuthCallbackUrl = async (url?: string | null) => {
+        if (!url?.startsWith('com.trycallmate.app://')) return;
         // Close the browser immediately so the user is back in the app
         const { Browser } = await import('@capacitor/browser');
         await Browser.close();
@@ -494,17 +628,41 @@ export default function App() {
         const params = new URLSearchParams(url.replace('#', '?').split('?')[1] ?? '');
         const code = params.get('code');
         if (code) {
-          await sb.auth.exchangeCodeForSession(code);
+          const { error } = await sb.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error('OAuth code exchange failed', error);
+            return;
+          }
+          await completePendingAuthIfNeeded();
           return;
         }
 
         const accessToken = params.get('access_token');
         if (accessToken) {
-          await sb.auth.setSession({
+          const refreshToken = params.get('refresh_token');
+          const { error } = await sb.auth.setSession({
             access_token: accessToken,
-            refresh_token: params.get('refresh_token') ?? '',
+            refresh_token: refreshToken ?? '',
           });
+          if (error) {
+            console.error('OAuth token session restore failed', error, { hasRefreshToken: !!refreshToken });
+            return;
+          }
         }
+
+        await completePendingAuthIfNeeded();
+      };
+
+      const launchUrl = await CapApp.getLaunchUrl();
+      await handleAuthCallbackUrl(launchUrl?.url);
+
+      CapApp.addListener('appUrlOpen', async ({ url }) => {
+        await handleAuthCallbackUrl(url);
+      });
+
+      CapApp.addListener('appStateChange', async ({ isActive }) => {
+        if (!isActive) return;
+        await completePendingAuthIfNeeded();
       });
     };
     setupDeepLink();
@@ -516,6 +674,39 @@ export default function App() {
   useEffect(() => {
     if (view === 'home') window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, [view]);
+
+  useEffect(() => {
+    if (!supabaseUser) return;
+
+    const syncTimer = window.setTimeout(() => {
+      void upsertProfile(supabaseUser.id, {
+        name: userName.trim() || null,
+        gender: userGender || null,
+        age_range: userAgeRange || null,
+        anxiety_severity: anxietySeverity || null,
+        anxiety_triggers: anxietyTriggers,
+        life_impact: lifeImpact,
+        call_streak: callStreak,
+        tier,
+        trial_start_date: trialStartDate,
+        dark_mode: isDark,
+      });
+    }, 250);
+
+    return () => window.clearTimeout(syncTimer);
+  }, [
+    supabaseUser,
+    userName,
+    userGender,
+    userAgeRange,
+    anxietySeverity,
+    anxietyTriggers,
+    lifeImpact,
+    callStreak,
+    tier,
+    trialStartDate,
+    isDark,
+  ]);
 
   // Safeguard: Redirect to home if logged in and trying to access onboarding
   useEffect(() => {
@@ -530,20 +721,34 @@ export default function App() {
   }, [userEmail, view]);
 
   const loadUserDataFromSupabase = async (userId: string) => {
-    const [remoteScripts, remoteReflections, remotePersonas, profile] = await Promise.all([
+    const [remoteScripts, remoteReflections, remoteRatings, remotePersonas, profile] = await Promise.all([
       fetchScripts(userId),
       fetchReflections(userId),
+      fetchAnxietyRatings(userId),
       fetchPersonas(userId),
       fetchProfile(userId),
     ]);
 
-    if (remoteScripts.length) {
-      setHistory(remoteScripts);
-      localStorage.setItem('ringtone_history', JSON.stringify(remoteScripts));
+    const sanitizedRemoteScripts = sanitizeHistory(remoteScripts);
+    if (sanitizedRemoteScripts.length) {
+      setHistory(sanitizedRemoteScripts);
+      localStorage.setItem('ringtone_history', JSON.stringify(sanitizedRemoteScripts));
     }
     if (remoteReflections.length) {
       setReflections(remoteReflections);
       localStorage.setItem('ringtone_reflections', JSON.stringify(remoteReflections));
+    }
+    if (remoteRatings.length) {
+      const mappedRatings = remoteRatings
+        .map(r => ({
+          id: r.id,
+          scriptId: r.script_id,
+          rating: r.rating,
+          timestamp: r.timestamp,
+        }))
+        .sort((a, b) => a.timestamp - b.timestamp);
+      setCallAnxietyRatings(mappedRatings);
+      localStorage.setItem('callmate_anxiety_ratings', JSON.stringify(mappedRatings));
     }
     if (remotePersonas.length) {
       setPersonas(remotePersonas);
@@ -551,6 +756,12 @@ export default function App() {
     }
     if (profile) {
       if (profile.name) { setUserName(profile.name); localStorage.setItem('callmate_user_name', profile.name); }
+      if (profile.gender !== undefined && profile.gender !== null) { setUserGender(profile.gender); localStorage.setItem('callmate_user_gender', profile.gender); }
+      if (profile.age_range !== undefined && profile.age_range !== null) { setUserAgeRange(profile.age_range); localStorage.setItem('callmate_user_age_range', profile.age_range); }
+      if (profile.anxiety_severity) { setAnxietySeverity(profile.anxiety_severity as AnxietySeverity); localStorage.setItem('callmate_severity', profile.anxiety_severity); }
+      if (Array.isArray(profile.anxiety_triggers)) { setAnxietyTriggers(profile.anxiety_triggers); localStorage.setItem('callmate_triggers', JSON.stringify(profile.anxiety_triggers)); }
+      if (Array.isArray(profile.life_impact)) { setLifeImpact(profile.life_impact); localStorage.setItem('callmate_impact', JSON.stringify(profile.life_impact)); }
+      if (typeof profile.call_streak === 'number') { setCallStreak(profile.call_streak); localStorage.setItem('callmate_streak', String(profile.call_streak)); }
       if (profile.tier) { setTier(profile.tier as Tier); localStorage.setItem('ringtone_tier', profile.tier); }
       if (profile.trial_start_date) { setTrialStartDate(profile.trial_start_date); localStorage.setItem('callmate_trial_start', String(profile.trial_start_date)); }
       setTheme(profile.dark_mode ? 'dark' : 'light');
@@ -593,15 +804,36 @@ export default function App() {
     }
   };
 
+  const handleDeleteBranch = (index: number) => {
+    if (!currentScript?.extraBranches) return;
+    const updated = {
+      ...currentScript,
+      extraBranches: currentScript.extraBranches.filter((_, i) => i !== index)
+    };
+    setCurrentScript(updated);
+    const newHistory = history.map(h => h.id === updated.id ? updated : h);
+    setHistory(newHistory);
+    localStorage.setItem('ringtone_history', JSON.stringify(newHistory));
+  };
+
   const handleGenerate = async (overrideTone?: Tone, overrideDesc?: string) => {
     const targetTone = overrideTone || tone;
     const targetDescription = overrideDesc || (overrideTone ? currentScript?.description : description) || description;
     
     // Check for limits
-    if (!isPremium) { setShowUpgradeModal(true); return; }
-    if (tier === 'trial' && trialScriptsUsed >= TRIAL_SCRIPT_LIMIT) { setShowUpgradeModal(true); return; }
+    if (!isPremium) {
+      console.warn('Generate blocked: user is not premium or trial is inactive.', { tier, trialDaysRemaining });
+      setShowUpgradeModal(true);
+      return;
+    }
+    if (tier === 'trial' && trialScriptsUsed >= TRIAL_SCRIPT_LIMIT) {
+      console.warn('Generate blocked: trial script limit reached.', { tier, trialScriptsUsed, limit: TRIAL_SCRIPT_LIMIT });
+      setShowUpgradeModal(true);
+      return;
+    }
 
-    if (!targetDescription.trim()) return;
+    const sanitizedDescription = targetDescription.trim().slice(0, 500);
+    if (!sanitizedDescription) return;
     if (overrideTone) setIsRewriting(true); else setLoading(true);
     try {
       const userProfile = {
@@ -612,7 +844,7 @@ export default function App() {
         anxietyTriggers: anxietyTriggers.length > 0 ? anxietyTriggers : undefined,
         lifeImpact: lifeImpact.length > 0 ? lifeImpact : undefined,
       };
-      const script = await generateCallScript(targetDescription, targetTone, perspective, selectedPersona || undefined, userProfile);
+      const script = await generateCallScript(sanitizedDescription, targetTone, perspective, selectedPersona || undefined, userProfile);
       setCurrentScript(script);
 
       // Auto-save to history for all tiers
@@ -657,8 +889,10 @@ export default function App() {
         }
       }
     } catch (error) {
+      console.error('Failed to generate script', error);
       hapticError();
-      alert('Failed to generate script.');
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to generate script. ${message}`);
     } finally {
       setLoading(false);
       setIsRewriting(false);
@@ -671,16 +905,32 @@ export default function App() {
       setShowUpgradeModal(true);
       return;
     }
+    // If already playing, stop
+    if (isPracticePlaying) {
+      practiceAudioRef.current?.pause();
+      practiceAudioRef.current = null;
+      setIsPracticePlaying(false);
+      setIsPracticeMode(false);
+      return;
+    }
     setIsPracticeMode(true);
     try {
       const textToRead = `${currentScript.opening}. ${currentScript.mainAsk}. ${currentScript.close}`;
       const audioUrl = await generateTTS(textToRead);
       const audio = new Audio(audioUrl);
+      practiceAudioRef.current = audio;
       audio.play();
-      audio.onended = () => { setIsPracticeMode(false); URL.revokeObjectURL(audioUrl); };
+      setIsPracticePlaying(true);
+      setIsPracticeMode(false);
+      audio.onended = () => {
+        setIsPracticePlaying(false);
+        practiceAudioRef.current = null;
+        URL.revokeObjectURL(audioUrl);
+      };
     } catch (error) {
       console.error(error);
       setIsPracticeMode(false);
+      setIsPracticePlaying(false);
     }
   };
 
@@ -704,7 +954,7 @@ export default function App() {
     }
   };
 
-  const saveReflection = (feedback: string, anxietyRating?: number) => {
+  const saveReflection = async (feedback: string, anxietyRating?: number) => {
     if (!currentScript) return;
     const reflection: Reflection = {
       id: crypto.randomUUID(),
@@ -716,11 +966,29 @@ export default function App() {
     setReflections(newReflections);
     localStorage.setItem('ringtone_reflections', JSON.stringify(newReflections));
 
+    if (supabaseUser) {
+      void dbSaveReflection(supabaseUser.id, reflection);
+    }
+
     if (anxietyRating !== undefined) {
-      const newRating: AnxietyRating = { scriptId: currentScript.id, rating: anxietyRating, timestamp: Date.now() };
-      const newRatings = [...callAnxietyRatings, newRating];
+      const existingRating = callAnxietyRatings.find((rating) => rating.scriptId === currentScript.id);
+      const newRating: AnxietyRating = {
+        id: existingRating?.id ?? crypto.randomUUID(),
+        scriptId: currentScript.id,
+        rating: anxietyRating,
+        timestamp: Date.now()
+      };
+      const newRatings = existingRating
+        ? callAnxietyRatings
+            .map((rating) => rating.scriptId === currentScript.id ? newRating : rating)
+            .sort((a, b) => a.timestamp - b.timestamp)
+        : [...callAnxietyRatings, newRating];
       setCallAnxietyRatings(newRatings);
       localStorage.setItem('callmate_anxiety_ratings', JSON.stringify(newRatings));
+
+      if (supabaseUser) {
+        void syncAnxietyRatings(supabaseUser.id, [newRating]);
+      }
 
       // Update streak
       const today = new Date().toDateString();
@@ -836,43 +1104,44 @@ export default function App() {
   };
 
   if (view === 'splash') return (
-    <div className={cn("h-screen flex flex-col items-center justify-center p-6 transition-colors duration-500 relative overflow-hidden", isDark ? "bg-black text-white" : "bg-white text-black")}>
+    <div className={cn("app-screen warm-therapeutic-bg flex flex-col items-center justify-center p-6 transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
       <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative">
         <motion.div
           animate={{ scale: [1, 1.6, 1], opacity: [0.35, 0, 0.35] }}
           transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut" }}
-          className="absolute inset-0 rounded-[3rem] bg-blue-500/40"
+          className="absolute inset-0 rounded-[3rem] bg-[#8fae9e]/35"
         />
         <motion.div
           animate={{ scale: [1, 1.35, 1], opacity: [0.25, 0, 0.25] }}
           transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut", delay: 0.7 }}
-          className="absolute inset-0 rounded-[3rem] bg-blue-400/30"
+          className="absolute inset-0 rounded-[3rem] bg-[#d9c4a4]/28"
         />
-        <div className="w-24 h-24 rounded-[2.5rem] flex items-center justify-center shadow-2xl bg-black relative z-10">
-          <Logo className="w-18 h-18 text-white" />
+        <div className={cn("w-24 h-24 rounded-[2.5rem] flex items-center justify-center shadow-2xl relative z-10", isDark ? "bg-[#22312b]" : "bg-[#4d6f62]")}>
+          <Logo className="w-18 h-18 text-[#f8f4ed]" />
         </div>
       </motion.div>
-      <h1 className="text-5xl font-bold tracking-tighter mt-8 relative z-10">CALLMATE</h1>
-      <p className="text-zinc-500 mt-2 relative z-10 text-sm font-medium">Beat telephobia. One call at a time.</p>
+      <h1 className="text-5xl font-semibold tracking-tight mt-8 relative z-10">Callmate</h1>
+      <p className={cn("mt-2 relative z-10 text-sm font-medium", isDark ? "text-[#b6c2bc]" : "text-[#66756f]")}>A steadier way into hard calls.</p>
+      <p className={cn("mt-8 relative z-10 text-base", isDark ? "text-[#e1e8e3]" : "text-[#3f5049]")}>You can handle this call.</p>
     </div>
   );
 
   if (view === 'explainer') return (
-    <div className={cn("h-screen flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-black text-white" : "bg-white text-black")}>
+    <div className={cn("app-screen warm-therapeutic-bg flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
       <div className="relative z-10 flex-1 flex flex-col justify-between px-7 pt-14 pb-10 max-w-md mx-auto w-full">
 
         {/* Top section */}
         <div className="space-y-8">
           <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-400">
-            Also known as Phone Anxiety
+            className={cn("text-[10px] font-black uppercase tracking-[0.3em]", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>
+            A real form of anxiety
           </motion.p>
 
           {/* Definition */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="space-y-3">
-            <h1 className="text-6xl font-black tracking-tighter leading-none">Tele&shy;phobia</h1>
-            <p className={cn("text-sm font-mono tracking-wide", isDark ? "text-zinc-500" : "text-zinc-400")}>/ˌtelɪˈfəʊbiə/ · noun</p>
-            <p className={cn("text-base leading-relaxed", isDark ? "text-zinc-300" : "text-zinc-600")}>
+            <h1 className="text-6xl font-semibold tracking-tight leading-none">Tele&shy;phobia</h1>
+            <p className={cn("text-sm tracking-wide", isDark ? "text-[#96a49e]" : "text-[#87938d]")}>/ˌtelɪˈfəʊbiə/ · noun</p>
+            <p className={cn("text-base leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>
               The fear or reluctance to make or receive phone calls — a real, diagnosed condition that affects daily life.
             </p>
           </motion.div>
@@ -884,9 +1153,9 @@ export default function App() {
               { stat: '1 in 3', desc: 'adults actively avoid phone calls' },
               { stat: '40M+', desc: 'Americans affected — most never seek help' },
             ].map(({ stat, desc }) => (
-              <div key={stat} className={cn("flex items-center gap-4 p-4 rounded-2xl border", isDark ? "bg-zinc-900/60 border-zinc-800" : "bg-zinc-50 border-zinc-200")}>
-                <p className="text-xl font-black text-purple-400 w-14 shrink-0 tabular-nums">{stat}</p>
-                <p className={cn("text-sm leading-snug", isDark ? "text-zinc-300" : "text-zinc-700")}>{desc}</p>
+              <div key={stat} className={cn("flex items-center gap-4 p-4 rounded-2xl border warm-panel", isDark ? "bg-[#202926]/80 border-[#415049]" : "")}>
+                <p className={cn("text-xl font-black w-14 shrink-0 tabular-nums", isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>{stat}</p>
+                <p className={cn("text-sm leading-snug", isDark ? "text-[#d8e0db]" : "text-[#51615b]")}>{desc}</p>
               </div>
             ))}
           </motion.div>
@@ -894,11 +1163,11 @@ export default function App() {
 
         {/* Bottom section */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85 }} className="space-y-5 pt-6">
-          <p className={cn("text-2xl font-bold text-center", isDark ? "text-white" : "text-black")}>
-            You are not alone. 💙
+          <p className={cn("text-2xl font-semibold text-center", isDark ? "text-[#f5efe5]" : "text-[#22312b]")}>
+            You are not broken.
           </p>
           <Button size="lg" variant="primary" isDark={isDark} className="w-full h-14 font-bold text-base" onClick={() => setView('onboarding')}>
-            I want to fix this <ChevronRight className="w-4 h-4" />
+            Help me feel steadier <ChevronRight className="w-4 h-4" />
           </Button>
         </motion.div>
       </div>
@@ -914,31 +1183,31 @@ export default function App() {
     ];
 
     return (
-      <div className={cn("h-screen flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-black text-white" : "bg-white text-black")}>
+      <div className={cn("app-screen warm-therapeutic-bg flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
         {/* Progress dots */}
         <div className="relative z-10 flex items-center justify-center gap-2 pt-10 pb-2 shrink-0">
           {[1, 2, 3, 4, 5].map(s => (
             <motion.div key={s} layout animate={{ width: s === onboardingStep ? 28 : 8 }} transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className={cn("h-1.5 rounded-full", s <= onboardingStep ? "bg-blue-500" : (isDark ? "bg-zinc-800" : "bg-zinc-200"))} />
+              className={cn("h-1.5 rounded-full", s <= onboardingStep ? "bg-[#7b9d76]" : (isDark ? "bg-[#33403b]" : "bg-[#d8cdc0]"))} />
           ))}
         </div>
 
-        <div className="flex-1 flex flex-col px-7 pb-8 max-w-md mx-auto w-full relative z-10 overflow-hidden">
+        <div className="keyboard-aware flex-1 flex flex-col px-7 pb-8 max-w-md mx-auto w-full relative z-10 overflow-hidden">
           <AnimatePresence mode="wait">
 
             {/* ── Step 1: Profile ── */}
             {onboardingStep === 1 && (
               <motion.div key="s1" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.22 }} className="flex flex-col h-full pt-7">
                 <div className="shrink-0 mb-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-500 mb-3">Step 1 of 5 · Your Profile</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#5d8a7a] mb-3">Step 1 of 5 · Your Profile</p>
                   <h2 className="text-3xl font-bold tracking-tight leading-tight mb-2">Let's personalize your experience.</h2>
                 </div>
-                <div className={cn("mb-4 rounded-2xl p-4 flex items-start gap-3 border shrink-0", isDark ? "bg-blue-500/8 border-blue-500/20" : "bg-blue-50 border-blue-100")}>
+                <div className={cn("mb-4 rounded-2xl p-4 flex items-start gap-3 border shrink-0", isDark ? "bg-[#202926] border-[#415049]" : "bg-[rgba(255,251,245,0.86)] border-[#d8cdc0]")}>
                   <span className="text-lg shrink-0">✨</span>
-                  <p className={cn("text-sm leading-relaxed", isDark ? "text-zinc-300" : "text-zinc-700")}>
-                    This helps us personalize your call scripts — using your name naturally and tailoring the language to you.
-                  </p>
-                </div>
+                    <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>
+                      This helps us personalize your call scripts — using your name naturally and tailoring the language to you.
+                    </p>
+                  </div>
                 <div className="flex-1 overflow-y-auto scrollbar-hide space-y-5 pb-2">
                   {/* Name */}
                   <div className="space-y-2">
@@ -948,7 +1217,7 @@ export default function App() {
                       value={userName}
                       onChange={e => setUserName(e.target.value)}
                       placeholder="e.g. Alex"
-                      className={cn("w-full px-4 py-3.5 rounded-2xl border text-base font-medium focus:outline-none transition-all", isDark ? "bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-blue-500/60" : "bg-zinc-50 border-zinc-200 text-black placeholder:text-zinc-400 focus:border-blue-400")}
+                      className={cn("w-full px-4 py-3.5 rounded-2xl border text-base font-medium focus:outline-none transition-all", isDark ? "bg-[#202926] border-[#415049] text-white placeholder:text-[#81918a] focus:border-[#7b9d76]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0] text-[#22312b] placeholder:text-[#95a19c] focus:border-[#7b9d76]")}
                     />
                   </div>
                   {/* Gender */}
@@ -962,8 +1231,8 @@ export default function App() {
                           onClick={() => { const v = g === userGender ? '' : g; setUserGender(v); localStorage.setItem('callmate_user_gender', v); }}
                           className={cn("px-4 py-2 rounded-full text-sm font-medium transition-all border",
                             userGender === g
-                              ? "bg-blue-600 border-blue-500 text-white"
-                              : isDark ? "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600" : "bg-zinc-100 border-zinc-200 text-zinc-600 hover:border-zinc-400"
+                              ? "bg-[#5d8a7a] border-[#5d8a7a] text-white"
+                              : isDark ? "bg-[#202926] border-[#415049] text-[#c8d2cc] hover:border-[#66756f]" : "bg-[#f6f0e8] border-[#d8cdc0] text-[#66756f] hover:border-[#b7aa96]"
                           )}
                         >{g}</button>
                       ))}
@@ -980,8 +1249,8 @@ export default function App() {
                           onClick={() => { const v = a === userAgeRange ? '' : a; setUserAgeRange(v); localStorage.setItem('callmate_user_age_range', v); }}
                           className={cn("px-4 py-2 rounded-full text-sm font-medium transition-all border",
                             userAgeRange === a
-                              ? "bg-blue-600 border-blue-500 text-white"
-                              : isDark ? "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600" : "bg-zinc-100 border-zinc-200 text-zinc-600 hover:border-zinc-400"
+                              ? "bg-[#5d8a7a] border-[#5d8a7a] text-white"
+                              : isDark ? "bg-[#202926] border-[#415049] text-[#c8d2cc] hover:border-[#66756f]" : "bg-[#f6f0e8] border-[#d8cdc0] text-[#66756f] hover:border-[#b7aa96]"
                           )}
                         >{a}</button>
                       ))}
@@ -1000,7 +1269,7 @@ export default function App() {
             {onboardingStep === 2 && (
               <motion.div key="s2" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.22 }} className="flex flex-col h-full pt-7">
                 <div className="shrink-0 mb-5">
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-500 mb-3">Step 2 of 5 · Assessment</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#5d8a7a] mb-3">Step 2 of 5 · Assessment</p>
                   <h2 className="text-3xl font-bold tracking-tight leading-tight mb-2">How would you describe your relationship with phone calls?</h2>
                   <p className={cn("text-sm", isDark ? "text-zinc-500" : "text-zinc-500")}>76% of millennials experience telephobia. You're not alone.</p>
                 </div>
@@ -1032,7 +1301,7 @@ export default function App() {
             {onboardingStep === 3 && (
               <motion.div key="s3" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.22 }} className="flex flex-col h-full pt-7">
                 <div className="shrink-0 mb-5">
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-500 mb-3">Step 3 of 5 · Triggers</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#5d8a7a] mb-3">Step 3 of 5 · Triggers</p>
                   <h2 className="text-3xl font-bold tracking-tight leading-tight mb-2">What's your biggest fear on a call?</h2>
                   <p className={cn("text-sm", isDark ? "text-zinc-500" : "text-zinc-500")}>Select all that apply — this shapes your recovery plan.</p>
                 </div>
@@ -1047,15 +1316,51 @@ export default function App() {
                           localStorage.setItem('callmate_triggers', JSON.stringify(next));
                         }}
                         className={cn("w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-3",
-                          selected ? "border-blue-500/50 bg-blue-500/10" : isDark ? "border-zinc-800 bg-zinc-900/50 hover:border-zinc-600" : "border-zinc-200 bg-zinc-50 hover:border-zinc-400"
+                          selected ? "border-[#7b9d76] bg-[#7b9d76]/10" : isDark ? "border-[#415049] bg-[#202926]/70 hover:border-[#66756f]" : "border-[#d8cdc0] bg-[rgba(255,251,245,0.88)] hover:border-[#b7aa96]"
                         )}>
-                        <div className={cn("w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all", selected ? "border-blue-500 bg-blue-500" : isDark ? "border-zinc-600" : "border-zinc-300")}>
+                        <div className={cn("w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all", selected ? "border-[#5d8a7a] bg-[#5d8a7a]" : isDark ? "border-[#66756f]" : "border-[#b7aa96]")}>
                           {selected && <Check className="w-3 h-3 text-white" />}
                         </div>
                         <p className={cn("text-sm font-medium leading-snug", isDark ? "text-zinc-200" : "text-zinc-800")}>{trigger}</p>
                       </motion.button>
                     );
                   })}
+                  {/* Custom trigger input */}
+                  <div className={cn("w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-3", isDark ? "border-[#415049] bg-[#202926]/70" : "border-[#d8cdc0] bg-[rgba(255,251,245,0.88)]")}>
+                    <div className={cn("w-5 h-5 rounded-md border-2 shrink-0", isDark ? "border-[#66756f]" : "border-[#b7aa96]")} />
+                    <input
+                      type="text"
+                      value={customTriggerInput}
+                      onChange={e => setCustomTriggerInput(e.target.value)}
+                      placeholder="Something else..."
+                      className="flex-1 bg-transparent text-sm font-medium focus:outline-none placeholder:text-zinc-500"
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && customTriggerInput.trim()) {
+                          const t = customTriggerInput.trim();
+                          if (!anxietyTriggers.includes(t)) {
+                            const next = [...anxietyTriggers, t];
+                            setAnxietyTriggers(next);
+                            localStorage.setItem('callmate_triggers', JSON.stringify(next));
+                          }
+                          setCustomTriggerInput('');
+                        }
+                      }}
+                    />
+                    {customTriggerInput.trim() && (
+                      <button
+                        onClick={() => {
+                          const t = customTriggerInput.trim();
+                          if (!anxietyTriggers.includes(t)) {
+                            const next = [...anxietyTriggers, t];
+                            setAnxietyTriggers(next);
+                            localStorage.setItem('callmate_triggers', JSON.stringify(next));
+                          }
+                          setCustomTriggerInput('');
+                        }}
+                        className="text-[#5d8a7a] text-xs font-bold shrink-0"
+                      >Add</button>
+                    )}
+                  </div>
                 </div>
                 <div className="shrink-0 pt-5 space-y-2">
                   <Button size="lg" variant="primary" isDark={isDark} className="w-full h-14 font-bold" onClick={() => setOnboardingStep(4)}>
@@ -1070,7 +1375,7 @@ export default function App() {
             {onboardingStep === 4 && (
               <motion.div key="s4" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.22 }} className="flex flex-col h-full pt-7">
                 <div className="shrink-0 mb-5">
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-500 mb-3">Step 4 of 5 · Impact</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#5d8a7a] mb-3">Step 4 of 5 · Impact</p>
                   <h2 className="text-3xl font-bold tracking-tight leading-tight mb-2">Where is phone anxiety costing you the most?</h2>
                   <p className={cn("text-sm", isDark ? "text-zinc-500" : "text-zinc-500")}>Pick up to 2 — we'll prioritize those scenarios in your plan.</p>
                 </div>
@@ -1087,12 +1392,12 @@ export default function App() {
                           localStorage.setItem('callmate_impact', JSON.stringify(next));
                         }}
                         className={cn("w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-4",
-                          selected ? "border-blue-500/50 bg-blue-500/10" : maxed ? "opacity-40 border-zinc-800 bg-zinc-900/30 cursor-not-allowed"
-                          : isDark ? "border-zinc-800 bg-zinc-900/50 hover:border-zinc-600" : "border-zinc-200 bg-zinc-50 hover:border-zinc-400"
+                          selected ? "border-[#7b9d76] bg-[#7b9d76]/10" : maxed ? "opacity-40 border-[#415049] bg-[#202926]/40 cursor-not-allowed"
+                          : isDark ? "border-[#415049] bg-[#202926]/70 hover:border-[#66756f]" : "border-[#d8cdc0] bg-[rgba(255,251,245,0.88)] hover:border-[#b7aa96]"
                         )}>
                         <span className="text-2xl shrink-0">{area.icon}</span>
                         <p className={cn("text-sm font-medium flex-1", isDark ? "text-zinc-200" : "text-zinc-800")}>{area.label}</p>
-                        {selected && <Check className="w-4 h-4 text-blue-400 shrink-0" />}
+                        {selected && <Check className="w-4 h-4 text-[#5d8a7a] shrink-0" />}
                       </motion.button>
                     );
                   })}
@@ -1110,7 +1415,7 @@ export default function App() {
             {onboardingStep === 5 && (
               <motion.div key="s5" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.22 }} className="flex flex-col h-full pt-7">
                 <div className="shrink-0 mb-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-500 mb-3">Step 5 of 5 · Your Plan</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#7b9d76] mb-3">Step 5 of 5 · Your Plan</p>
                   <h2 className="text-3xl font-bold tracking-tight leading-tight mb-1">Here's what beating telephobia looks like.</h2>
                   <p className={cn("text-sm", isDark ? "text-zinc-500" : "text-zinc-500")}>Most users feel measurably less anxious within 2 weeks.</p>
                 </div>
@@ -1118,7 +1423,7 @@ export default function App() {
                   <OnboardingDemoDashboard isDark={isDark} />
                 </div>
                 <div className="shrink-0 pt-4 space-y-2">
-                  <Button size="lg" variant="primary" isDark={isDark} className="w-full h-14 font-bold text-base bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30" onClick={() => {
+                  <Button size="lg" variant="primary" isDark={isDark} className="w-full h-14 font-bold text-base bg-[#5d8a7a] hover:bg-[#527a6c] shadow-[#5d8a7a]/20" onClick={() => {
                     if (tier === 'free') {
                       const now = Date.now();
                       setTrialStartDate(now);
@@ -1170,6 +1475,12 @@ export default function App() {
           anxietyRatings: callAnxietyRatings,
           personas,
           name: userName,
+          gender: userGender,
+          ageRange: userAgeRange,
+          anxietySeverity,
+          anxietyTriggers,
+          lifeImpact,
+          callStreak,
           tier,
           trialStartDate,
           darkMode: isDark,
@@ -1186,11 +1497,11 @@ export default function App() {
   />;
 
   if (view === 'reviews') return (
-    <div className={cn("h-screen flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-black text-white" : "bg-white text-black")}>
+    <div className={cn("app-screen warm-therapeutic-bg flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
       <div className="flex-1 flex flex-col px-6 py-10 overflow-y-auto max-w-lg mx-auto w-full">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-center mb-8">
-          <p className={cn("text-xs font-black uppercase tracking-[0.25em] mb-3", isDark ? "text-emerald-400" : "text-emerald-600")}>
+          <p className={cn("text-xs font-black uppercase tracking-[0.25em] mb-3", isDark ? "text-[#b7d0c4]" : "text-[#7b9d76]")}>
             You're in good company 💙
           </p>
           <h1 className="text-3xl font-bold leading-tight">
@@ -1211,18 +1522,18 @@ export default function App() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 + i * 0.1 }}
-              className={cn("p-4 rounded-2xl border transition-colors", isDark ? "bg-zinc-900/80 border-zinc-800" : "bg-zinc-50 border-zinc-200")}
+              className={cn("p-4 rounded-2xl border transition-colors", isDark ? "bg-[#202926]/80 border-[#415049]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]")}
             >
               <div className="flex items-start justify-between gap-2 mb-1.5">
                 <div>
                   <p className={cn("text-sm font-bold", isDark ? "text-zinc-100" : "text-zinc-900")}>{r.name}</p>
-                  <p className={cn("text-[10px]", isDark ? "text-zinc-500" : "text-zinc-400")}>{r.location} · {r.tag}</p>
+                  <p className={cn("text-[10px]", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>{r.location} · {r.tag}</p>
                 </div>
                 <div className="flex gap-0.5 shrink-0 mt-0.5">
                   {[...Array(5)].map((_, j) => <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />)}
                 </div>
               </div>
-              <p className={cn("text-sm leading-relaxed", isDark ? "text-zinc-300" : "text-zinc-700")}>"{r.quote}"</p>
+              <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>"{r.quote}"</p>
             </motion.div>
           ))}
         </div>
@@ -1231,7 +1542,7 @@ export default function App() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="pt-6 space-y-3">
           <Button
             size="xl"
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25"
+            className="w-full bg-[#5d8a7a] hover:bg-[#527a6c] text-white shadow-lg shadow-[#5d8a7a]/20"
             onClick={() => {
               if (supabaseUser) {
                 setView('home');
@@ -1250,11 +1561,45 @@ export default function App() {
   );
 
   return (
-    <div className={cn("min-h-screen transition-colors duration-500 selection:bg-white/10 relative overflow-hidden", isDark ? "bg-black text-white" : "bg-white text-black")}>
-      <header className={cn("sticky top-0 z-40 border-b px-6 py-4 flex items-center justify-between transition-colors", isDark ? "bg-black border-white/5" : "bg-white border-black/5")}>
+    <div className={cn("min-h-screen warm-therapeutic-bg transition-colors duration-500 selection:bg-white/10 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
+
+      {/* Offline banner */}
+      <AnimatePresence>
+        {!isOnline && (
+          <motion.div
+            initial={{ y: -40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -40, opacity: 0 }}
+            className="fixed top-0 left-0 right-0 z-[200] flex items-center justify-center gap-2 bg-zinc-900 text-zinc-300 text-xs font-semibold py-2 px-4"
+          >
+            <WifiOff className="w-3.5 h-3.5" /> You're offline — scripts saved locally
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Milestone toast */}
+      <AnimatePresence>
+        {milestoneToast && (
+          <motion.div
+            initial={{ y: 80, opacity: 0, scale: 0.9 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 80, opacity: 0, scale: 0.9 }}
+            className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border"
+            style={{ background: isDark ? '#202926' : '#fff', borderColor: isDark ? '#415049' : '#d8cdc0' }}
+          >
+            <span className="text-2xl">{milestoneToast.icon}</span>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Achievement Unlocked</p>
+              <p className={cn("text-sm font-bold", isDark ? "text-white" : "text-black")}>{milestoneToast.title}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <header className={cn("sticky top-0 z-40 border-b px-6 py-4 flex items-center justify-between transition-colors", isDark ? "bg-[#161d1b]/95 border-[#33403b]" : "bg-[rgba(243,238,228,0.92)] border-[#d8cdc0]")}>
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setCurrentScript(null); setActiveTab('home'); setView('home'); }}>
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-black">
-            <Logo className="w-6 h-6 text-white" />
+          <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center", isDark ? "bg-[#22312b]" : "bg-[#5d8a7a]")}>
+            <Logo className="w-6 h-6 text-[#fbf8f2]" />
           </div>
           <span className="font-bold text-xl">Callmate</span>
         </div>
@@ -1264,8 +1609,8 @@ export default function App() {
             className={cn(
               "p-2 rounded-xl transition-all",
               view === 'settings' 
-                ? (isDark ? "bg-white text-black" : "bg-black text-white") 
-                : (isDark ? "bg-white/5 text-zinc-400 hover:bg-white/10" : "bg-black/5 text-zinc-500 hover:bg-black/10")
+                ? (isDark ? "bg-[#f3eee4] text-[#22312b]" : "bg-[#5d8a7a] text-white") 
+                : (isDark ? "bg-[#202926] text-[#97a59f] hover:bg-[#293330]" : "bg-[#ece5da] text-[#66756f] hover:bg-[#e3dacd]")
             )}
           >
             <Settings className="w-5 h-5" />
@@ -1274,7 +1619,7 @@ export default function App() {
       </header>
 
 
-      <main className="max-w-2xl mx-auto p-6 pb-48">
+      <main className="keyboard-aware max-w-2xl mx-auto p-6 pb-48">
         <AnimatePresence mode="wait">
           {view === 'home' && (
             <div key="home" className="space-y-8">
@@ -1286,13 +1631,13 @@ export default function App() {
                   animate={{ opacity: 1, y: 0 }}
                   className={cn(
                     "p-4 rounded-2xl border flex items-start justify-between gap-3 transition-colors",
-                    isDark ? "bg-amber-500/10 border-amber-500/25" : "bg-amber-50 border-amber-200"
+                    isDark ? "bg-[#443925]/40 border-[#8f7752]" : "bg-[#f5ecd9] border-[#ddc8a5]"
                   )}
                 >
                   <div className="flex-1">
-                    <p className="text-xs font-black text-amber-500 uppercase tracking-widest mb-1">You've been quiet 👀</p>
+                    <p className={cn("text-xs font-black uppercase tracking-widest mb-1", isDark ? "text-[#dfc090]" : "text-[#a17e4d]")}>You've been quiet</p>
                     <p className={cn("text-sm font-semibold leading-snug", isDark ? "text-zinc-200" : "text-zinc-800")}>
-                      It's been a couple of days. The call you've been putting off is still waiting. You've got this.
+                      It's been a couple of days. The call you've been putting off is still waiting. You can come back to it gently.
                     </p>
                   </div>
                   <button onClick={() => setComebackNudgeDismissed(true)} className="shrink-0 p-1 rounded-full text-zinc-500 hover:text-zinc-300 transition-colors mt-0.5">
@@ -1301,865 +1646,178 @@ export default function App() {
                 </motion.div>
               )}
 
-              {/* Milestone proximity card */}
-              {nextMilestone && history.length > 0 && (
-                <div
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-2xl border transition-colors",
-                    isDark ? "bg-zinc-900/60 border-zinc-800" : "bg-zinc-50 border-zinc-200"
-                  )}
-                >
-                  <span className="text-xl">{nextMilestone.icon}</span>
-                  <p className={cn("text-xs flex-1", isDark ? "text-zinc-400" : "text-zinc-600")}>
-                    <span className="font-black">{nextMilestone.needed} more {nextMilestone.needed === 1 ? 'script' : 'scripts'}</span> until you unlock <span className={cn("font-semibold", isDark ? "text-zinc-200" : "text-zinc-800")}>{nextMilestone.title}</span>
-                  </p>
-                </div>
-              )}
-
-              {/* Resume active script banner */}
-              {currentScript && (
-                <div
-                  onClick={() => setView('script')}
-                  className={cn(
-                    "p-4 rounded-2xl border cursor-pointer flex items-center justify-between gap-3 transition-all",
-                    isDark ? "bg-blue-500/10 border-blue-500/20 hover:border-blue-500/40" : "bg-blue-50 border-blue-200 hover:border-blue-400"
-                  )}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-0.5">Resume Active Script</p>
-                    <p className={cn("text-sm font-semibold truncate", isDark ? "text-zinc-200" : "text-zinc-800")}>{currentScript.description}</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-blue-500 shrink-0" />
-                </div>
-              )}
-
-              <section>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Select Call Type</h2>
-                  <div className={cn("flex p-1 rounded-full border transition-colors", isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-100 border-zinc-200")}>
-                    {['Random', 'A-Z'].map((m) => (
-                      <button key={m} onClick={() => setSortMode(m as any)} className={cn("px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all", sortMode === m ? (isDark ? "bg-white text-black" : "bg-black text-white") : "text-zinc-500")}>{m}</button>
-                    ))}
-                  </div>
-                </div>
-                <CallTypeGrid items={sortedCallTypes} onSelect={(item) => setDescription(item)} selectedItem={description} isDark={isDark} />
-              </section>
-
-              {isPremium && personas.length > 0 && (
-                <section>
-                  <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Calling as Persona</h2>
-                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                    <button 
-                      onClick={() => setSelectedPersona(null)}
-                      className={cn(
-                        "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
-                        !selectedPersona ? (isDark ? "bg-white text-black" : "bg-black text-white") : (isDark ? "bg-zinc-800 text-zinc-400" : "bg-zinc-200 text-zinc-600")
-                      )}
-                    >
-                      Default
-                    </button>
-                    {personas.map(p => (
-                      <button 
-                        key={p.id}
-                        onClick={() => setSelectedPersona(p)}
-                        className={cn(
-                          "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
-                          selectedPersona?.id === p.id ? (isDark ? "bg-white text-black" : "bg-black text-white") : (isDark ? "bg-zinc-800 text-zinc-400" : "bg-zinc-200 text-zinc-600")
-                        )}
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              <section>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Perspective</h2>
-                  <div className={cn("flex p-1 rounded-xl transition-colors", isDark ? "bg-zinc-900" : "bg-zinc-100")}>
-                    <button 
-                      onClick={() => setPerspective('outgoing')}
-                      className={cn(
-                        "px-4 py-1.5 rounded-lg text-xs font-bold transition-all relative", 
-                        perspective === 'outgoing' 
-                          ? (isDark ? "bg-zinc-800 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)]" : "bg-white text-black shadow-sm") 
-                          : "text-zinc-500 hover:text-zinc-400"
-                      )}
-                    >
-                      I'm Calling
-                    </button>
-                    <button 
-                      onClick={() => setPerspective('incoming')}
-                      className={cn(
-                        "px-4 py-1.5 rounded-lg text-xs font-bold transition-all relative", 
-                        perspective === 'incoming' 
-                          ? (isDark ? "bg-zinc-800 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)]" : "bg-white text-black shadow-sm") 
-                          : "text-zinc-500 hover:text-zinc-400"
-                      )}
-                    >
-                      I'm Answering
-                    </button>
-                  </div>
-                </div>
-
-                <h2 className={cn("text-xs font-bold uppercase tracking-widest mb-4 transition-colors", isDark ? "text-zinc-400" : "text-zinc-500")}>
-                  {perspective === 'outgoing' ? 'Describe Your Call' : 'Who is calling and why?'}
-                </h2>
-                <Card isDark={isDark} className="p-0 overflow-hidden">
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)} 
-                    placeholder={perspective === 'outgoing' ? "I need to call my landlord..." : "My bank is calling about a suspicious charge..."} 
-                    className={cn("w-full h-32 p-6 text-xl bg-transparent focus:outline-none resize-none transition-colors font-medium", isDark ? "placeholder:text-zinc-600" : "placeholder:text-zinc-400")}
-                  />
-                  <div className={cn("p-4 border-t flex flex-wrap gap-2 transition-colors", isDark ? "bg-zinc-800/30 border-zinc-700/50" : "bg-zinc-50/60 border-zinc-200")}>
-                    {(['Professional', 'Assertive', 'Friendly', 'Firm'] as Tone[]).map((t) => (
-                      <button 
-                        key={t} 
-                        onClick={() => setTone(t)} 
-                        className={cn(
-                          "px-4 py-2 rounded-full text-sm font-medium transition-all", 
-                          tone === t 
-                            ? (isDark ? "bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]" : "bg-black text-white shadow-lg") 
-                            : (isDark ? "bg-zinc-800/50 text-zinc-400 border border-zinc-700/50 hover:bg-zinc-800" : "bg-zinc-200/50 text-zinc-600 border border-zinc-300/50 hover:bg-zinc-200")
-                        )}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                </Card>
-                <Button size="xl" variant="primary" isDark={isDark} className="w-full mt-4 h-14 font-bold tracking-tight" disabled={!description.trim() || loading} onClick={() => handleGenerate()}>
-                  {loading ? <Loader2 className="animate-spin" /> : <><Phone className="w-5 h-5" /> Prepare My Call</>}
-                </Button>
-              </section>
-
-              {/* Incoming Call Kit — always visible, zero AI generation time */}
-              <section>
-                <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Incoming Call Kit</h2>
-                <div className="grid grid-cols-1 gap-2">
-                  {SAFE_LINES.map((line, i) => {
-                    const expanded = expandedSafeLineIndex === i;
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => toggleSafeLine(i)}
-                        className={cn(
-                          "text-left p-4 rounded-2xl border transition-all flex items-start justify-between gap-3",
-                          expanded
-                            ? (isDark ? "bg-blue-500/10 border-blue-500/40" : "bg-blue-50 border-blue-300")
-                            : (isDark ? "bg-zinc-900/80 border-white/8 hover:border-white/20 hover:bg-zinc-900" : "bg-zinc-100/80 border-black/8 hover:border-black/20 hover:bg-zinc-100")
-                        )}
-                      >
-                        <div className="flex-1">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">{line.situation}</p>
-                          <p className={cn(
-                            "font-semibold leading-snug transition-all",
-                            expanded ? "text-xl leading-relaxed" : "text-sm",
-                            isDark ? "text-zinc-100" : "text-zinc-900"
-                          )}>
-                            "{line.line}"
-                          </p>
-                        </div>
-                        {expanded
-                          ? <ChevronUp className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                          : <ChevronDown className="w-4 h-4 text-zinc-600 shrink-0 mt-0.5" />
-                        }
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-[10px] text-zinc-600 mt-2 text-center">Tap any line to expand it for easier reading during the call</p>
-              </section>
+              <HomeScreen
+                isDark={isDark}
+                nextMilestone={history.length > 0 ? nextMilestone : null}
+                currentScript={currentScript}
+                setView={setView}
+                sortedCallTypes={sortedCallTypes}
+                sortMode={sortMode}
+                setSortMode={setSortMode}
+                description={description}
+                setDescription={setDescription}
+                isPremium={isPremium}
+                personas={personas}
+                selectedPersona={selectedPersona}
+                setSelectedPersona={setSelectedPersona}
+                perspective={perspective}
+                setPerspective={setPerspective}
+                tone={tone}
+                setTone={setTone}
+                loading={loading}
+                handleGenerate={handleGenerate}
+                expandedSafeLineIndex={expandedSafeLineIndex}
+                toggleSafeLine={toggleSafeLine}
+              />
 
             </div>
           )}
 
           {view === 'settings' && (
-            <div key="settings" className="space-y-8">
-              <div className="flex items-center gap-4">
-                <Button variant="ghost" size="sm" isDark={isDark} onClick={() => setView(activeTab)}>
-                  <ArrowLeft className="w-4 h-4" /> Back
-                </Button>
-                <h2 className="text-3xl font-bold">Settings</h2>
-              </div>
-
-              <div className="space-y-6">
-
-                {/* Profile section */}
-                <section className="space-y-3">
-                  <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Profile</h3>
-                  {(supabaseUser || userEmail) ? (
-                    <Card isDark={isDark} className="p-5 space-y-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white font-black text-lg shrink-0 select-none">
-                          {(userName || userEmail || supabaseUser?.email || 'C')[0].toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-lg">{userName || 'Callmate User'}</p>
-                          <p className={cn("text-sm truncate", isDark ? "text-zinc-400" : "text-zinc-500")}>{userEmail || supabaseUser?.email || ''}</p>
-                          <p className="text-xs text-emerald-500 font-semibold mt-0.5">✓ Synced to cloud</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={async () => {
-                          await signOut();
-                          setSupabaseUser(null);
-                          setUserEmail('');
-                          localStorage.removeItem('callmate_user_email');
-                          setView('account');
-                        }}
-                        className={cn("w-full py-2.5 rounded-xl border text-sm font-semibold transition-colors", isDark ? "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300" : "border-zinc-200 text-zinc-500 hover:border-zinc-400 hover:text-zinc-700")}
-                      >
-                        Sign Out
-                      </button>
-                    </Card>
-                  ) : (
-                    <Card isDark={isDark} className="p-5 space-y-4">
-                      <div className="flex items-center gap-4">
-                        <div className={cn("w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-2xl", isDark ? "bg-zinc-800" : "bg-zinc-100")}>
-                          👤
-                        </div>
-                        <div>
-                          <p className="font-bold">{userName || 'Guest'}</p>
-                          <p className={cn("text-sm", isDark ? "text-zinc-500" : "text-zinc-400")}>Progress saved locally only</p>
-                        </div>
-                      </div>
-                      <Button className="w-full" isDark={isDark} onClick={() => setView('account')}>
-                        Create Account or Sign In
-                      </Button>
-                    </Card>
-                  )}
-                </section>
-
-                {!isPremium && (
-                  <Card isDark={isDark} className="bg-gradient-to-br from-blue-600 to-indigo-600 border-none p-6 text-white overflow-hidden relative">
-                    <div className="relative z-10">
-                      <h3 className="text-2xl font-bold mb-2">Complete Your Trial Setup</h3>
-                      <p className="text-blue-100 text-sm mb-4">Choose a plan to unlock full access and start your 3-day free trial.</p>
-                      <Button variant="glass" isDark={true} className="w-full bg-white text-blue-600 border-none" onClick={() => setShowUpgradeModal(true)}>
-                        Start Free Trial
-                      </Button>
-                    </div>
-                    <div className="absolute -right-8 -bottom-8 opacity-20">
-                      <Star className="w-32 h-32" />
-                    </div>
-                  </Card>
-                )}
-
-                <section className="space-y-4">
-                  <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Display</h3>
-                  <Card isDark={isDark} className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-bold text-lg">Theme</p>
-                        <p className="text-zinc-500 text-sm">Switch between light and dark mode</p>
-                      </div>
-                      <div className={cn("flex p-1 rounded-2xl transition-colors", isDark ? "bg-black" : "bg-zinc-200")}>
-                        <button 
-                          onClick={() => { setTheme('light'); localStorage.setItem('ringtone_theme', 'light'); }}
-                          className={cn("p-2 rounded-xl transition-all", !isDark ? "bg-white text-black shadow-sm" : "text-zinc-500")}
-                        >
-                          <Sun className="w-5 h-5" />
-                        </button>
-                        <button 
-                          onClick={() => { setTheme('dark'); localStorage.setItem('ringtone_theme', 'dark'); }}
-                          className={cn("p-2 rounded-xl transition-all", isDark ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-500")}
-                        >
-                          <Moon className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  </Card>
-                </section>
-
-                <section className="space-y-4">
-                  <div className="flex items-center justify-between px-1">
-                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Custom Personas</h3>
-                    {isPremium && (
-                      <button onClick={() => { setSelectedPersona(null); setShowPersonaModal(true); }} className="text-blue-500 text-xs font-bold uppercase tracking-widest hover:underline">
-                        + Add New
-                      </button>
-                    )}
-                  </div>
-                  <Card isDark={isDark} className="p-4 space-y-3">
-                    {!isPremium ? (
-                      <div className="py-4 text-center">
-                        <p className="text-zinc-500 text-sm mb-3">Personas are a premium feature</p>
-                        <Button variant="ghost" size="sm" isDark={isDark} onClick={() => setShowUpgradeModal(true)}>Learn More</Button>
-                      </div>
-                    ) : personas.length === 0 ? (
-                      <p className="text-zinc-500 text-sm text-center py-4">No custom personas yet.</p>
-                    ) : (
-                      personas.map(p => (
-                        <div key={p.id} className={cn("p-4 rounded-2xl border flex items-center justify-between", isDark ? "bg-black border-zinc-800" : "bg-white border-zinc-200")}>
-                          <div>
-                            <p className="font-bold">{p.name}</p>
-                            <p className="text-xs text-zinc-500 line-clamp-1">{p.context}</p>
-                          </div>
-                          <div className="flex gap-2">
-                            <button onClick={() => { setSelectedPersona(p); setShowPersonaModal(true); }} className="p-2 text-zinc-500 hover:text-blue-500 transition-colors">
-                              <Settings className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => setPersonas(personas.filter(x => x.id !== p.id))} className="p-2 text-zinc-500 hover:text-red-500 transition-colors">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </Card>
-                </section>
-
-                <section className="space-y-4">
-                  <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Account & Usage</h3>
-                  <Card isDark={isDark} className="p-6 space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-bold text-lg">Current Plan</p>
-                        <p className="text-zinc-500 text-sm">
-                          {tier === 'annual' ? 'Annual Plan' : tier === 'monthly' ? 'Monthly Plan' : tier === 'trial' ? '3-Day Free Trial' : 'Trial required'}
-                        </p>
-                      </div>
-                      <Button variant="outline" size="sm" isDark={isDark} onClick={() => setShowUpgradeModal(true)}>
-                        {tier === 'free' ? 'Start Trial' : 'Manage'}
-                      </Button>
-                    </div>
-                  </Card>
-                </section>
-
-                <section className="space-y-4">
-                  <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Data Management</h3>
-                  <Card isDark={isDark} className="p-6 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-bold text-lg">Call History</p>
-                        <p className="text-zinc-500 text-sm">{history.length} scripts saved locally</p>
-                      </div>
-                      <button 
-                        onClick={clearHistory}
-                        className="p-3 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500/20 transition-colors"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </Card>
-                </section>
-
-                <section className="space-y-4">
-                  <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">App Info</h3>
-                  <div className="px-1 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-zinc-500">Version</span>
-                      <span className={cn("font-mono transition-colors", isDark ? "text-zinc-300" : "text-zinc-700")}>2.1.0-hybrid</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-zinc-500">Build</span>
-                      <span className={cn("font-mono transition-colors", isDark ? "text-zinc-300" : "text-zinc-700")}>2026.03.08</span>
-                    </div>
-                  </div>
-                </section>
-              </div>
-            </div>
+            <SettingsScreen
+              key="settings"
+              isDark={isDark}
+              activeTab={activeTab}
+              setView={setView}
+              supabaseUser={supabaseUser}
+              userEmail={userEmail}
+              userName={userName}
+              signOut={signOut}
+              setSupabaseUser={setSupabaseUser}
+              setUserEmail={setUserEmail}
+              isPremium={isPremium}
+              setShowUpgradeModal={setShowUpgradeModal}
+              setTheme={setTheme}
+              personas={personas}
+              setSelectedPersona={setSelectedPersona}
+              setShowPersonaModal={setShowPersonaModal}
+              setPersonas={setPersonas}
+              tier={tier}
+              historyLength={history.length}
+              clearHistory={clearHistory}
+            />
           )}
 
           {view === 'dashboard' && (
-            <div key="dashboard" className="space-y-5 pb-32">
-              {/* Header */}
-              <div>
-                <h2 className="text-3xl font-bold tracking-tight">Recovery Progress</h2>
-                <p className={cn("text-sm mt-1", isDark ? "text-zinc-500" : "text-zinc-500")}>
-                  {history.length === 0 ? "Complete your first call to start tracking." : `${history.length} call${history.length !== 1 ? 's' : ''} logged · telephobia recovery in progress`}
-                </p>
-              </div>
-
-              {/* Recovery Score */}
-              <div className={cn("rounded-3xl border p-5 transition-colors", isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-50 border-zinc-200")}>
-                <div className="flex items-end justify-between mb-3">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Recovery Score</p>
-                    <p className={cn("text-6xl font-black tabular-nums", recoveryScore >= 60 ? "text-emerald-400" : recoveryScore >= 30 ? "text-amber-400" : "text-zinc-400")}>{recoveryScore}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Streak</p>
-                    <p className={cn("text-3xl font-black", callStreak > 0 ? "text-orange-400" : "text-zinc-600")}>
-                      {callStreak > 0 ? '🔥' : '—'} {callStreak > 0 ? callStreak : 0}
-                    </p>
-                  </div>
-                </div>
-                {/* Score bar */}
-                <div className={cn("h-2.5 rounded-full overflow-hidden", isDark ? "bg-zinc-800" : "bg-zinc-200")}>
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${recoveryScore}%` }}
-                    transition={{ duration: 1, ease: 'easeOut' }}
-                    className={cn("h-full rounded-full", recoveryScore >= 60 ? "bg-emerald-500" : recoveryScore >= 30 ? "bg-amber-500" : "bg-zinc-500")}
-                  />
-                </div>
-                <p className={cn("text-xs mt-2", isDark ? "text-zinc-600" : "text-zinc-400")}>
-                  {recoveryScore === 0 ? "Complete your first call to begin." : recoveryScore < 30 ? "Early days — every call counts." : recoveryScore < 60 ? "You're making real progress." : "Significant improvement detected."}
-                </p>
-              </div>
-
-              {/* Stats row */}
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { label: 'Calls Scripted', value: history.length, color: 'text-blue-400' },
-                  { label: 'Low-Anxiety Calls', value: callAnxietyRatings.filter(r => r.rating <= 2).length, color: 'text-emerald-400' },
-                  { label: 'Avg Anxiety', value: callAnxietyRatings.length > 0 ? (callAnxietyRatings.slice(-5).reduce((s, r) => s + r.rating, 0) / Math.min(callAnxietyRatings.length, 5)).toFixed(1) : '—', color: 'text-purple-400' },
-                ].map((stat, i) => (
-                  <div key={i} className={cn("rounded-2xl border p-4 text-center transition-colors", isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-50 border-zinc-200")}>
-                    <p className={cn("text-2xl font-black", stat.color)}>{stat.value}</p>
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mt-1 leading-tight">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Anxiety trend chart */}
-              <div className={cn("rounded-3xl border p-5 transition-colors", isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-50 border-zinc-200")}>
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4">Anxiety Trend</p>
-                {callAnxietyRatings.length < 2 ? (
-                  <div className="flex flex-col items-center justify-center py-8 gap-2">
-                    <p className="text-4xl">📉</p>
-                    <p className={cn("text-sm text-center", isDark ? "text-zinc-500" : "text-zinc-500")}>Rate your anxiety after each call to see your trend here.</p>
-                  </div>
-                ) : (
-                  <svg viewBox={`0 0 ${Math.max(callAnxietyRatings.length * 40, 200)} 80`} className="w-full" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="trendGrad" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#ef4444" /><stop offset="100%" stopColor="#22c55e" />
-                      </linearGradient>
-                    </defs>
-                    {callAnxietyRatings.map((r, i) => {
-                      const x = i * 40 + 5;
-                      const y = ((r.rating - 1) / 4) * 60 + 5;
-                      const nx = (i + 1) * 40 + 5;
-                      const nr = callAnxietyRatings[i + 1];
-                      const ny = nr ? ((nr.rating - 1) / 4) * 60 + 5 : null;
-                      return (
-                        <g key={i}>
-                          {ny !== null && <line x1={x} y1={y} x2={nx} y2={ny} stroke="url(#trendGrad)" strokeWidth="2.5" strokeLinecap="round" />}
-                          <circle cx={x} cy={y} r="5" fill={r.rating <= 2 ? '#22c55e' : r.rating <= 3 ? '#f59e0b' : '#ef4444'} />
-                        </g>
-                      );
-                    })}
-                  </svg>
-                )}
-              </div>
-
-              {/* Milestones */}
-              <div className={cn("rounded-3xl border p-5 transition-colors", isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-50 border-zinc-200")}>
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4">Milestones</p>
-                <div className="grid grid-cols-3 gap-3">
-                  {MILESTONES.map((m) => {
-                    const unlocked = unlockedMilestones.has(m.id);
-                    return (
-                      <div
-                        key={m.id}
-                        className={cn("flex flex-col items-center gap-1.5 p-3 rounded-2xl border text-center transition-all",
-                          unlocked
-                            ? isDark ? "bg-emerald-500/10 border-emerald-500/30 opacity-100 scale-100" : "bg-emerald-50 border-emerald-200 opacity-100 scale-100"
-                            : isDark ? "bg-zinc-800/40 border-zinc-800 opacity-35 scale-[0.97]" : "bg-zinc-100 border-zinc-200 opacity-35 scale-[0.97]"
-                        )}
-                      >
-                        <span className="text-2xl">{unlocked ? m.icon : '🔒'}</span>
-                        <p className={cn("text-[9px] font-bold leading-tight uppercase tracking-wide", unlocked ? (isDark ? "text-emerald-400" : "text-emerald-700") : "text-zinc-600")}>{m.title}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Severity context */}
-              {anxietySeverity && (
-                <div className={cn("rounded-2xl border p-4 transition-colors", isDark ? "bg-zinc-900/60 border-zinc-800" : "bg-zinc-50 border-zinc-200")}>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Your Starting Point</p>
-                  <p className={cn("text-sm font-semibold capitalize", isDark ? "text-white" : "text-black")}>{anxietySeverity} telephobia</p>
-                  {lifeImpact.length > 0 && <p className="text-xs text-zinc-500 mt-1">Focus areas: {lifeImpact.join(' · ')}</p>}
-                </div>
-              )}
-            </div>
+            <DashboardScreen
+              key="dashboard"
+              isDark={isDark}
+              historyLength={history.length}
+              recoveryScore={recoveryScore}
+              callStreak={callStreak}
+              callAnxietyRatings={callAnxietyRatings}
+              milestones={MILESTONES}
+              unlockedMilestones={unlockedMilestones}
+              anxietySeverity={anxietySeverity}
+              lifeImpact={lifeImpact}
+            />
           )}
 
           {view === 'history' && (
-            <div key="history" className="space-y-[-140px] pt-4">
-              <div className="flex flex-col gap-6 mb-12 px-2 relative z-[100]">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-4xl font-bold tracking-tight">History</h2>
-                  {currentScript && (
-                    <Button variant="outline" size="sm" isDark={isDark} onClick={() => setView('script')}>
-                      <ArrowLeft className="w-4 h-4" /> Active Script
-                    </Button>
-                  )}
-                </div>
-
-                {/* Active script resume banner */}
-                {currentScript && (
-                  <div
-                    onClick={() => setView('script')}
-                    className={cn(
-                      "p-4 rounded-2xl border cursor-pointer flex items-center justify-between gap-3 transition-all",
-                      isDark ? "bg-blue-500/10 border-blue-500/20 hover:border-blue-500/40" : "bg-blue-50 border-blue-200 hover:border-blue-400"
-                    )}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-0.5">Active Script</p>
-                      <p className={cn("text-sm font-semibold truncate", isDark ? "text-zinc-200" : "text-zinc-800")}>{currentScript.description}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-blue-500 shrink-0" />
-                  </div>
-                )}
-                
-                {isPremium && (
-                  <div className={cn("relative flex items-center transition-colors", isDark ? "text-zinc-400" : "text-zinc-500")}>
-                    <Search className="absolute left-4 w-5 h-5 pointer-events-none" />
-                    <input 
-                      type="text" 
-                      placeholder="Search scripts..." 
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className={cn(
-                        "w-full pl-12 pr-4 py-4 rounded-2xl border focus:outline-none transition-all",
-                        isDark ? "bg-zinc-900 border-zinc-800 focus:border-white/20" : "bg-zinc-100 border-zinc-200 focus:border-black/20"
-                      )}
-                    />
-                  </div>
-                )}
-              </div>
-              
-              {filteredHistory.length === 0 ? (
-                <div className={cn("py-20 text-center space-y-4 rounded-[2.5rem] border relative z-10 transition-colors", isDark ? "bg-zinc-900/30 border-zinc-800/50" : "bg-zinc-100/50 border-zinc-200")}>
-                  <div className={cn("w-16 h-16 rounded-full flex items-center justify-center mx-auto transition-colors", isDark ? "bg-zinc-900" : "bg-zinc-200")}>
-                    <History className="w-8 h-8 text-zinc-500" />
-                  </div>
-                  <p className="text-zinc-500">{searchQuery ? "No matches found." : "No scripts generated yet."}</p>
-                </div>
-              ) : (
-                filteredHistory.map((s, i) => {
-                  const colors = [
-                    'bg-[#A8A291]',
-                    'bg-[#1E7145]',
-                    'bg-[#D66D42]',
-                    'bg-[#A12B2B]',
-                    'bg-[#4A6FA5]',
-                    'bg-[#7B68EE]'
-                  ];
-                  const bgColor = colors[i % colors.length];
-                  
-                  return (
-                    <div
-                      key={s.id}
-                      onClick={() => { setCurrentScript(s); setPreviousView('history'); setView('script'); }}
-                      className={cn(
-                        "relative p-8 rounded-[2.5rem] cursor-pointer shadow-[0_-4px_16px_rgba(0,0,0,0.12)] transition-all hover:translate-y-[-20px] active:scale-[0.98] group min-h-[220px]",
-                        bgColor,
-                        "text-black"
-                      )}
-                      style={{ zIndex: i + 1 }}
-                    >
-                      <div className="flex justify-between items-start mb-6">
-                        <div className="space-y-1 flex-1">
-                          <h3 className="text-2xl font-bold tracking-tight leading-snug line-clamp-2">
-                            {s.description}
-                          </h3>
-                          <p className="text-black/50 font-medium text-sm mt-1">
-                            {s.tone} Call
-                          </p>
-                        </div>
-                        <div className="text-right shrink-0 ml-4">
-                          <div className="text-xl font-bold leading-none">
-                            {new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                          </div>
-                          <div className="text-black/30 text-xs font-bold mt-1">
-                            {new Date(s.timestamp).toLocaleDateString('de-DE')}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-end">
-                        <div
-                          className="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center"
-                          onClick={(e) => { e.stopPropagation(); toggleStar(s.id); }}
-                        >
-                          <Star className={cn("w-5 h-5", starredScripts.includes(s.id) ? "text-amber-500 fill-amber-500" : "text-black/40")} />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-              {/* Extra spacer for the last card to be fully visible */}
-              <div className="h-40" />
-            </div>
+            <HistoryScreen
+              key="history"
+              isDark={isDark}
+              currentScript={currentScript}
+              setView={setView}
+              isPremium={isPremium}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              filteredHistory={filteredHistory}
+              setCurrentScript={setCurrentScript}
+              setPreviousView={setPreviousView}
+              toggleStar={toggleStar}
+              starredScripts={starredScripts}
+            />
           )}
 
           {view === 'script' && currentScript && (
-            <div key="script" className="space-y-6">
-
-              {/* Medical Call Extra Help Banner */}
-              {isMedicalCall && (
-                <div className={cn("rounded-2xl border p-4 transition-colors", isDark ? "bg-blue-950/50 border-blue-500/25" : "bg-blue-50 border-blue-200")}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-base">🏥</span>
-                    <p className={cn("text-xs font-black uppercase tracking-widest", isDark ? "text-blue-400" : "text-blue-600")}>Medical Call Prep</p>
-                  </div>
-                  <div className="space-y-2">
-                    {[
-                      "Write down your symptoms and when they started",
-                      "Have your insurance card and pharmacy info ready",
-                      "Note any current medications or allergies",
-                      "State your main concern clearly in the first sentence",
-                      "It's okay to ask them to repeat or slow down — they're used to it",
-                    ].map((tip, i) => (
-                      <div key={i} className="flex items-start gap-2">
-                        <div className={cn("w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5", isDark ? "border-blue-500/40" : "border-blue-300")}>
-                          <span className="text-[9px] font-black text-blue-400">{i + 1}</span>
-                        </div>
-                        <p className={cn("text-xs leading-snug", isDark ? "text-zinc-300" : "text-zinc-700")}>{tip}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <p className={cn("text-[10px] mt-3 leading-relaxed", isDark ? "text-zinc-500" : "text-zinc-400")}>
-                    They deal with these calls all day. You are not bothering them.
-                  </p>
-                </div>
-              )}
-
-              {/* Speaker Mode Prompt — shown first 5 script sessions */}
-              <AnimatePresence>
-                {showSpeakerPrompt && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    className={cn("rounded-2xl border p-4 flex items-start justify-between gap-3 transition-colors", isDark ? "bg-blue-500/10 border-blue-500/20" : "bg-blue-50 border-blue-200")}
-                  >
-                    <div>
-                      <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-1">Put it on speaker</p>
-                      <p className={cn("text-sm leading-snug", isDark ? "text-zinc-300" : "text-zinc-700")}>Both hands free to read and type during the call. Screen stays on.</p>
-                    </div>
-                    <button onClick={() => setShowSpeakerPrompt(false)} className="text-zinc-500 hover:text-zinc-300 shrink-0 mt-0.5">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-
-              <div className="flex items-center justify-between">
-                <Button variant="ghost" size="sm" isDark={isDark} onClick={() => { setActiveTab(previousView); setView(previousView); }}><ArrowLeft className="w-4 h-4" /> {previousView === 'history' ? 'History' : 'Home'}</Button>
-                <div className="flex gap-2">
-                  {isPremium && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      isDark={isDark} 
-                      onClick={handlePractice}
-                      className={cn(isPracticeMode && "bg-emerald-500/20 border-emerald-500/50 text-emerald-500")}
-                    >
-                      {isPracticeMode ? <Loader2 className="animate-spin w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                      Practice
-                    </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    isDark={isDark}
-                    onClick={() => currentScript && toggleStar(currentScript.id)}
-                    className={cn(currentScript && starredScripts.includes(currentScript.id) && "bg-amber-500/20 border-amber-500/50 text-amber-500")}
-                  >
-                    <Star className={cn("w-4 h-4", currentScript && starredScripts.includes(currentScript.id) && "fill-current")} />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    isDark={isDark}
-                    onClick={handleShare}
-                    className={cn(shareToast && "bg-emerald-500/20 border-emerald-500/50 text-emerald-500")}
-                  >
-                    {shareToast ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Script Identity Card */}
-              <div className={cn("rounded-3xl border p-5 transition-colors", isDark ? "bg-zinc-900/70 border-zinc-800" : "bg-zinc-50 border-zinc-200")}>
-                <div className="flex items-start justify-between gap-3">
-                  <p className={cn("text-lg font-bold leading-snug flex-1", isDark ? "text-white" : "text-black")}>
-                    {currentScript.description}
-                  </p>
-                  <span className={cn(
-                    "shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border",
-                    currentScript.tone === 'Professional' ? (isDark ? "bg-blue-500/15 border-blue-500/30 text-blue-400" : "bg-blue-50 border-blue-200 text-blue-600")
-                    : currentScript.tone === 'Assertive' ? (isDark ? "bg-amber-500/15 border-amber-500/30 text-amber-400" : "bg-amber-50 border-amber-200 text-amber-600")
-                    : currentScript.tone === 'Friendly' ? (isDark ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400" : "bg-emerald-50 border-emerald-200 text-emerald-600")
-                    : (isDark ? "bg-rose-500/15 border-rose-500/30 text-rose-400" : "bg-rose-50 border-rose-200 text-rose-600")
-                  )}>
-                    {currentScript.tone}
-                  </span>
-                </div>
-              </div>
-
-              {/* Alter Ego Mode */}
-              <div className={cn("rounded-3xl border overflow-hidden transition-all", showAlterEgo ? (isDark ? "bg-indigo-950/50 border-indigo-500/30" : "bg-indigo-50 border-indigo-200") : (isDark ? "bg-zinc-900/50 border-zinc-800" : "bg-zinc-50 border-zinc-200"))}>
-                <button onClick={() => setShowAlterEgo(p => !p)} className="w-full flex items-center justify-between p-4 text-left">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">🎭</span>
-                    <div>
-                      <p className={cn("text-sm font-bold", isDark ? "text-white" : "text-black")}>Alter Ego Mode</p>
-                      <p className="text-xs text-zinc-500">{showAlterEgo ? "You are Alex — confident caller" : "Pretend you're someone else"}</p>
-                    </div>
-                  </div>
-                  <div className={cn("w-11 h-6 rounded-full transition-colors relative shrink-0", showAlterEgo ? "bg-indigo-500" : (isDark ? "bg-zinc-700" : "bg-zinc-300"))}>
-                    <div
-                      className="absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200"
-                      style={{ transform: `translateX(${showAlterEgo ? 22 : 2}px)` }}
+            <ScriptScreen
+              key="script"
+              isDark={isDark}
+              currentScript={currentScript}
+              isMedicalCall={isMedicalCall}
+              showMedicalPrep={showMedicalPrep}
+              onHideMedicalPrep={() => setShowMedicalPrep(false)}
+              showSpeakerPrompt={showSpeakerPrompt}
+              setShowSpeakerPrompt={setShowSpeakerPrompt}
+              previousView={previousView}
+              setActiveTab={setActiveTab}
+              setView={setView}
+              isPremium={isPremium}
+              handlePractice={handlePractice}
+              isPracticeMode={isPracticeMode}
+              isPracticePlaying={isPracticePlaying}
+              toggleStar={toggleStar}
+              starredScripts={starredScripts}
+              handleShare={handleShare}
+              shareToast={shareToast}
+              showAlterEgo={showAlterEgo}
+              setShowAlterEgo={setShowAlterEgo}
+              handleVoicemail={handleVoicemail}
+              handleEmailFallback={handleEmailFallback}
+              voicemailScript={voicemailScript}
+              emailFallback={emailFallback}
+              isRewriting={isRewriting}
+              setTone={setTone}
+              handleGenerate={handleGenerate}
+              onShowPreCallCheck={() => setShowPreCallCheck(true)}
+              onShowReflectionPrompt={() => { hapticLight(); setShowReflectionPrompt(true); }}
+              onShowPanicPanel={() => { hapticMedium(); setShowPanicPanel(true); setPanicCategory(null); setPanicResponse(null); }}
+              scriptSections={
+                <div className={cn("space-y-4 pb-32 transition-opacity", isRewriting && "opacity-50")}>
+                  <ScriptSection title="Opening" step={1} content={currentScript.opening} isExpanded={expandedSections.opening} onToggle={() => setExpandedSections(p => ({...p, opening: !p.opening}))} isDark={isDark} color="blue" />
+                  <ScriptSection title="Main Ask" step={2} content={currentScript.mainAsk} isExpanded={expandedSections.mainAsk} onToggle={() => setExpandedSections(p => ({...p, mainAsk: !p.mainAsk}))} isDark={isDark} color="purple" />
+                  <ScriptSection title="Branch A" condition={currentScript.branchX.condition} content={currentScript.branchX.response} isBranch isExpanded={expandedSections.branchX} onToggle={() => setExpandedSections(p => ({...p, branchX: !p.branchX}))} isDark={isDark} color="emerald" />
+                  <ScriptSection title="Branch B" condition={currentScript.branchY.condition} content={currentScript.branchY.response} isBranch isExpanded={expandedSections.branchY} onToggle={() => setExpandedSections(p => ({...p, branchY: !p.branchY}))} isDark={isDark} color="amber" />
+                  {currentScript.extraBranches?.map((branch, i) => (
+                    <ScriptSection
+                      key={`extra-${i}`}
+                      title="Extra Branch"
+                      condition={branch.condition}
+                      content={branch.response}
+                      isBranch
+                      isExpanded={true}
+                      onToggle={() => {}}
+                      onDelete={() => handleDeleteBranch(i)}
+                      isDark={isDark}
+                      color="amber"
                     />
-                  </div>
-                </button>
-                <AnimatePresence>
-                  {showAlterEgo && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-                      <div className={cn("mx-4 mb-4 p-4 rounded-2xl border", isDark ? "bg-indigo-900/30 border-indigo-500/20" : "bg-indigo-100 border-indigo-200")}>
-                        <p className={cn("text-sm font-bold mb-1", isDark ? "text-indigo-200" : "text-indigo-900")}>You are Alex Stone.</p>
-                        <p className={cn("text-sm leading-relaxed", isDark ? "text-indigo-300/80" : "text-indigo-800")}>
-                          A confident public speaker who makes phone calls every single day. Calls are just conversations — you start them, guide them, and end them on your terms. This is just another call.
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {isPremium && (
-                <div className="flex gap-3">
-                  <Button variant="outline" size="sm" isDark={isDark} className="flex-1" onClick={handleVoicemail}>
-                    Voicemail Script
-                  </Button>
-                  <Button variant="outline" size="sm" isDark={isDark} className="flex-1" onClick={handleEmailFallback}>
-                    Email Fallback
-                  </Button>
-                </div>
-              )}
-
-              {voicemailScript && (
-                <Card isDark={isDark} className="bg-emerald-500/5 border-emerald-500/20">
-                  <p className="text-[10px] font-bold text-emerald-500 uppercase mb-2">Voicemail Script</p>
-                  <p className={cn("text-lg italic leading-relaxed", isDark ? "text-emerald-100" : "text-emerald-900")}>"{voicemailScript}"</p>
-                </Card>
-              )}
-
-              {emailFallback && (
-                <Card isDark={isDark} className="bg-blue-500/5 border-blue-500/20">
-                  <p className="text-[10px] font-bold text-blue-500 uppercase mb-2">Follow-up Email</p>
-                  <p className={cn("text-lg italic leading-relaxed whitespace-pre-wrap", isDark ? "text-blue-100" : "text-blue-900")}>{emailFallback}</p>
-                </Card>
-              )}
-
-              <div className={cn("border rounded-3xl p-4 flex flex-col gap-3 transition-colors", isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-100 border-zinc-200")}>
-                <div className="flex items-center justify-between"><span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Adjust Tone</span>{isRewriting && <Loader2 className="animate-spin" />}</div>
-                <div className="flex flex-wrap gap-2">
-                  {(['Professional', 'Assertive', 'Friendly', 'Firm'] as Tone[]).map((t) => (
-                    <button key={t} disabled={isRewriting} onClick={() => { setTone(t); handleGenerate(t); }} className={cn("px-3 py-1.5 rounded-full text-xs font-semibold transition-all", currentScript.tone === t ? (isDark ? "bg-white text-black" : "bg-black text-white") : (isDark ? "bg-zinc-800 text-zinc-500" : "bg-zinc-200 text-zinc-500"))}>{t}</button>
                   ))}
-                </div>
-              </div>
-              {/* Reassurance note */}
-              <div className={cn("flex items-start gap-3 px-4 py-3 rounded-2xl border transition-colors", isDark ? "bg-zinc-900/40 border-zinc-800/60" : "bg-zinc-50 border-zinc-200")}>
-                <span className="text-base shrink-0 mt-0.5">💙</span>
-                <p className={cn("text-xs leading-relaxed", isDark ? "text-zinc-500" : "text-zinc-500")}>
-                  The person on the other line is <span className={isDark ? "text-zinc-300 font-semibold" : "text-zinc-700 font-semibold"}>not annoyed at you</span>. They're just doing their job — same as you.
-                </p>
-              </div>
 
-              <div className={cn("space-y-4 pb-32 transition-opacity", isRewriting && "opacity-50")}>
-                <ScriptSection title="Opening" step={1} content={currentScript.opening} isExpanded={expandedSections.opening} onToggle={() => setExpandedSections(p => ({...p, opening: !p.opening}))} isDark={isDark} color="blue" />
-                <ScriptSection title="Main Ask" step={2} content={currentScript.mainAsk} isExpanded={expandedSections.mainAsk} onToggle={() => setExpandedSections(p => ({...p, mainAsk: !p.mainAsk}))} isDark={isDark} color="purple" />
-                <ScriptSection title="Branch A" condition={currentScript.branchX.condition} content={currentScript.branchX.response} isBranch isExpanded={expandedSections.branchX} onToggle={() => setExpandedSections(p => ({...p, branchX: !p.branchX}))} isDark={isDark} color="emerald" />
-                <ScriptSection title="Branch B" condition={currentScript.branchY.condition} content={currentScript.branchY.response} isBranch isExpanded={expandedSections.branchY} onToggle={() => setExpandedSections(p => ({...p, branchY: !p.branchY}))} isDark={isDark} color="amber" />
-                {/* Extra branches (manually added or auto-saved from panic) */}
-                {currentScript.extraBranches?.map((branch, i) => (
-                  <ScriptSection
-                    key={`extra-${i}`}
-                    title={`Extra Branch`}
-                    condition={branch.condition}
-                    content={branch.response}
-                    isBranch
-                    isExpanded={true}
-                    onToggle={() => {}}
-                    isDark={isDark}
-                    color="amber"
-                  />
-                ))}
-
-                {/* Add a Branch */}
-                <AnimatePresence>
-                  {showAddBranch ? (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className={cn("rounded-2xl border p-4 space-y-3 transition-colors", isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-100 border-zinc-200")}>
-                      <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">What scenario do you want to prepare for?</p>
-                      <textarea
-                        value={addBranchInput}
-                        onChange={e => setAddBranchInput(e.target.value)}
-                        placeholder="e.g. What if they ask why it took me so long?"
-                        className={cn("w-full rounded-xl border p-3 text-sm focus:outline-none resize-none h-20 transition-colors", isDark ? "bg-black border-zinc-800 text-white" : "bg-white border-zinc-300 text-black")}
-                        autoFocus
-                      />
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" isDark={isDark} onClick={() => { setShowAddBranch(false); setAddBranchInput(''); }}>Cancel</Button>
-                        <Button size="sm" className="flex-1" disabled={!addBranchInput.trim() || addBranchLoading} onClick={handleAddBranch}>
-                          {addBranchLoading ? <Loader2 className="animate-spin w-4 h-4" /> : 'Add Branch'}
-                        </Button>
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <motion.button
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      onClick={() => setShowAddBranch(true)}
-                      className={cn("w-full py-3 rounded-2xl border border-dashed text-sm font-medium transition-all flex items-center justify-center gap-2", isDark ? "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300" : "border-zinc-300 text-zinc-400 hover:border-zinc-500 hover:text-zinc-600")}
-                    >
-                      <Plus className="w-4 h-4" /> Add a branch
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-
-                <ScriptSection title="Close" step={3} content={currentScript.close} isExpanded={expandedSections.close} onToggle={() => setExpandedSections(p => ({...p, close: !p.close}))} isDark={isDark} color="rose" />
-              </div>
-              <div className="fixed bottom-[100px] left-0 right-0 px-6 max-w-2xl mx-auto z-[60] flex flex-col gap-3">
-                {isPremium && (
-                  <button
-                    onClick={() => setShowPreCallCheck(true)}
-                    className={cn(
-                      "w-full py-3.5 rounded-2xl border-2 font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99]",
-                      isDark ? "border-indigo-500/50 text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20" : "border-indigo-400/50 text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
+                  <AnimatePresence>
+                    {showAddBranch ? (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className={cn("rounded-2xl border p-4 space-y-3 transition-colors", isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-100 border-zinc-200")}>
+                        <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">What scenario do you want to prepare for?</p>
+                        <textarea
+                          value={addBranchInput}
+                          onChange={e => setAddBranchInput(e.target.value)}
+                          placeholder="e.g. What if they ask why it took me so long?"
+                          className={cn("w-full rounded-xl border p-3 text-sm focus:outline-none resize-none h-20 transition-colors", isDark ? "bg-black border-zinc-800 text-white" : "bg-white border-zinc-300 text-black")}
+                          autoFocus
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" isDark={isDark} onClick={() => { setShowAddBranch(false); setAddBranchInput(''); }}>Cancel</Button>
+                          <Button size="sm" className="flex-1" disabled={!addBranchInput.trim() || addBranchLoading} onClick={handleAddBranch}>
+                            {addBranchLoading ? <Loader2 className="animate-spin w-4 h-4" /> : 'Add Branch'}
+                          </Button>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.button
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        onClick={() => setShowAddBranch(true)}
+                        className={cn("w-full py-3 rounded-2xl border border-dashed text-sm font-medium transition-all flex items-center justify-center gap-2", isDark ? "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300" : "border-zinc-300 text-zinc-400 hover:border-zinc-500 hover:text-zinc-600")}
+                      >
+                        <Plus className="w-4 h-4" /> Add a branch
+                      </motion.button>
                     )}
-                  >
-                    <span>🧘</span> Pre-Call Check — Ready to Make the Call?
-                  </button>
-                )}
-                {isPremium && (
-                  <Button
-                    variant="accent"
-                    size="lg"
-                    className="w-full h-14 rounded-2xl shadow-xl"
-                    onClick={() => { hapticLight(); setShowReflectionPrompt(true); }}
-                  >
-                    <Check className="w-5 h-5" /> Call Complete — Log It
-                  </Button>
-                )}
-                <Button
-                  size="xl"
-                  className={cn(
-                    "w-full h-20 rounded-[2rem] shadow-2xl border-4 transition-all bg-red-600 text-white hover:bg-red-500 shadow-red-600/40 hover:shadow-red-500/60",
-                    isDark ? "border-red-900" : "border-red-300"
-                  )}
-                  onClick={() => { hapticMedium(); setShowPanicPanel(true); setPanicCategory(null); setPanicResponse(null); }}
-                >
-                  <AlertCircle className="w-8 h-8" /> They said something unexpected
-                </Button>
-              </div>
-            </div>
+                  </AnimatePresence>
+
+                  <ScriptSection title="Close" step={3} content={currentScript.close} isExpanded={expandedSections.close} onToggle={() => setExpandedSections(p => ({...p, close: !p.close}))} isDark={isDark} color="rose" />
+                </div>
+              }
+            />
           )}
         </AnimatePresence>
       </main>
@@ -2307,13 +1965,13 @@ export default function App() {
         {showReviewModal && (
           <>
             <div onClick={() => setShowReviewModal(false)} className="fixed inset-0 bg-black/80 z-[100]" />
-            <div className={cn("fixed bottom-0 left-0 right-0 rounded-t-[2.5rem] z-[110] shadow-2xl border-t max-w-2xl mx-auto transition-colors", isDark ? "bg-zinc-900 border-white/5" : "bg-white border-black/5")}>
+            <div className={cn("fixed bottom-0 left-0 right-0 rounded-t-[2.5rem] z-[110] shadow-2xl border-t max-w-2xl mx-auto transition-colors", isDark ? "bg-[#202926] border-[#415049]" : "bg-[rgba(255,251,245,0.98)] border-[#d8cdc0]")}>
               <div className="p-8 space-y-6 max-h-[90vh] overflow-y-auto pb-10">
                 {/* Header */}
                 <div className="text-center space-y-2">
                   <div className="text-4xl">🌟</div>
                   <h2 className="text-2xl font-bold">People love Callmate</h2>
-                  <p className={cn("text-sm", isDark ? "text-zinc-400" : "text-zinc-500")}>Real stories from people who made the call.</p>
+                  <p className={cn("text-sm", isDark ? "text-[#c5d0ca]" : "text-[#607068]")}>Real stories from people who made the call.</p>
                 </div>
 
                 {/* Reviews */}
@@ -2324,29 +1982,29 @@ export default function App() {
                     { name: "Priya K.", location: "New York", quote: "I used to let every work call go to voicemail and make up excuses. Not anymore.", tag: "Work Call" },
                     { name: "Marcus R.", location: "Seattle", quote: "I'm autistic and phone calls are my nightmare. This app is genuinely life-changing. Nothing else comes close.", tag: "Customer Service" },
                   ].map((r, i) => (
-                    <div key={i} className={cn("p-4 rounded-2xl border transition-colors", isDark ? "bg-zinc-800/60 border-zinc-700/50" : "bg-zinc-50 border-zinc-200")}>
+                    <div key={i} className={cn("p-4 rounded-2xl border transition-colors", isDark ? "bg-[#171f1d] border-[#415049]" : "bg-[#fffdf9] border-[#d8cdc0]")}>
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div>
                           <p className={cn("text-sm font-bold", isDark ? "text-zinc-100" : "text-zinc-900")}>{r.name}</p>
-                          <p className={cn("text-[10px]", isDark ? "text-zinc-500" : "text-zinc-400")}>{r.location} · {r.tag}</p>
+                          <p className={cn("text-[10px]", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>{r.location} · {r.tag}</p>
                         </div>
                         <div className="flex gap-0.5 shrink-0 mt-0.5">
                           {[...Array(5)].map((_, j) => <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />)}
                         </div>
                       </div>
-                      <p className={cn("text-sm leading-relaxed", isDark ? "text-zinc-300" : "text-zinc-700")}>"{r.quote}"</p>
+                      <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>"{r.quote}"</p>
                     </div>
                   ))}
                 </div>
 
                 {/* CTA */}
                 <div className="space-y-3 pt-1">
-                  <p className={cn("text-center text-xs font-semibold", isDark ? "text-zinc-400" : "text-zinc-500")}>
+                  <p className={cn("text-center text-xs font-semibold", isDark ? "text-[#b7c3bd]" : "text-[#66756f]")}>
                     Enjoying Callmate? A quick review helps others find us.
                   </p>
                   <Button
                     size="xl"
-                    className="w-full bg-amber-500 hover:bg-amber-400 text-black shadow-lg shadow-amber-500/25"
+                    className="w-full bg-[#d8b278] hover:bg-[#cca469] text-[#22312b] shadow-lg shadow-[#d8b278]/25"
                     onClick={() => {
                       setShowReviewModal(false);
                       window.open('https://apps.apple.com/app/callmate', '_blank');
@@ -2354,7 +2012,7 @@ export default function App() {
                   >
                     ⭐⭐⭐⭐⭐ Rate on the App Store
                   </Button>
-                  <button onClick={() => setShowReviewModal(false)} className={cn("w-full text-sm font-medium py-1 transition-colors", isDark ? "text-zinc-500 hover:text-zinc-400" : "text-zinc-400 hover:text-zinc-500")}>
+                  <button onClick={() => setShowReviewModal(false)} className={cn("w-full text-sm font-medium py-1 transition-colors", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#87938d] hover:text-[#66756f]")}>
                     Maybe later
                   </button>
                 </div>
@@ -2368,9 +2026,9 @@ export default function App() {
         {showUpgradeModal && (
           <>
             <div onClick={() => { if (!upgradeModalForced) setShowUpgradeModal(false); }} className="fixed inset-0 bg-black/80 z-[100]" />
-            <div className={cn("fixed bottom-0 left-0 right-0 rounded-t-[2.5rem] z-[110] shadow-2xl border-t max-w-2xl mx-auto max-h-[94dvh] overflow-y-auto transition-colors", isDark ? "bg-zinc-900 border-white/5" : "bg-white border-black/5")}>
+            <div className={cn("fixed bottom-0 left-0 right-0 rounded-t-[2.5rem] z-[110] shadow-2xl border-t max-w-2xl mx-auto max-h-[94dvh] overflow-y-auto transition-colors", isDark ? "bg-[#202926] border-[#415049]" : "bg-[rgba(255,251,245,0.98)] border-[#d8cdc0]")}>
               <div className="flex justify-center pt-4 pb-2">
-                <div className={cn("w-10 h-1 rounded-full", isDark ? "bg-zinc-700" : "bg-zinc-300")} />
+                <div className={cn("w-10 h-1 rounded-full", isDark ? "bg-[#5b6962]" : "bg-[#cdbfae]")} />
               </div>
 
               <div className="px-6 pb-10 space-y-6">
@@ -2379,22 +2037,22 @@ export default function App() {
                   <div className="space-y-1">
                     <h2 className={cn("text-2xl font-black leading-tight", isDark ? "text-white" : "text-black")}>
                       {userName ? (
-                        <>Hey <span className="text-indigo-400">{userName}</span>,<br /></>
+                        <>Hey <span className={cn(isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>{userName}</span>,<br /></>
                       ) : null}
-                      Unlock <span className="text-indigo-400">Callmate</span> to reduce phone anxiety faster.
+                      Unlock <span className={cn(isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>Callmate</span> to feel steadier on every call.
                     </h2>
-                    <p className="text-zinc-500 text-sm">3 days free · No payment due now · Cancel anytime</p>
+                    <p className={cn("text-sm", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>3 days free · No payment due now · Cancel anytime</p>
                   </div>
                   {!upgradeModalForced && (
-                    <button onClick={() => setShowUpgradeModal(false)} className={cn("p-2 rounded-full shrink-0 mt-1 transition-colors", isDark ? "bg-zinc-800 hover:bg-zinc-700" : "bg-zinc-100 hover:bg-zinc-200")}>
+                    <button onClick={() => setShowUpgradeModal(false)} className={cn("p-2 rounded-full shrink-0 mt-1 transition-colors", isDark ? "bg-[#171f1d] hover:bg-[#2b3632]" : "bg-[#ece5da] hover:bg-[#e2d8ca]")}>
                       <X className="w-5 h-5" />
                     </button>
                   )}
                 </div>
 
                 {/* Benefits */}
-                <div className={cn("rounded-2xl border p-4 space-y-2.5 transition-colors", isDark ? "bg-zinc-800/60 border-zinc-700" : "bg-zinc-50 border-zinc-200")}>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">Everything included</p>
+                <div className={cn("rounded-2xl border p-4 space-y-2.5 transition-colors", isDark ? "bg-[#171f1d] border-[#415049]" : "bg-[#fffdf9] border-[#d8cdc0]")}>
+                  <p className={cn("text-[10px] font-black uppercase tracking-widest mb-3", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>Everything included</p>
                   {[
                     { icon: '📞', text: 'Unlimited call scripts — never face a call unprepared' },
                     { icon: '📚', text: 'Full call history — every script saved forever' },
@@ -2406,7 +2064,7 @@ export default function App() {
                   ].map(({ icon, text }) => (
                     <div key={text} className="flex items-start gap-3">
                       <span className="text-base shrink-0">{icon}</span>
-                      <p className={cn("text-sm leading-snug", isDark ? "text-zinc-300" : "text-zinc-700")}>{text}</p>
+                      <p className={cn("text-sm leading-snug", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>{text}</p>
                     </div>
                   ))}
                 </div>
@@ -2418,22 +2076,22 @@ export default function App() {
                     onClick={() => { setTier('monthly'); localStorage.setItem('ringtone_tier', 'monthly'); setShowUpgradeModal(false); }}
                     className={cn(
                       "p-5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] relative",
-                      tier === 'monthly' ? (isDark ? "bg-indigo-900/40 border-indigo-500" : "bg-indigo-50 border-indigo-400") : (isDark ? "bg-zinc-800/40 border-zinc-700 hover:border-zinc-500" : "bg-zinc-50 border-zinc-200 hover:border-zinc-400")
+                      tier === 'monthly' ? (isDark ? "bg-[#274136]/45 border-[#7fa091]" : "bg-[#eef5f1] border-[#8fae9e]") : (isDark ? "bg-[#171f1d] border-[#415049] hover:border-[#66756f]" : "bg-[#fffdf9] border-[#d8cdc0] hover:border-[#b7aa96]")
                     )}
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
                           <h3 className={cn("font-black text-lg", isDark ? "text-white" : "text-black")}>Monthly</h3>
-                          <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Popular</span>
+                          <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest", isDark ? "bg-[#5d8a7a]/20 text-[#b7d0c4]" : "bg-[#dbe8df] text-[#5d8a7a]")}>Popular</span>
                         </div>
-                        <p className="text-zinc-500 text-xs">Billed monthly after trial</p>
+                        <p className={cn("text-xs", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>Billed monthly after trial</p>
                       </div>
                       <div className="text-right">
-                        <p className={cn("text-2xl font-black tabular-nums", isDark ? "text-white" : "text-black")}>$6.99<span className="text-sm font-normal text-zinc-500">/mo</span></p>
+                        <p className={cn("text-2xl font-black tabular-nums", isDark ? "text-white" : "text-black")}>$6.99<span className={cn("text-sm font-normal", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>/mo</span></p>
                       </div>
                     </div>
-                    <div className={cn("rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-2", isDark ? "bg-indigo-500/10 text-indigo-300" : "bg-indigo-50 text-indigo-700")}>
+                    <div className={cn("rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-2", isDark ? "bg-[#274136]/35 text-[#d7e6df]" : "bg-[#eef5f1] text-[#4d6f62]")}>
                       <Check className="w-3.5 h-3.5 shrink-0" />
                       3 days free, then $6.99/month · No payment due now
                     </div>
@@ -2444,23 +2102,23 @@ export default function App() {
                     onClick={() => { setTier('annual'); localStorage.setItem('ringtone_tier', 'annual'); setShowUpgradeModal(false); }}
                     className={cn(
                       "p-5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] relative",
-                      tier === 'annual' ? (isDark ? "bg-emerald-900/40 border-emerald-500" : "bg-emerald-50 border-emerald-400") : (isDark ? "bg-zinc-800/40 border-zinc-700 hover:border-zinc-500" : "bg-zinc-50 border-zinc-200 hover:border-zinc-400")
+                      tier === 'annual' ? (isDark ? "bg-[#314230]/45 border-[#9bb68f]" : "bg-[#f1f5ea] border-[#a9be97]") : (isDark ? "bg-[#171f1d] border-[#415049] hover:border-[#66756f]" : "bg-[#fffdf9] border-[#d8cdc0] hover:border-[#b7aa96]")
                     )}
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
                           <h3 className={cn("font-black text-lg", isDark ? "text-white" : "text-black")}>Annual</h3>
-                          <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Save 30%</span>
+                          <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest", isDark ? "bg-[#7b9d76]/20 text-[#d3e1cb]" : "bg-[#edf4e8] text-[#6e8f69]")}>Save 30%</span>
                         </div>
-                        <p className="text-zinc-500 text-xs">Best value · Billed yearly after trial</p>
+                        <p className={cn("text-xs", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>Best value · Billed yearly after trial</p>
                       </div>
                       <div className="text-right">
-                        <p className={cn("text-2xl font-black tabular-nums", isDark ? "text-white" : "text-black")}>$58.99<span className="text-sm font-normal text-zinc-500">/yr</span></p>
-                        <p className="text-[10px] text-emerald-400 font-black">≈ $4.92/mo</p>
+                        <p className={cn("text-2xl font-black tabular-nums", isDark ? "text-white" : "text-black")}>$58.99<span className={cn("text-sm font-normal", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>/yr</span></p>
+                        <p className={cn("text-[10px] font-black", isDark ? "text-[#c6ddb7]" : "text-[#6e8f69]")}>≈ $4.92/mo</p>
                       </div>
                     </div>
-                    <div className={cn("rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-2", isDark ? "bg-emerald-500/10 text-emerald-300" : "bg-emerald-50 text-emerald-700")}>
+                    <div className={cn("rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-2", isDark ? "bg-[#314230]/35 text-[#d9e6cf]" : "bg-[#edf4e8] text-[#587651]")}>
                       <Check className="w-3.5 h-3.5 shrink-0" />
                       3 days free, then $58.99/year · Cancel anytime
                     </div>
@@ -2469,26 +2127,26 @@ export default function App() {
 
                 <ReviewSlideshow isDark={isDark} />
 
-                <p className="text-center text-xs text-zinc-500 leading-relaxed">
+                <p className={cn("text-center text-xs leading-relaxed", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>
                   You won't be charged until your 3-day free trial ends.<br />Cancel anytime before then — no questions asked.
                 </p>
 
                 {/* Footer links */}
                 <div className="flex items-center justify-center gap-4 flex-wrap">
-                  <button onClick={() => openInAppBrowser('https://callmate.app/terms')} className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors underline underline-offset-2">Terms of Service</button>
-                  <span className="text-zinc-700 text-xs">·</span>
-                  <button onClick={() => openInAppBrowser('https://callmate.app/privacy')} className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors underline underline-offset-2">Privacy Policy</button>
-                  <span className="text-zinc-700 text-xs">·</span>
+                  <button onClick={() => openInAppBrowser('https://callmate.app/terms')} className={cn("text-xs transition-colors underline underline-offset-2", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#66756f] hover:text-[#4d5d56]")}>Terms of Service</button>
+                  <span className={cn("text-xs", isDark ? "text-[#5b6962]" : "text-[#b6a998]")}>·</span>
+                  <button onClick={() => openInAppBrowser('https://callmate.app/privacy')} className={cn("text-xs transition-colors underline underline-offset-2", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#66756f] hover:text-[#4d5d56]")}>Privacy Policy</button>
+                  <span className={cn("text-xs", isDark ? "text-[#5b6962]" : "text-[#b6a998]")}>·</span>
                   <button
                     onClick={() => {/* restore purchase handler — wire StoreKit here */}}
-                    className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors underline underline-offset-2"
+                    className={cn("text-xs transition-colors underline underline-offset-2", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#66756f] hover:text-[#4d5d56]")}
                   >
                     Restore Purchase
                   </button>
                 </div>
 
                 {!upgradeModalForced && (
-                  <button onClick={() => setShowUpgradeModal(false)} className="w-full text-zinc-500 text-sm font-medium py-1 hover:text-zinc-400 transition-colors">Maybe later</button>
+                  <button onClick={() => setShowUpgradeModal(false)} className={cn("w-full text-sm font-medium py-1 transition-colors", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#87938d] hover:text-[#66756f]")}>Maybe later</button>
                 )}
               </div>
             </div>
@@ -2501,28 +2159,36 @@ export default function App() {
             <div className={cn("fixed bottom-0 left-0 right-0 p-8 rounded-t-[3rem] z-[110] shadow-2xl border-t transition-colors max-w-2xl mx-auto", isDark ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200")}>
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">{selectedPersona ? 'Edit Persona' : 'New Persona'}</h2>
+                  <div className="space-y-1">
+                    <h2 className="text-2xl font-bold">{selectedPersona ? 'Edit Call Role' : 'New Call Role'}</h2>
+                    <p className={cn("text-sm leading-relaxed", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>
+                      A call role is the version of you this script should speak from, not the person you are calling.
+                    </p>
+                  </div>
                   <button onClick={() => setShowPersonaModal(false)} className={cn("p-2 rounded-full", isDark ? "bg-zinc-800" : "bg-zinc-100")}><X className="w-5 h-5" /></button>
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Persona Name</label>
+                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Role Name</label>
                     <input 
                       type="text" 
-                      placeholder="e.g. My Boss, Landlord" 
+                      placeholder="e.g. Calm Tenant, Composed Patient, Clear Manager" 
                       defaultValue={selectedPersona?.name}
                       className={cn("w-full p-4 rounded-2xl border focus:outline-none", isDark ? "bg-black border-zinc-800 text-white" : "bg-zinc-50 border-zinc-200 text-black")}
                       id="persona-name"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Context / Relationship</label>
+                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">How This Version of You Speaks</label>
                     <textarea 
-                      placeholder="e.g. He is very busy and prefers direct answers. We have a formal relationship." 
+                      placeholder="e.g. I am calm, direct, and respectful. I do not over-explain. I ask clearly for what I need and stay grounded if there is pushback." 
                       defaultValue={selectedPersona?.context}
                       className={cn("w-full p-4 rounded-2xl border focus:outline-none h-32 resize-none", isDark ? "bg-black border-zinc-800 text-white" : "bg-zinc-50 border-zinc-200 text-black")}
                       id="persona-context"
                     />
+                    <p className={cn("text-xs leading-relaxed px-1", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>
+                      Describe your stance, boundaries, and energy for this kind of call. Tone still controls whether the script sounds professional, assertive, friendly, or firm.
+                    </p>
                   </div>
                 </div>
                 <Button size="xl" className="w-full" onClick={() => {
@@ -2537,7 +2203,7 @@ export default function App() {
                   }
                   setShowPersonaModal(false);
                 }}>
-                  Save Persona
+                  Save Call Role
                 </Button>
               </div>
             </div>
@@ -2573,7 +2239,7 @@ export default function App() {
                 </div>
                 <div>
                   <p className={cn("text-[10px] font-black uppercase tracking-widest mb-3 text-center", isDark ? "text-zinc-500" : "text-zinc-400")}>How anxious were you during that call?</p>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-5 gap-2 max-w-xl mx-auto">
                     {[
                       { rating: 1, label: 'Calm',       emoji: '😌', color: 'border-emerald-500/60 bg-emerald-500/10 text-emerald-400' },
                       { rating: 2, label: 'Mild',        emoji: '😊', color: 'border-lime-500/60 bg-lime-500/10 text-lime-400' },
@@ -2583,7 +2249,7 @@ export default function App() {
                     ].map(opt => (
                       <button key={opt.rating}
                         onClick={() => saveReflection(`Anxiety: ${opt.rating}/5 — ${opt.label}`, opt.rating)}
-                        className={cn("flex-1 flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all", opt.color)}>
+                        className={cn("flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl border-2 transition-all text-center min-w-0", opt.color)}>
                         <span className="text-2xl">{opt.emoji}</span>
                         <span className="text-[9px] font-black uppercase tracking-wide">{opt.label}</span>
                       </button>
@@ -2615,19 +2281,19 @@ function ReviewSlideshow({ isDark }: { isDark: boolean }) {
   }, []);
   const r = SLIDESHOW_REVIEWS[index];
   return (
-    <div className={cn("rounded-2xl border p-4 transition-colors", isDark ? "bg-zinc-800/50 border-zinc-700/50" : "bg-zinc-50 border-zinc-200")}>
+    <div className={cn("rounded-2xl border p-4 transition-colors", isDark ? "bg-[#171f1d] border-[#415049]" : "bg-[#fffdf9] border-[#d8cdc0]")}>
       <AnimatePresence mode="wait">
         <motion.div key={index} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3 }} className="space-y-2">
           <div className="flex gap-0.5">
-            {[...Array(5)].map((_, j) => <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />)}
+            {[...Array(5)].map((_, j) => <Star key={j} className="w-3.5 h-3.5 fill-[#d8b278] text-[#d8b278]" />)}
           </div>
-          <p className={cn("text-sm leading-relaxed", isDark ? "text-zinc-200" : "text-zinc-800")}>"{r.quote}"</p>
-          <p className={cn("text-[11px]", isDark ? "text-zinc-500" : "text-zinc-400")}>{r.name} · {r.location} · {r.tag}</p>
+          <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>"{r.quote}"</p>
+          <p className={cn("text-[11px]", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>{r.name} · {r.location} · {r.tag}</p>
         </motion.div>
       </AnimatePresence>
       <div className="flex gap-1.5 mt-3">
         {SLIDESHOW_REVIEWS.map((_, i) => (
-          <div key={i} className={cn("h-1 rounded-full transition-all duration-300", i === index ? "w-5 bg-amber-400" : (isDark ? "w-1.5 bg-zinc-700" : "w-1.5 bg-zinc-300"))} />
+          <div key={i} className={cn("h-1 rounded-full transition-all duration-300", i === index ? "w-5 bg-[#d8b278]" : (isDark ? "w-1.5 bg-[#5b6962]" : "w-1.5 bg-[#cdbfae]"))} />
         ))}
       </div>
     </div>
@@ -2660,11 +2326,11 @@ function BreathingGuide({ onComplete }: { onComplete: () => void }) {
   }, []);
 
   const cfg: Record<Phase, { label: string; sub: string; color: string; scale: number; dur: number }> = {
-    ready:  { label: 'Get ready',      sub: 'Find a comfortable position',               color: '#6366f1', scale: 0.38, dur: 0.5 },
-    inhale: { label: 'Breathe In',     sub: 'Slowly inhale through your nose',           color: '#6366f1', scale: 1.0,  dur: INHALE / 1000 },
-    hold:   { label: 'Hold',           sub: 'Hold it gently',                            color: '#8b5cf6', scale: 1.0,  dur: 0.4 },
-    exhale: { label: 'Breathe Out',    sub: 'Slowly exhale through your mouth',          color: '#06b6d4', scale: 0.38, dur: EXHALE / 1000 },
-    done:   { label: 'Well done ✓',   sub: "You're calmer. Your body is ready.",        color: '#22c55e', scale: 0.38, dur: 0.5 },
+    ready:  { label: 'Settle in',      sub: 'Find a comfortable position',               color: '#7b9d76', scale: 0.38, dur: 0.5 },
+    inhale: { label: 'Breathe In',     sub: 'Slowly inhale through your nose',           color: '#7b9d76', scale: 1.0,  dur: INHALE / 1000 },
+    hold:   { label: 'Hold',           sub: 'Hold it gently',                            color: '#d8c5a6', scale: 1.0,  dur: 0.4 },
+    exhale: { label: 'Breathe Out',    sub: 'Slowly exhale through your mouth',          color: '#5d8a7a', scale: 0.38, dur: EXHALE / 1000 },
+    done:   { label: 'You are steady', sub: "Your body is calmer now.",                  color: '#5d8a7a', scale: 0.38, dur: 0.5 },
   };
 
   const c = cfg[phase];
@@ -2706,7 +2372,7 @@ function BreathingGuide({ onComplete }: { onComplete: () => void }) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.85 }}
               transition={{ duration: 0.25 }}
-              className="text-white font-black text-sm drop-shadow-lg leading-tight"
+              className="text-[#fbf8f2] font-black text-sm drop-shadow-lg leading-tight"
             >
               {c.label}
             </motion.p>
@@ -2722,7 +2388,7 @@ function BreathingGuide({ onComplete }: { onComplete: () => void }) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.3 }}
-          className="text-zinc-400 text-sm text-center"
+          className="text-[#66756f] text-sm text-center"
         >
           {c.sub}
         </motion.p>
@@ -2736,8 +2402,8 @@ function BreathingGuide({ onComplete }: { onComplete: () => void }) {
               key={i}
               className={cn(
                 "h-1.5 rounded-full transition-all duration-500",
-                i < cycle ? "bg-indigo-400 w-4" :
-                i === cycle ? "bg-indigo-500 w-6" : "bg-zinc-700 w-1.5"
+                i < cycle ? "bg-[#7b9d76] w-4" :
+                i === cycle ? "bg-[#5d8a7a] w-6" : "bg-[#d8cdc0] w-1.5"
               )}
             />
           ))}
@@ -2746,15 +2412,12 @@ function BreathingGuide({ onComplete }: { onComplete: () => void }) {
 
       {/* Done CTA */}
       {phase === 'done' && (
-        <motion.button
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+        <button
           onClick={onComplete}
-          className="mt-1 px-8 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold text-sm transition-all"
+          className="mt-1 px-8 py-3.5 rounded-2xl bg-[#5d8a7a] hover:bg-[#527a6c] active:scale-[0.98] text-white font-bold text-sm transition-all shadow-lg shadow-[#5d8a7a]/20"
         >
-          Continue →
-        </motion.button>
+          Continue
+        </button>
       )}
     </div>
   );
@@ -2765,7 +2428,7 @@ function PreCallCheck({ isDark, onClose }: { isDark: boolean; onClose: () => voi
   const [mantraTaps, setMantraTaps] = React.useState(0);
 
   return (
-    <div className={cn("fixed inset-0 z-[130] flex flex-col transition-colors", isDark ? "bg-black" : "bg-zinc-950")}>
+    <div className={cn("fixed inset-0 z-[130] flex flex-col warm-therapeutic-bg transition-colors", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
 
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-12 pb-5 shrink-0">
@@ -2775,17 +2438,17 @@ function PreCallCheck({ isDark, onClose }: { isDark: boolean; onClose: () => voi
               key={i}
               animate={{ width: i === step ? 28 : 8, opacity: i <= step ? 1 : 0.3 }}
               transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-              className={cn("h-1.5 rounded-full", i <= step ? "bg-indigo-500" : "bg-zinc-700")}
+              className={cn("h-1.5 rounded-full", i <= step ? "bg-[#5d8a7a]" : (isDark ? "bg-[#33403b]" : "bg-[#d8cdc0]"))}
             />
           ))}
         </div>
-        <button onClick={onClose} className="text-zinc-500 hover:text-zinc-400 text-sm font-semibold transition-colors">
+        <button onClick={onClose} className={cn("text-sm font-semibold transition-colors", isDark ? "text-[#97a59f] hover:text-[#dbe3de]" : "text-[#66756f] hover:text-[#22312b]")}>
           Skip
         </button>
       </div>
 
       {/* Step content */}
-      <div className="flex-1 overflow-y-auto px-6">
+      <div className="flex-1 overflow-y-auto px-6 keyboard-aware">
         <AnimatePresence mode="wait">
 
           {/* Step 0 — Smile */}
@@ -2793,15 +2456,15 @@ function PreCallCheck({ isDark, onClose }: { isDark: boolean; onClose: () => voi
             <motion.div key="smile" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.22 }} className="flex flex-col items-center text-center pt-4 pb-6 gap-5">
               <div className="text-7xl">😊</div>
               <div>
-                <p className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-2">Step 1 of 3 — Smile</p>
-                <h2 className="text-2xl font-black text-white leading-tight mb-3">Turn on your smile before the call starts.</h2>
-                <p className="text-zinc-400 text-sm leading-relaxed">
+                <p className={cn("text-xs font-black uppercase tracking-widest mb-2", isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>Step 1 of 3 · Soften</p>
+                <h2 className={cn("text-2xl font-black leading-tight mb-3", isDark ? "text-[#f6f2ea]" : "text-[#22312b]")}>Let your face soften before the call starts.</h2>
+                <p className={cn("text-sm leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>
                   Smiling — even a small, deliberate one — triggers a real biological response. It activates your parasympathetic nervous system, lowers cortisol, and shifts your brain's perception of the situation from threat to manageable.
                 </p>
               </div>
-              <div className={cn("w-full rounded-2xl border p-4 text-left", isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-800 border-zinc-700")}>
-                <p className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-2">Try this right now</p>
-                <p className="text-zinc-300 text-sm leading-relaxed">Take a moment to smile — a real one. Hold it for 5 seconds. Notice how your shoulders drop a little. Keep that smile when the call starts. It works even if the other person can't see you.</p>
+              <div className={cn("w-full rounded-2xl border p-4 text-left warm-panel", isDark ? "bg-[#202926]/88 border-[#415049]" : "")}>
+                <p className={cn("text-xs font-black uppercase tracking-widest mb-2", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>Try this right now</p>
+                <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>Take a small real smile for 5 seconds. Notice your jaw unclench and your shoulders drop a little. Keep that softness when the call begins.</p>
               </div>
             </motion.div>
           )}
@@ -2810,9 +2473,9 @@ function PreCallCheck({ isDark, onClose }: { isDark: boolean; onClose: () => voi
           {step === 1 && (
             <motion.div key="breath" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.22 }} className="flex flex-col items-center text-center pt-4 pb-6 gap-4">
               <div>
-                <p className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-2">Step 2 of 3 — Breathe</p>
-                <h2 className="text-2xl font-black text-white leading-tight mb-1">3 deep breaths.</h2>
-                <p className="text-zinc-500 text-sm">Follow the circle. Let it guide you.</p>
+                <p className={cn("text-xs font-black uppercase tracking-widest mb-2", isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>Step 2 of 3 · Breathe</p>
+                <h2 className={cn("text-2xl font-black leading-tight mb-1", isDark ? "text-[#f6f2ea]" : "text-[#22312b]")}>Take three slower breaths.</h2>
+                <p className={cn("text-sm", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>Follow the circle and let your pace come down.</p>
               </div>
               <BreathingGuide onComplete={() => setStep(2)} />
             </motion.div>
@@ -2823,25 +2486,25 @@ function PreCallCheck({ isDark, onClose }: { isDark: boolean; onClose: () => voi
             <motion.div key="mindset" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.22 }} className="flex flex-col items-center text-center pt-4 pb-6 gap-5">
               <div className="text-7xl">🧠</div>
               <div>
-                <p className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-2">Step 3 of 3 — Reframe</p>
-                <h2 className="text-2xl font-black text-white leading-tight mb-3">They're not thinking about you.</h2>
-                <p className="text-zinc-400 text-sm leading-relaxed">
+                <p className={cn("text-xs font-black uppercase tracking-widest mb-2", isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>Step 3 of 3 · Reframe</p>
+                <h2 className={cn("text-2xl font-black leading-tight mb-3", isDark ? "text-[#f6f2ea]" : "text-[#22312b]")}>This call does not need to be perfect.</h2>
+                <p className={cn("text-sm leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>
                   The person on the other end is focused on their own day, their own tasks. They're not analyzing your voice, judging your words, or waiting for you to stumble. Most people are understanding — they just want to resolve the same thing you do.
                 </p>
               </div>
-              <div className={cn("w-full rounded-2xl border p-5 text-left", isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-800 border-zinc-700")}>
-                <p className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-3">Tap the mantra 5 times</p>
+              <div className={cn("w-full rounded-2xl border p-5 text-left warm-panel", isDark ? "bg-[#202926]/88 border-[#415049]" : "")}>
+                <p className={cn("text-xs font-black uppercase tracking-widest mb-3", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>Tap this reminder 5 times</p>
                 <motion.button
                   whileTap={{ scale: 0.96 }}
                   onClick={() => setMantraTaps(t => Math.min(t + 1, 5))}
                   className={cn(
                     "w-full py-4 rounded-2xl text-center font-black text-base transition-all border-2",
                     mantraTaps >= 5
-                      ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
-                      : "bg-indigo-500/10 border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/20"
+                      ? (isDark ? "bg-[#5d8a7a]/15 border-[#7b9d76]/40 text-[#b7d0c4]" : "bg-[#dbe8df] border-[#8fae9e] text-[#476f61]")
+                      : (isDark ? "bg-[#5d8a7a]/10 border-[#5d8a7a]/30 text-[#dbe8df] hover:bg-[#5d8a7a]/15" : "bg-[#f3eee4] border-[#d8cdc0] text-[#476f61] hover:bg-[#ece5da]")
                   )}
                 >
-                  {mantraTaps >= 5 ? '✓ This is going to be a great call.' : '"This is going to be a great call."'}
+                  {mantraTaps >= 5 ? '✓ I only need to be clear, not perfect.' : '"I only need to be clear, not perfect."'}
                 </motion.button>
                 <div className="flex justify-center gap-2 mt-3">
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -2849,7 +2512,7 @@ function PreCallCheck({ isDark, onClose }: { isDark: boolean; onClose: () => voi
                       key={i}
                       animate={{ scale: i < mantraTaps ? 1 : 0.7, opacity: i < mantraTaps ? 1 : 0.25 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                      className={cn("w-2.5 h-2.5 rounded-full", i < mantraTaps ? "bg-indigo-400" : "bg-zinc-700")}
+                      className={cn("w-2.5 h-2.5 rounded-full", i < mantraTaps ? "bg-[#5d8a7a]" : (isDark ? "bg-[#415049]" : "bg-[#d8cdc0]"))}
                     />
                   ))}
                 </div>
@@ -2869,18 +2532,18 @@ function PreCallCheck({ isDark, onClose }: { isDark: boolean; onClose: () => voi
             className={cn(
               "w-full py-4 rounded-2xl font-bold text-base transition-all",
               step === 1
-                ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white shadow-lg shadow-indigo-600/25"
+                ? (isDark ? "bg-[#202926] text-[#5b6962] cursor-not-allowed" : "bg-[#ece5da] text-[#97a59f] cursor-not-allowed")
+                : "bg-[#5d8a7a] hover:bg-[#527a6c] active:scale-[0.99] text-white shadow-lg shadow-[#5d8a7a]/20"
             )}
           >
-            {step === 1 ? 'Follow the breathing guide above →' : 'Next →'}
+            {step === 1 ? 'Follow the breathing guide above' : 'Next'}
           </button>
         ) : (
           <button
             onClick={onClose}
-            className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-emerald-600/25"
+            className="w-full py-4 rounded-2xl bg-[#5d8a7a] hover:bg-[#527a6c] active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-[#5d8a7a]/20"
           >
-            I'm Ready — Start the Call 📞
+            I&apos;m Ready to Start the Call
           </button>
         )}
       </div>
@@ -2994,7 +2657,7 @@ function SetupAnimation({ isDark, userName, onDone }: { isDark: boolean; userNam
   }, []);
 
   return (
-    <div className={cn("h-screen flex flex-col items-center justify-center px-8 transition-colors relative overflow-hidden", isDark ? "bg-black text-white" : "bg-white text-black")}>
+    <div className={cn("app-screen warm-therapeutic-bg flex flex-col items-center justify-center px-8 transition-colors relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
       <div className="w-full max-w-sm relative z-10">
         {/* Logo + heading */}
         <motion.div
@@ -3004,15 +2667,15 @@ function SetupAnimation({ isDark, userName, onDone }: { isDark: boolean; userNam
           className="mb-10"
         >
           <div className="flex items-center gap-2 mb-5">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-black">
-              <Logo className="w-5 h-5 text-white" />
+            <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center", isDark ? "bg-[#22312b]" : "bg-[#5d8a7a]")}>
+              <Logo className="w-5 h-5 text-[#fbf8f2]" />
             </div>
             <span className="font-bold text-xl">Callmate</span>
           </div>
           <h1 className="text-2xl font-black leading-tight">
             {userName ? `Setting things up for you, ${userName}.` : 'Setting things up for you.'}
           </h1>
-          <p className={cn("text-sm mt-1.5", isDark ? "text-zinc-500" : "text-zinc-400")}>This only takes a second.</p>
+          <p className={cn("text-sm mt-1.5", isDark ? "text-[#9aa8a2]" : "text-[#6f7d75]")}>This will feel calm and quick.</p>
         </motion.div>
 
         {/* Steps */}
@@ -3033,18 +2696,18 @@ function SetupAnimation({ isDark, userName, onDone }: { isDark: boolean; userNam
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 18 }}
-                    className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center shrink-0"
+                    className="w-5 h-5 rounded-full bg-[#7b9d76] flex items-center justify-center shrink-0"
                   >
                     <Check className="w-3 h-3 text-white" />
                   </motion.div>
                 ) : isActive ? (
-                  <div className="w-5 h-5 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin shrink-0" />
+                  <div className="w-5 h-5 rounded-full border-2 border-[#7b9d76] border-t-transparent animate-spin shrink-0" />
                 ) : (
                   <div className={cn("w-5 h-5 rounded-full border-2 shrink-0", isDark ? "border-zinc-700" : "border-zinc-300")} />
                 )}
                 <span className={cn(
                   "text-sm font-medium transition-colors duration-300",
-                  isDone ? (isDark ? "text-white" : "text-black") : (isDark ? "text-zinc-600" : "text-zinc-400")
+                  isDone ? (isDark ? "text-white" : "text-[#22312b]") : (isDark ? "text-[#899791]" : "text-[#7d8b84]")
                 )}>
                   {text}
                 </span>
@@ -3061,16 +2724,16 @@ function SetupAnimation({ isDark, userName, onDone }: { isDark: boolean; userNam
           className="space-y-4"
         >
           <div>
-            <p className={cn("text-xs font-black uppercase tracking-widest mb-1.5", isDark ? "text-indigo-400" : "text-indigo-600")}>All set</p>
+            <p className={cn("text-xs font-black uppercase tracking-widest mb-1.5", isDark ? "text-[#a9c2b5]" : "text-[#5d8a7a]")}>All set</p>
             <h2 className="text-2xl font-black leading-tight">
               {userName ? `Your Callmate is ready, ${userName}.` : 'Your Callmate is ready.'}
             </h2>
           </div>
           <button
             onClick={onDone}
-            className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-indigo-600/25"
+            className="w-full py-4 rounded-2xl bg-[#5d8a7a] hover:bg-[#527a6c] active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-[#5d8a7a]/20"
           >
-            Start Making Calls →
+            Enter Callmate
           </button>
         </motion.div>
       </div>
@@ -3192,6 +2855,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
   const handleApple = async () => {
     setAppleLoading(true);
     setEmailError('');
+    localStorage.setItem(AUTH_INTENT_KEY, mode);
     try {
       const result = await signInWithApple();
       const { error, data } = result as { error: any; data: any };
@@ -3209,6 +2873,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
         }
       }
     } catch (e: any) {
+      localStorage.removeItem(AUTH_INTENT_KEY);
       const msg = e?.message ?? '';
       if (!msg.toLowerCase().includes('cancel')) {
         setEmailError(`Apple Sign In failed: ${formatAuthError(msg)}`);
@@ -3221,22 +2886,26 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
   const handleGoogle = async () => {
     setLoading(true);
     setEmailError('');
+    localStorage.setItem(AUTH_INTENT_KEY, mode);
     try {
       const { data, error } = await signInWithGoogle();
       if (error) {
+        localStorage.removeItem(AUTH_INTENT_KEY);
         const msg = error.message?.toLowerCase() ?? '';
         setEmailError(
           msg.includes('client') || msg.includes('provider') || msg.includes('enabled')
             ? 'Google Sign In is not configured yet — use email below.'
             : formatAuthError(error.message)
         );
-      } else {
-        const googleUser = data?.user ?? data?.session?.user;
+      } else if ('user' in data || 'session' in data) {
+        const oauthResult = data as any;
+        const googleUser = oauthResult?.user ?? oauthResult?.session?.user;
         if (googleUser) {
           await finishSignedInUser(googleUser, mode);
         }
       }
     } catch (e: any) {
+      localStorage.removeItem(AUTH_INTENT_KEY);
       const msg = e?.message ?? '';
       if (!msg.toLowerCase().includes('cancel')) {
         setEmailError(`Google Sign In failed: ${formatAuthError(msg)}`);
@@ -3247,29 +2916,29 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
   };
 
   return (
-    <div className={cn("h-screen flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-black text-white" : "bg-white text-black")}>
-      <motion.div animate={{ scale: [1, 1.08, 1], opacity: [0.1, 0.16, 0.1] }} transition={{ duration: 9, repeat: Infinity }}
-        className="absolute top-[-30%] right-[-20%] w-[70vw] h-[70vw] rounded-full blur-[130px] bg-indigo-500 pointer-events-none" />
+    <div className={cn("app-screen warm-therapeutic-bg flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
+      <motion.div animate={{ scale: [1, 1.05, 1], opacity: [0.08, 0.14, 0.08] }} transition={{ duration: 10, repeat: Infinity }}
+        className="absolute top-[-30%] right-[-20%] w-[70vw] h-[70vw] rounded-full blur-[130px] bg-[#7b9d76] pointer-events-none" />
 
-      <div className="flex-1 flex flex-col px-6 py-10 overflow-y-auto max-w-lg mx-auto w-full justify-center">
+      <div className="keyboard-aware flex-1 flex flex-col px-6 py-10 overflow-y-auto max-w-lg mx-auto w-full justify-center">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
           <div className="flex items-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-black">
-              <Logo className="w-5 h-5 text-white" />
+            <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center", isDark ? "bg-[#22312b]" : "bg-[#5d8a7a]")}>
+              <Logo className="w-5 h-5 text-[#fbf8f2]" />
             </div>
             <span className="font-bold text-xl">Callmate</span>
           </div>
-          <p className={cn("text-xs font-black uppercase tracking-[0.25em] mb-2", isDark ? "text-indigo-400" : "text-indigo-600")}>
+          <p className={cn("text-xs font-black uppercase tracking-[0.25em] mb-2", isDark ? "text-[#a9c2b5]" : "text-[#5d8a7a]")}>
             {tier === 'annual' ? 'Annual Plan · Save 30%' : 'Monthly Plan'}
           </p>
           <h1 className="text-3xl font-bold leading-tight mb-2">
             {mode === 'login' ? 'Welcome back.' : (userName ? `One last step, ${userName}.` : 'One last step.')}
           </h1>
-          <p className={cn("text-sm leading-relaxed", isDark ? "text-zinc-400" : "text-zinc-500")}>
+          <p className={cn("text-sm leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#607068]")}>
             {mode === 'login'
-              ? 'Sign in to access your scripts and progress.'
-              : 'Your scripts and recovery progress are saved to your account — not just this device.'}
+              ? 'Sign in to pick up right where you left off.'
+              : 'Your scripts and progress stay with your account, so your support is there when you need it.'}
           </p>
         </motion.div>
 
@@ -3279,7 +2948,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="space-y-3 mb-5">
           <button onClick={handleApple} disabled={loading || appleLoading} className={cn(
             "w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border font-semibold text-sm transition-all active:scale-[0.99] disabled:opacity-50",
-            isDark ? "bg-white text-black border-white hover:bg-zinc-100" : "bg-black text-white border-black hover:bg-zinc-800"
+            isDark ? "bg-[#f4efe6] text-[#22312b] border-[#f4efe6] hover:bg-[#ebe4d8]" : "bg-[#22312b] text-[#fbf8f2] border-[#22312b] hover:bg-[#2e4039]"
           )}>
             {appleLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
               <>
@@ -3290,7 +2959,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
           </button>
           <button onClick={handleGoogle} disabled={loading} className={cn(
             "w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border font-semibold text-sm transition-all active:scale-[0.99] disabled:opacity-50",
-            isDark ? "bg-zinc-900 text-white border-zinc-700 hover:border-zinc-500" : "bg-white text-black border-zinc-200 hover:border-zinc-400"
+            isDark ? "bg-[#202926] text-white border-[#46534d] hover:border-[#66756f]" : "bg-[rgba(255,251,245,0.92)] text-[#22312b] border-[#d8cdc0] hover:border-[#b7aa96]"
           )}>
             <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
             {mode === 'login' ? 'Sign in with Google' : 'Continue with Google'}
@@ -3299,9 +2968,9 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
 
         {/* Divider */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.18 }} className="flex items-center gap-3 mb-5">
-          <div className={cn("flex-1 h-px", isDark ? "bg-zinc-800" : "bg-zinc-200")} />
-          <span className={cn("text-xs font-bold", isDark ? "text-zinc-600" : "text-zinc-400")}>{mode === 'login' ? 'or sign in with email' : 'or sign up with email'}</span>
-          <div className={cn("flex-1 h-px", isDark ? "bg-zinc-800" : "bg-zinc-200")} />
+          <div className={cn("flex-1 h-px", isDark ? "bg-[#415049]" : "bg-[#d8cdc0]")} />
+          <span className={cn("text-xs font-bold", isDark ? "text-[#8f9d97]" : "text-[#87938d]")}>{mode === 'login' ? 'or sign in with email' : 'or sign up with email'}</span>
+          <div className={cn("flex-1 h-px", isDark ? "bg-[#415049]" : "bg-[#d8cdc0]")} />
         </motion.div>
           </>
         )}
@@ -3313,18 +2982,18 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
             transition={{ delay: 0.18 }}
             className={cn(
               "rounded-3xl border p-5 space-y-4 mb-5",
-              isDark ? "bg-zinc-900/80 border-zinc-800" : "bg-zinc-50 border-zinc-200"
+              isDark ? "bg-[#202926]/85 border-[#415049]" : "bg-[rgba(255,251,245,0.94)] border-[#d8cdc0]"
             )}
           >
             <div className="space-y-2">
-              <p className={cn("text-xs font-black uppercase tracking-[0.25em]", isDark ? "text-emerald-400" : "text-emerald-600")}>Account Created</p>
+              <p className={cn("text-xs font-black uppercase tracking-[0.25em]", isDark ? "text-[#b4d0bd]" : "text-[#7b9d76]")}>Account Created</p>
               <h2 className="text-2xl font-bold leading-tight">Check your email to finish signing up.</h2>
-              <p className={cn("text-sm leading-relaxed", isDark ? "text-zinc-400" : "text-zinc-600")}>
+              <p className={cn("text-sm leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#607068]")}>
                 We sent a confirmation link to <span className={cn("font-semibold", isDark ? "text-white" : "text-black")}>{pendingConfirmationEmail}</span>.
                 Tap that link and we&apos;ll finish bringing you into Callmate.
               </p>
             </div>
-            <div className={cn("rounded-2xl p-4 text-sm leading-relaxed", isDark ? "bg-zinc-950 border border-zinc-800 text-zinc-300" : "bg-white border border-zinc-200 text-zinc-700")}>
+            <div className={cn("rounded-2xl p-4 text-sm leading-relaxed", isDark ? "bg-[#171f1d] border border-[#415049] text-[#d9e2dd]" : "bg-[#fffdf9] border border-[#d8cdc0] text-[#54645d]")}>
               If you don&apos;t see it, check spam or promotions. If you already confirmed, continue below.
             </div>
           </motion.div>
@@ -3337,7 +3006,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
             onChange={(e) => { setEmail(e.target.value); setEmailError(''); }}
             className={cn(
               "w-full px-4 py-4 rounded-2xl border text-base focus:outline-none transition-colors",
-              isDark ? "bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-600 focus:border-indigo-500" : "bg-zinc-50 border-zinc-200 text-black placeholder:text-zinc-400 focus:border-indigo-400"
+              isDark ? "bg-[#202926] border-[#415049] text-white placeholder:text-[#82908a] focus:border-[#7b9d76]" : "bg-[rgba(255,251,245,0.94)] border-[#d8cdc0] text-[#22312b] placeholder:text-[#92a09a] focus:border-[#7b9d76]"
             )}
           />
           <div className="relative">
@@ -3420,7 +3089,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
           )}
           {mode === 'signup' && trialEndDate && (
             <p className={cn("text-center text-xs leading-relaxed", isDark ? "text-zinc-500" : "text-zinc-400")}>
-              Your 3-day free trial starts today. No charge until {trialEndDate}.<br />Cancel anytime.
+              Your 3-day free trial starts now. No charge until {trialEndDate}.<br />Cancel anytime.
             </p>
           )}
           {mode === 'signup' && (
@@ -3649,6 +3318,7 @@ function ScriptSection({
   isBranch = false,
   isExpanded,
   onToggle,
+  onDelete,
   isDark = true,
   color = 'zinc'
 }: {
@@ -3659,6 +3329,7 @@ function ScriptSection({
   isBranch?: boolean,
   isExpanded: boolean,
   onToggle: () => void,
+  onDelete?: () => void,
   isDark?: boolean,
   color?: 'blue' | 'purple' | 'emerald' | 'amber' | 'rose' | 'zinc'
 }) {
@@ -3687,7 +3358,16 @@ function ScriptSection({
                 </div>
               )}
             </div>
-            <div className="shrink-0 pt-1">
+            <div className="shrink-0 pt-1 flex items-center gap-2">
+              {onDelete && (
+                <button
+                  onClick={e => { e.stopPropagation(); onDelete(); }}
+                  className="p-1 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  aria-label="Delete branch"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
               {isExpanded ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
             </div>
           </div>
