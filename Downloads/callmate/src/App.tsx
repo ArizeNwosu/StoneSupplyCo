@@ -257,10 +257,10 @@ export default function App() {
   const [showAlterEgo, setShowAlterEgo] = useState(false);
   const [trialStartDate, setTrialStartDate] = useState<number | null>(null);
   const [trialScriptsUsed, setTrialScriptsUsed] = useState(0);
-  const [userName, setUserName] = useState('');
-  const [userGender, setUserGender] = useState('');
-  const [userAgeRange, setUserAgeRange] = useState('');
-  const [userEmail, setUserEmail] = useState('');
+  const [userName, setUserName] = useState(() => localStorage.getItem('callmate_user_name') || '');
+  const [userGender, setUserGender] = useState(() => localStorage.getItem('callmate_user_gender') || '');
+  const [userAgeRange, setUserAgeRange] = useState(() => localStorage.getItem('callmate_user_age_range') || '');
+  const [userEmail, setUserEmail] = useState(() => localStorage.getItem('callmate_user_email') || '');
   const [starredScripts, setStarredScripts] = useState<string[]>(() => {
     const saved = localStorage.getItem('callmate_starred');
     return saved ? JSON.parse(saved) : [];
@@ -398,37 +398,104 @@ export default function App() {
 
     const savedLastScript = localStorage.getItem('callmate_last_script_date');
     if (savedLastScript) setLastScriptDate(parseInt(savedLastScript));
-
-    const timer = setTimeout(() => { if (view === 'splash') setView('explainer'); }, 2000);
-    return () => clearTimeout(timer);
   }, []);
 
   // ─── Supabase session management ──────────────────────────────────────────
   useEffect(() => {
-    // Restore existing session on mount
-    const restoreSession = async () => {
-      const { data: { session } } = await (await import('./services/supabase')).supabase.auth.getSession();
+    // Check for existing session and enforce minimum splash duration in parallel.
+    const init = async () => {
+      const { supabase: sb } = await import('./services/supabase');
+      const [{ data: { session } }] = await Promise.all([
+        sb.auth.getSession(),
+        new Promise<void>(resolve => setTimeout(resolve, 2000)),
+      ]);
+      const savedEmail = localStorage.getItem('callmate_user_email');
       if (session?.user) {
         setSupabaseUser(session.user);
-        await loadUserDataFromSupabase(session.user.id);
+        if (session.user.email) {
+          setUserEmail(session.user.email);
+          localStorage.setItem('callmate_user_email', session.user.email);
+        }
+        setView('home');
+        loadUserDataFromSupabase(session.user.id);
+      } else if (savedEmail) {
+        setUserEmail(savedEmail);
+        setView('home');
+      } else {
+        setView('explainer');
       }
     };
-    restoreSession();
+    init();
 
     // Listen for future auth state changes (login / logout)
     const { data: { subscription } } = onAuthStateChange(async (event, session) => {
       if (session?.user) {
+        // Always sync user state for any event that has a valid session
         setSupabaseUser(session.user);
+        if (session.user.email) {
+          setUserEmail(session.user.email);
+          localStorage.setItem('callmate_user_email', session.user.email);
+        }
         if (event === 'SIGNED_IN') {
           await loadUserDataFromSupabase(session.user.id);
+          
+          // Only automatically set view if we are currently in an onboarding/auth view
+          // This avoids interrupting the user if they are already using the app
+          if (['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(view)) {
+            const isNewUser = Date.now() - new Date(session.user.created_at).getTime() < 30000;
+            setView(isNewUser ? 'setup' : 'home');
+          }
         }
       } else {
         setSupabaseUser(null);
+        if (event === 'SIGNED_OUT') {
+          setUserEmail('');
+          localStorage.removeItem('callmate_user_email');
+          setView('account');
+        }
       }
     });
 
+    // Handle deep link callback from OAuth (com.trycallmate.app://login-callback)
+    const setupDeepLink = async () => {
+      const { Capacitor } = await import('@capacitor/core');
+      if (!Capacitor.isNativePlatform()) return;
+      const { App: CapApp } = await import('@capacitor/app');
+      CapApp.addListener('appUrlOpen', async ({ url }) => {
+        if (!url.startsWith('com.trycallmate.app://')) return;
+        // Close the browser immediately so the user is back in the app
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.close();
+        // Exchange the auth code for a session — onAuthStateChange handles the rest
+        const { supabase: sb } = await import('./services/supabase');
+        const params = new URLSearchParams(url.split('?')[1] ?? '');
+        const code = params.get('code');
+        if (code) {
+          await sb.auth.exchangeCodeForSession(code);
+        }
+      });
+    };
+    setupDeepLink();
+
     return () => subscription.unsubscribe();
   }, []);
+
+  // Scroll to top whenever navigating to the main home view
+  useEffect(() => {
+    if (view === 'home') window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [view]);
+
+  // Safeguard: Redirect to home if logged in and trying to access onboarding
+  useEffect(() => {
+    const isAuthenticating = ['account', 'setup'].includes(view);
+    const isOnboarding = ['explainer', 'onboarding', 'reviews'].includes(view);
+    
+    // Only redirect to home if we have a verified email AND we are on a landing/onboarding page
+    // and NOT currently in the middle of the auth/setup flow.
+    if (userEmail && isOnboarding && !isAuthenticating) {
+      setView('home');
+    }
+  }, [userEmail, view]);
 
   const loadUserDataFromSupabase = async (userId: string) => {
     const [remoteScripts, remoteReflections, remotePersonas, profile] = await Promise.all([
@@ -1047,20 +1114,32 @@ export default function App() {
     tier={tier}
     trialStartDate={trialStartDate}
     onComplete={async (email, isNewUser) => {
-      setUserEmail(email);
-      localStorage.setItem('callmate_user_email', email);
-      // Push local data to Supabase on first signup
-      if (isNewUser && supabaseUser) {
-        await pushLocalDataToSupabase(supabaseUser.id, {
-          scripts: history,
-          reflections,
-          anxietyRatings: callAnxietyRatings,
-          personas,
-          name: userName,
-          tier,
-          trialStartDate,
-          darkMode: isDark,
-        });
+      if (email) {
+        setUserEmail(email);
+        localStorage.setItem('callmate_user_email', email);
+      }
+      // Get fresh session — supabaseUser closure may be stale at this point
+      const { supabase: sb } = await import('./services/supabase');
+      const { data: { session: freshSession } } = await sb.auth.getSession();
+      if (freshSession?.user) {
+        setSupabaseUser(freshSession.user);
+        if (freshSession.user.email && !email) {
+          setUserEmail(freshSession.user.email);
+          localStorage.setItem('callmate_user_email', freshSession.user.email);
+        }
+        // Push local data to Supabase on first signup
+        if (isNewUser) {
+          await pushLocalDataToSupabase(freshSession.user.id, {
+            scripts: history,
+            reflections,
+            anxietyRatings: callAnxietyRatings,
+            personas,
+            name: userName,
+            tier,
+            trialStartDate,
+            darkMode: isDark,
+          });
+        }
       }
       // New user → setup animation; returning user → home directly
       setView(isNewUser ? 'setup' : 'home');
@@ -1409,15 +1488,15 @@ export default function App() {
                 {/* Profile section */}
                 <section className="space-y-3">
                   <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Profile</h3>
-                  {userEmail ? (
+                  {(supabaseUser || userEmail) ? (
                     <Card isDark={isDark} className="p-5 space-y-4">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white font-black text-lg shrink-0 select-none">
-                          {(userName || userEmail)[0].toUpperCase()}
+                          {(userName || userEmail || supabaseUser?.email || 'C')[0].toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-lg">{userName || 'Callmate User'}</p>
-                          <p className={cn("text-sm truncate", isDark ? "text-zinc-400" : "text-zinc-500")}>{userEmail}</p>
+                          <p className={cn("text-sm truncate", isDark ? "text-zinc-400" : "text-zinc-500")}>{userEmail || supabaseUser?.email || ''}</p>
                           <p className="text-xs text-emerald-500 font-semibold mt-0.5">✓ Synced to cloud</p>
                         </div>
                       </div>
@@ -1427,6 +1506,7 @@ export default function App() {
                           setSupabaseUser(null);
                           setUserEmail('');
                           localStorage.removeItem('callmate_user_email');
+                          setView('account');
                         }}
                         className={cn("w-full py-2.5 rounded-xl border text-sm font-semibold transition-colors", isDark ? "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300" : "border-zinc-200 text-zinc-500 hover:border-zinc-400 hover:text-zinc-700")}
                       >
@@ -2331,7 +2411,7 @@ export default function App() {
                       {userName ? (
                         <>Hey <span className="text-indigo-400">{userName}</span>,<br /></>
                       ) : null}
-                      Unlock <span className="text-indigo-400">Callmate</span> to reduce call anxiety faster.
+                      Unlock <span className="text-indigo-400">Callmate</span> to reduce phone anxiety faster.
                     </h2>
                     <p className="text-zinc-500 text-sm">3 days free · No payment due now · Cancel anytime</p>
                   </div>
@@ -2364,7 +2444,7 @@ export default function App() {
                 <div className="space-y-3">
                   {/* Monthly */}
                   <div
-                    onClick={() => { setTier('monthly'); localStorage.setItem('ringtone_tier', 'monthly'); setShowUpgradeModal(false); setView('account'); }}
+                    onClick={() => { setTier('monthly'); localStorage.setItem('ringtone_tier', 'monthly'); setShowUpgradeModal(false); }}
                     className={cn(
                       "p-5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] relative",
                       tier === 'monthly' ? (isDark ? "bg-indigo-900/40 border-indigo-500" : "bg-indigo-50 border-indigo-400") : (isDark ? "bg-zinc-800/40 border-zinc-700 hover:border-zinc-500" : "bg-zinc-50 border-zinc-200 hover:border-zinc-400")
@@ -2390,7 +2470,7 @@ export default function App() {
 
                   {/* Annual */}
                   <div
-                    onClick={() => { setTier('annual'); localStorage.setItem('ringtone_tier', 'annual'); setShowUpgradeModal(false); setView('account'); }}
+                    onClick={() => { setTier('annual'); localStorage.setItem('ringtone_tier', 'annual'); setShowUpgradeModal(false); }}
                     className={cn(
                       "p-5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] relative",
                       tier === 'annual' ? (isDark ? "bg-emerald-900/40 border-emerald-500" : "bg-emerald-50 border-emerald-400") : (isDark ? "bg-zinc-800/40 border-zinc-700 hover:border-zinc-500" : "bg-zinc-50 border-zinc-200 hover:border-zinc-400")
@@ -3055,6 +3135,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
   const [showPassword, setShowPassword] = React.useState(false);
   const [emailError, setEmailError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
+  const [appleLoading, setAppleLoading] = React.useState(false);
 
   const trialEndDate = trialStartDate
     ? new Date(trialStartDate + 3 * 86400000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
@@ -3104,29 +3185,64 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
   };
 
   const handleApple = async () => {
-    setLoading(true);
-    const { error } = await signInWithApple();
-    if (error) {
-      const msg = error.message?.toLowerCase() ?? '';
-      setEmailError(
-        msg.includes('client') || msg.includes('provider') || msg.includes('enabled')
-          ? 'Apple Sign In is not configured yet — use email below.'
-          : error.message
-      );
-      setLoading(false);
+    setAppleLoading(true);
+    try {
+      const result = await signInWithApple();
+      const { error, data } = result as { error: any; data: any };
+      if (error) {
+        const msg = error.message?.toLowerCase() ?? '';
+        setEmailError(
+          msg.includes('client') || msg.includes('provider') || msg.includes('enabled')
+            ? 'Apple Sign In is not configured yet — use email below.'
+            : error.message
+        );
+      } else {
+        // Call onComplete directly — don't rely solely on onAuthStateChange firing SIGNED_IN
+        // (it may fire TOKEN_REFRESHED instead for returning users)
+        const appleUser = data?.user ?? data?.session?.user;
+        const appleEmail = appleUser?.email ?? '';
+        // If user was created in the last 30 seconds, treat as new
+        const isNewAppleUser = appleUser?.created_at
+          ? Date.now() - new Date(appleUser.created_at).getTime() < 30000
+          : false;
+        onComplete(appleEmail, isNewAppleUser);
+      }
+    } catch (e: any) {
+      const msg = e?.message ?? '';
+      if (!msg.toLowerCase().includes('cancel')) {
+        setEmailError(`Apple Sign In failed: ${msg}`);
+      }
+    } finally {
+      setAppleLoading(false);
     }
   };
 
   const handleGoogle = async () => {
     setLoading(true);
-    const { error } = await signInWithGoogle();
-    if (error) {
-      const msg = error.message?.toLowerCase() ?? '';
-      setEmailError(
-        msg.includes('client') || msg.includes('provider') || msg.includes('enabled')
-          ? 'Google Sign In is not configured yet — use email below.'
-          : error.message
-      );
+    try {
+      const { data, error } = await signInWithGoogle();
+      if (error) {
+        const msg = error.message?.toLowerCase() ?? '';
+        setEmailError(
+          msg.includes('client') || msg.includes('provider') || msg.includes('enabled')
+            ? 'Google Sign In is not configured yet — use email below.'
+            : error.message
+        );
+      } else {
+        const googleUser = data?.user ?? data?.session?.user;
+        const googleEmail = googleUser?.email ?? '';
+        // If user was created in the last 30 seconds, treat as new
+        const isNewGoogleUser = googleUser?.created_at
+          ? Date.now() - new Date(googleUser.created_at).getTime() < 30000
+          : false;
+        onComplete(googleEmail, isNewGoogleUser);
+      }
+    } catch (e: any) {
+      const msg = e?.message ?? '';
+      if (!msg.toLowerCase().includes('cancel')) {
+        setEmailError(`Google Sign In failed: ${msg}`);
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -3160,12 +3276,16 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
 
         {/* Social auth */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="space-y-3 mb-5">
-          <button onClick={handleApple} disabled={loading} className={cn(
+          <button onClick={handleApple} disabled={loading || appleLoading} className={cn(
             "w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border font-semibold text-sm transition-all active:scale-[0.99] disabled:opacity-50",
             isDark ? "bg-white text-black border-white hover:bg-zinc-100" : "bg-black text-white border-black hover:bg-zinc-800"
           )}>
-            <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-            {mode === 'login' ? 'Sign in with Apple' : 'Continue with Apple'}
+            {appleLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+              <>
+                <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                {mode === 'login' ? 'Sign in with Apple' : 'Continue with Apple'}
+              </>
+            )}
           </button>
           <button onClick={handleGoogle} disabled={loading} className={cn(
             "w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border font-semibold text-sm transition-all active:scale-[0.99] disabled:opacity-50",
@@ -3237,8 +3357,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
             disabled={loading}
             className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-indigo-600/25 disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {mode === 'login' ? 'Sign In' : 'Create Account & Start Free Trial'}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (mode === 'login' ? 'Sign In' : 'Create Account & Start Free Trial')}
           </button>
           {mode === 'signup' && trialEndDate && (
             <p className={cn("text-center text-xs leading-relaxed", isDark ? "text-zinc-500" : "text-zinc-400")}>

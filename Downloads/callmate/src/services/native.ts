@@ -3,9 +3,23 @@
  * All functions are safe to call in the browser (they no-op gracefully).
  */
 
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 
 const isNative = Capacitor.isNativePlatform();
+
+// ─── OAuth Session (ASWebAuthenticationSession) ───────────────────────────────
+
+interface OAuthSessionPlugin {
+  start(options: { url: string; callbackScheme: string }): Promise<{ url: string }>;
+}
+
+const OAuthSession = registerPlugin<OAuthSessionPlugin>('OAuthSession');
+
+export async function openOAuthSession(url: string, callbackScheme: string): Promise<string | null> {
+  if (!isNative) return null;
+  const result = await OAuthSession.start({ url, callbackScheme });
+  return result.url;
+}
 
 // ─── Haptics ──────────────────────────────────────────────────────────────────
 
@@ -59,6 +73,29 @@ export async function setStatusBarLight() {
   const { StatusBar, Style } = await import('@capacitor/status-bar');
   await StatusBar.setStyle({ style: Style.Light });
   await StatusBar.setBackgroundColor({ color: '#FFFFFF' });
+}
+
+// ─── Apple Sign In (native via WKScriptMessageHandler) ───────────────────────
+
+export interface AppleSignInResult {
+  identityToken: string;
+  email?: string;
+  givenName?: string;
+  familyName?: string;
+}
+
+export function nativeAppleSignIn(): Promise<AppleSignInResult> {
+  return new Promise((resolve, reject) => {
+    const handler = (event: Event) => {
+      window.removeEventListener('nativeAppleSignIn', handler);
+      const { result, error } = (event as CustomEvent<{ result?: AppleSignInResult; error?: string }>).detail;
+      if (error) reject(new Error(error));
+      else if (result) resolve(result);
+      else reject(new Error('No result from Apple Sign In'));
+    };
+    window.addEventListener('nativeAppleSignIn', handler);
+    (window as any).webkit?.messageHandlers?.appleSignIn?.postMessage({});
+  });
 }
 
 // ─── Browser (for terms/privacy links) ───────────────────────────────────────

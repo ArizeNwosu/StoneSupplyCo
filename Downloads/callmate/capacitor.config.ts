@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.callmate.app',
+  appId: 'com.trycallmate.app',
   appName: 'Callmate',
   webDir: 'dist',
   ios: {
