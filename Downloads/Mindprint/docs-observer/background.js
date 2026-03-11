@@ -22,7 +22,7 @@ const AI_TOOL_LABELS = {
 
 // ─── IndexedDB ────────────────────────────────────────────────────────────────
 const DB_NAME    = 'mindprint'
-const DB_VERSION = 1
+const DB_VERSION = 2
 let _db = null
 
 function openDB() {
@@ -39,6 +39,15 @@ function openDB() {
         const es = db.createObjectStore('events', { keyPath: 'id', autoIncrement: true })
         es.createIndex('by_session',    'sessionId')
         es.createIndex('by_session_ts', ['sessionId', 'ts'])
+      }
+      if (!db.objectStoreNames.contains('segments')) {
+        const seg = db.createObjectStore('segments', { keyPath: 'segmentId' })
+        seg.createIndex('by_session_index', ['sessionId', 'segmentIndex'])
+      }
+      if (!db.objectStoreNames.contains('semantic_snapshots')) {
+        const snap = db.createObjectStore('semantic_snapshots', { keyPath: 'id', autoIncrement: true })
+        snap.createIndex('by_segment_ts', ['segmentId', 'ts'])
+        snap.createIndex('by_session_ts', ['sessionId', 'ts'])
       }
     }
     req.onsuccess = ({ target: { result: db } }) => { _db = db; resolve(db) }
@@ -113,6 +122,38 @@ async function addEvent(sessionId, event, isCheckout) {
   }))
 }
 
+async function addSegment(segment) {
+  return dbTxWrite('segments', s => s.put(segment))
+}
+
+async function getSessionSegments(sessionId) {
+  const db = await openDB()
+  return new Promise((resolve, reject) => {
+    const tx    = db.transaction('segments', 'readonly')
+    const idx   = tx.objectStore('segments').index('by_session_index')
+    const range = IDBKeyRange.bound([sessionId, 0], [sessionId, Infinity])
+    const req   = idx.getAll(range)
+    req.onsuccess = ({ target: { result } }) => resolve(result)
+    req.onerror   = ({ target: { error  } }) => reject(error)
+  })
+}
+
+async function addSemanticSnapshot(snapshot) {
+  return dbTxWrite('semantic_snapshots', s => s.add(snapshot))
+}
+
+async function getSegmentSemanticSnapshots(segmentId) {
+  const db = await openDB()
+  return new Promise((resolve, reject) => {
+    const tx    = db.transaction('semantic_snapshots', 'readonly')
+    const idx   = tx.objectStore('semantic_snapshots').index('by_segment_ts')
+    const range = IDBKeyRange.bound([segmentId, 0], [segmentId, Infinity])
+    const req   = idx.getAll(range)
+    req.onsuccess = ({ target: { result } }) => resolve(result)
+    req.onerror   = ({ target: { error  } }) => reject(error)
+  })
+}
+
 async function getSessionEvents(sessionId) {
   const db = await openDB()
   return new Promise((resolve, reject) => {
@@ -130,6 +171,76 @@ async function getSessionEvents(sessionId) {
 // so it survives service-worker restarts.
 const eventCounts = new Map()  // sessionId → count (in-memory only)
 const ACTIVE_SESSION_KEY = 'mindprint_active_session'
+
+function detectToolContext(url = '') {
+  try {
+    const u = new URL(url)
+    const host = u.hostname.replace(/^www\./, '')
+    if (host === 'docs.google.com') return { tool: 'google_docs', captureMode: 'semantic' }
+    if (host === 'notion.so') return { tool: 'notion', captureMode: 'semantic' }
+    if (host === 'figma.com') return { tool: 'figma', captureMode: 'rrweb' }
+    if (host === 'canva.com') return { tool: 'canva', captureMode: 'rrweb' }
+    if (host === 'chatgpt.com' || host === 'chat.openai.com') return { tool: 'chatgpt', captureMode: 'rrweb' }
+    if (host === 'claude.ai') return { tool: 'claude', captureMode: 'rrweb' }
+    return { tool: host || 'browser', captureMode: 'rrweb' }
+  } catch (_) {
+    return { tool: 'browser', captureMode: 'rrweb' }
+  }
+}
+
+async function openSegment(session, tab) {
+  const context = detectToolContext(tab.url || session.url)
+  const segmentIndex = session.segmentCount || 0
+  const segmentId = crypto.randomUUID()
+  const segment = {
+    segmentId,
+    sessionId: session.sessionId,
+    segmentIndex,
+    tool: context.tool,
+    captureMode: context.captureMode,
+    host: tab.url ? new URL(tab.url).hostname : '',
+    url: tab.url || session.url || '',
+    title: tab.title || session.title || 'Untitled',
+    startedAt: Date.now(),
+    endedAt: null,
+    durationMs: 0,
+    metadata: {},
+  }
+  await addSegment(segment)
+  const next = {
+    ...session,
+    activeSegmentId: segmentId,
+    activeTool: context.tool,
+    activeCaptureMode: context.captureMode,
+    segmentCount: segmentIndex + 1,
+    tabId: tab.id || session.tabId,
+    url: segment.url,
+    title: segment.title,
+  }
+  await updateSession(session.sessionId, {
+    activeSegmentId: next.activeSegmentId,
+    activeTool: next.activeTool,
+    activeCaptureMode: next.activeCaptureMode,
+    segmentCount: next.segmentCount,
+    tabId: next.tabId,
+    url: next.url,
+    title: next.title,
+  })
+  await setActiveSession(next)
+  return next
+}
+
+async function closeActiveSegment(session) {
+  if (!session?.activeSegmentId) return
+  const segments = await getSessionSegments(session.sessionId)
+  const segment = segments.find((item) => item.segmentId === session.activeSegmentId)
+  if (!segment || segment.endedAt) return
+  await addSegment({
+    ...segment,
+    endedAt: Date.now(),
+    durationMs: Date.now() - segment.startedAt,
+  })
+}
 
 async function getActiveSession() {
   const data = await chrome.storage.local.get(ACTIVE_SESSION_KEY)
@@ -213,16 +324,25 @@ async function startRecording(tabId) {
     createdAt:  now,
     status:     'recording',
     eventCount: 0,
+    segmentCount: 0,
+    activeSegmentId: null,
   }
 
   await putSession(session)
   await setActiveSession(session)
   eventCounts.set(sessionId, 0)
+  const nextSession = await openSegment(session, tab)
 
   await injectRrweb(tabId, sessionId)
 
   // Tell the content bridge which session to forward events for
-  await chrome.tabs.sendMessage(tabId, { type: 'RECORDING_STARTED', sessionId })
+  await chrome.tabs.sendMessage(tabId, {
+    type:      'RECORDING_STARTED',
+    sessionId,
+    tool: nextSession.activeTool,
+    captureMode: nextSession.activeCaptureMode,
+    segmentId: nextSession.activeSegmentId,
+  })
 
   chrome.action.setBadgeText({ text: '●', tabId }).catch(() => {})
   chrome.action.setBadgeBackgroundColor({ color: '#ef4444', tabId }).catch(() => {})
@@ -230,7 +350,7 @@ async function startRecording(tabId) {
   // Keep the service worker alive while recording
   chrome.alarms.create('keepalive', { periodInMinutes: 0.4 })
 
-  return session
+  return nextSession
 }
 
 // ─── Stop Recording ───────────────────────────────────────────────────────────
@@ -240,27 +360,33 @@ async function stopRecording(tabId) {
 
   const endTime = Date.now()
   const count   = eventCounts.get(session.sessionId) || 0
+  await closeActiveSegment(session)
 
-  // Stop rrweb in MAIN world
-  try {
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      func: () => {
-        if (typeof window.__mindprint_stop === 'function') window.__mindprint_stop()
-        window.__mindprint_recording = null
-      },
-      world: 'MAIN',
-    })
-  } catch (_) { /* tab may have navigated away */ }
+  const tabs = await chrome.tabs.query({})
+  await Promise.allSettled(tabs.map(async (tab) => {
+    if (!tab.id) return
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+          if (typeof window.__mindprint_stop === 'function') window.__mindprint_stop()
+          window.__mindprint_recording = null
+        },
+        world: 'MAIN',
+      })
+    } catch (_) {}
 
-  // Tell the content bridge to stop forwarding
-  try { await chrome.tabs.sendMessage(tabId, { type: 'RECORDING_STOPPED' }) } catch (_) {}
+    try {
+      await chrome.tabs.sendMessage(tab.id, { type: 'RECORDING_STOPPED' })
+    } catch (_) {}
+  }))
 
   const updated = await updateSession(session.sessionId, {
     endTime,
     status:     'stopped',
     eventCount: count,
     durationMs: endTime - session.startTime,
+    activeSegmentId: null,
   })
 
   await setActiveSession(null)
@@ -280,6 +406,7 @@ async function uploadRecording(sessionId) {
   const rows       = await getSessionEvents(sessionId)
   const rrwebEvts  = rows.filter(r => !r.event._mindprintMeta).map(r => r.event)
   const aiEvts     = rows.filter(r =>  r.event._mindprintMeta).map(r => r.event)
+  const segments   = await getSessionSegments(sessionId)
 
   const hdrs = {
     'Content-Type':  'application/json',
@@ -297,7 +424,11 @@ async function uploadRecording(sessionId) {
       title:           session.title,
       duration_ms:     session.durationMs ?? 0,
       ai_interactions: aiEvts,
-      metadata:        { eventCount: rrwebEvts.length },
+      metadata:        {
+        eventCount: rrwebEvts.length,
+        segmentCount: segments.length,
+        primaryTool: segments[0]?.tool || null,
+      },
     }),
   })
   if (!recRes.ok) {
@@ -321,6 +452,55 @@ async function uploadRecording(sessionId) {
     }
   }
 
+  if (segments.length) {
+    const segmentRows = segments.map((segment) => ({
+      id:           segment.segmentId,
+      session_id:   sessionId,
+      segment_index: segment.segmentIndex,
+      tool:         segment.tool,
+      host:         segment.host,
+      url:          segment.url,
+      title:        segment.title,
+      capture_mode: segment.captureMode,
+      started_at:   new Date(segment.startedAt).toISOString(),
+      ended_at:     segment.endedAt ? new Date(segment.endedAt).toISOString() : null,
+      duration_ms:  segment.durationMs || 0,
+      metadata:     segment.metadata || {},
+    }))
+    const segmentRes = await fetch(`${SUPABASE_URL}/rest/v1/recording_segments`, {
+      method:  'POST',
+      headers: { ...hdrs, 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(segmentRows),
+    })
+    if (!segmentRes.ok) {
+      throw new Error(`Segment upload failed: ${await segmentRes.text()}`)
+    }
+
+    const artifactRows = []
+    for (const segment of segments) {
+      const snapshots = await getSegmentSemanticSnapshots(segment.segmentId)
+      snapshots.forEach((snapshot, index) => {
+        artifactRows.push({
+          session_id:   sessionId,
+          segment_id:   segment.segmentId,
+          artifact_type: 'semantic_checkpoint',
+          chunk_index:  index,
+          payload:      snapshot.payload,
+        })
+      })
+    }
+    if (artifactRows.length) {
+      const artifactRes = await fetch(`${SUPABASE_URL}/rest/v1/segment_artifacts`, {
+        method:  'POST',
+        headers: { ...hdrs, 'Prefer': 'return=minimal' },
+        body: JSON.stringify(artifactRows),
+      })
+      if (!artifactRes.ok) {
+        throw new Error(`Segment artifact upload failed: ${await artifactRes.text()}`)
+      }
+    }
+  }
+
   await updateSession(sessionId, { status: 'uploaded' })
   return `${VIEWER_ORIGIN}/viewer/index.html?id=${sessionId}`
 }
@@ -339,6 +519,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'AI_META_EVENT') {
     const { sessionId, event } = msg
     addEvent(sessionId, { ...event, _mindprintMeta: true }, false).catch(console.error)
+    return false
+  }
+
+  if (msg.type === 'DOCS_SEMANTIC_SNAPSHOT') {
+    addSemanticSnapshot({
+      sessionId: msg.sessionId,
+      segmentId: msg.segmentId,
+      ts: msg.ts || Date.now(),
+      payload: msg.payload,
+    }).catch(console.error)
     return false
   }
 
@@ -413,27 +603,27 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // When the user navigates to a new page within a recording session, re-inject.
 chrome.webNavigation.onCompleted.addListener(async ({ tabId, frameId }) => {
   if (frameId !== 0) return  // main frame only
-  const session = await getActiveSession()
+  let session = await getActiveSession()
   if (!session) return
   try {
+    const tab = await chrome.tabs.get(tabId)
+    const context = detectToolContext(tab.url || session.url)
+    if (
+      context.tool !== session.activeTool ||
+      context.captureMode !== session.activeCaptureMode ||
+      (tab.url && tab.url !== session.url)
+    ) {
+      await closeActiveSegment(session)
+      session = await openSegment(session, tab)
+    }
     await injectRrweb(tabId, session.sessionId)
     await chrome.tabs.sendMessage(tabId, {
       type:      'RECORDING_STARTED',
       sessionId: session.sessionId,
+      tool: session.activeTool,
+      captureMode: session.activeCaptureMode,
+      segmentId: session.activeSegmentId,
     })
-    const tab = await chrome.tabs.get(tabId)
-    const next = {
-      ...session,
-      tabId,
-      url:   tab.url   || session.url,
-      title: tab.title || session.title,
-    }
-    await updateSession(session.sessionId, {
-      tabId: next.tabId,
-      url:   next.url,
-      title: next.title,
-    })
-    await setActiveSession(next)
   } catch (_) {}
 })
 
@@ -462,27 +652,27 @@ async function logAIVisit(url, title) {
 chrome.tabs.onActivated.addListener(async ({ tabId }) => {
   try {
     const tab = await chrome.tabs.get(tabId)
-    const session = await getActiveSession()
+    let session = await getActiveSession()
     if (session?.status === 'recording') {
       const protocol = tab.url ? new URL(tab.url).protocol : ''
       if (tab.url && !BLOCKED_PROTOCOLS.has(protocol)) {
+        const context = detectToolContext(tab.url || session.url)
+        if (
+          context.tool !== session.activeTool ||
+          context.captureMode !== session.activeCaptureMode ||
+          tab.url !== session.url
+        ) {
+          await closeActiveSegment(session)
+          session = await openSegment(session, tab)
+        }
         await injectRrweb(tabId, session.sessionId)
         await chrome.tabs.sendMessage(tabId, {
           type:      'RECORDING_STARTED',
           sessionId: session.sessionId,
+          tool: session.activeTool,
+          captureMode: session.activeCaptureMode,
+          segmentId: session.activeSegmentId,
         })
-        const next = {
-          ...session,
-          tabId,
-          url:   tab.url   || session.url,
-          title: tab.title || session.title,
-        }
-        await updateSession(session.sessionId, {
-          tabId: next.tabId,
-          url:   next.url,
-          title: next.title,
-        })
-        await setActiveSession(next)
       }
     }
     if (tab.url) await logAIVisit(tab.url, tab.title)

@@ -1,5 +1,8 @@
 -- Mindprint Supabase Schema
 -- Run this in your Supabase SQL editor (Database → SQL Editor → New query)
+-- This is the restored rrweb-first baseline schema.
+-- For the non-destructive segmented replay extension, run:
+--   supabase/segments_migration.sql
 
 -- ─── Recordings ──────────────────────────────────────────────────────────────
 -- One row per recording session.

@@ -206,6 +206,11 @@
       inset: 0;
       overflow: hidden;
       background: #edf2f8;
+      transition: opacity 180ms ease;
+    }
+
+    .stage.document-view .replay-root {
+      opacity: 0.04;
     }
 
     .replay-root .replayer-wrapper {
@@ -222,6 +227,133 @@
 
     .replay-root .rr-controller {
       display: none !important;
+    }
+
+    .semantic-surface {
+      position: absolute;
+      top: 68px;
+      left: 16px;
+      z-index: 14;
+      width: min(360px, calc(100vw - 32px));
+      display: none;
+      pointer-events: auto;
+    }
+
+    .semantic-surface.visible {
+      display: block;
+    }
+
+    .semantic-surface.document-view {
+      top: 16px;
+      left: 50%;
+      width: min(960px, calc(100vw - 48px));
+      transform: translateX(-50%);
+      z-index: 16;
+    }
+
+    .semantic-doc {
+      width: 100%;
+      max-height: min(420px, calc(100vh - 220px));
+      padding: 16px 16px 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(124, 138, 162, 0.16);
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 18px 50px rgba(116, 129, 153, 0.14);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      overflow: auto;
+    }
+
+    .semantic-surface.document-view .semantic-doc {
+      max-height: calc(100vh - 170px);
+      padding: 26px 28px 34px;
+      border-radius: 28px;
+    }
+
+    .semantic-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .semantic-title {
+      margin: 0 0 12px;
+      font-size: 18px;
+      line-height: 1.15;
+      letter-spacing: -0.04em;
+    }
+
+    .semantic-surface.document-view .semantic-title {
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.02;
+      margin-bottom: 18px;
+    }
+
+    .semantic-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .semantic-block {
+      margin: 0;
+      color: var(--muted-strong);
+      font-size: 14px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
+    .semantic-block[data-type="heading"] {
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.3;
+      letter-spacing: -0.03em;
+      margin-top: 4px;
+    }
+
+    .semantic-surface.document-view .semantic-block {
+      font-size: 18px;
+      line-height: 1.65;
+    }
+
+    .semantic-surface.document-view .semantic-block[data-type="heading"] {
+      font-size: 28px;
+      line-height: 1.2;
+      margin-top: 10px;
+    }
+
+    .semantic-toggle {
+      position: absolute;
+      top: 68px;
+      left: 16px;
+      z-index: 15;
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid rgba(124, 138, 162, 0.14);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      font-size: 12px;
+      cursor: pointer;
+      display: none;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .semantic-toggle.visible {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .semantic-toggle.active {
+      background: rgba(107, 124, 255, 0.12);
+      border-color: rgba(107, 124, 255, 0.24);
+      color: #4254d0;
     }
 
     .overlay {
@@ -366,6 +498,36 @@
       transform: translateX(24px);
       pointer-events: none;
       transition: opacity 220ms ease, transform 220ms ease;
+    }
+
+    .segment-badge {
+      top: 16px;
+      left: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 0 14px;
+      border: 1px solid rgba(124, 138, 162, 0.14);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      font-size: 13px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .segment-badge.hidden {
+      display: none;
+    }
+
+    .segment-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, var(--brand), var(--brand-2));
+      flex: 0 0 auto;
     }
 
     .status-toast.visible {
@@ -676,6 +838,33 @@
       transition: width 100ms linear;
     }
 
+    .timeline-segments {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .timeline-segment {
+      position: absolute;
+      top: 50%;
+      height: 14px;
+      margin-top: -7px;
+      border-radius: 999px;
+      opacity: 0.2;
+    }
+
+    .timeline-segment[data-mode="semantic"] {
+      background: linear-gradient(90deg, rgba(107, 124, 255, 0.48), rgba(127, 99, 255, 0.34));
+    }
+
+    .timeline-segment[data-mode="rrweb"] {
+      background: rgba(124, 138, 162, 0.28);
+    }
+
+    .timeline-segment[data-mode="screen"] {
+      background: rgba(255, 155, 84, 0.32);
+    }
+
     .timeline-markers {
       position: absolute;
       inset: 0;
@@ -958,6 +1147,16 @@
         right: 12px;
         max-width: none;
       }
+
+      .semantic-surface,
+      .semantic-toggle {
+        left: 12px;
+      }
+
+      .semantic-surface {
+        top: 62px;
+        width: min(320px, calc(100vw - 24px));
+      }
     }
   </style>
 </head>
@@ -983,6 +1182,17 @@
 
     <main class="stage" id="stage">
       <div class="replay-root" id="replayRoot"></div>
+      <button class="semantic-toggle" id="semanticToggle" type="button" aria-expanded="false">Show Docs document view</button>
+      <div class="semantic-surface" id="semanticSurface" aria-hidden="true">
+        <article class="semantic-doc">
+          <div class="semantic-meta">
+            <span id="semanticSource">Google Docs semantic replay</span>
+            <span id="semanticStamp">Live text checkpoint</span>
+          </div>
+          <h2 class="semantic-title" id="semanticTitle">Document replay</h2>
+          <div class="semantic-body" id="semanticBody"></div>
+        </article>
+      </div>
 
       <div class="replay-cover" id="replayCover">
         <div class="cover-card">
@@ -1014,6 +1224,11 @@
       <div class="overlay status-toast" id="toast" role="status" aria-live="polite">
         <span class="toast-dot" id="toastDot"></span>
         <span class="toast-text" id="toastText"></span>
+      </div>
+
+      <div class="overlay segment-badge hidden" id="segmentBadge">
+        <span class="segment-dot" aria-hidden="true"></span>
+        <span id="segmentBadgeText">Canva · rrweb</span>
       </div>
 
       <div class="overlay authorship" id="authorshipCard">
@@ -1064,6 +1279,7 @@
 
           <div class="timeline-wrap" id="timelineWrap">
             <div class="timeline-track"></div>
+            <div class="timeline-segments" id="timelineSegments"></div>
             <div class="timeline-fill" id="timelineFill"></div>
             <div class="timeline-markers" id="timelineMarkers"></div>
             <input class="scrubber" id="timelineInput" type="range" min="0" max="10000" step="1" value="0" aria-label="Replay timeline" />
@@ -1106,6 +1322,7 @@
     const playButton = document.getElementById("playButton");
     const timelineInput = document.getElementById("timelineInput");
     const timelineFill = document.getElementById("timelineFill");
+    const timelineSegments = document.getElementById("timelineSegments");
     const timelineMarkers = document.getElementById("timelineMarkers");
     const timecode = document.getElementById("timecode");
     const shareButton = document.getElementById("shareButton");
@@ -1113,6 +1330,14 @@
     const toast = document.getElementById("toast");
     const toastDot = document.getElementById("toastDot");
     const toastText = document.getElementById("toastText");
+    const segmentBadge = document.getElementById("segmentBadge");
+    const segmentBadgeText = document.getElementById("segmentBadgeText");
+    const semanticSurface = document.getElementById("semanticSurface");
+    const semanticToggle = document.getElementById("semanticToggle");
+    const semanticSource = document.getElementById("semanticSource");
+    const semanticStamp = document.getElementById("semanticStamp");
+    const semanticTitle = document.getElementById("semanticTitle");
+    const semanticBody = document.getElementById("semanticBody");
     const authorshipCard = document.getElementById("authorshipCard");
     const authorshipToggle = document.getElementById("authorshipToggle");
     const errorBanner = document.getElementById("errorBanner");
@@ -1136,6 +1361,8 @@
       events: [],
       meta: null,
       annotations: [],
+      segments: [],
+      semanticArtifacts: new Map(),
       totalMs: 0,
       currentMs: 0,
       previousMs: 0,
@@ -1151,8 +1378,17 @@
       demoMode: false,
       originalWidth: 1440,
       originalHeight: 900,
-      coverVisible: true
+      coverVisible: true,
+      activeSegmentId: null,
+      semanticVisible: false
     };
+
+    function supabaseHeaders() {
+      return {
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${SUPABASE_ANON}`
+      };
+    }
 
     function fmtClock(ms) {
       const totalSeconds = Math.max(0, Math.floor(ms / 1000));
@@ -1216,11 +1452,7 @@
     }
 
     async function fetchRecording(sessionId) {
-      const headers = {
-        apikey: SUPABASE_ANON,
-        Authorization: `Bearer ${SUPABASE_ANON}`
-      };
-
+      const headers = supabaseHeaders();
       const metaRes = await fetch(
         `${SUPABASE_URL}/rest/v1/recordings?session_id=eq.${encodeURIComponent(sessionId)}&select=*`,
         { headers }
@@ -1248,7 +1480,167 @@
         throw new Error("Replay has no events.");
       }
 
-      return { meta, events };
+      const [segmentsRes, semanticRes] = await Promise.all([
+        fetch(
+          `${SUPABASE_URL}/rest/v1/recording_segments?session_id=eq.${encodeURIComponent(sessionId)}&order=segment_index.asc&select=*`,
+          { headers }
+        ),
+        fetch(
+          `${SUPABASE_URL}/rest/v1/segment_artifacts?session_id=eq.${encodeURIComponent(sessionId)}&artifact_type=eq.semantic_checkpoint&order=segment_id.asc,chunk_index.asc&select=*`,
+          { headers }
+        )
+      ]);
+
+      const segments = segmentsRes.ok ? await segmentsRes.json() : [];
+      const semanticArtifacts = semanticRes.ok ? await semanticRes.json() : [];
+
+      return { meta, events, segments, semanticArtifacts };
+    }
+
+    function computeSegments(meta, segments, totalMs) {
+      if (!Array.isArray(segments) || !segments.length) return [];
+      const sorted = [...segments].sort((a, b) => (a.segment_index || 0) - (b.segment_index || 0));
+      const candidateStarts = sorted
+        .map((segment) => Date.parse(segment.started_at || ""))
+        .filter((value) => Number.isFinite(value));
+      const sessionStart = candidateStarts.length
+        ? Math.min(...candidateStarts)
+        : Date.parse(meta.created_at || "") || Date.now();
+      return sorted.map((segment, index) => {
+        const next = sorted[index + 1];
+        const absStart = Date.parse(segment.started_at || "") || (index === 0 ? sessionStart : sessionStart + Math.round((totalMs / sorted.length) * index));
+        const nextStart = Date.parse(next?.started_at || "");
+        const explicitEnd = Date.parse(segment.ended_at || "");
+        const durationEnd = absStart + Math.max(0, Number(segment.duration_ms || 0));
+        const derivedEnd = Number.isFinite(explicitEnd) && explicitEnd > absStart
+          ? explicitEnd
+          : Number.isFinite(nextStart) && nextStart > absStart
+            ? nextStart
+            : durationEnd > absStart
+              ? durationEnd
+              : absStart + Math.round(totalMs / Math.max(sorted.length, 1));
+        const startMs = clamp(absStart - sessionStart, 0, totalMs);
+        const endMs = clamp(Math.max(startMs, derivedEnd - sessionStart), startMs, totalMs);
+        return {
+          id: segment.id,
+          tool: segment.tool || "browser",
+          title: segment.title || segment.tool || "Replay segment",
+          captureMode: segment.capture_mode || "rrweb",
+          host: segment.host || "",
+          url: segment.url || "",
+          startMs,
+          endMs: endMs || startMs,
+          absStart,
+          absEnd: derivedEnd,
+          metadata: segment.metadata || {}
+        };
+      }).filter((segment) => segment.endMs >= segment.startMs);
+    }
+
+    function mapSemanticArtifacts(rows) {
+      const artifacts = new Map();
+      (rows || []).forEach((row) => {
+        if (!artifacts.has(row.segment_id)) {
+          artifacts.set(row.segment_id, []);
+        }
+        artifacts.get(row.segment_id).push(row.payload || {});
+      });
+      return artifacts;
+    }
+
+    function segmentLabel(segment) {
+      const tool = (segment.tool || "browser").replace(/_/g, " ");
+      const prettyTool = tool.charAt(0).toUpperCase() + tool.slice(1);
+      return `${prettyTool} · ${segment.captureMode}`;
+    }
+
+    function getSegmentAt(ms) {
+      return state.segments.find((segment) => ms >= segment.startMs && ms <= Math.max(segment.endMs, segment.startMs + 1)) || null;
+    }
+
+    function renderSegments() {
+      timelineSegments.innerHTML = "";
+      state.segments.forEach((segment) => {
+        const band = document.createElement("div");
+        band.className = "timeline-segment";
+        band.dataset.mode = segment.captureMode;
+        band.style.left = `${(segment.startMs / state.totalMs) * 100}%`;
+        band.style.width = `${(Math.max(8, segment.endMs - segment.startMs) / state.totalMs) * 100}%`;
+        band.title = `${segmentLabel(segment)} · ${fmtClock(segment.endMs - segment.startMs)}`;
+        timelineSegments.appendChild(band);
+      });
+    }
+
+    function renderSemanticSnapshot(segment, currentMs) {
+      const snapshots = state.semanticArtifacts.get(segment.id) || [];
+      if (!snapshots.length) {
+        semanticSurface.classList.remove("visible");
+        semanticSurface.setAttribute("aria-hidden", "true");
+        return;
+      }
+      const targetAbs = segment.absStart + Math.max(0, currentMs - segment.startMs);
+      let snapshot = snapshots[0];
+      for (const item of snapshots) {
+        if ((item.capturedAt || 0) <= targetAbs) {
+          snapshot = item;
+        }
+      }
+      semanticSource.textContent = `${segmentLabel(segment)} semantic replay`;
+      semanticStamp.textContent = snapshot.reason === "stop" ? "Final checkpoint" : "Live text checkpoint";
+      semanticTitle.textContent = snapshot.title || segment.title || "Document replay";
+      semanticBody.innerHTML = "";
+      const blocks = Array.isArray(snapshot.blocks) && snapshot.blocks.length
+        ? snapshot.blocks
+        : (snapshot.text || "").split(/\n+/).filter(Boolean).map((text, index) => ({
+            blockId: `semantic_${index}`,
+            type: index === 0 ? "heading" : "paragraph",
+            text
+          }));
+      blocks.forEach((block) => {
+        const el = document.createElement(block.type === "heading" ? "h3" : "p");
+        el.className = "semantic-block";
+        el.dataset.type = block.type || "paragraph";
+        el.textContent = block.text || "";
+        semanticBody.appendChild(el);
+      });
+      semanticSurface.classList.add("visible");
+      semanticSurface.setAttribute("aria-hidden", "false");
+    }
+
+    function syncSemanticVisibility(hasSemanticSegment) {
+      semanticToggle.classList.toggle("visible", hasSemanticSegment);
+      semanticToggle.classList.toggle("active", hasSemanticSegment && state.semanticVisible);
+      semanticToggle.textContent = state.semanticVisible ? "Hide Docs document view" : "Show Docs document view";
+      semanticToggle.setAttribute("aria-expanded", hasSemanticSegment && state.semanticVisible ? "true" : "false");
+      semanticSurface.classList.toggle("document-view", hasSemanticSegment && state.semanticVisible);
+      stage.classList.toggle("document-view", hasSemanticSegment && state.semanticVisible);
+      if (!hasSemanticSegment || !state.semanticVisible) {
+        semanticSurface.classList.remove("visible");
+        semanticSurface.setAttribute("aria-hidden", "true");
+      }
+    }
+
+    function renderActiveSegment(currentMs) {
+      const segment = getSegmentAt(currentMs);
+      if (!segment) {
+        state.activeSegmentId = null;
+        segmentBadge.classList.add("hidden");
+        syncSemanticVisibility(false);
+        return;
+      }
+      if (state.activeSegmentId !== segment.id) {
+        state.activeSegmentId = segment.id;
+      }
+      segmentBadgeText.textContent = segmentLabel(segment);
+      segmentBadge.classList.remove("hidden");
+      const hasSemanticSegment = segment.captureMode === "semantic" && state.semanticArtifacts.has(segment.id);
+      syncSemanticVisibility(hasSemanticSegment);
+      if (hasSemanticSegment && state.semanticVisible) {
+        renderSemanticSnapshot(segment, currentMs);
+      } else {
+        semanticSurface.classList.remove("visible");
+        semanticSurface.setAttribute("aria-hidden", "true");
+      }
     }
 
     function remapEventDuration(events, durationMs) {
@@ -1309,6 +1701,18 @@
       }
 
       return annotations.sort((a, b) => a.at - b.at);
+    }
+
+    function deriveSegmentAnnotations(segments, totalMs) {
+      return (segments || [])
+        .slice(1)
+        .map((segment, index) => ({
+          id: `segment-switch-${index}`,
+          type: "switch",
+          at: clamp(segment.startMs, 0, totalMs),
+          label: `Switched to ${(segment.tool || "browser").replace(/_/g, " ")}`,
+          toast: `Switched to ${(segment.tool || "browser").replace(/_/g, " ")}`
+        }));
     }
 
     async function buildDemoReplay() {
@@ -1655,6 +2059,7 @@
         timelineInput.value = String(Math.round(ratio * 10000));
       }
       timecode.textContent = `${fmtClock(safeMs)} / ${fmtClock(state.totalMs)}`;
+      renderActiveSegment(safeMs);
     }
 
     function fitReplay() {
@@ -1892,9 +2297,11 @@
         state.meta = replay.meta;
         state.events = replay.events;
         state.totalMs = replay.meta.duration_ms || Math.max(0, replay.events[replay.events.length - 1].timestamp - replay.events[0].timestamp);
+        state.segments = computeSegments(replay.meta, replay.segments, state.totalMs);
+        state.semanticArtifacts = mapSemanticArtifacts(replay.semanticArtifacts);
         state.annotations = (replay.annotations && replay.annotations.length)
           ? replay.annotations
-          : deriveAnnotations(replay.meta, replay.events, state.totalMs);
+          : deriveAnnotations(replay.meta, replay.events, state.totalMs).concat(deriveSegmentAnnotations(state.segments, state.totalMs)).sort((a, b) => a.at - b.at);
 
         const metaEvent = replay.events.find((event) => event.type === 4);
         if (metaEvent && metaEvent.data) {
@@ -1905,6 +2312,7 @@
         renderHeader(replay.meta, state.totalMs);
         renderCertificate(inferCertificate(replay.meta, state.annotations, state.totalMs));
         renderCover(replay.meta);
+        renderSegments();
         renderMarkers();
         updateTimeline(0);
         buildReplayer();
@@ -1919,10 +2327,13 @@
           state.events = replay.events;
           state.totalMs = replay.meta.duration_ms;
           state.annotations = replay.annotations;
+          state.segments = [];
+          state.semanticArtifacts = new Map();
           state.demoMode = true;
           renderHeader(replay.meta, state.totalMs);
           renderCertificate(inferCertificate(replay.meta, state.annotations, state.totalMs));
           renderCover(replay.meta);
+          renderSegments();
           renderMarkers();
           updateTimeline(0);
           buildReplayer();
@@ -1985,6 +2396,12 @@
     authorshipToggle.addEventListener("click", () => {
       authorshipCard.classList.toggle("open");
       authorshipToggle.setAttribute("aria-expanded", authorshipCard.classList.contains("open") ? "true" : "false");
+      showChrome();
+    });
+
+    semanticToggle.addEventListener("click", () => {
+      state.semanticVisible = !state.semanticVisible;
+      renderActiveSegment(state.currentMs);
       showChrome();
     });
 
