@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "Mindprint",
+  "version": "2.0.0",
+  "description": "Record and verify human authorship of your creative work",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs",
+    "webNavigation",
+    "alarms"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Mindprint"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["rrweb.iife.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mindprint</title>
+  <style>
+    :root {
+      --bg-0: #f7f8fb;
+      --bg-1: #eef1f7;
+      --bg-2: #e5eaf3;
+      --surface-0: rgba(255, 255, 255, 0.84);
+      --surface-1: rgba(255, 255, 255, 0.94);
+      --surface-2: #f4f7fc;
+      --text-0: #12161f;
+      --text-1: #414b5c;
+      --text-2: #6f7889;
+      --text-3: #98a0ae;
+      --brand: #6d7cff;
+      --brand-strong: #8b74ff;
+      --brand-soft: rgba(109, 124, 255, 0.08);
+      --success: #46d39a;
+      --warning: #ffad5c;
+      --danger: #ff6b78;
+      --pause: #9c77ff;
+      --border-0: rgba(124, 138, 162, 0.16);
+      --border-1: rgba(124, 138, 162, 0.22);
+      --shadow-0: 0 10px 28px rgba(116, 129, 153, 0.08);
+      --shadow-1: 0 18px 44px rgba(116, 129, 153, 0.1);
+      --radius-sm: 10px;
+      --radius-md: 14px;
+      --radius-lg: 18px;
+      --radius-xl: 22px;
+      --radius-pill: 999px;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --container: min(1180px, calc(100vw - 32px));
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text-0);
+      background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    .shell {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: var(--container);
+      margin: 0 auto;
+      padding: 18px 0;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-mark {
+      width: 10px;
+      height: 28px;
+      border-radius: var(--radius-pill);
+      background: linear-gradient(180deg, var(--brand), var(--brand-strong));
+      box-shadow: none;
+    }
+
+    .brand-word {
+      font-size: 19px;
+      font-weight: 600;
+      letter-spacing: -0.04em;
+    }
+
+    .nav {
+      display: inline-flex;
+      gap: 18px;
+      color: var(--text-2);
+      font-size: 13px;
+      align-items: center;
+    }
+
+    .nav-link:hover {
+      color: var(--text-0);
+    }
+
+    .nav-cta {
+      min-height: 38px;
+      padding: 0 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-0);
+      background: rgba(255,255,255,0.88);
+      color: var(--text-0);
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .section {
+      position: relative;
+      z-index: 1;
+      width: var(--container);
+      margin: 0 auto;
+    }
+
+    .hero {
+      padding: 44px 0 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.04fr) minmax(360px, 0.96fr);
+      gap: 26px;
+      align-items: stretch;
+    }
+
+    .hero-copy,
+    .hero-feature,
+    .proof-band,
+    .showcase,
+    .certificate-section,
+    .audiences,
+    .final-cta {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(124, 138, 162, 0.1);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-0);
+    }
+
+    .hero-copy {
+      padding: 34px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-copy::before {
+      content: "";
+      position: absolute;
+      inset: auto -40px -40px auto;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(109, 124, 255, 0.03), transparent 72%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-2);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, var(--brand), var(--brand-strong));
+      box-shadow: none;
+    }
+
+    .hero h1 {
+      margin: 16px 0 0;
+      font-size: clamp(46px, 8vw, 80px);
+      line-height: 0.92;
+      letter-spacing: -0.07em;
+      max-width: 10ch;
+    }
+
+    .hero p.lead {
+      margin: 18px 0 0;
+      max-width: 580px;
+      font-size: 18px;
+      line-height: 1.55;
+      color: var(--text-1);
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-0);
+      background: rgba(255,255,255,0.64);
+      color: var(--text-1);
+      font-size: 12px;
+    }
+
+    .chip strong {
+      font-family: var(--mono);
+      margin-left: 6px;
+      color: var(--text-0);
+      font-weight: 600;
+    }
+
+    .chip.semantic {
+      color: #4254d0;
+      background: rgba(109, 124, 255, 0.05);
+      border-color: rgba(109, 124, 255, 0.24);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .button {
+      min-height: 46px;
+      padding: 0 17px;
+      border-radius: var(--radius-pill);
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font: inherit;
+      font-weight: 600;
+      transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+    }
+
+    .button.primary {
+      background: #111111;
+      color: white;
+      box-shadow: none;
+    }
+
+    .button.ghost {
+      background: rgba(255,255,255,0.94);
+      border-color: var(--border-0);
+      color: var(--text-0);
+    }
+
+    .hero-feature {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .feature-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .feature-title {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .feature-title span:first-child {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-3);
+    }
+
+    .feature-title span:last-child {
+      font-size: 18px;
+      color: var(--text-0);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: var(--radius-pill);
+      background: rgba(109,124,255,0.1);
+      border: 1px solid rgba(109,124,255,0.24);
+      color: #4254d0;
+      font-size: 12px;
+    }
+
+    .badge strong {
+      font-family: var(--mono);
+      font-weight: 600;
+    }
+
+    .player-frame {
+      position: relative;
+      overflow: hidden;
+      border-radius: 24px;
+      border: 1px solid rgba(124, 138, 162, 0.16);
+      background: #f6f8fc;
+      box-shadow: var(--shadow-0);
+      aspect-ratio: 16 / 10;
+    }
+
+    .player-frame iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #f6f8fc;
+    }
+
+    .proof-band {
+      margin-top: 22px;
+      padding: 18px 22px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .proof-stat {
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.52);
+      border: 1px solid rgba(124, 138, 162, 0.12);
+    }
+
+    .proof-stat span:first-child {
+      display: block;
+      color: var(--text-3);
+      font-size: 11px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .proof-stat span:last-child {
+      color: var(--text-0);
+      font-size: 18px;
+    }
+
+    .proof-stat strong {
+      font-family: var(--mono);
+      font-size: 20px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 22px;
+      padding: 22px 0 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--text-2);
+      max-width: 480px;
+      line-height: 1.55;
+    }
+
+    .showcase {
+      padding: 22px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .replay-card {
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(124, 138, 162, 0.12);
+      background: rgba(255,255,255,0.82);
+      transition: transform 180ms ease, border-color 180ms ease;
+    }
+
+    .replay-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(124, 138, 162, 0.14);
+    }
+
+    .thumb {
+      position: relative;
+      aspect-ratio: 16 / 11;
+      padding: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(246,248,252,1)),
+        linear-gradient(135deg, rgba(109,124,255,0.03), rgba(255,255,255,0.9));
+      overflow: hidden;
+    }
+
+    .thumb::before {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(246, 249, 253, 0.74));
+      border: 1px solid rgba(124, 138, 162, 0.12);
+    }
+
+    .thumb-ui {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .thumb-top,
+    .thumb-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .thumb-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: auto;
+    }
+
+    .line {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(146, 157, 178, 0.24);
+    }
+
+    .line.short { width: 48%; }
+    .line.mid { width: 68%; }
+    .line.long { width: 84%; }
+
+    .card-copy {
+      padding: 16px;
+    }
+
+    .card-copy h3 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+    }
+
+    .card-copy p {
+      margin: 10px 0 0;
+      color: var(--text-2);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .mini-chip {
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-0);
+      background: rgba(255,255,255,0.64);
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-1);
+    }
+
+    .certificate-section {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .certificate-panel {
+      padding: 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(124, 138, 162, 0.12);
+      background: rgba(255,255,255,0.56);
+    }
+
+    .certificate-panel h3 {
+      margin: 0;
+      font-size: 25px;
+      letter-spacing: -0.05em;
+    }
+
+    .certificate-panel p {
+      margin: 10px 0 0;
+      color: var(--text-2);
+      line-height: 1.6;
+      max-width: 56ch;
+    }
+
+    .certificate-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .certificate-item {
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(124, 138, 162, 0.12);
+      background: rgba(255,255,255,0.56);
+    }
+
+    .certificate-item span:first-child {
+      display: block;
+      color: var(--text-3);
+      font-size: 11px;
+      margin-bottom: 5px;
+    }
+
+    .certificate-item span:last-child {
+      color: var(--text-0);
+      font-size: 14px;
+    }
+
+    .certificate-summary {
+      padding: 20px;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at top left, rgba(109, 124, 255, 0.04), transparent 30%),
+        rgba(255,255,255,0.92);
+      border: 1px solid rgba(124, 138, 162, 0.12);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .summary-score {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: var(--radius-pill);
+      background: rgba(109, 124, 255, 0.1);
+      border: 1px solid rgba(109, 124, 255, 0.24);
+      width: fit-content;
+      color: #4254d0;
+      font-size: 12px;
+    }
+
+    .summary-score strong {
+      font-family: var(--mono);
+    }
+
+    .summary-copy h3 {
+      margin: 18px 0 0;
+      font-size: 28px;
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .summary-copy p {
+      margin: 10px 0 0;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+
+    .audiences {
+      padding: 22px;
+    }
+
+    .audience-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .audience-card {
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(124, 138, 162, 0.12);
+      background: rgba(255,255,255,0.58);
+    }
+
+    .audience-card span {
+      display: inline-flex;
+      min-height: 30px;
+      padding: 0 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-0);
+      align-items: center;
+      color: var(--text-2);
+      font-size: 11px;
+    }
+
+    .audience-card h3 {
+      margin: 16px 0 0;
+      font-size: 20px;
+      letter-spacing: -0.04em;
+    }
+
+    .audience-card p {
+      margin: 10px 0 0;
+      color: var(--text-2);
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .final-cta {
+      margin: 22px 0 40px;
+      padding: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .final-cta h2 {
+      margin: 0;
+      font-size: clamp(32px, 4vw, 54px);
+      line-height: 0.96;
+      letter-spacing: -0.06em;
+      max-width: 12ch;
+    }
+
+    .final-cta p {
+      margin: 12px 0 0;
+      max-width: 48ch;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+
+    .footer {
+      width: var(--container);
+      margin: 0 auto;
+      padding: 0 0 30px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--text-3);
+      font-size: 12px;
+    }
+
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 420ms ease, transform 420ms ease;
+    }
+
+    [data-reveal].visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1080px) {
+      .hero,
+      .certificate-section,
+      .proof-band,
+      .audience-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .final-cta {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        padding: 14px 0;
+      }
+
+      .nav {
+        display: none;
+      }
+
+      .hero-copy,
+      .hero-feature,
+      .showcase,
+      .certificate-section,
+      .audiences,
+      .final-cta,
+      .proof-band {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      .hero {
+        padding-top: 24px;
+      }
+
+      .certificate-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .footer {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="Mindprint">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-word">Mindprint</span>
+      </a>
+      <nav class="nav">
+        <a class="nav-link" href="#replays">Replays</a>
+        <a class="nav-link" href="#certificate">Certificate</a>
+        <a class="nav-link" href="#audiences">Use Cases</a>
+        <a class="nav-cta" href="./viewer/index.html">Watch a replay</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="section hero">
+        <div class="hero-copy" data-reveal>
+          <div class="eyebrow">Proof of Work</div>
+          <h1>Show how it was built, not just how it ended.</h1>
+          <p class="lead">
+            Mindprint turns real working sessions into polished Thinking Replays, so clients, teams, and hiring managers can watch the actual process behind the final result.
+          </p>
+          <div class="chip-row">
+            <span class="chip semantic">Human Authored <strong>94</strong></span>
+            <span class="chip">Session <strong>16:24</strong></span>
+            <span class="chip">Revisions <strong>14</strong></span>
+            <span class="chip">AI collaboration <strong>Moderate</strong></span>
+          </div>
+          <div class="actions">
+            <a class="button primary" href="./viewer/index.html">Watch the featured replay</a>
+            <a class="button ghost" href="#certificate">See the certificate</a>
+          </div>
+        </div>
+
+        <div class="hero-feature" data-reveal>
+          <div class="feature-head">
+            <div class="feature-title">
+              <span>Featured replay</span>
+              <span>Maya Chen · Launch brief for Delta Studio</span>
+            </div>
+            <div class="badge">Human Authored <strong>94</strong></div>
+          </div>
+          <div class="player-frame">
+            <iframe src="./viewer/index.html" title="Featured Mindprint replay"></iframe>
+          </div>
+        </div>
+      </section>
+
+      <section class="section proof-band" data-reveal>
+        <div class="proof-stat">
+          <span>Understand instantly</span>
+          <span><strong>3s</strong> to grasp the work</span>
+        </div>
+        <div class="proof-stat">
+          <span>Human authorship</span>
+          <span><strong>94</strong> confidence score</span>
+        </div>
+        <div class="proof-stat">
+          <span>Actual work</span>
+          <span><strong>14</strong> visible revisions</span>
+        </div>
+        <div class="proof-stat">
+          <span>Proof artifact</span>
+          <span><strong>1</strong> shareable replay link</span>
+        </div>
+      </section>
+
+      <div class="section stack">
+        <section class="showcase" id="replays" data-reveal>
+          <div class="section-head">
+            <div>
+              <h2>Replays that feel like portfolio artifacts.</h2>
+            </div>
+            <p>
+              Each replay is a proof surface: a still, a score, a certificate, and the session itself. The work stays central. The trust signals stay visible.
+            </p>
+          </div>
+          <div class="cards">
+            <a class="replay-card" href="./viewer/index.html">
+              <div class="thumb">
+                <div class="thumb-ui">
+                  <div class="thumb-top">
+                    <span class="badge">Verified Replay <strong>94</strong></span>
+                    <span class="mini-chip">Freelancer</span>
+                  </div>
+                  <div class="thumb-lines">
+                    <div class="line long"></div>
+                    <div class="line mid"></div>
+                    <div class="line short"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-copy">
+                <h3>Launch strategy replay</h3>
+                <p>Show the actual writing, revisions, and AI collaboration behind a client-ready narrative.</p>
+                <div class="card-meta">
+                  <span class="mini-chip">16:24 session</span>
+                  <span class="mini-chip">14 revisions</span>
+                  <span class="mini-chip">Moderate AI</span>
+                </div>
+              </div>
+            </a>
+
+            <a class="replay-card" href="./viewer/index.html">
+              <div class="thumb">
+                <div class="thumb-ui">
+                  <div class="thumb-top">
+                    <span class="badge">Human Authored <strong>91</strong></span>
+                    <span class="mini-chip">Student</span>
+                  </div>
+                  <div class="thumb-lines">
+                    <div class="line mid"></div>
+                    <div class="line long"></div>
+                    <div class="line short"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-copy">
+                <h3>Research memo replay</h3>
+                <p>Turn a draft process into proof of reasoning, revision depth, and original thought.</p>
+                <div class="card-meta">
+                  <span class="mini-chip">22:10 session</span>
+                  <span class="mini-chip">9 revisions</span>
+                  <span class="mini-chip">Light AI</span>
+                </div>
+              </div>
+            </a>
+
+            <a class="replay-card" href="./viewer/index.html">
+              <div class="thumb">
+                <div class="thumb-ui">
+                  <div class="thumb-top">
+                    <span class="badge">Verified Replay <strong>96</strong></span>
+                    <span class="mini-chip">Operator</span>
+                  </div>
+                  <div class="thumb-lines">
+                    <div class="line short"></div>
+                    <div class="line mid"></div>
+                    <div class="line long"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-copy">
+                <h3>Process design replay</h3>
+                <p>Share how a system was constructed in real time instead of explaining it after the fact.</p>
+                <div class="card-meta">
+                  <span class="mini-chip">11:08 session</span>
+                  <span class="mini-chip">18 revisions</span>
+                  <span class="mini-chip">No AI</span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </section>
+
+        <section class="certificate-section" id="certificate" data-reveal>
+          <div class="certificate-panel">
+            <div class="eyebrow">Human Authorship Certificate</div>
+            <h3>Trust is built from visible process, not a claim after the fact.</h3>
+            <p>
+              Mindprint surfaces the session duration, active writing time, revision depth, and AI collaboration level in the same certificate pattern everywhere the replay appears.
+            </p>
+            <div class="certificate-grid">
+              <div class="certificate-item">
+                <span>Session duration</span>
+                <span>16m 24s</span>
+              </div>
+              <div class="certificate-item">
+                <span>Active writing time</span>
+                <span>11m 48s</span>
+              </div>
+              <div class="certificate-item">
+                <span>Revision count</span>
+                <span>14</span>
+              </div>
+              <div class="certificate-item">
+                <span>AI collaboration</span>
+                <span>Moderate</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="certificate-summary">
+            <div class="summary-score">Human Authored <strong>94 / 100</strong></div>
+            <div class="summary-copy">
+              <h3>One badge. One language. Everywhere.</h3>
+              <p>
+                The replay viewer, landing page, and extension all use the same verification surface so the brand feels coherent and the proof stays legible.
+              </p>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Captured live <strong>Yes</strong></span>
+              <span class="chip">Replay link <strong>Shareable</strong></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="audiences" id="audiences" data-reveal>
+          <div class="section-head">
+            <div>
+              <h2>Built for any mission where proof matters.</h2>
+            </div>
+            <p>
+              The same replay language should work whether the viewer is a client, manager, recruiter, professor, or collaborator.
+            </p>
+          </div>
+          <div class="audience-grid">
+            <div class="audience-card">
+              <span>Freelancers</span>
+              <h3>Win trust before the call.</h3>
+              <p>Show clients how the deliverable was actually crafted, not just the polished final asset.</p>
+            </div>
+            <div class="audience-card">
+              <span>Students</span>
+              <h3>Prove the thinking.</h3>
+              <p>Turn drafts and revisions into evidence of reasoning, effort, and authorship.</p>
+            </div>
+            <div class="audience-card">
+              <span>Professionals</span>
+              <h3>Share process with clarity.</h3>
+              <p>Make internal reviews faster by replaying the work instead of summarizing it after the fact.</p>
+            </div>
+            <div class="audience-card">
+              <span>Candidates</span>
+              <h3>Use work as the portfolio.</h3>
+              <p>Let hiring teams watch how the task was built and revised instead of trusting a static case study.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="final-cta" data-reveal>
+          <div>
+            <div class="eyebrow">Send one yourself</div>
+            <h2>Make your process look as strong as your output.</h2>
+            <p>
+              The replay is the product. The certificate is the trust layer. The link is the portfolio. Record once, then send proof anywhere the work needs to win.
+            </p>
+          </div>
+          <div class="actions">
+            <a class="button primary" href="./viewer/index.html">Open replay demo</a>
+            <a class="button ghost" href="./docs-observer/popup.html">Open extension UI</a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <span>Created with Mindprint · Proof of work, not just a finished file.</span>
+      <span>Thinking Replay · Human Authorship Certificate · Replay Portfolio</span>
+    </footer>
+  </div>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.18 });
+
+    document.querySelectorAll('[data-reveal]').forEach((el) => observer.observe(el));
+  </script>
+</body>
+</html>

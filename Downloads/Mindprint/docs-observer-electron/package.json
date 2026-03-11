@@ -1,0 +1,13 @@
+{
+  "name": "docs-observer-electron",
+  "version": "1.0.0",
+  "description": "Cross-app text capture via macOS Accessibility API",
+  "main": "main.js",
+  "scripts": {
+    "build-watcher": "swiftc watcher.swift -o watcher -framework Cocoa -framework ScreenCaptureKit",
+    "start": "npm run build-watcher && electron ."
+  },
+  "devDependencies": {
+    "electron": "^32.0.0"
+  }
+}

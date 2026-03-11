@@ -1,0 +1,13 @@
+{
+  "name": "mindprint-extension",
+  "version": "2.0.0",
+  "description": "Mindprint Chrome Extension – record and verify human authorship",
+  "private": true,
+  "scripts": {
+    "setup": "npm install && npm run copy-rrweb",
+    "copy-rrweb": "cp node_modules/rrweb/dist/rrweb.min.js rrweb.iife.js"
+  },
+  "dependencies": {
+    "rrweb": "1.1.3"
+  }
+}

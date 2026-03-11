@@ -1,0 +1,2029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mindprint Thinking Replay</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/rrweb@1.1.3/dist/rrweb.min.css" />
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: rgba(255, 255, 255, 0.84);
+      --surface-strong: rgba(255, 255, 255, 0.94);
+      --surface-soft: rgba(249, 250, 253, 0.86);
+      --border: rgba(124, 138, 162, 0.16);
+      --border-strong: rgba(124, 138, 162, 0.24);
+      --text: #12161f;
+      --muted: #6f7889;
+      --muted-strong: #414b5c;
+      --brand: #6b7cff;
+      --brand-2: #7f63ff;
+      --pause: #9e6bff;
+      --switch: #4ce0a1;
+      --paste: #ff9b54;
+      --revision: #ff6b7d;
+      --shadow: 0 14px 34px rgba(116, 129, 153, 0.1);
+      --topbar-h: 48px;
+      --footer-h: 40px;
+      --control-w: min(980px, calc(100vw - 32px));
+      --control-pad: 14px;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 999px;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+      color: var(--text);
+      font-family: var(--sans);
+      overflow: hidden;
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .shell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .topbar,
+    .footer {
+      position: fixed;
+      left: 0;
+      right: 0;
+      z-index: 30;
+      display: grid;
+      align-items: center;
+      padding: 0 18px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .topbar {
+      top: 0;
+      height: var(--topbar-h);
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      background: rgba(255, 255, 255, 0.7);
+      border-bottom: 1px solid rgba(124, 138, 162, 0.14);
+    }
+
+    .footer {
+      bottom: 0;
+      height: var(--footer-h);
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.66);
+      border-top: 1px solid rgba(124, 138, 162, 0.14);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.01em;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 10px;
+      height: 28px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--brand) 0%, var(--brand-2) 100%);
+      box-shadow: none;
+    }
+
+    .brand-word {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.04em;
+    }
+
+    .titlebar {
+      justify-self: center;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      white-space: nowrap;
+      color: var(--muted-strong);
+      font-size: 13px;
+    }
+
+    .titlebar strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .duration-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(255, 255, 255, 0.96);
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .share-wrap {
+      justify-self: end;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ghost-button {
+      height: 34px;
+      padding: 0 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 200ms ease, border-color 200ms ease, transform 200ms ease;
+    }
+
+    .ghost-button:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .stage {
+      position: fixed;
+      inset: var(--topbar-h) 0 var(--footer-h);
+      overflow: hidden;
+      background: #f3f6fb;
+      cursor: default;
+    }
+
+    .stage::before,
+    .stage::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 120px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .stage::before {
+      top: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), transparent);
+    }
+
+    .stage::after {
+      bottom: 0;
+      background: linear-gradient(180deg, transparent, rgba(243, 246, 251, 0.92));
+    }
+
+    .replay-root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #edf2f8;
+    }
+
+    .replay-root .replayer-wrapper {
+      position: absolute !important;
+      transform-origin: 0 0;
+      box-shadow: 0 14px 40px rgba(116, 129, 153, 0.12);
+    }
+
+    .replay-root .replayer-wrapper,
+    .replay-root iframe {
+      border: 0 !important;
+      background: #fff;
+    }
+
+    .replay-root .rr-controller {
+      display: none !important;
+    }
+
+    .overlay {
+      position: absolute;
+      z-index: 12;
+    }
+
+    .replay-cover {
+      position: absolute;
+      inset: 0;
+      z-index: 17;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      background:
+        radial-gradient(circle at 28% 24%, rgba(109, 124, 255, 0.12), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(241, 245, 252, 0.84));
+      opacity: 1;
+      transition: opacity 280ms ease, visibility 280ms ease;
+    }
+
+    .replay-cover.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .cover-card {
+      width: min(720px, calc(100vw - 48px));
+      padding: 28px 28px 24px;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: var(--shadow);
+    }
+
+    .cover-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .cover-kicker::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, var(--brand), var(--brand-2));
+      box-shadow: none;
+    }
+
+    .cover-title {
+      margin: 0;
+      max-width: 12ch;
+      font-size: clamp(38px, 5.6vw, 72px);
+      line-height: 0.94;
+      letter-spacing: -0.06em;
+    }
+
+    .cover-subtitle {
+      margin: 14px 0 0;
+      max-width: 560px;
+      font-size: 16px;
+      line-height: 1.55;
+      color: var(--muted-strong);
+    }
+
+    .cover-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .cover-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 0 12px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-1);
+      font-size: 12px;
+    }
+
+    .cover-chip strong {
+      font-family: var(--mono);
+      color: var(--text);
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    .cover-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .cover-play {
+      min-height: 46px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: var(--radius-pill);
+      background: linear-gradient(180deg, var(--brand), var(--brand-2));
+      color: white;
+      cursor: pointer;
+      box-shadow: none;
+    }
+
+    .cover-note {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .status-toast {
+      top: 16px;
+      right: 16px;
+      min-height: 42px;
+      max-width: min(420px, calc(100vw - 40px));
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: translateX(24px);
+      pointer-events: none;
+      transition: opacity 220ms ease, transform 220ms ease;
+    }
+
+    .status-toast.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .toast-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+    }
+
+    .toast-text {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.25;
+    }
+
+    .authorship {
+      top: 16px;
+      right: 16px;
+      transform: translateY(54px);
+      width: min(320px, calc(100vw - 32px));
+      pointer-events: auto;
+    }
+
+    .authorship-toggle {
+      width: 100%;
+      min-height: 40px;
+      padding: 0 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .authorship-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .authorship-check {
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(107, 124, 255, 0.34), rgba(127, 99, 255, 0.2));
+      color: #4254d0;
+      font-size: 12px;
+      font-weight: 700;
+      flex: 0 0 auto;
+    }
+
+    .authorship-label {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1px;
+      min-width: 0;
+    }
+
+    .authorship-label span:first-child {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .authorship-label span:last-child {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .authorship-score {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: #4254d0;
+    }
+
+    .authorship-panel {
+      margin-top: 10px;
+      padding: 0 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 220ms ease, padding-top 220ms ease, padding-bottom 220ms ease, opacity 220ms ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .authorship.open .authorship-panel {
+      max-height: 220px;
+      padding-top: 12px;
+      padding-bottom: 12px;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .certificate-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 14px;
+    }
+
+    .certificate-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .certificate-item span:first-child {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .certificate-item span:last-child {
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .loading {
+      position: absolute;
+      inset: 0;
+      z-index: 18;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      transition: opacity 220ms ease;
+      background: radial-gradient(circle at center, rgba(255, 255, 255, 0.46), rgba(241, 245, 252, 0.92));
+    }
+
+    .loading.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .loading-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+    }
+
+    .loading-spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-top-color: var(--brand);
+      animation: spin 900ms linear infinite;
+    }
+
+    .loading-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .loading-copy strong {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .loading-copy span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .controls {
+      position: absolute;
+      left: 50%;
+      bottom: 16px;
+      z-index: 15;
+      width: var(--control-w);
+      transform: translateX(-50%);
+      padding: var(--control-pad);
+      border-radius: 18px;
+      border: 1px solid rgba(124, 138, 162, 0.16);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: var(--shadow);
+      opacity: 1;
+      transition: opacity 200ms ease, transform 200ms ease;
+      pointer-events: auto;
+    }
+
+    .stage.playing.chrome-hidden .controls {
+      opacity: 0;
+      transform: translateX(-50%) translateY(12px);
+      pointer-events: none;
+    }
+
+    .controls-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .play-button {
+      width: 48px;
+      height: 48px;
+      border: 0;
+      border-radius: 50%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 150ms ease, background 150ms ease;
+      position: relative;
+    }
+
+    .play-button:hover {
+      transform: scale(1.03);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+    }
+
+    .play-button.pulse {
+      animation: pulse 180ms ease;
+    }
+
+    .play-icon,
+    .pause-icon {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    .play-button[data-state="paused"] .play-icon {
+      display: block;
+      margin-left: 3px;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      border-left: 16px solid var(--text);
+    }
+
+    .play-button[data-state="playing"] .pause-icon {
+      display: inline-flex;
+      gap: 4px;
+      width: auto;
+      height: 20px;
+    }
+
+    .pause-icon::before,
+    .pause-icon::after {
+      content: "";
+      width: 5px;
+      height: 20px;
+      border-radius: 3px;
+      background: var(--text);
+    }
+
+    .timeline-wrap {
+      position: relative;
+      min-width: 0;
+      padding: 10px 0 14px;
+    }
+
+    .timeline-track,
+    .timeline-fill {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 4px;
+      transform: translateY(-50%);
+      border-radius: 999px;
+    }
+
+    .timeline-track {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .timeline-fill {
+      right: auto;
+      width: 0%;
+      background: linear-gradient(90deg, var(--brand), var(--brand-2));
+      box-shadow: none;
+      transition: width 100ms linear;
+    }
+
+    .timeline-markers {
+      position: absolute;
+      inset: 0;
+    }
+
+    .marker {
+      position: absolute;
+      top: 50%;
+      width: 10px;
+      height: 10px;
+      margin-top: -5px;
+      border: 2px solid rgba(255, 255, 255, 0.96);
+      border-radius: 50%;
+      cursor: pointer;
+      transform: translateX(-50%);
+      transition: transform 150ms ease;
+    }
+
+    .marker:hover {
+      transform: translateX(-50%) scale(1.18);
+    }
+
+    .marker::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 10px);
+      transform: translateX(-50%);
+      padding: 7px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.94);
+      color: var(--text);
+      font-size: 11px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease;
+      box-shadow: 0 8px 18px rgba(116, 129, 153, 0.08);
+    }
+
+    .marker:hover::after {
+      opacity: 1;
+    }
+
+    .scrubber {
+      -webkit-appearance: none;
+      appearance: none;
+      position: relative;
+      width: 100%;
+      height: 24px;
+      background: transparent;
+      margin: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .scrubber::-webkit-slider-runnable-track {
+      height: 4px;
+      background: transparent;
+    }
+
+    .scrubber::-moz-range-track {
+      height: 4px;
+      background: transparent;
+      border: 0;
+    }
+
+    .scrubber::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--text);
+      border: 0;
+      margin-top: -4px;
+      opacity: 0;
+      box-shadow: 0 0 0 4px rgba(107, 124, 255, 0.16);
+      transition: opacity 150ms ease, transform 150ms ease;
+    }
+
+    .scrubber::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--text);
+      border: 0;
+      opacity: 0;
+      box-shadow: 0 0 0 4px rgba(107, 124, 255, 0.16);
+      transition: opacity 150ms ease, transform 150ms ease;
+    }
+
+    .timeline-wrap:hover .scrubber::-webkit-slider-thumb,
+    .timeline-wrap:hover .scrubber::-moz-range-thumb,
+    .scrubber:focus-visible::-webkit-slider-thumb,
+    .scrubber:focus-visible::-moz-range-thumb,
+    .scrubber.dragging::-webkit-slider-thumb,
+    .scrubber.dragging::-moz-range-thumb {
+      opacity: 1;
+    }
+
+    .scrubber.dragging::-webkit-slider-thumb,
+    .scrubber.dragging::-moz-range-thumb {
+      transform: scale(1.2);
+    }
+
+    .timecode {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted-strong);
+      white-space: nowrap;
+    }
+
+    .speed {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .speed button {
+      min-width: 40px;
+      height: 30px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.64);
+      color: var(--muted-strong);
+      cursor: pointer;
+      transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+    }
+
+    .speed button.active {
+      border-color: rgba(107, 124, 255, 0.34);
+      background: rgba(107, 124, 255, 0.14);
+      color: #4254d0;
+    }
+
+    .footer-left,
+    .footer-right {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .footer-right a {
+      color: var(--text);
+      opacity: 0.82;
+      transition: opacity 160ms ease;
+    }
+
+    .footer-right a:hover {
+      opacity: 1;
+    }
+
+    .error-banner {
+      position: absolute;
+      left: 16px;
+      bottom: 110px;
+      z-index: 16;
+      max-width: min(480px, calc(100vw - 32px));
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 107, 125, 0.18);
+      background: rgba(255, 243, 245, 0.92);
+      color: #a33a4b;
+      font-size: 13px;
+      display: none;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .error-banner.visible {
+      display: block;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.06);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @media (max-width: 820px) {
+      .topbar {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+      }
+
+      .titlebar {
+        grid-column: 1 / -1;
+        justify-self: start;
+        order: 3;
+        font-size: 12px;
+      }
+
+      .authorship {
+        width: auto;
+      }
+
+      .authorship-toggle {
+        width: auto;
+        min-width: 44px;
+        padding: 0 12px;
+      }
+
+      .authorship-label,
+      .authorship-score {
+        display: none;
+      }
+
+      .controls {
+        width: min(96vw, 720px);
+      }
+
+      .controls-row {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+      }
+
+      .timecode {
+        grid-column: 2 / 3;
+      }
+
+      .speed {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+        margin-left: 62px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .topbar,
+      .footer {
+        padding: 0 12px;
+      }
+
+      .brand-word,
+      .footer-left {
+        font-size: 12px;
+      }
+
+      .ghost-button {
+        padding: 0 11px;
+        font-size: 12px;
+      }
+
+      .controls {
+        bottom: 10px;
+        padding: 12px;
+      }
+
+      .controls-row {
+        grid-template-columns: 48px minmax(0, 1fr);
+      }
+
+      .timecode,
+      .speed {
+        grid-column: 2 / 3;
+      }
+
+      .speed {
+        margin-left: 0;
+      }
+
+      .status-toast {
+        left: 12px;
+        right: 12px;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Mindprint">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-word">Mindprint</span>
+      </div>
+
+      <div class="titlebar">
+        <strong id="creatorName">Freelancer</strong>
+        <span>Thinking Replay</span>
+        <span id="sessionDate">Mar 11, 2026</span>
+        <span class="duration-pill" id="durationPill">00:00</span>
+      </div>
+
+      <div class="share-wrap">
+        <button class="ghost-button" id="shareButton" type="button">↗ Share this replay</button>
+      </div>
+    </header>
+
+    <main class="stage" id="stage">
+      <div class="replay-root" id="replayRoot"></div>
+
+      <div class="replay-cover" id="replayCover">
+        <div class="cover-card">
+          <div class="cover-kicker">Verified Replay</div>
+          <h1 class="cover-title"><span id="coverCreator">Freelancer</span> built this live.</h1>
+          <p class="cover-subtitle" id="coverSubtitle">Open the replay to watch the real sequence of writing, revision, pauses, and AI collaboration exactly as it happened.</p>
+          <div class="cover-meta">
+            <span class="cover-chip">Human Authored <strong id="coverScore">94</strong></span>
+            <span class="cover-chip">Session <strong id="coverDuration">00:00</strong></span>
+            <span class="cover-chip">Revisions <strong id="coverRevisions">0</strong></span>
+          </div>
+          <div class="cover-actions">
+            <button class="cover-play" id="coverPlayButton" type="button">Play replay</button>
+            <span class="cover-note">Proof of work, not just the finished file.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="loading" id="loadingOverlay">
+        <div class="loading-card">
+          <div class="loading-spinner" aria-hidden="true"></div>
+          <div class="loading-copy">
+            <strong id="loadingTitle">Opening Thinking Replay</strong>
+            <span id="loadingText">Preparing a real session playback.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="overlay status-toast" id="toast" role="status" aria-live="polite">
+        <span class="toast-dot" id="toastDot"></span>
+        <span class="toast-text" id="toastText"></span>
+      </div>
+
+      <div class="overlay authorship" id="authorshipCard">
+        <button class="authorship-toggle" id="authorshipToggle" type="button" aria-expanded="false">
+          <span class="authorship-main">
+            <span class="authorship-check" aria-hidden="true">✓</span>
+            <span class="authorship-label">
+              <span>Human Authored</span>
+              <span>Verified session summary</span>
+            </span>
+          </span>
+          <span class="authorship-score" id="authorshipScore">94</span>
+        </button>
+        <div class="authorship-panel" id="authorshipPanel">
+          <div class="certificate-grid">
+            <div class="certificate-item">
+              <span>Session duration</span>
+              <span id="certDuration">00:00</span>
+            </div>
+            <div class="certificate-item">
+              <span>Active writing time</span>
+              <span id="certActiveTime">00:00</span>
+            </div>
+            <div class="certificate-item">
+              <span>Revision count</span>
+              <span id="certRevisions">0</span>
+            </div>
+            <div class="certificate-item">
+              <span>AI collaboration</span>
+              <span id="certAILevel">Light</span>
+            </div>
+            <div class="certificate-item">
+              <span>Confidence score</span>
+              <span id="certConfidence">94 / 100</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overlay error-banner" id="errorBanner"></div>
+
+      <section class="controls" id="controls">
+        <div class="controls-row">
+          <button class="play-button" id="playButton" type="button" data-state="paused" aria-label="Play replay">
+            <span class="play-icon" aria-hidden="true"></span>
+            <span class="pause-icon" aria-hidden="true"></span>
+          </button>
+
+          <div class="timeline-wrap" id="timelineWrap">
+            <div class="timeline-track"></div>
+            <div class="timeline-fill" id="timelineFill"></div>
+            <div class="timeline-markers" id="timelineMarkers"></div>
+            <input class="scrubber" id="timelineInput" type="range" min="0" max="10000" step="1" value="0" aria-label="Replay timeline" />
+          </div>
+
+          <div class="timecode" id="timecode">00:00 / 00:00</div>
+
+          <div class="speed" id="speedGroup" aria-label="Playback speed">
+            <button type="button" data-speed="0.5">0.5×</button>
+            <button type="button" data-speed="1" class="active">1×</button>
+            <button type="button" data-speed="2">2×</button>
+            <button type="button" data-speed="5">5×</button>
+            <button type="button" data-speed="10">10×</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-left">Created with Mindprint · mindprint.pro</div>
+      <div class="footer-right"><a href="https://mindprint.pro" target="_blank" rel="noreferrer">Record your own thinking →</a></div>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/rrweb@1.1.3/dist/rrweb.min.js"></script>
+  <script>
+    "use strict";
+
+    const SUPABASE_URL = "https://nvkimudseoftlegbvctz.supabase.co";
+    const SUPABASE_ANON = "sb_publishable_CsSIIPTJYtu9D-o8JhH3Yg_Awyz0mjQ";
+    const DEMO_DURATION_MS = 16500;
+
+    const stage = document.getElementById("stage");
+    const replayRoot = document.getElementById("replayRoot");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const loadingTitle = document.getElementById("loadingTitle");
+    const loadingText = document.getElementById("loadingText");
+    const replayCover = document.getElementById("replayCover");
+    const coverPlayButton = document.getElementById("coverPlayButton");
+    const playButton = document.getElementById("playButton");
+    const timelineInput = document.getElementById("timelineInput");
+    const timelineFill = document.getElementById("timelineFill");
+    const timelineMarkers = document.getElementById("timelineMarkers");
+    const timecode = document.getElementById("timecode");
+    const shareButton = document.getElementById("shareButton");
+    const speedGroup = document.getElementById("speedGroup");
+    const toast = document.getElementById("toast");
+    const toastDot = document.getElementById("toastDot");
+    const toastText = document.getElementById("toastText");
+    const authorshipCard = document.getElementById("authorshipCard");
+    const authorshipToggle = document.getElementById("authorshipToggle");
+    const errorBanner = document.getElementById("errorBanner");
+    const creatorNameEl = document.getElementById("creatorName");
+    const sessionDateEl = document.getElementById("sessionDate");
+    const durationPillEl = document.getElementById("durationPill");
+    const coverCreatorEl = document.getElementById("coverCreator");
+    const coverScoreEl = document.getElementById("coverScore");
+    const coverDurationEl = document.getElementById("coverDuration");
+    const coverRevisionsEl = document.getElementById("coverRevisions");
+    const coverSubtitleEl = document.getElementById("coverSubtitle");
+    const authorshipScoreEl = document.getElementById("authorshipScore");
+    const certDuration = document.getElementById("certDuration");
+    const certActiveTime = document.getElementById("certActiveTime");
+    const certRevisions = document.getElementById("certRevisions");
+    const certAILevel = document.getElementById("certAILevel");
+    const certConfidence = document.getElementById("certConfidence");
+
+    const state = {
+      replayer: null,
+      events: [],
+      meta: null,
+      annotations: [],
+      totalMs: 0,
+      currentMs: 0,
+      previousMs: 0,
+      lastSeekMs: 0,
+      playing: false,
+      speed: 1,
+      dragging: false,
+      pollTimer: null,
+      hideTimer: null,
+      toastTimer: null,
+      toastMarkerId: null,
+      toastEpoch: 0,
+      demoMode: false,
+      originalWidth: 1440,
+      originalHeight: 900,
+      coverVisible: true
+    };
+
+    function fmtClock(ms) {
+      const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      if (hours > 0) {
+        return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      }
+      return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    function fmtDate(value) {
+      return new Date(value).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function setLoading(title, text) {
+      loadingTitle.textContent = title;
+      loadingText.textContent = text;
+    }
+
+    function hideLoading() {
+      loadingOverlay.classList.add("hidden");
+    }
+
+    function showReplayCover() {
+      state.coverVisible = true;
+      replayCover.classList.remove("hidden");
+      stage.classList.remove("playing");
+      stage.classList.remove("chrome-hidden");
+    }
+
+    function hideReplayCover() {
+      state.coverVisible = false;
+      replayCover.classList.add("hidden");
+    }
+
+    function showError(message) {
+      errorBanner.textContent = message;
+      errorBanner.classList.add("visible");
+    }
+
+    function clearError() {
+      errorBanner.classList.remove("visible");
+      errorBanner.textContent = "";
+    }
+
+    function annotationColor(type) {
+      if (type === "pause") return getComputedStyle(document.documentElement).getPropertyValue("--pause").trim();
+      if (type === "switch") return getComputedStyle(document.documentElement).getPropertyValue("--switch").trim();
+      if (type === "paste") return getComputedStyle(document.documentElement).getPropertyValue("--paste").trim();
+      return getComputedStyle(document.documentElement).getPropertyValue("--revision").trim();
+    }
+
+    async function fetchRecording(sessionId) {
+      const headers = {
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${SUPABASE_ANON}`
+      };
+
+      const metaRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/recordings?session_id=eq.${encodeURIComponent(sessionId)}&select=*`,
+        { headers }
+      );
+      if (!metaRes.ok) {
+        throw new Error(`Recording metadata fetch failed with ${metaRes.status}`);
+      }
+
+      const [meta] = await metaRes.json();
+      if (!meta) {
+        throw new Error("Replay not found.");
+      }
+
+      const chunksRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/recording_chunks?session_id=eq.${encodeURIComponent(sessionId)}&order=chunk_index.asc&select=events`,
+        { headers }
+      );
+      if (!chunksRes.ok) {
+        throw new Error(`Replay chunks fetch failed with ${chunksRes.status}`);
+      }
+
+      const chunks = await chunksRes.json();
+      const events = chunks.flatMap((chunk) => Array.isArray(chunk.events) ? chunk.events : []);
+      if (!events.length) {
+        throw new Error("Replay has no events.");
+      }
+
+      return { meta, events };
+    }
+
+    function remapEventDuration(events, durationMs) {
+      if (events.length < 2) return events;
+      const first = events[0].timestamp;
+      const last = events[events.length - 1].timestamp;
+      const sourceSpan = Math.max(1, last - first);
+      return events.map((event) => ({
+        ...event,
+        timestamp: first + Math.round(((event.timestamp - first) / sourceSpan) * durationMs)
+      }));
+    }
+
+    function deriveAnnotations(meta, events, totalMs) {
+      const annotations = [];
+      const firstTs = events[0]?.timestamp || 0;
+      const revisionCountFromMeta = Number(meta?.metadata?.revisionCount || 0);
+
+      for (let index = 1; index < events.length; index += 1) {
+        const gap = events[index].timestamp - events[index - 1].timestamp;
+        if (gap >= 3500) {
+          annotations.push({
+            id: `pause-${index}`,
+            type: "pause",
+            at: clamp(events[index - 1].timestamp - firstTs + 300, 0, totalMs),
+            label: `${(gap / 1000).toFixed(1)}s thinking pause`,
+            toast: `${(gap / 1000).toFixed(1)}s thinking pause`,
+            durationMs: gap
+          });
+        }
+      }
+
+      const aiEvents = Array.isArray(meta?.ai_interactions) ? meta.ai_interactions : [];
+      aiEvents.forEach((entry, index) => {
+        const offset = clamp((entry.ts || firstTs) - firstTs, 0, totalMs);
+        const type = entry.type === "paste" ? "paste" : "switch";
+        const tool = entry.tool || entry.host || entry.label || "AI tool";
+        const rewritten = typeof entry.rewritten_percent === "number" ? entry.rewritten_percent : 71;
+        annotations.push({
+          id: `ai-${index}`,
+          type,
+          at: offset,
+          label: type === "paste" ? `AI paste - ${rewritten}% rewritten` : `Switched to ${tool}`,
+          toast: type === "paste" ? `AI content incorporated - ${rewritten}% rewritten` : `Switched to ${tool}`,
+          tool,
+          rewritePct: rewritten
+        });
+      });
+
+      if (!annotations.some((item) => item.type === "revision") && revisionCountFromMeta > 0) {
+        annotations.push({
+          id: "revision-meta",
+          type: "revision",
+          at: clamp(Math.round(totalMs * 0.72), 0, totalMs),
+          label: "Rewrote this section",
+          toast: "Rewrote this section"
+        });
+      }
+
+      return annotations.sort((a, b) => a.at - b.at);
+    }
+
+    async function buildDemoReplay() {
+      const demoStart = Date.now();
+      const frame = document.createElement("iframe");
+      frame.setAttribute("aria-hidden", "true");
+      frame.style.position = "fixed";
+      frame.style.left = "-200vw";
+      frame.style.top = "0";
+      frame.style.width = "1440px";
+      frame.style.height = "900px";
+      frame.style.opacity = "0";
+      frame.style.pointerEvents = "none";
+
+      const scriptTag = '<script src="https://cdn.jsdelivr.net/npm/rrweb@1.1.3/dist/rrweb.min.js"><\\/script>';
+      const inlineScript = `
+        const send = (payload) => parent.postMessage({ __mindprintDemo: true, payload }, "*");
+        const notes = document.getElementById("notes");
+        const pageTag = document.getElementById("page-tag");
+        const sync = document.getElementById("sync");
+        const aiPanel = document.getElementById("ai");
+        const hero = document.getElementById("hero");
+        const steps = document.getElementById("steps");
+        const chips = Array.from(document.querySelectorAll(".chip"));
+        const stop = rrweb.record({
+          emit(event) {
+            send({ type: "event", event });
+          },
+          checkoutEveryNms: 400,
+          collectFonts: true
+        });
+
+        const write = (text, delay, fn) => setTimeout(fn, delay);
+        write("", 40, () => { notes.textContent = "Drafting a campaign brief for Delta Studio."; });
+        write("", 130, () => { pageTag.textContent = "Client brief v2"; });
+        write("", 260, () => { notes.textContent = "Drafting a campaign brief for Delta Studio. Focus on launch momentum and proof of craft."; });
+        write("", 420, () => { chips[0].textContent = "Intro refined"; });
+        write("", 590, () => { steps.innerHTML = "<li>Clarify the launch narrative.</li><li>Show the live build process.</li><li>Explain where AI helped and where it didn’t.</li>"; });
+        write("", 900, () => { sync.textContent = "Autosaved just now"; });
+        write("", 1020, () => { hero.innerHTML = "<h1>Launch with a replay, not a PDF.</h1><p>Show the actual decisions, edits, and revisions that led to the final deliverable.</p>"; });
+        write("", 1280, () => { aiPanel.style.opacity = "1"; aiPanel.querySelector("h3").textContent = "ChatGPT"; });
+        write("", 1420, () => { aiPanel.querySelector("p").textContent = "Draft a tighter opening that sounds premium, not agency boilerplate."; });
+        write("", 1660, () => { notes.textContent += "\\n\\nPulled in AI suggestions, but rewrote the structure to fit the launch." });
+        write("", 1900, () => { hero.querySelector("p").textContent = "Show the actual decisions, edits, and revisions that led to the final deliverable. Every change stays visible."; });
+        write("", 2120, () => { chips[1].textContent = "AI notes merged"; });
+        write("", 2420, () => { notes.textContent += "\\n\\nFinal pass: tighten the CTA and make the proof feel immediate."; });
+        write("", 2680, () => { chips[2].textContent = "CTA rewritten"; });
+        write("", 2860, () => { sync.textContent = "Synced 2 seconds ago"; });
+        write("", 3060, () => {
+          stop();
+          send({ type: "done" });
+        });
+      `;
+
+      frame.srcdoc = `<!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f5f0e8;
+            color: #18161b;
+          }
+          body {
+            display: flex;
+            align-items: stretch;
+            justify-content: stretch;
+          }
+          .frame {
+            flex: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 320px;
+            background: linear-gradient(180deg, #fcfaf7 0%, #f2ede5 100%);
+          }
+          .doc {
+            padding: 44px 56px;
+            border-right: 1px solid rgba(24, 22, 27, 0.08);
+          }
+          .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #5b5660;
+            margin-bottom: 34px;
+          }
+          .page-tag {
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(24, 22, 27, 0.06);
+          }
+          h1 {
+            font-size: 52px;
+            line-height: 1.02;
+            letter-spacing: -0.05em;
+            margin: 0 0 16px;
+          }
+          p {
+            font-size: 22px;
+            line-height: 1.55;
+            color: #4d4852;
+            margin: 0 0 18px;
+            max-width: 760px;
+          }
+          .chips {
+            display: flex;
+            gap: 10px;
+            margin: 24px 0 32px;
+            flex-wrap: wrap;
+          }
+          .chip {
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(77, 72, 82, 0.08);
+            color: #4d4852;
+            font-size: 14px;
+          }
+          ol {
+            margin: 0;
+            padding-left: 22px;
+            font-size: 23px;
+            line-height: 1.7;
+          }
+          .notes {
+            margin-top: 36px;
+            padding: 24px;
+            min-height: 180px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.58);
+            box-shadow: 0 14px 50px rgba(0,0,0,0.05);
+            white-space: pre-wrap;
+            font-size: 22px;
+            line-height: 1.6;
+          }
+          .side {
+            padding: 40px 28px;
+            background: rgba(255, 255, 255, 0.42);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+          }
+          .panel {
+            padding: 18px;
+            border-radius: 22px;
+            background: rgba(24, 22, 27, 0.04);
+          }
+          .panel h3 {
+            margin: 0 0 10px;
+            font-size: 15px;
+            color: #3d3942;
+          }
+          .panel p {
+            margin: 0;
+            font-size: 16px;
+            line-height: 1.55;
+            color: #5b5660;
+          }
+          #ai {
+            opacity: 0.18;
+            transition: opacity 140ms linear;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="frame">
+          <section class="doc">
+            <div class="toolbar">
+              <span>Delta Studio / Launch Narrative</span>
+              <span class="page-tag" id="page-tag">Campaign brief</span>
+            </div>
+            <div id="hero">
+              <h1>Prove the work by replaying how it was made.</h1>
+              <p>Recipients should understand the build process before they read the final artifact.</p>
+            </div>
+            <div class="chips">
+              <span class="chip">Outline started</span>
+              <span class="chip">Research pending</span>
+              <span class="chip">CTA draft</span>
+            </div>
+            <ol id="steps">
+              <li>Capture the document in real time.</li>
+              <li>Highlight the decisions, not just the answer.</li>
+              <li>Package it in something that feels premium.</li>
+            </ol>
+            <div class="notes" id="notes">Opening a live brief...</div>
+          </section>
+          <aside class="side">
+            <div class="panel">
+              <h3>Session status</h3>
+              <p id="sync">Autosave enabled</p>
+            </div>
+            <div class="panel" id="ai">
+              <h3>Assistant</h3>
+              <p>Waiting for prompt...</p>
+            </div>
+            <div class="panel">
+              <h3>Delivery intent</h3>
+              <p>Make the replay feel like opening a polished product, not a debugging tool.</p>
+            </div>
+          </aside>
+        </div>
+        ${scriptTag}
+        <script>${inlineScript}<\\/script>
+      </body>
+      </html>`;
+
+      document.body.appendChild(frame);
+
+      const events = [];
+      await new Promise((resolve, reject) => {
+        const timeout = window.setTimeout(() => {
+          window.removeEventListener("message", onMessage);
+          reject(new Error("Demo replay timed out."));
+        }, 7000);
+
+        function cleanup() {
+          window.clearTimeout(timeout);
+          window.removeEventListener("message", onMessage);
+          frame.remove();
+        }
+
+        function onMessage(event) {
+          if (!event.data || !event.data.__mindprintDemo) return;
+          const payload = event.data.payload || {};
+          if (payload.type === "event" && payload.event) {
+            events.push(payload.event);
+          }
+          if (payload.type === "done") {
+            cleanup();
+            resolve();
+          }
+        }
+
+        window.addEventListener("message", onMessage);
+      });
+
+      const scaledEvents = remapEventDuration(events, DEMO_DURATION_MS);
+      const meta = {
+        title: "Launch brief for Delta Studio",
+        url: "https://www.notion.so/launch-brief",
+        created_at: new Date(demoStart).toISOString(),
+        duration_ms: DEMO_DURATION_MS,
+        creator_name: "Maya Chen",
+        metadata: {
+          revisionCount: 14,
+          confidenceScore: 94,
+          activeWritingMs: 11800
+        },
+        ai_interactions: [
+          { type: "switch", ts: scaledEvents[8]?.timestamp || (scaledEvents[0]?.timestamp || demoStart) + 7200, tool: "ChatGPT" },
+          { type: "paste", ts: scaledEvents[11]?.timestamp || (scaledEvents[0]?.timestamp || demoStart) + 9800, rewritten_percent: 71 }
+        ]
+      };
+
+      const annotations = [
+        { id: "demo-pause", type: "pause", at: 4200, label: "4.2s pause", toast: "4.2s thinking pause", durationMs: 4200 },
+        { id: "demo-switch", type: "switch", at: 7600, label: "Switched to ChatGPT", toast: "Switched to ChatGPT", tool: "ChatGPT" },
+        { id: "demo-paste", type: "paste", at: 10400, label: "AI paste - 71% rewritten", toast: "AI content incorporated - 71% rewritten", rewritePct: 71 },
+        { id: "demo-revision", type: "revision", at: 12800, label: "Rewrote this section", toast: "Rewrote this section" }
+      ];
+
+      return { meta, events: scaledEvents, annotations };
+    }
+
+    function inferCertificate(meta, annotations, totalMs) {
+      const longPauseMs = annotations
+        .filter((item) => item.type === "pause")
+        .reduce((sum, item) => sum + (item.durationMs || 0), 0);
+      const activeWritingMs = meta?.metadata?.activeWritingMs || clamp(totalMs - longPauseMs, 0, totalMs);
+      const revisionCount = meta?.metadata?.revisionCount || Math.max(annotations.filter((item) => item.type === "revision").length * 3, 6);
+      const aiCount = annotations.filter((item) => item.type === "switch" || item.type === "paste").length;
+      const aiLevel = aiCount <= 1 ? "Light" : aiCount <= 3 ? "Moderate" : "Heavy";
+      const confidence = meta?.metadata?.confidenceScore || Math.max(78, 97 - aiCount * 2);
+      return {
+        durationMs: totalMs,
+        activeWritingMs,
+        revisionCount,
+        aiLevel,
+        confidence
+      };
+    }
+
+    function renderHeader(meta, totalMs) {
+      creatorNameEl.textContent = meta.creator_name || meta.creator || "Freelancer";
+      sessionDateEl.textContent = fmtDate(meta.created_at || Date.now());
+      durationPillEl.textContent = fmtClock(totalMs);
+    }
+
+    function renderCertificate(certificate) {
+      authorshipScoreEl.textContent = String(certificate.confidence);
+      certDuration.textContent = fmtClock(certificate.durationMs);
+      certActiveTime.textContent = fmtClock(certificate.activeWritingMs);
+      certRevisions.textContent = String(certificate.revisionCount);
+      certAILevel.textContent = certificate.aiLevel;
+      certConfidence.textContent = `${certificate.confidence} / 100`;
+      coverScoreEl.textContent = String(certificate.confidence);
+      coverDurationEl.textContent = fmtClock(certificate.durationMs);
+      coverRevisionsEl.textContent = String(certificate.revisionCount);
+    }
+
+    function renderCover(meta) {
+      const creator = meta.creator_name || meta.creator || "Freelancer";
+      coverCreatorEl.textContent = creator;
+      coverSubtitleEl.textContent = state.demoMode
+        ? "Open the replay to watch a polished sample of writing, revision, pauses, and AI collaboration in real time."
+        : "Open the replay to watch the real sequence of writing, revision, pauses, and AI collaboration exactly as it happened.";
+      showReplayCover();
+    }
+
+    function renderMarkers() {
+      timelineMarkers.innerHTML = "";
+      state.annotations.forEach((item) => {
+        const marker = document.createElement("button");
+        marker.type = "button";
+        marker.className = "marker";
+        marker.style.left = `${(item.at / state.totalMs) * 100}%`;
+        marker.style.background = annotationColor(item.type);
+        marker.setAttribute("data-tip", item.label);
+        marker.setAttribute("aria-label", item.label);
+        marker.addEventListener("click", () => {
+          seekTo(item.at, false);
+        });
+        timelineMarkers.appendChild(marker);
+      });
+    }
+
+    function updatePlayButton() {
+      playButton.dataset.state = state.playing ? "playing" : "paused";
+      playButton.setAttribute("aria-label", state.playing ? "Pause replay" : "Play replay");
+      playButton.classList.remove("pulse");
+      void playButton.offsetWidth;
+      playButton.classList.add("pulse");
+    }
+
+    function updateTimeline(currentMs) {
+      const safeMs = clamp(currentMs, 0, state.totalMs);
+      const ratio = state.totalMs ? safeMs / state.totalMs : 0;
+      timelineFill.style.width = `${ratio * 100}%`;
+      if (!state.dragging) {
+        timelineInput.value = String(Math.round(ratio * 10000));
+      }
+      timecode.textContent = `${fmtClock(safeMs)} / ${fmtClock(state.totalMs)}`;
+    }
+
+    function fitReplay() {
+      const wrapper = replayRoot.querySelector(".replayer-wrapper");
+      const iframe = wrapper ? wrapper.querySelector("iframe") : null;
+      if (!wrapper || !iframe) return;
+
+      const width = Number(iframe.width) || state.originalWidth;
+      const height = Number(iframe.height) || state.originalHeight;
+      const scale = Math.min(replayRoot.clientWidth / width, replayRoot.clientHeight / height);
+      const left = (replayRoot.clientWidth - width * scale) / 2;
+      const top = (replayRoot.clientHeight - height * scale) / 2;
+
+      iframe.setAttribute("sandbox", "allow-same-origin");
+      wrapper.style.width = `${width}px`;
+      wrapper.style.height = `${height}px`;
+      wrapper.style.left = `${left}px`;
+      wrapper.style.top = `${top}px`;
+      wrapper.style.transform = `scale(${scale})`;
+    }
+
+    function getCurrentTime() {
+      if (!state.replayer) return state.currentMs;
+      if (typeof state.replayer.getCurrentTime === "function") {
+        return clamp(state.replayer.getCurrentTime(), 0, state.totalMs);
+      }
+      return clamp(state.currentMs, 0, state.totalMs);
+    }
+
+    function syncFromPlayer() {
+      if (!state.replayer || state.dragging) return;
+      const currentMs = getCurrentTime();
+      state.previousMs = state.currentMs;
+      state.currentMs = currentMs;
+      updateTimeline(currentMs);
+      maybeFireToast(state.previousMs, state.currentMs);
+    }
+
+    function resetToastWindow(currentMs) {
+      state.toastMarkerId = null;
+      state.toastEpoch += 1;
+      if (currentMs < state.previousMs) {
+        toast.classList.remove("visible");
+      }
+    }
+
+    function showToast(item) {
+      state.toastMarkerId = item.id;
+      state.toastEpoch += 1;
+      const toastEpoch = state.toastEpoch;
+      toastDot.style.background = annotationColor(item.type);
+      toastText.textContent = item.toast || item.label;
+      toast.classList.add("visible");
+      window.clearTimeout(state.toastTimer);
+      state.toastTimer = window.setTimeout(() => {
+        if (toastEpoch !== state.toastEpoch) return;
+        toast.classList.remove("visible");
+      }, 2500);
+    }
+
+    function maybeFireToast(previousMs, currentMs) {
+      if (currentMs < previousMs) {
+        resetToastWindow(currentMs);
+        return;
+      }
+      const next = state.annotations.find((item) => item.at > previousMs && item.at <= currentMs);
+      if (next && next.id !== state.toastMarkerId) {
+        showToast(next);
+      }
+    }
+
+    function showChrome() {
+      stage.classList.remove("chrome-hidden");
+      window.clearTimeout(state.hideTimer);
+      if (state.playing) {
+        state.hideTimer = window.setTimeout(() => {
+          stage.classList.add("chrome-hidden");
+        }, 3000);
+      }
+    }
+
+    function pausePlayback() {
+      if (!state.replayer) return;
+      state.replayer.pause();
+      state.playing = false;
+      state.currentMs = getCurrentTime();
+      state.previousMs = state.currentMs;
+      stage.classList.remove("playing", "chrome-hidden");
+      updatePlayButton();
+      updateTimeline(state.currentMs);
+      window.clearTimeout(state.hideTimer);
+      if (state.currentMs <= 80) {
+        showReplayCover();
+      }
+    }
+
+    function playFrom(ms) {
+      if (!state.replayer) return;
+      hideReplayCover();
+      state.currentMs = clamp(ms, 0, state.totalMs);
+      state.previousMs = state.currentMs;
+      state.replayer.play(state.currentMs);
+      state.playing = true;
+      stage.classList.add("playing");
+      updatePlayButton();
+      updateTimeline(state.currentMs);
+      showChrome();
+    }
+
+    function seekTo(ms, preservePlayState) {
+      if (!state.replayer) return;
+      const target = clamp(ms, 0, state.totalMs);
+      const wasPlaying = preservePlayState !== undefined ? preservePlayState : state.playing;
+      state.replayer.pause();
+      state.replayer.play(target);
+      if (wasPlaying || target > 0) {
+        hideReplayCover();
+      }
+      state.currentMs = target;
+      state.previousMs = target;
+      updateTimeline(target);
+      resetToastWindow(target);
+      if (!wasPlaying) {
+        window.setTimeout(() => {
+          if (!state.replayer) return;
+          state.replayer.pause();
+          state.playing = false;
+          stage.classList.remove("playing");
+          updatePlayButton();
+          showChrome();
+          if (target <= 80) {
+            showReplayCover();
+          }
+        }, 50);
+      } else {
+        state.playing = true;
+        stage.classList.add("playing");
+        updatePlayButton();
+        showChrome();
+      }
+    }
+
+    function setSpeed(nextSpeed) {
+      state.speed = nextSpeed;
+      Array.from(speedGroup.querySelectorAll("button")).forEach((button) => {
+        button.classList.toggle("active", Number(button.dataset.speed) === nextSpeed);
+      });
+      if (state.replayer && typeof state.replayer.setConfig === "function") {
+        state.replayer.setConfig({ speed: nextSpeed });
+      }
+    }
+
+    function destroyPlayer() {
+      window.clearInterval(state.pollTimer);
+      state.pollTimer = null;
+      window.clearTimeout(state.hideTimer);
+      window.clearTimeout(state.toastTimer);
+      if (state.replayer) {
+        try {
+          state.replayer.pause();
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      state.replayer = null;
+      replayRoot.innerHTML = "";
+    }
+
+    function buildReplayer() {
+      destroyPlayer();
+
+      state.replayer = new rrweb.Replayer(state.events, {
+        root: replayRoot,
+        showController: false,
+        speed: state.speed,
+        mouseTail: false,
+        useVirtualDom: true,
+        insertStyleRules: [
+          "html { overflow: hidden !important; }",
+          "body { overflow: hidden !important; }"
+        ]
+      });
+
+      state.replayer.on("start", () => {
+        state.playing = true;
+        stage.classList.add("playing");
+        updatePlayButton();
+        showChrome();
+      });
+
+      state.replayer.on("pause", () => {
+        state.playing = false;
+        stage.classList.remove("playing");
+        state.currentMs = getCurrentTime();
+        state.previousMs = state.currentMs;
+        updatePlayButton();
+        updateTimeline(state.currentMs);
+      });
+
+      state.replayer.on("finish", () => {
+        state.playing = false;
+        state.currentMs = state.totalMs;
+        state.previousMs = state.totalMs;
+        stage.classList.remove("playing");
+        stage.classList.remove("chrome-hidden");
+        updatePlayButton();
+        updateTimeline(state.currentMs);
+        showReplayCover();
+      });
+
+      state.replayer.on("fullsnapshot-rebuilded", fitReplay);
+      state.replayer.pause(0);
+      fitReplay();
+      state.pollTimer = window.setInterval(syncFromPlayer, 100);
+    }
+
+    async function loadReplay() {
+      clearError();
+      setLoading("Opening Thinking Replay", "Preparing a real session playback.");
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get("id");
+
+      try {
+        let replay;
+        if (sessionId) {
+          setLoading("Opening Thinking Replay", "Fetching the recorded session.");
+          replay = await fetchRecording(sessionId);
+          state.demoMode = false;
+        } else {
+          setLoading("Opening Thinking Replay", "Generating a polished demo session.");
+          replay = await buildDemoReplay();
+          state.demoMode = true;
+        }
+
+        state.meta = replay.meta;
+        state.events = replay.events;
+        state.totalMs = replay.meta.duration_ms || Math.max(0, replay.events[replay.events.length - 1].timestamp - replay.events[0].timestamp);
+        state.annotations = (replay.annotations && replay.annotations.length)
+          ? replay.annotations
+          : deriveAnnotations(replay.meta, replay.events, state.totalMs);
+
+        const metaEvent = replay.events.find((event) => event.type === 4);
+        if (metaEvent && metaEvent.data) {
+          state.originalWidth = metaEvent.data.width || state.originalWidth;
+          state.originalHeight = metaEvent.data.height || state.originalHeight;
+        }
+
+        renderHeader(replay.meta, state.totalMs);
+        renderCertificate(inferCertificate(replay.meta, state.annotations, state.totalMs));
+        renderCover(replay.meta);
+        renderMarkers();
+        updateTimeline(0);
+        buildReplayer();
+        hideLoading();
+      } catch (error) {
+        console.error(error);
+        showError(error.message || "Failed to open the replay.");
+        setLoading("Replay unavailable", "Falling back to a local demo session.");
+        try {
+          const replay = await buildDemoReplay();
+          state.meta = replay.meta;
+          state.events = replay.events;
+          state.totalMs = replay.meta.duration_ms;
+          state.annotations = replay.annotations;
+          state.demoMode = true;
+          renderHeader(replay.meta, state.totalMs);
+          renderCertificate(inferCertificate(replay.meta, state.annotations, state.totalMs));
+          renderCover(replay.meta);
+          renderMarkers();
+          updateTimeline(0);
+          buildReplayer();
+          hideLoading();
+        } catch (demoError) {
+          console.error(demoError);
+          showError(`Replay failed: ${demoError.message}`);
+          setLoading("Replay unavailable", "The viewer could not prepare a playback.");
+        }
+      }
+    }
+
+    playButton.addEventListener("click", () => {
+      if (!state.replayer) return;
+      if (state.playing) {
+        pausePlayback();
+      } else if (state.currentMs >= state.totalMs) {
+        seekTo(0, false);
+      } else {
+        playFrom(state.currentMs);
+      }
+    });
+
+    coverPlayButton.addEventListener("click", () => {
+      if (!state.replayer) return;
+      playFrom(state.currentMs > 0 ? state.currentMs : 0);
+    });
+
+    timelineInput.addEventListener("pointerdown", () => {
+      state.dragging = true;
+      timelineInput.classList.add("dragging");
+      showChrome();
+    });
+
+    timelineInput.addEventListener("input", () => {
+      const target = (Number(timelineInput.value) / 10000) * state.totalMs;
+      state.currentMs = target;
+      updateTimeline(target);
+    });
+
+    function commitSeek() {
+      if (!state.dragging) return;
+      state.dragging = false;
+      timelineInput.classList.remove("dragging");
+      const target = (Number(timelineInput.value) / 10000) * state.totalMs;
+      seekTo(target);
+    }
+
+    timelineInput.addEventListener("change", commitSeek);
+    timelineInput.addEventListener("pointerup", commitSeek);
+    timelineInput.addEventListener("touchend", commitSeek, { passive: true });
+
+    speedGroup.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-speed]");
+      if (!button) return;
+      setSpeed(Number(button.dataset.speed));
+      showChrome();
+    });
+
+    authorshipToggle.addEventListener("click", () => {
+      authorshipCard.classList.toggle("open");
+      authorshipToggle.setAttribute("aria-expanded", authorshipCard.classList.contains("open") ? "true" : "false");
+      showChrome();
+    });
+
+    shareButton.addEventListener("click", async () => {
+      const url = window.location.href;
+      const defaultLabel = "↗ Share this replay";
+      try {
+        await navigator.clipboard.writeText(url);
+        shareButton.textContent = "Link copied";
+        window.setTimeout(() => {
+          shareButton.textContent = defaultLabel;
+        }, 1800);
+      } catch (error) {
+        window.open(url, "_blank", "noopener");
+      }
+    });
+
+    ["mousemove", "mouseenter", "touchstart", "focusin"].forEach((eventName) => {
+      stage.addEventListener(eventName, showChrome, { passive: true });
+    });
+
+    window.addEventListener("resize", fitReplay);
+    document.addEventListener("keydown", (event) => {
+      if (!state.replayer) return;
+      if (event.code === "Space") {
+        event.preventDefault();
+        playButton.click();
+      }
+      if (event.code === "ArrowRight") {
+        event.preventDefault();
+        seekTo(state.currentMs + 5000, state.playing);
+      }
+      if (event.code === "ArrowLeft") {
+        event.preventDefault();
+        seekTo(state.currentMs - 5000, state.playing);
+      }
+    });
+
+    loadReplay();
+  </script>
+</body>
+</html>
