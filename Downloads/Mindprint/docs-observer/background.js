@@ -129,22 +129,29 @@ async function getSessionEvents(sessionId) {
 // Session metadata is persisted in chrome.storage.local keyed by `rec_${tabId}`
 // so it survives service-worker restarts.
 const eventCounts = new Map()  // sessionId → count (in-memory only)
+const ACTIVE_SESSION_KEY = 'mindprint_active_session'
 
-async function getActiveSession(tabId) {
-  const data = await chrome.storage.local.get(`rec_${tabId}`)
-  return data[`rec_${tabId}`] ?? null
+async function getActiveSession() {
+  const data = await chrome.storage.local.get(ACTIVE_SESSION_KEY)
+  return data[ACTIVE_SESSION_KEY] ?? null
 }
 
-async function setActiveSession(tabId, session) {
+async function setActiveSession(session) {
   if (session) {
-    await chrome.storage.local.set({ [`rec_${tabId}`]: session })
+    await chrome.storage.local.set({ [ACTIVE_SESSION_KEY]: session })
   } else {
-    await chrome.storage.local.remove(`rec_${tabId}`)
+    await chrome.storage.local.remove(ACTIVE_SESSION_KEY)
   }
 }
 
 // ─── rrweb Injection ──────────────────────────────────────────────────────────
 async function injectRrweb(tabId, sessionId) {
+  // Ensure the isolated-world content bridge exists for already-open tabs.
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    files:  ['content.js'],
+  })
+
   // Step 1 – load rrweb library into the page's MAIN world
   await chrome.scripting.executeScript({
     target: { tabId },
@@ -184,7 +191,7 @@ async function injectRrweb(tabId, sessionId) {
 const BLOCKED_PROTOCOLS = new Set(['chrome:', 'chrome-extension:', 'about:', 'edge:', 'brave:'])
 
 async function startRecording(tabId) {
-  const existing = await getActiveSession(tabId)
+  const existing = await getActiveSession()
   if (existing?.status === 'recording') return existing  // already recording
 
   const tab = await chrome.tabs.get(tabId)
@@ -209,7 +216,7 @@ async function startRecording(tabId) {
   }
 
   await putSession(session)
-  await setActiveSession(tabId, session)
+  await setActiveSession(session)
   eventCounts.set(sessionId, 0)
 
   await injectRrweb(tabId, sessionId)
@@ -228,7 +235,7 @@ async function startRecording(tabId) {
 
 // ─── Stop Recording ───────────────────────────────────────────────────────────
 async function stopRecording(tabId) {
-  const session = await getActiveSession(tabId)
+  const session = await getActiveSession()
   if (!session) return null
 
   const endTime = Date.now()
@@ -256,7 +263,7 @@ async function stopRecording(tabId) {
     durationMs: endTime - session.startTime,
   })
 
-  await setActiveSession(tabId, null)
+  await setActiveSession(null)
   eventCounts.delete(session.sessionId)
 
   chrome.action.setBadgeText({ text: '', tabId }).catch(() => {})
@@ -339,7 +346,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'POPUP_STATUS') {
     chrome.tabs.query({ active: true, currentWindow: true }, async ([tab]) => {
       if (!tab) { sendResponse({ status: 'no-tab' }); return }
-      const session = await getActiveSession(tab.id)
+      const session = await getActiveSession()
       const count   = session ? (eventCounts.get(session.sessionId) || 0) : 0
       sendResponse({ session, count })
     })
@@ -406,7 +413,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // When the user navigates to a new page within a recording session, re-inject.
 chrome.webNavigation.onCompleted.addListener(async ({ tabId, frameId }) => {
   if (frameId !== 0) return  // main frame only
-  const session = await getActiveSession(tabId)
+  const session = await getActiveSession()
   if (!session) return
   try {
     await injectRrweb(tabId, session.sessionId)
@@ -414,6 +421,19 @@ chrome.webNavigation.onCompleted.addListener(async ({ tabId, frameId }) => {
       type:      'RECORDING_STARTED',
       sessionId: session.sessionId,
     })
+    const tab = await chrome.tabs.get(tabId)
+    const next = {
+      ...session,
+      tabId,
+      url:   tab.url   || session.url,
+      title: tab.title || session.title,
+    }
+    await updateSession(session.sessionId, {
+      tabId: next.tabId,
+      url:   next.url,
+      title: next.title,
+    })
+    await setActiveSession(next)
   } catch (_) {}
 })
 
@@ -426,25 +446,45 @@ async function logAIVisit(url, title) {
     if (!label) return
   } catch (_) { return }
 
-  // Log against every currently active recording session
-  const all = await chrome.storage.local.get(null)
-  for (const [key, session] of Object.entries(all)) {
-    if (!key.startsWith('rec_') || !session?.sessionId) continue
-    await addEvent(session.sessionId, {
-      _mindprintMeta: true,
-      type:   'ai_visit',
-      tool:   label,
-      host,
-      url,
-      title:  title || '',
-      ts:     Date.now(),
-    }, false).catch(() => {})
-  }
+  const session = await getActiveSession()
+  if (!session?.sessionId) return
+  await addEvent(session.sessionId, {
+    _mindprintMeta: true,
+    type:   'ai_visit',
+    tool:   label,
+    host,
+    url,
+    title:  title || '',
+    ts:     Date.now(),
+  }, false).catch(() => {})
 }
 
 chrome.tabs.onActivated.addListener(async ({ tabId }) => {
   try {
     const tab = await chrome.tabs.get(tabId)
+    const session = await getActiveSession()
+    if (session?.status === 'recording') {
+      const protocol = tab.url ? new URL(tab.url).protocol : ''
+      if (tab.url && !BLOCKED_PROTOCOLS.has(protocol)) {
+        await injectRrweb(tabId, session.sessionId)
+        await chrome.tabs.sendMessage(tabId, {
+          type:      'RECORDING_STARTED',
+          sessionId: session.sessionId,
+        })
+        const next = {
+          ...session,
+          tabId,
+          url:   tab.url   || session.url,
+          title: tab.title || session.title,
+        }
+        await updateSession(session.sessionId, {
+          tabId: next.tabId,
+          url:   next.url,
+          title: next.title,
+        })
+        await setActiveSession(next)
+      }
+    }
     if (tab.url) await logAIVisit(tab.url, tab.title)
   } catch (_) {}
 })
