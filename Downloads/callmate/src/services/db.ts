@@ -8,6 +8,10 @@ export interface UserProfile {
   name: string | null;
   gender: string | null;
   age_range: string | null;
+  anxiety_severity: string | null;
+  anxiety_triggers: string[] | null;
+  life_impact: string[] | null;
+  call_streak: number;
   tier: string;
   trial_start_date: number | null;
   dark_mode: boolean;
@@ -158,7 +162,7 @@ export async function fetchAnxietyRatings(userId: string) {
     .from('anxiety_ratings')
     .select('*')
     .eq('user_id', userId)
-    .order('timestamp', { ascending: false });
+    .order('timestamp', { ascending: true });
   if (error || !data) return [];
   return data as AnxietyRatingRow[];
 }
@@ -211,6 +215,12 @@ export async function pushLocalDataToSupabase(
     anxietyRatings: Array<{ id?: string; scriptId: string; rating: number; timestamp: number }>;
     personas: Persona[];
     name: string;
+    gender: string;
+    ageRange: string;
+    anxietySeverity: string | null;
+    anxietyTriggers: string[];
+    lifeImpact: string[];
+    callStreak: number;
     tier: string;
     trialStartDate: number | null;
     darkMode: boolean;
@@ -223,6 +233,12 @@ export async function pushLocalDataToSupabase(
     syncPersonas(userId, data.personas),
     upsertProfile(userId, {
       name: data.name || null,
+      gender: data.gender || null,
+      age_range: data.ageRange || null,
+      anxiety_severity: data.anxietySeverity || null,
+      anxiety_triggers: data.anxietyTriggers.length ? data.anxietyTriggers : null,
+      life_impact: data.lifeImpact.length ? data.lifeImpact : null,
+      call_streak: data.callStreak,
       tier: data.tier,
       trial_start_date: data.trialStartDate,
       dark_mode: data.darkMode,

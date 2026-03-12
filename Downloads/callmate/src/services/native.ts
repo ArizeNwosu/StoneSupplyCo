@@ -86,15 +86,28 @@ export interface AppleSignInResult {
 
 export function nativeAppleSignIn(): Promise<AppleSignInResult> {
   return new Promise((resolve, reject) => {
+    const messageHandler = (window as any).webkit?.messageHandlers?.appleSignIn;
+    if (!messageHandler?.postMessage) {
+      reject(new Error('Apple Sign In is unavailable on this device'));
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      window.removeEventListener('nativeAppleSignIn', handler);
+      reject(new Error('Apple Sign In timed out'));
+    }, 15000);
+
     const handler = (event: Event) => {
+      window.clearTimeout(timeoutId);
       window.removeEventListener('nativeAppleSignIn', handler);
       const { result, error } = (event as CustomEvent<{ result?: AppleSignInResult; error?: string }>).detail;
       if (error) reject(new Error(error));
       else if (result) resolve(result);
       else reject(new Error('No result from Apple Sign In'));
     };
+
     window.addEventListener('nativeAppleSignIn', handler);
-    (window as any).webkit?.messageHandlers?.appleSignIn?.postMessage({});
+    messageHandler.postMessage({});
   });
 }
 

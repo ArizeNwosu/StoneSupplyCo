@@ -1,10 +1,21 @@
 import { supabase } from './supabase';
 
+async function getAuthRedirectUrl() {
+  const { Capacitor } = await import('@capacitor/core');
+  return Capacitor.isNativePlatform()
+    ? 'com.trycallmate.app://login-callback'
+    : window.location.origin;
+}
+
 export async function signUp(email: string, password: string, name?: string) {
+  const emailRedirectTo = await getAuthRedirectUrl();
   return supabase.auth.signUp({
     email,
     password,
-    options: { data: { name: name ?? '' } },
+    options: {
+      data: { name: name ?? '' },
+      emailRedirectTo,
+    },
   });
 }
 
@@ -31,31 +42,62 @@ export async function signInWithApple() {
 }
 
 export async function signInWithGoogle() {
+  const redirectTo = await getAuthRedirectUrl();
   const { Capacitor } = await import('@capacitor/core');
   if (Capacitor.isNativePlatform()) {
-    // Google OAuth via ASWebAuthenticationSession — will work once custom plugin is confirmed
-    const { openOAuthSession } = await import('./native');
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'com.trycallmate.app://login-callback', skipBrowserRedirect: true },
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+      },
     });
-    if (error || !data.url) return { data: null, error: error ?? new Error('No OAuth URL') };
-    const callbackUrl = await openOAuthSession(data.url, 'com.trycallmate.app');
-    if (!callbackUrl) return { data: null, error: new Error('OAuth cancelled') };
-    const params = new URLSearchParams(callbackUrl.split('?')[1] ?? '');
-    const code = params.get('code');
-    if (code) return supabase.auth.exchangeCodeForSession(code);
-    return { data: null, error: new Error('No code in callback') };
+
+    if (error || !data?.url) {
+      return { data: null, error: error ?? new Error('No OAuth URL') };
+    }
+
+    try {
+      const { openOAuthSession } = await import('./native');
+      const callbackUrl = await openOAuthSession(data.url, 'com.trycallmate.app');
+      if (!callbackUrl) return { data: null, error: new Error('OAuth cancelled') };
+
+      const urlObj = new URL(callbackUrl.replace('#', '?'));
+      const code = urlObj.searchParams.get('code');
+      if (code) return supabase.auth.exchangeCodeForSession(code);
+
+      const accessToken = urlObj.searchParams.get('access_token');
+      if (accessToken) {
+        const refreshToken = urlObj.searchParams.get('refresh_token');
+        return supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken ?? ''
+        });
+      }
+
+      return { data: null, error: new Error('No code or token in callback') };
+    } catch (nativeError: any) {
+      const message = nativeError?.message?.toLowerCase?.() ?? '';
+      if (!message.includes('not implemented')) {
+        throw nativeError;
+      }
+
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url: data.url, presentationStyle: 'fullscreen' });
+      return { data, error: null };
+    }
   }
+
   return supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin },
+    options: { redirectTo },
   });
 }
 
 export async function sendPasswordReset(email: string) {
+  const redirectTo = await getAuthRedirectUrl();
   return supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`,
+    redirectTo,
   });
 }
 

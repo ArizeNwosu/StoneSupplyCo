@@ -1,1 +1,61 @@
 @import "tailwindcss";
+
+:root {
+  --app-vh: 100vh;
+  --keyboard-inset: 0px;
+  --warm-bg: #f3eee4;
+  --warm-bg-soft: #fbf8f2;
+  --warm-surface: rgba(255, 251, 245, 0.86);
+  --warm-border: rgba(121, 137, 124, 0.18);
+  --warm-ink: #22312b;
+  --warm-muted: #66756f;
+  --warm-accent: #5d8a7a;
+  --warm-accent-soft: #dbe8df;
+  --warm-accent-deep: #476f61;
+  --warm-highlight: #d8c5a6;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--warm-bg);
+  color: var(--warm-ink);
+}
+
+.app-screen {
+  height: var(--app-vh);
+  min-height: var(--app-vh);
+}
+
+.keyboard-aware {
+  padding-bottom: max(1.5rem, calc(var(--keyboard-inset) + 1.5rem));
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  scroll-margin-block-start: 6rem;
+  scroll-margin-block-end: calc(var(--keyboard-inset) + 6rem);
+}
+
+.warm-therapeutic-bg {
+  background:
+    radial-gradient(circle at top left, rgba(216, 197, 166, 0.18), transparent 34%),
+    radial-gradient(circle at top right, rgba(121, 157, 139, 0.16), transparent 30%),
+    linear-gradient(180deg, var(--warm-bg-soft) 0%, var(--warm-bg) 100%);
+}
+
+.warm-panel {
+  background: var(--warm-surface);
+  border: 1px solid var(--warm-border);
+  box-shadow: 0 18px 48px rgba(59, 73, 65, 0.08);
+}
+
+.warm-label {
+  color: var(--warm-accent-deep);
+}

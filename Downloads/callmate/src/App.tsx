@@ -32,8 +32,9 @@ import { Tone, CallScript, SAFE_LINES, PANIC_OPTIONS, PanicOption, COMMON_CALL_T
 import { generateCallScript, generatePanicResponse, generateTTS, generateVoicemailScript, generateEmailFallback, generateBranch } from './services/gemini';
 import { signUp, signIn, signInWithApple, signInWithGoogle, signOut, onAuthStateChange, sendPasswordReset } from './services/auth';
 import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchAnxietyRatings, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection as dbSaveReflection, savePersona, syncAnxietyRatings, deleteScript as dbDeleteScript, deletePersona as dbDeletePersona } from './services/db';
-import { hapticLight, hapticMedium, hapticSuccess, hapticError, setStatusBarDark, setStatusBarLight, openInAppBrowser } from './services/native';
+import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, setStatusBarDark, setStatusBarLight, openInAppBrowser } from './services/native';
 import type { User } from '@supabase/supabase-js';
+import breatheAudio from '../breathe.mp3';
 
 const RotatingText = () => {
   const words = ["putting off?", "dreading?", "avoiding?"];
@@ -133,6 +134,8 @@ const IMPACT_AREAS = [
 
 const HAS_SEEN_ONBOARDING_KEY = 'callmate_has_seen_onboarding';
 const AUTH_INTENT_KEY = 'callmate_auth_intent';
+const BREATHE_SOUND_KEY = 'callmate_breathe_sound_enabled';
+const BREATHE_VIBRATION_KEY = 'callmate_breathe_vibration_enabled';
 
 export default function App() {
   const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
@@ -158,6 +161,7 @@ export default function App() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalForced, setUpgradeModalForced] = useState(false);
   const [showPreCallCheck, setShowPreCallCheck] = useState(false);
+  const [preCallCheckMode, setPreCallCheckMode] = useState<'script' | 'breathe'>('script');
   const [showPostCallReinforcement, setShowPostCallReinforcement] = useState(false);
   const [postCallRating, setPostCallRating] = useState<number | undefined>(undefined);
   const [showPanicPanel, setShowPanicPanel] = useState(false);
@@ -175,8 +179,14 @@ export default function App() {
   const [previousView, setPreviousView] = useState<'home' | 'history'>('home');
   const [onboardingStep, setOnboardingStep] = useState(1);
   const [anxietySeverity, setAnxietySeverity] = useState<AnxietySeverity | null>(null);
-  const [anxietyTriggers, setAnxietyTriggers] = useState<string[]>([]);
-  const [lifeImpact, setLifeImpact] = useState<string[]>([]);
+  const [anxietyTriggers, setAnxietyTriggers] = useState<string[]>(() => {
+    const saved = localStorage.getItem('callmate_triggers');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [lifeImpact, setLifeImpact] = useState<string[]>(() => {
+    const saved = localStorage.getItem('callmate_impact');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [callAnxietyRatings, setCallAnxietyRatings] = useState<AnxietyRating[]>([]);
   const [callStreak, setCallStreak] = useState(0);
   const [activeTab, setActiveTab] = useState<'home' | 'history' | 'dashboard'>('home');
@@ -1760,7 +1770,10 @@ export default function App() {
               isRewriting={isRewriting}
               setTone={setTone}
               handleGenerate={handleGenerate}
-              onShowPreCallCheck={() => setShowPreCallCheck(true)}
+              onShowPreCallCheck={() => {
+                setPreCallCheckMode('script');
+                setShowPreCallCheck(true);
+              }}
               onShowReflectionPrompt={() => { hapticLight(); setShowReflectionPrompt(true); }}
               onShowPanicPanel={() => { hapticMedium(); setShowPanicPanel(true); setPanicCategory(null); setPanicResponse(null); }}
               scriptSections={
@@ -1821,6 +1834,28 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
+
+      {['home', 'history', 'dashboard', 'settings'].includes(view) && !showPreCallCheck && (
+        <div className="fixed bottom-[104px] right-6 z-[65] max-w-2xl mx-auto">
+          <button
+            type="button"
+            onClick={() => {
+              hapticLight();
+              setPreCallCheckMode('breathe');
+              setShowPreCallCheck(true);
+            }}
+            className={cn(
+              "px-5 py-3 rounded-2xl shadow-xl border flex items-center gap-2 font-bold text-sm transition-all active:scale-[0.98]",
+              isDark
+                ? "bg-[#202926] border-[#415049] text-[#dbe8df] hover:border-[#66756f]"
+                : "bg-[rgba(255,251,245,0.96)] border-[#d8cdc0] text-[#476f61] hover:border-[#b7aa96]"
+            )}
+          >
+            <span>🧘</span>
+            Breathe
+          </button>
+        </div>
+      )}
 
       <nav className={cn("fixed bottom-0 left-0 right-0 border-t px-4 py-3 pb-8 z-50 flex items-center justify-around max-w-2xl mx-auto shadow-2xl transition-colors", isDark ? "bg-black border-white/5" : "bg-white border-black/5")}>
         {/* New Call */}
@@ -2221,6 +2256,7 @@ export default function App() {
         {showPreCallCheck && (
           <PreCallCheck
             isDark={isDark}
+            mode={preCallCheckMode}
             onClose={() => setShowPreCallCheck(false)}
           />
         )}
@@ -2300,35 +2336,130 @@ function ReviewSlideshow({ isDark }: { isDark: boolean }) {
   );
 }
 
-function BreathingGuide({ onComplete }: { onComplete: () => void }) {
+function BreathingGuide({
+  onComplete,
+  soundEnabled,
+  vibrationEnabled,
+}: {
+  onComplete: () => void;
+  soundEnabled: boolean;
+  vibrationEnabled: boolean;
+}) {
   type Phase = 'ready' | 'inhale' | 'hold' | 'exhale' | 'done';
   const [phase, setPhase] = React.useState<Phase>('ready');
   const [cycle, setCycle] = React.useState(0);
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const TOTAL = 3;
-  const INHALE = 4000, HOLD = 2000, EXHALE = 6000;
-  const CYCLE = INHALE + HOLD + EXHALE; // 12000ms
+  const START_DELAY = 4000;
+  const PAUSE_BETWEEN = 4000;
+  const INHALE = 5000, HOLD = 6000, EXHALE = 9000;
+  const ACTIVE_CYCLE = INHALE + HOLD + EXHALE;
 
   React.useEffect(() => {
     const t: ReturnType<typeof setTimeout>[] = [];
-    // Small delay before first inhale so user sees the UI
-    t.push(setTimeout(() => { setPhase('inhale'); setCycle(0); }, 600));
+    t.push(setTimeout(() => { setPhase('inhale'); setCycle(0); }, START_DELAY));
     for (let c = 0; c < TOTAL; c++) {
-      const base = 600 + c * CYCLE;
+      const base = START_DELAY + c * (ACTIVE_CYCLE + PAUSE_BETWEEN);
       t.push(setTimeout(() => setPhase('hold'), base + INHALE));
       t.push(setTimeout(() => setPhase('exhale'), base + INHALE + HOLD));
       if (c < TOTAL - 1) {
-        t.push(setTimeout(() => { setPhase('inhale'); setCycle(c + 1); }, base + CYCLE));
+        t.push(setTimeout(() => setPhase('ready'), base + ACTIVE_CYCLE));
+        t.push(setTimeout(() => { setPhase('inhale'); setCycle(c + 1); }, base + ACTIVE_CYCLE + PAUSE_BETWEEN));
       }
     }
-    t.push(setTimeout(() => setPhase('done'), 600 + TOTAL * CYCLE));
+    t.push(setTimeout(() => setPhase('done'), START_DELAY + TOTAL * ACTIVE_CYCLE + (TOTAL - 1) * PAUSE_BETWEEN));
     return () => t.forEach(clearTimeout);
   }, []);
+
+  React.useEffect(() => {
+    const audio = audioRef.current ?? new Audio(breatheAudio);
+    audioRef.current = audio;
+    audio.preload = 'auto';
+    audio.setAttribute('playsinline', 'true');
+    audio.loop = false;
+
+    if (!soundEnabled) {
+      audio.pause();
+    }
+
+    return () => {
+      audio.pause();
+    };
+  }, [soundEnabled]);
+
+  React.useEffect(() => {
+    return () => {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (!soundEnabled) {
+      audio.pause();
+      return;
+    }
+
+    if (phase === 'inhale') {
+      audio.currentTime = 0;
+      void audio.play().catch(() => {});
+      return;
+    }
+
+    if (phase === 'hold' || phase === 'exhale') {
+      if (audio.paused) {
+        void audio.play().catch(() => {});
+      }
+      return;
+    }
+
+    if (phase === 'ready' || phase === 'done') {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  }, [cycle, phase, soundEnabled]);
+
+  React.useEffect(() => {
+    if (!['inhale', 'hold', 'exhale'].includes(phase)) return;
+
+    const playPulse = () => {
+      if (vibrationEnabled) {
+        if ('vibrate' in navigator) {
+          navigator.vibrate(
+            phase === 'hold'
+              ? [320, 120, 320]
+              : phase === 'inhale'
+                ? [220, 90, 220]
+                : [260, 110, 260]
+          );
+        }
+        void (phase === 'hold' ? hapticHeavy() : phase === 'inhale' ? hapticHeavy() : hapticMedium());
+      }
+
+    };
+
+    playPulse();
+
+    const pulseInterval = window.setInterval(
+      playPulse,
+      phase === 'hold' ? 900 : phase === 'inhale' ? 1200 : 1400
+    );
+
+    return () => window.clearInterval(pulseInterval);
+  }, [phase, soundEnabled, vibrationEnabled]);
 
   const cfg: Record<Phase, { label: string; sub: string; color: string; scale: number; dur: number }> = {
     ready:  { label: 'Settle in',      sub: 'Find a comfortable position',               color: '#7b9d76', scale: 0.38, dur: 0.5 },
     inhale: { label: 'Breathe In',     sub: 'Slowly inhale through your nose',           color: '#7b9d76', scale: 1.0,  dur: INHALE / 1000 },
-    hold:   { label: 'Hold',           sub: 'Hold it gently',                            color: '#d8c5a6', scale: 1.0,  dur: 0.4 },
+    hold:   { label: 'Hold',           sub: 'Hold it gently',                            color: '#d8c5a6', scale: 1.0,  dur: HOLD / 1000 },
     exhale: { label: 'Breathe Out',    sub: 'Slowly exhale through your mouth',          color: '#5d8a7a', scale: 0.38, dur: EXHALE / 1000 },
     done:   { label: 'You are steady', sub: "Your body is calmer now.",                  color: '#5d8a7a', scale: 0.38, dur: 0.5 },
   };
@@ -2423,9 +2554,27 @@ function BreathingGuide({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-function PreCallCheck({ isDark, onClose }: { isDark: boolean; onClose: () => void }) {
+function PreCallCheck({
+  isDark,
+  mode,
+  onClose,
+}: {
+  isDark: boolean;
+  mode: 'script' | 'breathe';
+  onClose: () => void;
+}) {
   const [step, setStep] = React.useState(0);
   const [mantraTaps, setMantraTaps] = React.useState(0);
+  const [soundEnabled, setSoundEnabled] = React.useState(() => localStorage.getItem(BREATHE_SOUND_KEY) !== 'false');
+  const [vibrationEnabled, setVibrationEnabled] = React.useState(() => localStorage.getItem(BREATHE_VIBRATION_KEY) !== 'false');
+
+  React.useEffect(() => {
+    localStorage.setItem(BREATHE_SOUND_KEY, String(soundEnabled));
+  }, [soundEnabled]);
+
+  React.useEffect(() => {
+    localStorage.setItem(BREATHE_VIBRATION_KEY, String(vibrationEnabled));
+  }, [vibrationEnabled]);
 
   return (
     <div className={cn("fixed inset-0 z-[130] flex flex-col warm-therapeutic-bg transition-colors", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
@@ -2445,6 +2594,45 @@ function PreCallCheck({ isDark, onClose }: { isDark: boolean; onClose: () => voi
         <button onClick={onClose} className={cn("text-sm font-semibold transition-colors", isDark ? "text-[#97a59f] hover:text-[#dbe3de]" : "text-[#66756f] hover:text-[#22312b]")}>
           Skip
         </button>
+      </div>
+
+      <div className="px-6 pb-3 shrink-0">
+        <div className={cn("rounded-2xl border p-3 space-y-3", isDark ? "bg-[#202926]/88 border-[#415049]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]")}>
+          <div className="min-w-0">
+            <p className={cn("text-[10px] font-black uppercase tracking-widest mb-1", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>
+              {mode === 'breathe' ? 'Breathe' : 'Pre-Call Check'}
+            </p>
+            <p className={cn("text-sm leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>
+              Use sound and vibration cues if they help you settle.
+            </p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setSoundEnabled(value => !value)}
+              className={cn(
+                "px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-colors",
+                soundEnabled
+                  ? (isDark ? "bg-[#5d8a7a]/15 border-[#7b9d76]/40 text-[#dbe8df]" : "bg-[#dbe8df] border-[#8fae9e] text-[#476f61]")
+                  : (isDark ? "bg-[#171f1d] border-[#415049] text-[#97a59f]" : "bg-[#f3eee4] border-[#d8cdc0] text-[#66756f]")
+              )}
+            >
+              Sound {soundEnabled ? 'On' : 'Off'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setVibrationEnabled(value => !value)}
+              className={cn(
+                "px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-colors",
+                vibrationEnabled
+                  ? (isDark ? "bg-[#5d8a7a]/15 border-[#7b9d76]/40 text-[#dbe8df]" : "bg-[#dbe8df] border-[#8fae9e] text-[#476f61]")
+                  : (isDark ? "bg-[#171f1d] border-[#415049] text-[#97a59f]" : "bg-[#f3eee4] border-[#d8cdc0] text-[#66756f]")
+              )}
+            >
+              Vibration {vibrationEnabled ? 'On' : 'Off'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Step content */}
@@ -2477,7 +2665,7 @@ function PreCallCheck({ isDark, onClose }: { isDark: boolean; onClose: () => voi
                 <h2 className={cn("text-2xl font-black leading-tight mb-1", isDark ? "text-[#f6f2ea]" : "text-[#22312b]")}>Take three slower breaths.</h2>
                 <p className={cn("text-sm", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>Follow the circle and let your pace come down.</p>
               </div>
-              <BreathingGuide onComplete={() => setStep(2)} />
+              <BreathingGuide onComplete={() => setStep(2)} soundEnabled={soundEnabled} vibrationEnabled={vibrationEnabled} />
             </motion.div>
           )}
 
@@ -2496,7 +2684,10 @@ function PreCallCheck({ isDark, onClose }: { isDark: boolean; onClose: () => voi
                 <p className={cn("text-xs font-black uppercase tracking-widest mb-3", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>Tap this reminder 5 times</p>
                 <motion.button
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => setMantraTaps(t => Math.min(t + 1, 5))}
+                  onClick={() => {
+                    void hapticLight();
+                    setMantraTaps(t => Math.min(t + 1, 5));
+                  }}
                   className={cn(
                     "w-full py-4 rounded-2xl text-center font-black text-base transition-all border-2",
                     mantraTaps >= 5
@@ -2543,7 +2734,7 @@ function PreCallCheck({ isDark, onClose }: { isDark: boolean; onClose: () => voi
             onClick={onClose}
             className="w-full py-4 rounded-2xl bg-[#5d8a7a] hover:bg-[#527a6c] active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-[#5d8a7a]/20"
           >
-            I&apos;m Ready to Start the Call
+            {mode === 'breathe' ? 'Back to App' : "I'm Ready to Start the Call"}
           </button>
         )}
       </div>

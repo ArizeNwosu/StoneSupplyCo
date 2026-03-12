@@ -9,12 +9,21 @@ create table if not exists public.profiles (
   name          text,
   gender        text,
   age_range     text,
+  anxiety_severity text,
+  anxiety_triggers jsonb not null default '[]',
+  life_impact   jsonb not null default '[]',
+  call_streak   integer not null default 0,
   tier          text not null default 'free',
   trial_start_date bigint,
   dark_mode     boolean not null default false,
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
+
+alter table public.profiles add column if not exists anxiety_severity text;
+alter table public.profiles add column if not exists anxiety_triggers jsonb not null default '[]';
+alter table public.profiles add column if not exists life_impact jsonb not null default '[]';
+alter table public.profiles add column if not exists call_streak integer not null default 0;
 
 -- ─── Scripts ─────────────────────────────────────────────────────────────────
 create table if not exists public.scripts (

@@ -8,6 +8,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
     private var appleSignInHandlerAdded = false
+    private var oauthSessionPluginRegistered = false
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         return true
@@ -15,8 +16,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // Register the Apple Sign In message handler once the bridge WebView is ready
     func applicationDidBecomeActive(_ application: UIApplication) {
-        guard !appleSignInHandlerAdded else { return }
-        registerAppleSignInHandler()
+        if !appleSignInHandlerAdded {
+            registerAppleSignInHandler()
+        }
+        registerOAuthSessionPlugin()
     }
 
     private func registerAppleSignInHandler(retries: Int = 10) {
@@ -32,6 +35,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         webView.configuration.userContentController.add(AppleSignInHandler(appDelegate: self), name: "appleSignIn")
         appleSignInHandlerAdded = true
+    }
+
+    private func registerOAuthSessionPlugin(retries: Int = 10) {
+        guard !oauthSessionPluginRegistered else { return }
+        guard let bridgeVC = window?.rootViewController as? CAPBridgeViewController,
+              let bridge = bridgeVC.bridge else {
+            if retries > 0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    self.registerOAuthSessionPlugin(retries: retries - 1)
+                }
+            }
+            return
+        }
+        bridge.registerPluginType(OAuthSessionPlugin.self)
+        oauthSessionPluginRegistered = true
     }
 
     // Called by AppleSignInHandler when JavaScript posts a message

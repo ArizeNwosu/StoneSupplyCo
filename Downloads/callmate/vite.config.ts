@@ -8,6 +8,7 @@ export default defineConfig(({mode}) => {
   return {
     plugins: [react(), tailwindcss()],
     define: {
+      __OPENAI_API_KEY__: JSON.stringify(env.OPENAI_API_KEY || env.VITE_OPENAI_API_KEY || ''),
       'process.env.OPENAI_API_KEY': JSON.stringify(env.OPENAI_API_KEY),
       'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
