@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { AlertCircle, ArrowLeft, Check, ChevronDown, ChevronRight, ChevronUp, Copy, History, Loader2, Moon, Phone, Search, Settings, Share2, Square, Star, Sun, Trash2, Volume2, X } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { AlertCircle, ArrowLeft, Check, ChevronDown, ChevronRight, ChevronUp, Copy, Download, History, Loader2, Moon, Phone, Search, Settings, Share2, Square, Star, Sun, Trash2, Upload, Volume2, X, Instagram, ShieldAlert, LifeBuoy, Flag } from 'lucide-react';
+import type { ImportPreview } from '../services/exportImport';
 import { Tone, SAFE_LINES, Persona, CallScript, Tier, CallPerspective } from '../types';
 import { Button, Card, CallTypeGrid, cn } from './ui';
 import type { User } from '@supabase/supabase-js';
 import { motion } from 'motion/react';
+import { openInAppBrowser } from '../services/native';
+import tiktokIcon from '../../icons/tiktok.svg';
 
 type HomeScreenProps = {
   isDark: boolean;
@@ -213,11 +216,33 @@ type SettingsScreenProps = {
   personas: Persona[];
   setSelectedPersona: React.Dispatch<React.SetStateAction<Persona | null>>;
   setShowPersonaModal: React.Dispatch<React.SetStateAction<boolean>>;
-  setPersonas: React.Dispatch<React.SetStateAction<Persona[]>>;
+  deletePersona: (personaId: string) => void;
   tier: Tier;
   historyLength: number;
   clearHistory: () => void;
+  onExportJSON: () => void;
+  onExportCSV: () => void;
+  onImportFile: (file: File) => Promise<ImportPreview | { error: string }>;
+  onImportConfirm: (preview: ImportPreview, mode: 'merge' | 'replace') => void;
 };
+
+function SettingItem({ isDark, icon, label, onClick }: { isDark: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'w-full flex items-center gap-3 p-4 transition-all active:scale-[0.98]',
+        isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'
+      )}
+    >
+      <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center shrink-0', isDark ? 'bg-zinc-800' : 'bg-zinc-100')}>
+        {icon}
+      </div>
+      <span className={cn('flex-1 text-left font-bold', isDark ? 'text-zinc-200' : 'text-zinc-800')}>{label}</span>
+      <ChevronRight className={cn('w-4 h-4', isDark ? 'text-zinc-600' : 'text-zinc-400')} />
+    </button>
+  );
+}
 
 export function SettingsScreen(props: SettingsScreenProps) {
   const {
@@ -236,11 +261,36 @@ export function SettingsScreen(props: SettingsScreenProps) {
     personas,
     setSelectedPersona,
     setShowPersonaModal,
-    setPersonas,
+    deletePersona,
     tier,
     historyLength,
     clearHistory,
+    onExportJSON,
+    onExportCSV,
+    onImportFile,
+    onImportConfirm,
   } = props;
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportLoading(true);
+    setImportError(null);
+    setImportPreview(null);
+    const result = await onImportFile(file);
+    setImportLoading(false);
+    if ('error' in result) {
+      setImportError(result.error);
+    } else {
+      setImportPreview(result);
+    }
+    e.target.value = '';
+  };
 
   const handleSignOutPress = () => {
     if (document.activeElement instanceof HTMLElement) {
@@ -257,6 +307,30 @@ export function SettingsScreen(props: SettingsScreenProps) {
         console.error('Sign out failed', error);
       });
     }, 40);
+  };
+
+  const handleShareCallmate = async () => {
+    const shareUrl = 'https://www.trycallmate.app';
+    const shareText = 'Callmate helps make hard phone calls easier. Try it here: https://www.trycallmate.app';
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Callmate',
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      }
+    } catch {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareText);
+    } catch {
+      window.prompt('Copy this link', shareUrl);
+    }
   };
 
   return (
@@ -375,7 +449,7 @@ export function SettingsScreen(props: SettingsScreenProps) {
                     <button onClick={() => { setSelectedPersona(p); setShowPersonaModal(true); }} className={cn('p-2 transition-colors', isDark ? 'text-[#97a59f] hover:text-[#b7d0c4]' : 'text-[#6f7d75] hover:text-[#5d8a7a]')}>
                       <Settings className="w-4 h-4" />
                     </button>
-                    <button onClick={() => setPersonas(personas.filter((x) => x.id !== p.id))} className="p-2 text-zinc-500 hover:text-red-500 transition-colors">
+                    <button onClick={() => deletePersona(p.id)} className="p-2 text-zinc-500 hover:text-red-500 transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -414,6 +488,140 @@ export function SettingsScreen(props: SettingsScreenProps) {
                 <Trash2 className="w-5 h-5" />
               </button>
             </div>
+          </Card>
+        </section>
+
+        <section className="space-y-4">
+          <h3 className={cn('text-xs font-bold uppercase tracking-widest px-1', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>Data &amp; Backup</h3>
+          <Card isDark={isDark} className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-bold text-lg">Export All Data</p>
+                <p className="text-zinc-500 text-sm">Scripts + reflections as JSON</p>
+              </div>
+              <button onClick={onExportJSON} className={cn('p-3 rounded-2xl transition-colors', isDark ? 'bg-zinc-700 hover:bg-zinc-600' : 'bg-zinc-100 hover:bg-zinc-200')}>
+                <Download className="w-5 h-5" />
+              </button>
+            </div>
+            <div className={cn('border-t', isDark ? 'border-zinc-700' : 'border-zinc-200')} />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-bold text-lg">Export Scripts</p>
+                <p className="text-zinc-500 text-sm">Scripts only as CSV</p>
+              </div>
+              <button onClick={onExportCSV} className={cn('p-3 rounded-2xl transition-colors', isDark ? 'bg-zinc-700 hover:bg-zinc-600' : 'bg-zinc-100 hover:bg-zinc-200')}>
+                <Download className="w-5 h-5" />
+              </button>
+            </div>
+            <div className={cn('border-t', isDark ? 'border-zinc-700' : 'border-zinc-200')} />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-bold text-lg">Import Backup</p>
+                <p className="text-zinc-500 text-sm">Restore from .json file</p>
+              </div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importLoading}
+                className={cn('p-3 rounded-2xl transition-colors', isDark ? 'bg-zinc-700 hover:bg-zinc-600' : 'bg-zinc-100 hover:bg-zinc-200')}
+              >
+                {importLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+              </button>
+              <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleFileChange} />
+            </div>
+            {importError && (
+              <p className="text-red-500 text-sm">{importError}</p>
+            )}
+            {importPreview && (
+              <div className={cn('rounded-2xl p-4 space-y-3', isDark ? 'bg-zinc-700' : 'bg-zinc-100')}>
+                <p className="font-bold">Found {importPreview.scripts.length} scripts and {importPreview.reflections.length} reflections</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { onImportConfirm(importPreview, 'merge'); setImportPreview(null); }}
+                    className="flex-1 py-2 rounded-xl bg-emerald-500 text-white font-bold text-sm"
+                  >
+                    Merge
+                  </button>
+                  <button
+                    onClick={() => { onImportConfirm(importPreview, 'replace'); setImportPreview(null); }}
+                    className="flex-1 py-2 rounded-xl bg-blue-500 text-white font-bold text-sm"
+                  >
+                    Replace All
+                  </button>
+                  <button
+                    onClick={() => setImportPreview(null)}
+                    className={cn('px-3 py-2 rounded-xl font-bold text-sm', isDark ? 'bg-zinc-600 text-zinc-300' : 'bg-zinc-200 text-zinc-600')}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </Card>
+        </section>
+
+        <section className="space-y-4">
+          <h3 className={cn('text-xs font-bold uppercase tracking-widest px-1', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>Community & Support</h3>
+          <Card isDark={isDark} className="p-2 overflow-hidden">
+            <SettingItem
+              isDark={isDark}
+              icon={<Star className="w-4 h-4 text-amber-400" />}
+              label="Rate Callmate"
+              onClick={() => {}}
+            />
+            <div className={cn('mx-4 border-t', isDark ? 'border-zinc-800' : 'border-zinc-100')} />
+            <SettingItem
+              isDark={isDark}
+              icon={<Share2 className="w-4 h-4 text-blue-400" />}
+              label="Share Callmate"
+              onClick={() => { void handleShareCallmate(); }}
+            />
+            <div className={cn('mx-4 border-t', isDark ? 'border-zinc-800' : 'border-zinc-100')} />
+            <SettingItem
+              isDark={isDark}
+              icon={<Instagram className="w-4 h-4 text-pink-500" />}
+              label="Follow us on IG"
+              onClick={() => { void openInAppBrowser('https://www.instagram.com/trycallmate'); }}
+            />
+            <div className={cn('mx-4 border-t', isDark ? 'border-zinc-800' : 'border-zinc-100')} />
+            <SettingItem
+              isDark={isDark}
+              icon={
+                <img
+                  src={tiktokIcon}
+                  alt=""
+                  aria-hidden="true"
+                  className={cn('w-4 h-4 object-contain', isDark ? 'brightness-0 invert' : 'brightness-0')}
+                />
+              }
+              label="Follow us on TT"
+              onClick={() => { void openInAppBrowser('https://www.tiktok.com/@callmate'); }}
+            />
+          </Card>
+        </section>
+
+        <section className="space-y-4">
+          <h3 className={cn('text-xs font-bold uppercase tracking-widest px-1', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>Help & Legal</h3>
+          <Card isDark={isDark} className="p-2 overflow-hidden">
+            <SettingItem
+              isDark={isDark}
+              icon={<ShieldAlert className="w-4 h-4 text-purple-400" />}
+              label="Disclaimer"
+              onClick={() => { void openInAppBrowser('https://www.trycallmate.app/disclaimer.html'); }}
+            />
+            <div className={cn('mx-4 border-t', isDark ? 'border-zinc-800' : 'border-zinc-100')} />
+            <SettingItem
+              isDark={isDark}
+              icon={<LifeBuoy className="w-4 h-4 text-emerald-400" />}
+              label="Support"
+              onClick={() => { void openInAppBrowser('https://www.trycallmate.app/support.html'); }}
+            />
+            <div className={cn('mx-4 border-t', isDark ? 'border-zinc-800' : 'border-zinc-100')} />
+            <SettingItem
+              isDark={isDark}
+              icon={<Flag className="w-4 h-4 text-red-400" />}
+              label="Report Abuse"
+              onClick={() => { void openInAppBrowser('https://www.trycallmate.app/abuse.html'); }}
+            />
           </Card>
         </section>
 
@@ -459,6 +667,24 @@ export function DashboardScreen(props: DashboardScreenProps) {
     anxietySeverity,
     lifeImpact,
   } = props;
+  const chartPoints = callAnxietyRatings.slice(-6).map((entry, index, array) => {
+    const x = array.length === 1 ? 126 : (index / (array.length - 1)) * 252;
+    const confidence = 6 - entry.rating;
+    const y = 72 - ((confidence - 1) / 4) * 62;
+    return { x, y };
+  });
+  const progressPath = chartPoints.reduce((path, point, index) => (
+    index === 0 ? `M ${point.x},${point.y}` : `${path} L ${point.x},${point.y}`
+  ), '');
+  const progressAreaPath = progressPath ? `${progressPath} L ${chartPoints[chartPoints.length - 1]?.x ?? 252},72 L ${chartPoints[0]?.x ?? 0},72 Z` : '';
+  const latestConfidence = callAnxietyRatings.length > 0 ? 6 - callAnxietyRatings[callAnxietyRatings.length - 1].rating : null;
+  const trendLabel = callAnxietyRatings.length < 2
+    ? 'First data point'
+    : latestConfidence !== null && latestConfidence >= 4
+      ? 'Calmer recent calls'
+      : latestConfidence !== null && latestConfidence >= 3
+        ? 'Building steadier calls'
+        : 'Still finding your footing';
 
   return (
     <div className="space-y-5 pb-32">
@@ -510,14 +736,15 @@ export function DashboardScreen(props: DashboardScreenProps) {
 
       <div className={cn('rounded-3xl border p-5 transition-colors', isDark ? 'bg-[#202926] border-[#415049]' : 'bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]')}>
         <p className={cn('text-[10px] font-black uppercase tracking-widest mb-4', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>Anxiety Trend</p>
-        <div className={cn('flex items-center justify-between gap-3 mb-4 text-[10px] font-bold uppercase tracking-widest', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>
-          <span>Earlier calls</span>
-          <div className="flex items-center gap-2 normal-case tracking-normal text-[11px] font-medium">
-            <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Calm</span>
-            <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Moderate</span>
-            <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500" /> High</span>
+        <div className="flex gap-5 mb-4">
+          <div className="flex items-center gap-2">
+            <div className={cn('w-8 h-[2px] rounded-full', isDark ? 'bg-[#c9d3cd]' : 'bg-[#1f2937]')} />
+            <p className={cn('text-xs font-semibold', isDark ? 'text-[#b7c3bd]' : 'text-[#66756f]')}>Earlier calls</p>
           </div>
-          <span>Recent calls</span>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-[2px] rounded-full bg-[#7b9d76]" />
+            <p className={cn('text-xs font-semibold', isDark ? 'text-[#b7c3bd]' : 'text-[#66756f]')}>Recent calls</p>
+          </div>
         </div>
         {callAnxietyRatings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 gap-2">
@@ -525,33 +752,64 @@ export function DashboardScreen(props: DashboardScreenProps) {
             <p className={cn('text-sm text-center', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>Rate your anxiety after each call to see your trend here.</p>
           </div>
         ) : (
-          <svg viewBox={`0 0 ${Math.max(callAnxietyRatings.length * 40, 200)} 80`} className="w-full" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="trendGrad" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#ef4444" />
-                <stop offset="100%" stopColor="#22c55e" />
-              </linearGradient>
-            </defs>
-            {callAnxietyRatings.map((r, i) => {
-              const x = i * 40 + 5;
-              const y = ((r.rating - 1) / 4) * 60 + 5;
-              const nx = (i + 1) * 40 + 5;
-              const nr = callAnxietyRatings[i + 1];
-              const ny = nr ? ((nr.rating - 1) / 4) * 60 + 5 : null;
-              return (
-                <g key={i}>
-                  {ny !== null && <line x1={x} y1={y} x2={nx} y2={ny} stroke="url(#trendGrad)" strokeWidth="2.5" strokeLinecap="round" />}
-                  <circle cx={x} cy={y} r="5" fill={r.rating <= 2 ? '#22c55e' : r.rating <= 3 ? '#f59e0b' : '#ef4444'} />
-                </g>
-              );
-            })}
-          </svg>
+          <div className="relative">
+            <svg viewBox="0 0 252 92" className="w-full" style={{ overflow: 'visible' }}>
+              <defs>
+                <linearGradient id="progressLineGradMuted" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor={isDark ? '#d4d4d8' : '#1f2937'} stopOpacity="0.8" />
+                  <stop offset="100%" stopColor={isDark ? '#71717a' : '#52525b'} stopOpacity="0.9" />
+                </linearGradient>
+                <linearGradient id="progressLineGradActive" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#8ca79a" />
+                  <stop offset="55%" stopColor="#7b9d76" />
+                  <stop offset="100%" stopColor="#5d8a7a" />
+                </linearGradient>
+                <linearGradient id="progressFillGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#7b9d76" stopOpacity="0.18" />
+                  <stop offset="100%" stopColor="#7b9d76" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              {[18, 40, 62].map((y) => (
+                <line key={y} x1="0" y1={y} x2="252" y2={y} stroke={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'} strokeWidth="1" />
+              ))}
+              {progressAreaPath && <path d={progressAreaPath} fill="url(#progressFillGrad)" />}
+              {progressPath && (
+                <path
+                  d={progressPath}
+                  fill="none"
+                  stroke="url(#progressLineGradActive)"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              )}
+              {chartPoints.map((point, index) => (
+                <circle
+                  key={`${point.x}-${point.y}`}
+                  cx={point.x}
+                  cy={point.y}
+                  r="3.6"
+                  fill={isDark ? '#161d1b' : '#ffffff'}
+                  stroke={index === chartPoints.length - 1 ? '#7b9d76' : (isDark ? '#7b8580' : '#5f6d67')}
+                  strokeWidth={index === chartPoints.length - 1 ? '1.8' : '1.4'}
+                />
+              ))}
+              <text x="166" y="18" fontSize="10" fill={isDark ? '#c5d0ca' : '#51615b'} fontWeight="700">Callmate</text>
+              <text x="166" y="28" fontSize="10" fill={isDark ? '#8f9b95' : '#8a948f'}>builds lasting</text>
+              <text x="166" y="38" fontSize="10" fill={isDark ? '#8f9b95' : '#8a948f'}>confidence</text>
+              <text x="12" y="58" fontSize="10" fill={isDark ? '#b5b8c3' : '#6b7280'} fontWeight="700">Without support</text>
+              <text x="0" y="86" fontSize="10" fill={isDark ? '#a1a1aa' : '#6b7280'}>Earlier</text>
+              <text x="220" y="86" fontSize="10" fill={isDark ? '#a1a1aa' : '#6b7280'}>Recent</text>
+            </svg>
+          </div>
         )}
         {callAnxietyRatings.length === 1 && (
           <p className={cn('text-xs mt-2 text-center', isDark ? 'text-[#97a59f]' : 'text-[#6f7d75]')}>Your first anxiety datapoint is in. Log one more call to see the trend line.</p>
         )}
         {callAnxietyRatings.length > 1 && (
-          <p className={cn('text-xs mt-2 text-center', isDark ? 'text-[#97a59f]' : 'text-[#6f7d75]')}>Dots lower on the chart mean calmer calls. The line runs from earlier calls on the left to more recent calls on the right.</p>
+          <p className={cn('text-xs mt-3 text-center leading-relaxed', isDark ? 'text-[#97a59f]' : 'text-[#6f7d75]')}>
+            <span className={cn('font-bold', isDark ? 'text-[#f6f2ea]' : 'text-[#22312b]')}>{trendLabel}.</span> Lower anxiety scores lift the line higher, from earlier calls on the left to more recent calls on the right.
+          </p>
         )}
       </div>
 

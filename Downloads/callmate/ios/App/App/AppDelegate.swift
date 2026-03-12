@@ -9,6 +9,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     private var appleSignInHandlerAdded = false
     private var oauthSessionPluginRegistered = false
+    private var storeKitPluginRegistered = false
+    private var notificationSettingsPluginRegistered = false
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         return true
@@ -20,6 +22,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             registerAppleSignInHandler()
         }
         registerOAuthSessionPlugin()
+        registerStoreKitPlugin()
+        registerNotificationSettingsPlugin()
     }
 
     private func registerAppleSignInHandler(retries: Int = 10) {
@@ -39,17 +43,59 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private func registerOAuthSessionPlugin(retries: Int = 10) {
         guard !oauthSessionPluginRegistered else { return }
-        guard let bridgeVC = window?.rootViewController as? CAPBridgeViewController,
-              let bridge = bridgeVC.bridge else {
-            if retries > 0 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    self.registerOAuthSessionPlugin(retries: retries - 1)
-                }
-            }
+        
+        let bridgeVC = window?.rootViewController as? CAPBridgeViewController
+        let bridge = bridgeVC?.bridge
+        
+        if let bridge = bridge {
+            bridge.registerPluginType(OAuthSessionPlugin.self)
+            oauthSessionPluginRegistered = true
             return
         }
-        bridge.registerPluginType(OAuthSessionPlugin.self)
-        oauthSessionPluginRegistered = true
+        
+        if retries > 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.registerOAuthSessionPlugin(retries: retries - 1)
+            }
+        }
+    }
+
+    private func registerStoreKitPlugin(retries: Int = 10) {
+        guard !storeKitPluginRegistered else { return }
+        
+        let bridgeVC = window?.rootViewController as? CAPBridgeViewController
+        let bridge = bridgeVC?.bridge
+        
+        if let bridge = bridge {
+            bridge.registerPluginType(StoreKitPlugin.self)
+            storeKitPluginRegistered = true
+            return
+        }
+        
+        if retries > 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.registerStoreKitPlugin(retries: retries - 1)
+            }
+        }
+    }
+
+    private func registerNotificationSettingsPlugin(retries: Int = 10) {
+        guard !notificationSettingsPluginRegistered else { return }
+        
+        let bridgeVC = window?.rootViewController as? CAPBridgeViewController
+        let bridge = bridgeVC?.bridge
+        
+        if let bridge = bridge {
+            bridge.registerPluginType(NotificationSettingsPlugin.self)
+            notificationSettingsPluginRegistered = true
+            return
+        }
+        
+        if retries > 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.registerNotificationSettingsPlugin(retries: retries - 1)
+            }
+        }
     }
 
     // Called by AppleSignInHandler when JavaScript posts a message

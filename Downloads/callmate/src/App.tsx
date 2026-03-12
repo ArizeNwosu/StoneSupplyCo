@@ -17,12 +17,16 @@ import {
   Search,
   RotateCcw,
   Settings,
+  Tv,
   Trash2,
   Sun,
   Moon,
   Square,
   Copy,
-  WifiOff
+  Ellipsis,
+  Users,
+  WifiOff,
+  BellRing
 } from 'lucide-react';
 import { Logo } from './components/Logo';
 import { motion, AnimatePresence } from 'motion/react';
@@ -31,10 +35,22 @@ import { DashboardScreen, HistoryScreen, HomeScreen, ScriptScreen, SettingsScree
 import { Tone, CallScript, SAFE_LINES, PANIC_OPTIONS, PanicOption, COMMON_CALL_TYPES, Persona, Reflection, Tier, CallPerspective } from './types';
 import { generateCallScript, generatePanicResponse, generateTTS, generateVoicemailScript, generateEmailFallback, generateBranch } from './services/gemini';
 import { signUp, signIn, signInWithApple, signInWithGoogle, signOut, onAuthStateChange, sendPasswordReset } from './services/auth';
-import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchAnxietyRatings, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection as dbSaveReflection, savePersona, syncAnxietyRatings, deleteScript as dbDeleteScript, deletePersona as dbDeletePersona } from './services/db';
-import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, setStatusBarDark, setStatusBarLight, openInAppBrowser } from './services/native';
-import type { User } from '@supabase/supabase-js';
+import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchAnxietyRatings, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection as dbSaveReflection, savePersona, syncAnxietyRatings, deleteAllScriptsForUser, deletePersona as dbDeletePersona } from './services/db';
+import { fetchAccessState, startTrial } from './services/access';
+import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, vibrate, setStatusBarDark, setStatusBarLight, openInAppBrowser, requestNotificationsAccess } from './services/native';
+import type { User, RealtimeChannel } from '@supabase/supabase-js';
+import type { ImportPreview } from './services/exportImport';
 import breatheAudio from '../breathe.mp3';
+import appStoreIcon from '../icons/app-store.svg';
+import reviewAvatar1 from '../avatar/1.png';
+import reviewAvatar2 from '../avatar/2.png';
+import reviewAvatar3 from '../avatar/3.png';
+import reviewAvatar4 from '../avatar/4.png';
+import facebookIcon from '../icons/facebook (1).svg';
+import instagramIcon from '../icons/instagram (1).svg';
+import tiktokIcon from '../icons/tiktok.svg';
+import xIcon from '../icons/x.svg';
+import youtubeIcon from '../icons/youtube.svg';
 
 const RotatingText = () => {
   const words = ["putting off?", "dreading?", "avoiding?"];
@@ -137,9 +153,20 @@ const AUTH_INTENT_KEY = 'callmate_auth_intent';
 const BREATHE_SOUND_KEY = 'callmate_breathe_sound_enabled';
 const BREATHE_VIBRATION_KEY = 'callmate_breathe_vibration_enabled';
 
+function readStoredJson<T>(key: string, fallback: T): T {
+  const raw = localStorage.getItem(key);
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    localStorage.removeItem(key);
+    return fallback;
+  }
+}
+
 export default function App() {
   const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
-  const [view, setView] = useState<'splash' | 'explainer' | 'onboarding' | 'reviews' | 'account' | 'setup' | 'home' | 'history' | 'dashboard' | 'script' | 'settings'>('splash');
+  const [view, setView] = useState<'splash' | 'explainer' | 'reset' | 'onboarding' | 'reviews' | 'account' | 'setup' | 'notifications' | 'home' | 'history' | 'dashboard' | 'script' | 'settings'>('splash');
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [description, setDescription] = useState('');
   const [perspective, setPerspective] = useState<CallPerspective>('outgoing');
@@ -178,29 +205,26 @@ export default function App() {
   const [sortMode, setSortMode] = useState<'Random' | 'A-Z'>('Random');
   const [previousView, setPreviousView] = useState<'home' | 'history'>('home');
   const [onboardingStep, setOnboardingStep] = useState(1);
+  const [showOnboardingDiscovery, setShowOnboardingDiscovery] = useState(() => !localStorage.getItem('callmate_heard_about_us'));
+  const [showOnboardingThankYou, setShowOnboardingThankYou] = useState(false);
+  const [showIntroBreathe, setShowIntroBreathe] = useState(false);
+  const [setupNextView, setSetupNextView] = useState<'reviews' | 'notifications'>('notifications');
   const [anxietySeverity, setAnxietySeverity] = useState<AnxietySeverity | null>(null);
-  const [anxietyTriggers, setAnxietyTriggers] = useState<string[]>(() => {
-    const saved = localStorage.getItem('callmate_triggers');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [lifeImpact, setLifeImpact] = useState<string[]>(() => {
-    const saved = localStorage.getItem('callmate_impact');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [anxietyTriggers, setAnxietyTriggers] = useState<string[]>(() => readStoredJson('callmate_triggers', []));
+  const [lifeImpact, setLifeImpact] = useState<string[]>(() => readStoredJson('callmate_impact', []));
   const [callAnxietyRatings, setCallAnxietyRatings] = useState<AnxietyRating[]>([]);
   const [callStreak, setCallStreak] = useState(0);
   const [activeTab, setActiveTab] = useState<'home' | 'history' | 'dashboard'>('home');
   const [showAlterEgo, setShowAlterEgo] = useState(false);
   const [trialStartDate, setTrialStartDate] = useState<number | null>(null);
   const [trialScriptsUsed, setTrialScriptsUsed] = useState(0);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual' | null>(null);
   const [userName, setUserName] = useState(() => localStorage.getItem('callmate_user_name') || '');
   const [userGender, setUserGender] = useState(() => localStorage.getItem('callmate_user_gender') || '');
   const [userAgeRange, setUserAgeRange] = useState(() => localStorage.getItem('callmate_user_age_range') || '');
+  const [heardAboutUs, setHeardAboutUs] = useState(() => localStorage.getItem('callmate_heard_about_us') || '');
   const [userEmail, setUserEmail] = useState('');
-  const [starredScripts, setStarredScripts] = useState<string[]>(() => {
-    const saved = localStorage.getItem('callmate_starred');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [starredScripts, setStarredScripts] = useState<string[]>(() => readStoredJson('callmate_starred', []));
   const [shareToast, setShareToast] = useState(false);
   const [expandedSafeLineIndex, setExpandedSafeLineIndex] = useState<number | null>(null);
   const [showMedicalPrep, setShowMedicalPrep] = useState(true);
@@ -217,6 +241,7 @@ export default function App() {
   const [customTriggerInput, setCustomTriggerInput] = useState('');
   const practiceAudioRef = useRef<HTMLAudioElement | null>(null);
   const prevMilestoneIdsRef = useRef<Set<string>>(new Set());
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const isDark = theme === 'dark';
 
@@ -239,15 +264,236 @@ export default function App() {
 
   const TRIAL_SCRIPT_LIMIT = 5;
   const TRIAL_DAYS = 3;
-  const getEffectiveTier = () => (localStorage.getItem('ringtone_tier') as Tier) || tier;
-  const enforceAccessGate = (candidateTier = getEffectiveTier()) => {
-    if (candidateTier === 'free') {
+  const enforceAccessGate = (candidateTier = tier, candidateTrialStart = trialStartDate) => {
+    const trialActive = candidateTier === 'trial' && !!candidateTrialStart && Math.floor((Date.now() - candidateTrialStart) / 86400000) < TRIAL_DAYS;
+    const hasAccess = candidateTier === 'monthly' || candidateTier === 'annual' || trialActive;
+    if (!hasAccess) {
       setShowUpgradeModal(true);
       setUpgradeModalForced(true);
       return false;
     }
     return true;
   };
+
+  const applyAccessState = (access: Awaited<ReturnType<typeof fetchAccessState>>) => {
+    setTier(access.tier);
+    setTrialStartDate(access.trialStartedAt);
+    setTrialScriptsUsed(access.scriptsUsed);
+    setSelectedPlan(access.selectedPlan);
+  };
+
+  const loadAccessState = async () => {
+    const access = await fetchAccessState();
+    applyAccessState(access);
+    return access;
+  };
+
+  const loadAccessStateSafely = async () => {
+    try {
+      return await loadAccessState();
+    } catch (error) {
+      console.error('Failed to load access state', error);
+      return null;
+    }
+  };
+
+  const beginTrial = async (plan: 'monthly' | 'annual') => {
+    if (!supabaseUser) {
+      setShowUpgradeModal(false);
+      setView('account');
+      return null;
+    }
+    try {
+      const access = await startTrial(plan);
+      applyAccessState(access);
+      return access;
+    } catch (error) {
+      console.error('Failed to start trial', error);
+      alert('Unable to start your trial right now. Please try again.');
+      return null;
+    }
+  };
+
+  const handleIAPPurchase = async (plan: 'monthly' | 'annual') => {
+    if (!supabaseUser) { setShowUpgradeModal(false); setView('account'); return; }
+    try {
+      const { purchaseProduct, PRODUCT_IDS } = await import('./services/iap');
+      const { supabase } = await import('./services/supabase');
+      const productId = PRODUCT_IDS[plan];
+      const { transactionId, jwsToken } = await purchaseProduct(productId);
+      const { data, error } = await supabase.functions.invoke('verify-purchase', { body: { transactionId, jwsToken, productId } });
+      if (error) throw error;
+      applyAccessState(data);
+    } catch (error: any) {
+      if (error?.message === 'cancelled') return;
+      const detail = error?.context?.message ?? error?.message ?? String(error);
+      console.error('Purchase failed:', detail, error);
+      alert(`Purchase failed: ${detail}`);
+    }
+  };
+
+  const handleRestorePurchases = async () => {
+    if (!supabaseUser) {
+      setShowUpgradeModal(false);
+      setView('account');
+      return;
+    }
+
+    try {
+      const { restorePurchases } = await import('./services/iap');
+      const restoredProductIds = await restorePurchases();
+      const access = await loadAccessState();
+
+      if (access.tier === 'monthly' || access.tier === 'annual') {
+        setShowUpgradeModal(false);
+        return;
+      }
+
+      if (!restoredProductIds.length) {
+        alert('No previous purchases were found for this Apple ID.');
+        return;
+      }
+
+      alert('We found a previous purchase, but your account has not updated yet. Please try again in a moment.');
+    } catch (error: any) {
+      const detail = error?.context?.message ?? error?.message ?? String(error);
+      console.error('Restore purchases failed:', detail, error);
+      alert(`Restore failed: ${detail}`);
+    }
+  };
+
+  const onScriptChange = (script: CallScript | null, event: 'INSERT' | 'UPDATE' | 'DELETE', id?: string) => {
+    if (event === 'DELETE' && id) {
+      setHistory(prev => {
+        const next = prev.filter(s => s.id !== id);
+        localStorage.setItem('ringtone_history', JSON.stringify(next));
+        return next;
+      });
+      return;
+    }
+    if (!script) return;
+    setHistory(prev => {
+      const existingIndex = prev.findIndex(s => s.id === script.id);
+      if (existingIndex === -1) {
+        const next = [script, ...prev];
+        localStorage.setItem('ringtone_history', JSON.stringify(next));
+        return next;
+      }
+      const existing = prev[existingIndex];
+      if (script.updated_at && existing.updated_at && script.updated_at <= existing.updated_at) return prev;
+      const next = [...prev];
+      next[existingIndex] = script;
+      localStorage.setItem('ringtone_history', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const handleExportJSON = async () => {
+    const { exportToJSON, downloadFile } = await import('./services/exportImport');
+    downloadFile(exportToJSON(history, reflections), 'callmate-backup.json', 'application/json');
+  };
+
+  const handleExportCSV = async () => {
+    const { exportScriptsToCSV, downloadFile } = await import('./services/exportImport');
+    downloadFile(exportScriptsToCSV(history), 'callmate-scripts.csv', 'text/csv');
+  };
+
+  const handleImportFile = async (file: File): Promise<ImportPreview | { error: string }> => {
+    const { parseImportJSON } = await import('./services/exportImport');
+    const text = await file.text();
+    return parseImportJSON(text);
+  };
+
+  const handleImportConfirm = async (preview: ImportPreview, mode: 'merge' | 'replace') => {
+    const { applyImport } = await import('./services/exportImport');
+    const result = applyImport(preview, history, mode);
+    setHistory(result.scripts);
+    localStorage.setItem('ringtone_history', JSON.stringify(result.scripts));
+    setReflections(result.reflections);
+    localStorage.setItem('ringtone_reflections', JSON.stringify(result.reflections));
+    if (supabaseUser) {
+      for (const script of result.scripts) {
+        void saveScript(supabaseUser.id, script);
+      }
+    }
+  };
+
+  const persistScriptLocally = (scripts: CallScript[]) => {
+    setHistory(scripts);
+    localStorage.setItem('ringtone_history', JSON.stringify(scripts));
+  };
+
+  const persistReflectionsLocally = (items: Reflection[]) => {
+    setReflections(items);
+    localStorage.setItem('ringtone_reflections', JSON.stringify(items));
+  };
+
+  const persistRatingsLocally = (ratings: AnxietyRating[]) => {
+    setCallAnxietyRatings(ratings);
+    localStorage.setItem('callmate_anxiety_ratings', JSON.stringify(ratings));
+  };
+
+  const persistPersonasLocally = (items: Persona[]) => {
+    setPersonas(items);
+    localStorage.setItem('callmate_personas', JSON.stringify(items));
+  };
+
+  const persistPersonas = async (items: Persona[]) => {
+    persistPersonasLocally(items);
+    if (!supabaseUser) return;
+    await Promise.all(items.map((persona) => savePersona(supabaseUser.id, persona)));
+  };
+
+  const replaceCurrentScript = async (nextScript: CallScript) => {
+    setCurrentScript(nextScript);
+    const nextHistory = history.map((item) => item.id === nextScript.id ? nextScript : item);
+    persistScriptLocally(nextHistory);
+    if (supabaseUser) {
+      await saveScript(supabaseUser.id, nextScript);
+    }
+  };
+
+  const clearLocalUserCollections = () => {
+    persistScriptLocally([]);
+    persistReflectionsLocally([]);
+    persistRatingsLocally([]);
+    persistPersonasLocally([]);
+    setCurrentScript(null);
+  };
+
+  const hydrateSignedInUser = async (user: User, authIntent: 'signup' | 'login' | null = null) => {
+    setSupabaseUser(user);
+    if (user.email) {
+      setUserEmail(user.email);
+      localStorage.setItem('callmate_user_email', user.email);
+    }
+
+    let profile = null;
+    try {
+      profile = await loadUserDataFromSupabase(user.id);
+    } catch (error) {
+      console.error('Failed to load user data for signed-in user', error);
+    }
+
+    const access = await loadAccessStateSafely();
+
+    try {
+      const { createSyncSubscriptions } = await import('./services/sync');
+      channelRef.current?.unsubscribe();
+      channelRef.current = createSyncSubscriptions(user.id, { onScriptChange });
+    } catch (error) {
+      console.error('Failed to create sync subscriptions', error);
+    }
+
+    return {
+      profile,
+      access,
+      isReturningUser: !!profile?.name || authIntent === 'login' || (Date.now() - new Date(user.created_at).getTime() > 30000),
+    };
+  };
+
+  const isTrialPlanAnnual = tier === 'trial' && selectedPlan === 'annual';
+  const canUsePracticeMode = tier === 'annual' || isTrialPlanAnnual;
 
   const trialDaysRemaining = useMemo(() => {
     if (tier !== 'trial' || !trialStartDate) return null;
@@ -361,24 +607,14 @@ export default function App() {
     const savedTheme = localStorage.getItem('ringtone_theme') as 'dark' | 'light';
     if (savedTheme) setTheme(savedTheme);
 
-    const savedTier = localStorage.getItem('ringtone_tier') as Tier;
-    if (savedTier) setTier(savedTier);
-
     const savedSpeakerCount = parseInt(localStorage.getItem('callmate_speaker_count') || '0');
     setSpeakerPromptCount(savedSpeakerCount);
 
-    // Auto-show upgrade modal if trial already expired
-    const savedTierOnLoad = localStorage.getItem('ringtone_tier') as Tier;
-    const savedTrialStartOnLoad = localStorage.getItem('callmate_trial_start');
-    if (savedTierOnLoad === 'trial' && savedTrialStartOnLoad) {
-      const daysPassed = Math.floor((Date.now() - parseInt(savedTrialStartOnLoad)) / 86400000);
-      if (daysPassed >= 3) {
-        setTimeout(() => setShowUpgradeModal(true), 800);
-      }
-    }
-
     const savedRatings = localStorage.getItem('callmate_anxiety_ratings');
-    if (savedRatings) setCallAnxietyRatings(JSON.parse(savedRatings));
+    if (savedRatings) setCallAnxietyRatings(readStoredJson('callmate_anxiety_ratings', []));
+
+    setReflections(readStoredJson('ringtone_reflections', []));
+    setPersonas(readStoredJson('callmate_personas', []));
 
     const savedStreak = localStorage.getItem('callmate_streak');
     if (savedStreak) setCallStreak(parseInt(savedStreak));
@@ -391,17 +627,14 @@ export default function App() {
     const savedImpact = localStorage.getItem('callmate_impact');
     if (savedImpact) try { setLifeImpact(JSON.parse(savedImpact)); } catch {}
 
-    const savedTrialStart = localStorage.getItem('callmate_trial_start');
-    if (savedTrialStart) setTrialStartDate(parseInt(savedTrialStart));
-    const savedTrialScripts = localStorage.getItem('callmate_trial_scripts');
-    if (savedTrialScripts) setTrialScriptsUsed(parseInt(savedTrialScripts));
-
     const savedName = localStorage.getItem('callmate_user_name');
     if (savedName) setUserName(savedName);
     const savedGender = localStorage.getItem('callmate_user_gender');
     if (savedGender) setUserGender(savedGender);
     const savedAge = localStorage.getItem('callmate_user_age_range');
     if (savedAge) setUserAgeRange(savedAge);
+    const savedHeardAboutUs = localStorage.getItem('callmate_heard_about_us');
+    if (savedHeardAboutUs) setHeardAboutUs(savedHeardAboutUs);
 
     const savedLastScript = localStorage.getItem('callmate_last_script_date');
     if (savedLastScript) setLastScriptDate(parseInt(savedLastScript));
@@ -526,19 +759,21 @@ export default function App() {
         const { supabase: sb } = await import('./services/supabase');
         const [{ data: { session } }] = await Promise.all([
           sb.auth.getSession(),
-          new Promise<void>(resolve => setTimeout(resolve, 2000)),
+          new Promise<void>(resolve => setTimeout(resolve, 3200)),
         ]);
         if (session?.user) {
-          setSupabaseUser(session.user);
-          if (session.user.email) {
-            setUserEmail(session.user.email);
-            localStorage.setItem('callmate_user_email', session.user.email);
-          }
           const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
-          await loadUserDataFromSupabase(session.user.id);
           localStorage.removeItem(AUTH_INTENT_KEY);
-          setView(authIntent === 'signup' ? 'setup' : 'home');
-          enforceAccessGate();
+          const { access, isReturningUser } = await hydrateSignedInUser(session.user, authIntent);
+          
+          if (isReturningUser) {
+            setView('home');
+          } else {
+            setView('notifications');
+          }
+          if (access) {
+            enforceAccessGate(access.tier, access.trialStartedAt);
+          }
         } else {
           const hasSeenOnboarding = localStorage.getItem(HAS_SEEN_ONBOARDING_KEY) === 'true';
           if (hasSeenOnboarding) {
@@ -551,6 +786,17 @@ export default function App() {
       } catch (error) {
         console.error('App init failed', error);
         localStorage.removeItem(AUTH_INTENT_KEY);
+        try {
+          const { supabase: sb } = await import('./services/supabase');
+          const { data: { session } } = await sb.auth.getSession();
+          if (session?.user) {
+            await hydrateSignedInUser(session.user, 'login');
+            setView('home');
+            return;
+          }
+        } catch (sessionError) {
+          console.error('Session recovery failed after init error', sessionError);
+        }
         setSupabaseUser(null);
         setUserEmail('');
         setView('account');
@@ -561,34 +807,39 @@ export default function App() {
     // Listen for future auth state changes (login / logout)
     const { data: { subscription } } = onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        // Always sync user state for any event that has a valid session
-        setSupabaseUser(session.user);
-        if (session.user.email) {
-          setUserEmail(session.user.email);
-          localStorage.setItem('callmate_user_email', session.user.email);
-        }
-        if (event === 'SIGNED_IN') {
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          let isReturningUser = true;
           try {
-            await loadUserDataFromSupabase(session.user.id);
+            const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
+            const result = await hydrateSignedInUser(session.user, authIntent);
+            isReturningUser = result.isReturningUser;
+            if (authIntent) {
+              localStorage.removeItem(AUTH_INTENT_KEY);
+            }
           } catch (error) {
-            console.error('Failed to load user data after sign in', error);
+            console.error('Failed to hydrate user after auth change', error);
           }
-          const hasAccess = enforceAccessGate();
-          const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
-          if (authIntent) {
-            localStorage.removeItem(AUTH_INTENT_KEY);
-          }
-          
+
           // Only automatically set view if we are currently in an onboarding/auth view
           // This avoids interrupting the user if they are already using the app
-          if (hasAccess && ['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
-            const isNewUser = authIntent === 'signup' || Date.now() - new Date(session.user.created_at).getTime() < 30000;
-            setView(isNewUser ? 'setup' : 'home');
+          if (['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
+            if (isReturningUser) {
+              setView('home');
+            } else {
+              setView('notifications');
+            }
           }
         }
       } else {
         setSupabaseUser(null);
         if (event === 'SIGNED_OUT') {
+          channelRef.current?.unsubscribe();
+          channelRef.current = null;
+          clearLocalUserCollections();
+          setTier('free');
+          setTrialStartDate(null);
+          setTrialScriptsUsed(0);
+          setSelectedPlan(null);
           setUserEmail('');
           localStorage.removeItem('callmate_user_email');
           setView('account');
@@ -608,16 +859,13 @@ export default function App() {
         for (let attempt = 0; attempt < 6; attempt += 1) {
           const { data: { session } } = await sb.auth.getSession();
           if (session?.user) {
-            setSupabaseUser(session.user);
-            if (session.user.email) {
-              setUserEmail(session.user.email);
-              localStorage.setItem('callmate_user_email', session.user.email);
-            }
-            await loadUserDataFromSupabase(session.user.id);
+            const profile = (await hydrateSignedInUser(session.user, authIntent)).profile;
             localStorage.removeItem(AUTH_INTENT_KEY);
-            const hasAccess = enforceAccessGate();
-            if (hasAccess) {
-              setView(authIntent === 'signup' ? 'setup' : 'home');
+            const isReturningUser = profile?.name || authIntent === 'login' || (Date.now() - new Date(session.user.created_at).getTime() > 30000);
+            if (isReturningUser) {
+              setView('home');
+            } else {
+              setView('notifications');
             }
             return;
           }
@@ -696,9 +944,8 @@ export default function App() {
         anxiety_severity: anxietySeverity || null,
         anxiety_triggers: anxietyTriggers,
         life_impact: lifeImpact,
+        discovery_source: heardAboutUs,
         call_streak: callStreak,
-        tier,
-        trial_start_date: trialStartDate,
         dark_mode: isDark,
       });
     }, 250);
@@ -712,9 +959,8 @@ export default function App() {
     anxietySeverity,
     anxietyTriggers,
     lifeImpact,
+    heardAboutUs,
     callStreak,
-    tier,
-    trialStartDate,
     isDark,
   ]);
 
@@ -740,30 +986,18 @@ export default function App() {
     ]);
 
     const sanitizedRemoteScripts = sanitizeHistory(remoteScripts);
-    if (sanitizedRemoteScripts.length) {
-      setHistory(sanitizedRemoteScripts);
-      localStorage.setItem('ringtone_history', JSON.stringify(sanitizedRemoteScripts));
-    }
-    if (remoteReflections.length) {
-      setReflections(remoteReflections);
-      localStorage.setItem('ringtone_reflections', JSON.stringify(remoteReflections));
-    }
-    if (remoteRatings.length) {
-      const mappedRatings = remoteRatings
-        .map(r => ({
-          id: r.id,
-          scriptId: r.script_id,
-          rating: r.rating,
-          timestamp: r.timestamp,
-        }))
-        .sort((a, b) => a.timestamp - b.timestamp);
-      setCallAnxietyRatings(mappedRatings);
-      localStorage.setItem('callmate_anxiety_ratings', JSON.stringify(mappedRatings));
-    }
-    if (remotePersonas.length) {
-      setPersonas(remotePersonas);
-      localStorage.setItem('callmate_personas', JSON.stringify(remotePersonas));
-    }
+    persistScriptLocally(sanitizedRemoteScripts);
+    persistReflectionsLocally(remoteReflections);
+    const mappedRatings = remoteRatings
+      .map(r => ({
+        id: r.id,
+        scriptId: r.script_id,
+        rating: r.rating,
+        timestamp: r.timestamp,
+      }))
+      .sort((a, b) => a.timestamp - b.timestamp);
+    persistRatingsLocally(mappedRatings);
+    persistPersonasLocally(remotePersonas);
     if (profile) {
       if (profile.name) { setUserName(profile.name); localStorage.setItem('callmate_user_name', profile.name); }
       if (profile.gender !== undefined && profile.gender !== null) { setUserGender(profile.gender); localStorage.setItem('callmate_user_gender', profile.gender); }
@@ -771,11 +1005,11 @@ export default function App() {
       if (profile.anxiety_severity) { setAnxietySeverity(profile.anxiety_severity as AnxietySeverity); localStorage.setItem('callmate_severity', profile.anxiety_severity); }
       if (Array.isArray(profile.anxiety_triggers)) { setAnxietyTriggers(profile.anxiety_triggers); localStorage.setItem('callmate_triggers', JSON.stringify(profile.anxiety_triggers)); }
       if (Array.isArray(profile.life_impact)) { setLifeImpact(profile.life_impact); localStorage.setItem('callmate_impact', JSON.stringify(profile.life_impact)); }
+      if (profile.discovery_source) { setHeardAboutUs(profile.discovery_source); localStorage.setItem('callmate_heard_about_us', profile.discovery_source); }
       if (typeof profile.call_streak === 'number') { setCallStreak(profile.call_streak); localStorage.setItem('callmate_streak', String(profile.call_streak)); }
-      if (profile.tier) { setTier(profile.tier as Tier); localStorage.setItem('ringtone_tier', profile.tier); }
-      if (profile.trial_start_date) { setTrialStartDate(profile.trial_start_date); localStorage.setItem('callmate_trial_start', String(profile.trial_start_date)); }
       setTheme(profile.dark_mode ? 'dark' : 'light');
     }
+    return profile;
   };
 
   // Keep screen awake during active call
@@ -799,12 +1033,7 @@ export default function App() {
         ...currentScript,
         extraBranches: [...(currentScript.extraBranches || []), branch]
       };
-      setCurrentScript(updated);
-      if (tier !== 'free') {
-        const newHistory = history.map(h => h.id === updated.id ? updated : h);
-        setHistory(newHistory);
-        localStorage.setItem('ringtone_history', JSON.stringify(newHistory));
-      }
+      await replaceCurrentScript(updated);
       setAddBranchInput('');
       setShowAddBranch(false);
     } catch (error) {
@@ -820,10 +1049,7 @@ export default function App() {
       ...currentScript,
       extraBranches: currentScript.extraBranches.filter((_, i) => i !== index)
     };
-    setCurrentScript(updated);
-    const newHistory = history.map(h => h.id === updated.id ? updated : h);
-    setHistory(newHistory);
-    localStorage.setItem('ringtone_history', JSON.stringify(newHistory));
+    void replaceCurrentScript(updated);
   };
 
   const handleGenerate = async (overrideTone?: Tone, overrideDesc?: string) => {
@@ -859,8 +1085,11 @@ export default function App() {
 
       // Auto-save to history for all tiers
       const newHistory = [script, ...history].slice(0, 100);
-      setHistory(newHistory);
-      localStorage.setItem('ringtone_history', JSON.stringify(newHistory));
+      persistScriptLocally(newHistory);
+      if (supabaseUser) {
+        await saveScript(supabaseUser.id, script);
+        await loadAccessState();
+      }
 
       // Track last script date for re-engagement
       const now = Date.now();
@@ -872,12 +1101,6 @@ export default function App() {
         setTimeout(() => setShowReviewModal(true), 3500);
         setHasBeenReviewPrompted(true);
         localStorage.setItem('callmate_review_prompted', 'true');
-      }
-
-      if (tier === 'trial') {
-        const next = trialScriptsUsed + 1;
-        setTrialScriptsUsed(next);
-        localStorage.setItem('callmate_trial_scripts', String(next));
       }
 
       hapticSuccess();
@@ -911,7 +1134,7 @@ export default function App() {
 
   const handlePractice = async () => {
     if (!currentScript) return;
-    if (tier !== 'annual') {
+    if (!canUsePracticeMode) {
       setShowUpgradeModal(true);
       return;
     }
@@ -973,8 +1196,7 @@ export default function App() {
       timestamp: Date.now()
     };
     const newReflections = [reflection, ...reflections];
-    setReflections(newReflections);
-    localStorage.setItem('ringtone_reflections', JSON.stringify(newReflections));
+    persistReflectionsLocally(newReflections);
 
     if (supabaseUser) {
       void dbSaveReflection(supabaseUser.id, reflection);
@@ -993,8 +1215,7 @@ export default function App() {
             .map((rating) => rating.scriptId === currentScript.id ? newRating : rating)
             .sort((a, b) => a.timestamp - b.timestamp)
         : [...callAnxietyRatings, newRating];
-      setCallAnxietyRatings(newRatings);
-      localStorage.setItem('callmate_anxiety_ratings', JSON.stringify(newRatings));
+      persistRatingsLocally(newRatings);
 
       if (supabaseUser) {
         void syncAnxietyRatings(supabaseUser.id, [newRating]);
@@ -1025,8 +1246,13 @@ export default function App() {
 
   const clearHistory = () => {
     if (confirm('Are you sure you want to clear all call history?')) {
-      setHistory([]);
-      localStorage.removeItem('ringtone_history');
+      persistScriptLocally([]);
+      persistReflectionsLocally([]);
+      persistRatingsLocally([]);
+      setCurrentScript(null);
+      if (supabaseUser) {
+        void deleteAllScriptsForUser(supabaseUser.id);
+      }
     }
   };
 
@@ -1063,10 +1289,7 @@ export default function App() {
       ...currentScript,
       extraBranches: [...(currentScript.extraBranches || []), { condition: panicInput, response: panicResponse }]
     };
-    setCurrentScript(updated);
-    const newHistory = history.map(h => h.id === updated.id ? updated : h);
-    setHistory(newHistory);
-    localStorage.setItem('ringtone_history', JSON.stringify(newHistory));
+    void replaceCurrentScript(updated);
   };
 
   const toggleStar = (scriptId: string) => {
@@ -1114,7 +1337,10 @@ export default function App() {
   };
 
   if (view === 'splash') return (
-    <div className={cn("app-screen warm-therapeutic-bg flex flex-col items-center justify-center p-6 transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
+    <div className={cn("fixed inset-0 warm-therapeutic-bg flex flex-col items-center justify-center p-6 overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
+      <div className="absolute top-7 left-6 z-10">
+        <p className={cn("text-2xl font-semibold tracking-tight", isDark ? "text-[#f2ede3]" : "text-[#22312b]")}>Callmate</p>
+      </div>
       <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative">
         <motion.div
           animate={{ scale: [1, 1.6, 1], opacity: [0.35, 0, 0.35] }}
@@ -1130,8 +1356,15 @@ export default function App() {
           <Logo className="w-18 h-18 text-[#f8f4ed]" />
         </div>
       </motion.div>
-      <h1 className="text-5xl font-semibold tracking-tight mt-8 relative z-10">Callmate</h1>
-      <p className={cn("mt-2 relative z-10 text-sm font-medium", isDark ? "text-[#b6c2bc]" : "text-[#66756f]")}>A steadier way into hard calls.</p>
+      <p
+        className={cn(
+          "mt-8 relative z-10 text-center text-4xl font-semibold tracking-tight leading-[0.95]",
+          isDark ? "text-[#f2ede3]" : "text-[#111111]"
+        )}
+      >
+        <span className="block">Phone calls</span>
+        <span className="block">made easy</span>
+      </p>
       <p className={cn("mt-8 relative z-10 text-base", isDark ? "text-[#e1e8e3]" : "text-[#3f5049]")}>You can handle this call.</p>
     </div>
   );
@@ -1176,11 +1409,98 @@ export default function App() {
           <p className={cn("text-2xl font-semibold text-center", isDark ? "text-[#f5efe5]" : "text-[#22312b]")}>
             You are not broken.
           </p>
-          <Button size="lg" variant="primary" isDark={isDark} className="w-full h-14 font-bold text-base" onClick={() => setView('onboarding')}>
+          <Button size="lg" variant="primary" isDark={isDark} className="w-full h-14 font-bold text-base" onClick={() => setView('reset')}>
             Help me feel steadier <ChevronRight className="w-4 h-4" />
           </Button>
         </motion.div>
       </div>
+    </div>
+  );
+
+  if (view === 'reset') return (
+    <div className={cn("app-screen warm-therapeutic-bg flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
+      <div className="relative z-10 flex-1 flex flex-col justify-between px-7 pt-14 pb-10 max-w-md mx-auto w-full">
+        <div className="space-y-8">
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className={cn("text-[10px] font-black uppercase tracking-[0.3em]", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}
+          >
+            Your pre-call reset
+          </motion.p>
+
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-4">
+            <h1 className="text-[3rem] font-semibold tracking-tight leading-[0.92]">
+              The best way
+              <br />
+              to calm before
+              <br />
+              a call
+            </h1>
+            <p className={cn("text-base leading-relaxed max-w-[32ch]", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>
+              Before most hard calls, do this first. It takes less than 30 seconds and helps take the edge off before you speak.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className={cn("rounded-[2rem] border p-5 space-y-4", isDark ? "bg-[#202926]/88 border-[#415049]" : "bg-[rgba(255,251,245,0.9)] border-[#d8cdc0]")}
+          >
+            <div className="flex items-start gap-4">
+              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0", isDark ? "bg-[#2f3c37]" : "bg-[#eef1ed]")}>
+                <span className="text-2xl" aria-hidden="true">🫁</span>
+              </div>
+              <div className="space-y-1">
+                <p className={cn("text-sm font-black uppercase tracking-[0.18em]", isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>
+                  Before every difficult call
+                </p>
+                <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>
+                  Slow your breathing, relax your body, and lower the panic spike before the phone even rings.
+                </p>
+              </div>
+            </div>
+            <div className={cn("rounded-2xl px-4 py-3", isDark ? "bg-[#171f1d]" : "bg-[#f3eee4]")}>
+              <p className={cn("text-sm font-medium leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>
+                Try it once now. We&apos;ll build this into Callmate before your hard calls.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="space-y-3 pt-6">
+          <Button
+            size="lg"
+            variant="primary"
+            isDark={isDark}
+            className="w-full h-14 font-bold text-base"
+            onClick={() => setShowIntroBreathe(true)}
+          >
+            Try the pre-call reset <ChevronRight className="w-4 h-4" />
+          </Button>
+          <button
+            onClick={() => setView('onboarding')}
+            className={cn("w-full text-sm font-medium py-1 transition-colors", isDark ? "text-[#97a59f] hover:text-[#dbe3de]" : "text-[#66756f] hover:text-[#22312b]")}
+          >
+            Skip for now
+          </button>
+        </motion.div>
+      </div>
+
+      <AnimatePresence>
+        {showIntroBreathe && (
+          <PreCallCheck
+            isDark={isDark}
+            mode="breathe"
+            onClose={() => {
+              setShowIntroBreathe(false);
+              setView('onboarding');
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 
@@ -1194,85 +1514,55 @@ export default function App() {
 
     return (
       <div className={cn("app-screen warm-therapeutic-bg flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
-        {/* Progress dots */}
-        <div className="relative z-10 flex items-center justify-center gap-2 pt-10 pb-2 shrink-0">
-          {[1, 2, 3, 4, 5].map(s => (
-            <motion.div key={s} layout animate={{ width: s === onboardingStep ? 28 : 8 }} transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className={cn("h-1.5 rounded-full", s <= onboardingStep ? "bg-[#7b9d76]" : (isDark ? "bg-[#33403b]" : "bg-[#d8cdc0]"))} />
-          ))}
-        </div>
+        {!showOnboardingDiscovery && !showOnboardingThankYou && (
+          <div className="relative z-10 flex items-center justify-center gap-2 pt-10 pb-2 shrink-0">
+            {[1, 2, 3, 4, 5].map(s => (
+              <motion.div key={s} layout animate={{ width: s === onboardingStep ? 28 : 8 }} transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                className={cn("h-1.5 rounded-full", s <= onboardingStep ? "bg-[#7b9d76]" : (isDark ? "bg-[#33403b]" : "bg-[#d8cdc0]"))} />
+            ))}
+          </div>
+        )}
 
         <div className="keyboard-aware flex-1 flex flex-col px-7 pb-8 max-w-md mx-auto w-full relative z-10 overflow-hidden">
+          {showOnboardingDiscovery ? (
+            <OnboardingDiscoveryStep
+              isDark={isDark}
+              initialValue={heardAboutUs}
+              onBack={() => setView('explainer')}
+              onContinue={(value) => {
+                setHeardAboutUs(value);
+                localStorage.setItem('callmate_heard_about_us', value);
+                setShowOnboardingDiscovery(false);
+              }}
+            />
+          ) : showOnboardingThankYou ? (
+            <OnboardingThankYouStep
+              isDark={isDark}
+              onBack={() => setShowOnboardingThankYou(false)}
+              onContinue={() => {
+                setSetupNextView('reviews');
+                setView('setup');
+              }}
+            />
+          ) : (
           <AnimatePresence mode="wait">
 
-            {/* ── Step 1: Profile ── */}
             {onboardingStep === 1 && (
-              <motion.div key="s1" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.22 }} className="flex flex-col h-full pt-7">
-                <div className="shrink-0 mb-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#5d8a7a] mb-3">Step 1 of 5 · Your Profile</p>
-                  <h2 className="text-3xl font-bold tracking-tight leading-tight mb-2">Let's personalize your experience.</h2>
-                </div>
-                <div className={cn("mb-4 rounded-2xl p-4 flex items-start gap-3 border shrink-0", isDark ? "bg-[#202926] border-[#415049]" : "bg-[rgba(255,251,245,0.86)] border-[#d8cdc0]")}>
-                  <span className="text-lg shrink-0">✨</span>
-                    <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>
-                      This helps us personalize your call scripts — using your name naturally and tailoring the language to you.
-                    </p>
-                  </div>
-                <div className="flex-1 overflow-y-auto scrollbar-hide space-y-5 pb-2">
-                  {/* Name */}
-                  <div className="space-y-2">
-                    <p className={cn("text-xs font-bold uppercase tracking-widest px-1", isDark ? "text-zinc-400" : "text-zinc-500")}>First name <span className="text-blue-500">*</span></p>
-                    <input
-                      type="text"
-                      value={userName}
-                      onChange={e => setUserName(e.target.value)}
-                      placeholder="e.g. Alex"
-                      className={cn("w-full px-4 py-3.5 rounded-2xl border text-base font-medium focus:outline-none transition-all", isDark ? "bg-[#202926] border-[#415049] text-white placeholder:text-[#81918a] focus:border-[#7b9d76]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0] text-[#22312b] placeholder:text-[#95a19c] focus:border-[#7b9d76]")}
-                    />
-                  </div>
-                  {/* Gender */}
-                  <div className="space-y-2">
-                    <p className={cn("text-xs font-bold uppercase tracking-widest px-1", isDark ? "text-zinc-400" : "text-zinc-500")}>
-                      Gender <span className={cn("font-normal normal-case tracking-normal text-[11px]", isDark ? "text-zinc-600" : "text-zinc-400")}>· optional</span>
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {['Male', 'Female', 'Non-binary', 'Prefer not to say'].map(g => (
-                        <button key={g}
-                          onClick={() => { const v = g === userGender ? '' : g; setUserGender(v); localStorage.setItem('callmate_user_gender', v); }}
-                          className={cn("px-4 py-2 rounded-full text-sm font-medium transition-all border",
-                            userGender === g
-                              ? "bg-[#5d8a7a] border-[#5d8a7a] text-white"
-                              : isDark ? "bg-[#202926] border-[#415049] text-[#c8d2cc] hover:border-[#66756f]" : "bg-[#f6f0e8] border-[#d8cdc0] text-[#66756f] hover:border-[#b7aa96]"
-                          )}
-                        >{g}</button>
-                      ))}
-                    </div>
-                  </div>
-                  {/* Age range */}
-                  <div className="space-y-2">
-                    <p className={cn("text-xs font-bold uppercase tracking-widest px-1", isDark ? "text-zinc-400" : "text-zinc-500")}>
-                      Age range <span className={cn("font-normal normal-case tracking-normal text-[11px]", isDark ? "text-zinc-600" : "text-zinc-400")}>· optional</span>
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {['18–24', '25–34', '35–44', '45–54', '55+'].map(a => (
-                        <button key={a}
-                          onClick={() => { const v = a === userAgeRange ? '' : a; setUserAgeRange(v); localStorage.setItem('callmate_user_age_range', v); }}
-                          className={cn("px-4 py-2 rounded-full text-sm font-medium transition-all border",
-                            userAgeRange === a
-                              ? "bg-[#5d8a7a] border-[#5d8a7a] text-white"
-                              : isDark ? "bg-[#202926] border-[#415049] text-[#c8d2cc] hover:border-[#66756f]" : "bg-[#f6f0e8] border-[#d8cdc0] text-[#66756f] hover:border-[#b7aa96]"
-                          )}
-                        >{a}</button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="shrink-0 pt-5">
-                  <Button size="lg" variant="primary" isDark={isDark} className="w-full h-14 font-bold" disabled={!userName.trim()} onClick={() => { localStorage.setItem('callmate_user_name', userName); setOnboardingStep(2); }}>
-                    Continue <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </motion.div>
+              <OnboardingProfileStep
+                isDark={isDark}
+                initialName={userName}
+                initialGender={userGender}
+                initialAgeRange={userAgeRange}
+                onContinue={({ name, gender, ageRange }) => {
+                  setUserName(name);
+                  setUserGender(gender);
+                  setUserAgeRange(ageRange);
+                  localStorage.setItem('callmate_user_name', name);
+                  localStorage.setItem('callmate_user_gender', gender);
+                  localStorage.setItem('callmate_user_age_range', ageRange);
+                  setOnboardingStep(2);
+                }}
+              />
             )}
 
             {/* ── Step 2: Severity ── */}
@@ -1433,25 +1723,17 @@ export default function App() {
                   <OnboardingDemoDashboard isDark={isDark} />
                 </div>
                 <div className="shrink-0 pt-4 space-y-2">
-                  <Button size="lg" variant="primary" isDark={isDark} className="w-full h-14 font-bold text-base bg-[#5d8a7a] hover:bg-[#527a6c] shadow-[#5d8a7a]/20" onClick={() => {
-                    if (tier === 'free') {
-                      const now = Date.now();
-                      setTrialStartDate(now);
-                      setTier('trial');
-                      localStorage.setItem('callmate_trial_start', String(now));
-                      localStorage.setItem('ringtone_tier', 'trial');
-                    }
-                    setView('reviews');
-                  }}>
-                    Start My Free Trial <ChevronRight className="w-4 h-4" />
+                  <Button size="lg" variant="primary" isDark={isDark} className="w-full h-14 font-bold text-base bg-[#5d8a7a] hover:bg-[#527a6c] shadow-[#5d8a7a]/20" onClick={() => setShowOnboardingThankYou(true)}>
+                    Continue <ChevronRight className="w-4 h-4" />
                   </Button>
-                  <p className="text-center text-[10px] text-zinc-500 pt-1">3 days free · No payment due now · Cancel anytime</p>
+                  <p className="text-center text-[10px] text-zinc-500 pt-1">One quick stop before we set up your free trial.</p>
                   <button onClick={() => setOnboardingStep(4)} className="w-full text-center text-zinc-500 text-sm py-1 hover:text-zinc-400 transition-colors">Back</button>
                 </div>
               </motion.div>
             )}
 
           </AnimatePresence>
+          )}
         </div>
       </div>
     );
@@ -1490,11 +1772,13 @@ export default function App() {
           anxietySeverity,
           anxietyTriggers,
           lifeImpact,
+          discoverySource: heardAboutUs,
           callStreak,
-          tier,
-          trialStartDate,
           darkMode: isDark,
         });
+        applyAccessState(await startTrial('monthly'));
+      } else {
+        await loadAccessState();
       }
       setView(isNewUser ? 'setup' : 'home');
     }}
@@ -1503,8 +1787,25 @@ export default function App() {
   if (view === 'setup') return <SetupAnimation
     isDark={isDark}
     userName={userName}
-    onDone={() => setView('home')}
+    onDone={() => setView(setupNextView)}
   />;
+
+  if (view === 'notifications') return (
+    <OnboardingNotificationsStep
+      isDark={isDark}
+      onContinue={() => {
+        void (async () => {
+          localStorage.setItem('callmate_notifications_prompt_seen', 'true');
+          setView('home');
+          try {
+            await requestNotificationsAccess();
+          } catch (error) {
+            console.error('Failed to request notifications', error);
+          }
+        })();
+      }}
+    />
+  );
 
   if (view === 'reviews') return (
     <div className={cn("app-screen warm-therapeutic-bg flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
@@ -1522,10 +1823,10 @@ export default function App() {
         {/* Reviews */}
         <div className="space-y-3 flex-1">
           {[
-            { name: "Sarah M.", location: "Chicago", quote: "I finally called my doctor after putting it off for 3 years. I literally cried after I hung up.", tag: "Medical / Doctor Call" },
-            { name: "James T.", location: "Austin", quote: "Negotiated my rent down $150/month. The Firm tone was unreal — my landlord didn't even push back.", tag: "Landlord Call" },
-            { name: "Priya K.", location: "New York", quote: "I used to let every work call go to voicemail and make up excuses. Not anymore.", tag: "Work Call" },
-            { name: "Marcus R.", location: "Seattle", quote: "I'm autistic and phone calls are my nightmare. This app is genuinely life-changing.", tag: "Customer Service" },
+            { name: "Sarah M.", location: "Chicago", quote: "I finally called my doctor after putting it off for 3 years. I literally cried after I hung up.", tag: "Medical / Doctor Call", avatar: reviewAvatar1 },
+            { name: "Jenna T.", location: "Austin", quote: "Negotiated my rent down $150/month. The Firm tone was unreal — my landlord didn't even push back.", tag: "Landlord Call", avatar: reviewAvatar2 },
+            { name: "Chase K.", location: "New York", quote: "I used to let every work call go to voicemail and make up excuses. Not anymore.", tag: "Work Call", avatar: reviewAvatar3 },
+            { name: "Meritas R.", location: "Seattle", quote: "I'm autistic and phone calls are my nightmare. This app is genuinely life-changing.", tag: "Customer Service", avatar: reviewAvatar4 },
           ].map((r, i) => (
             <motion.div
               key={i}
@@ -1535,9 +1836,17 @@ export default function App() {
               className={cn("p-4 rounded-2xl border transition-colors", isDark ? "bg-[#202926]/80 border-[#415049]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]")}
             >
               <div className="flex items-start justify-between gap-2 mb-1.5">
-                <div>
-                  <p className={cn("text-sm font-bold", isDark ? "text-zinc-100" : "text-zinc-900")}>{r.name}</p>
-                  <p className={cn("text-[10px]", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>{r.location} · {r.tag}</p>
+                <div className="flex items-center gap-3 min-w-0">
+                  <img
+                    src={r.avatar}
+                    alt=""
+                    aria-hidden="true"
+                    className="w-11 h-11 rounded-full object-cover shrink-0 border border-white/20"
+                  />
+                  <div className="min-w-0">
+                    <p className={cn("text-sm font-bold", isDark ? "text-zinc-100" : "text-zinc-900")}>{r.name}</p>
+                    <p className={cn("text-[10px]", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>{r.location} · {r.tag}</p>
+                  </div>
                 </div>
                 <div className="flex gap-0.5 shrink-0 mt-0.5">
                   {[...Array(5)].map((_, j) => <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />)}
@@ -1571,7 +1880,7 @@ export default function App() {
   );
 
   return (
-    <div className={cn("min-h-screen warm-therapeutic-bg transition-colors duration-500 selection:bg-white/10 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
+    <div className={cn("h-[100dvh] warm-therapeutic-bg transition-colors duration-500 selection:bg-white/10 relative overflow-hidden flex flex-col overscroll-none", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
 
       {/* Offline banner */}
       <AnimatePresence>
@@ -1629,7 +1938,7 @@ export default function App() {
       </header>
 
 
-      <main className="keyboard-aware max-w-2xl mx-auto p-6 pb-48">
+      <main className="keyboard-aware flex-1 min-h-0 overflow-y-auto overscroll-contain max-w-2xl mx-auto w-full p-6 pb-48">
         <AnimatePresence mode="wait">
           {view === 'home' && (
             <div key="home" className="space-y-8">
@@ -1701,10 +2010,20 @@ export default function App() {
               personas={personas}
               setSelectedPersona={setSelectedPersona}
               setShowPersonaModal={setShowPersonaModal}
-              setPersonas={setPersonas}
+              deletePersona={(personaId) => {
+                const next = personas.filter((persona) => persona.id !== personaId);
+                persistPersonasLocally(next);
+                if (supabaseUser) {
+                  void dbDeletePersona(personaId);
+                }
+              }}
               tier={tier}
               historyLength={history.length}
               clearHistory={clearHistory}
+              onExportJSON={handleExportJSON}
+              onExportCSV={handleExportCSV}
+              onImportFile={handleImportFile}
+              onImportConfirm={(preview, mode) => { void handleImportConfirm(preview, mode); }}
             />
           )}
 
@@ -1837,8 +2156,10 @@ export default function App() {
 
       {['home', 'history', 'dashboard', 'settings'].includes(view) && !showPreCallCheck && (
         <div className="fixed bottom-[104px] right-6 z-[65] max-w-2xl mx-auto">
-          <button
+          <motion.button
             type="button"
+            animate={{ y: [0, -5, 0] }}
+            transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
             onClick={() => {
               hapticLight();
               setPreCallCheckMode('breathe');
@@ -1853,7 +2174,7 @@ export default function App() {
           >
             <span>🧘</span>
             Breathe
-          </button>
+          </motion.button>
         </div>
       )}
 
@@ -2061,12 +2382,8 @@ export default function App() {
         {showUpgradeModal && (
           <>
             <div onClick={() => { if (!upgradeModalForced) setShowUpgradeModal(false); }} className="fixed inset-0 bg-black/80 z-[100]" />
-            <div className={cn("fixed bottom-0 left-0 right-0 rounded-t-[2.5rem] z-[110] shadow-2xl border-t max-w-2xl mx-auto max-h-[94dvh] overflow-y-auto transition-colors", isDark ? "bg-[#202926] border-[#415049]" : "bg-[rgba(255,251,245,0.98)] border-[#d8cdc0]")}>
-              <div className="flex justify-center pt-4 pb-2">
-                <div className={cn("w-10 h-1 rounded-full", isDark ? "bg-[#5b6962]" : "bg-[#cdbfae]")} />
-              </div>
-
-              <div className="px-6 pb-10 space-y-6">
+            <div className={cn("fixed inset-0 z-[110] shadow-2xl overflow-y-auto transition-colors", isDark ? "bg-[#202926]" : "bg-[rgba(255,251,245,0.99)]")}>
+              <div className="px-6 pt-8 pb-10 max-w-2xl mx-auto min-h-full space-y-6">
                 {/* Personalised header */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
@@ -2074,15 +2391,23 @@ export default function App() {
                       {userName ? (
                         <>Hey <span className={cn(isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>{userName}</span>,<br /></>
                       ) : null}
-                      Unlock <span className={cn(isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>Callmate</span> to feel steadier on every call.
+                      Unlock <span className={cn(isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>Callmate</span> for help with phone anxiety.
                     </h2>
-                    <p className={cn("text-sm", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>3 days free · No payment due now · Cancel anytime</p>
+                    <p className={cn("text-sm", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>3 days free · Pay nothing today · Cancel anytime</p>
                   </div>
-                  {!upgradeModalForced && (
-                    <button onClick={() => setShowUpgradeModal(false)} className={cn("p-2 rounded-full shrink-0 mt-1 transition-colors", isDark ? "bg-[#171f1d] hover:bg-[#2b3632]" : "bg-[#ece5da] hover:bg-[#e2d8ca]")}>
-                      <X className="w-5 h-5" />
+                  <div className="flex items-center gap-3 shrink-0 mt-1">
+                    <button
+                      onClick={() => { void handleRestorePurchases(); }}
+                      className={cn("text-sm font-semibold transition-colors", isDark ? "text-[#b7d0c4] hover:text-white" : "text-[#5d8a7a] hover:text-[#22312b]")}
+                    >
+                      Restore
                     </button>
-                  )}
+                    {!upgradeModalForced && (
+                      <button onClick={() => setShowUpgradeModal(false)} className={cn("p-2 rounded-full transition-colors", isDark ? "bg-[#171f1d] hover:bg-[#2b3632]" : "bg-[#ece5da] hover:bg-[#e2d8ca]")}>
+                        <X className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Benefits */}
@@ -2108,7 +2433,12 @@ export default function App() {
                 <div className="space-y-3">
                   {/* Monthly */}
                   <div
-                    onClick={() => { setTier('monthly'); localStorage.setItem('ringtone_tier', 'monthly'); setShowUpgradeModal(false); }}
+                    onClick={() => {
+                      void (async () => {
+                        await handleIAPPurchase('monthly');
+                        setShowUpgradeModal(false);
+                      })();
+                    }}
                     className={cn(
                       "p-5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] relative",
                       tier === 'monthly' ? (isDark ? "bg-[#274136]/45 border-[#7fa091]" : "bg-[#eef5f1] border-[#8fae9e]") : (isDark ? "bg-[#171f1d] border-[#415049] hover:border-[#66756f]" : "bg-[#fffdf9] border-[#d8cdc0] hover:border-[#b7aa96]")
@@ -2123,18 +2453,23 @@ export default function App() {
                         <p className={cn("text-xs", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>Billed monthly after trial</p>
                       </div>
                       <div className="text-right">
-                        <p className={cn("text-2xl font-black tabular-nums", isDark ? "text-white" : "text-black")}>$6.99<span className={cn("text-sm font-normal", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>/mo</span></p>
+                        <p className={cn("text-2xl font-black tabular-nums", isDark ? "text-white" : "text-black")}>$8.99<span className={cn("text-sm font-normal", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>/mo</span></p>
                       </div>
                     </div>
                     <div className={cn("rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-2", isDark ? "bg-[#274136]/35 text-[#d7e6df]" : "bg-[#eef5f1] text-[#4d6f62]")}>
                       <Check className="w-3.5 h-3.5 shrink-0" />
-                      3 days free, then $6.99/month · No payment due now
+                      3 days free, then $8.99/month · Pay nothing today
                     </div>
                   </div>
 
                   {/* Annual */}
                   <div
-                    onClick={() => { setTier('annual'); localStorage.setItem('ringtone_tier', 'annual'); setShowUpgradeModal(false); }}
+                    onClick={() => {
+                      void (async () => {
+                        await handleIAPPurchase('annual');
+                        setShowUpgradeModal(false);
+                      })();
+                    }}
                     className={cn(
                       "p-5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] relative",
                       tier === 'annual' ? (isDark ? "bg-[#314230]/45 border-[#9bb68f]" : "bg-[#f1f5ea] border-[#a9be97]") : (isDark ? "bg-[#171f1d] border-[#415049] hover:border-[#66756f]" : "bg-[#fffdf9] border-[#d8cdc0] hover:border-[#b7aa96]")
@@ -2144,18 +2479,18 @@ export default function App() {
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
                           <h3 className={cn("font-black text-lg", isDark ? "text-white" : "text-black")}>Annual</h3>
-                          <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest", isDark ? "bg-[#7b9d76]/20 text-[#d3e1cb]" : "bg-[#edf4e8] text-[#6e8f69]")}>Save 30%</span>
+                          <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest", isDark ? "bg-[#7b9d76]/20 text-[#d3e1cb]" : "bg-[#edf4e8] text-[#6e8f69]")}>Save 35%</span>
                         </div>
                         <p className={cn("text-xs", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>Best value · Billed yearly after trial</p>
                       </div>
                       <div className="text-right">
-                        <p className={cn("text-2xl font-black tabular-nums", isDark ? "text-white" : "text-black")}>$58.99<span className={cn("text-sm font-normal", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>/yr</span></p>
-                        <p className={cn("text-[10px] font-black", isDark ? "text-[#c6ddb7]" : "text-[#6e8f69]")}>≈ $4.92/mo</p>
+                        <p className={cn("text-2xl font-black tabular-nums", isDark ? "text-white" : "text-black")}>$69.99<span className={cn("text-sm font-normal", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>/yr</span></p>
+                        <p className={cn("text-[10px] font-black", isDark ? "text-[#c6ddb7]" : "text-[#6e8f69]")}>≈ $5.83/mo</p>
                       </div>
                     </div>
                     <div className={cn("rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-2", isDark ? "bg-[#314230]/35 text-[#d9e6cf]" : "bg-[#edf4e8] text-[#587651]")}>
                       <Check className="w-3.5 h-3.5 shrink-0" />
-                      3 days free, then $58.99/year · Cancel anytime
+                      3 days free, then $69.99/year · Cancel anytime
                     </div>
                   </div>
                 </div>
@@ -2168,16 +2503,9 @@ export default function App() {
 
                 {/* Footer links */}
                 <div className="flex items-center justify-center gap-4 flex-wrap">
-                  <button onClick={() => openInAppBrowser('https://callmate.app/terms')} className={cn("text-xs transition-colors underline underline-offset-2", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#66756f] hover:text-[#4d5d56]")}>Terms of Service</button>
+                  <button onClick={() => openInAppBrowser('https://www.trycallmate.app/terms.html')} className={cn("text-xs transition-colors underline underline-offset-2", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#66756f] hover:text-[#4d5d56]")}>Terms of Service</button>
                   <span className={cn("text-xs", isDark ? "text-[#5b6962]" : "text-[#b6a998]")}>·</span>
-                  <button onClick={() => openInAppBrowser('https://callmate.app/privacy')} className={cn("text-xs transition-colors underline underline-offset-2", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#66756f] hover:text-[#4d5d56]")}>Privacy Policy</button>
-                  <span className={cn("text-xs", isDark ? "text-[#5b6962]" : "text-[#b6a998]")}>·</span>
-                  <button
-                    onClick={() => {/* restore purchase handler — wire StoreKit here */}}
-                    className={cn("text-xs transition-colors underline underline-offset-2", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#66756f] hover:text-[#4d5d56]")}
-                  >
-                    Restore Purchase
-                  </button>
+                  <button onClick={() => openInAppBrowser('https://www.trycallmate.app/privacy.html')} className={cn("text-xs transition-colors underline underline-offset-2", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#66756f] hover:text-[#4d5d56]")}>Privacy Policy</button>
                 </div>
 
                 {!upgradeModalForced && (
@@ -2231,11 +2559,10 @@ export default function App() {
                   const context = (document.getElementById('persona-context') as HTMLTextAreaElement).value;
                   if (!name || !context) return;
                   
-                  if (selectedPersona) {
-                    setPersonas(personas.map(p => p.id === selectedPersona.id ? { ...p, name, context } : p));
-                  } else {
-                    setPersonas([...personas, { id: crypto.randomUUID(), name, context }]);
-                  }
+                  const next = selectedPersona
+                    ? personas.map(p => p.id === selectedPersona.id ? { ...p, name, context } : p)
+                    : [...personas, { id: crypto.randomUUID(), name, context }];
+                  void persistPersonas(next);
                   setShowPersonaModal(false);
                 }}>
                   Save Call Role
@@ -2321,7 +2648,7 @@ function ReviewSlideshow({ isDark }: { isDark: boolean }) {
       <AnimatePresence mode="wait">
         <motion.div key={index} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3 }} className="space-y-2">
           <div className="flex gap-0.5">
-            {[...Array(5)].map((_, j) => <Star key={j} className="w-3.5 h-3.5 fill-[#d8b278] text-[#d8b278]" />)}
+            {[...Array(5)].map((_, j) => <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />)}
           </div>
           <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>"{r.quote}"</p>
           <p className={cn("text-[11px]", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>{r.name} · {r.location} · {r.tag}</p>
@@ -2432,18 +2759,10 @@ function BreathingGuide({
 
     const playPulse = () => {
       if (vibrationEnabled) {
-        if ('vibrate' in navigator) {
-          navigator.vibrate(
-            phase === 'hold'
-              ? [320, 120, 320]
-              : phase === 'inhale'
-                ? [220, 90, 220]
-                : [260, 110, 260]
-          );
-        }
-        void (phase === 'hold' ? hapticHeavy() : phase === 'inhale' ? hapticHeavy() : hapticMedium());
+        void vibrate({ 
+          duration: phase === 'hold' ? 400 : phase === 'inhale' ? 300 : 350 
+        });
       }
-
     };
 
     playPulse();
@@ -2932,6 +3251,378 @@ function SetupAnimation({ isDark, userName, onDone }: { isDark: boolean; userNam
   );
 }
 
+const OnboardingProfileStep = React.memo(function OnboardingProfileStep({
+  isDark,
+  initialName,
+  initialGender,
+  initialAgeRange,
+  onContinue,
+}: {
+  isDark: boolean;
+  initialName: string;
+  initialGender: string;
+  initialAgeRange: string;
+  onContinue: (profile: { name: string; gender: string; ageRange: string }) => void;
+}) {
+  const nameRef = React.useRef<HTMLInputElement>(null);
+  const [draftGender, setDraftGender] = React.useState(initialGender);
+  const [draftAgeRange, setDraftAgeRange] = React.useState(initialAgeRange);
+  const [hasName, setHasName] = React.useState(!!initialName);
+
+  return (
+    <motion.div key="s1" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.22 }} className="flex flex-col h-full pt-7">
+      <div className="shrink-0 mb-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#5d8a7a] mb-3">Step 1 of 5 · Your Profile</p>
+        <h2 className="text-3xl font-bold tracking-tight leading-tight mb-2">Let's personalize your experience.</h2>
+      </div>
+      <div className={cn("mb-4 rounded-2xl p-4 flex items-start gap-3 border shrink-0", isDark ? "bg-[#202926] border-[#415049]" : "bg-[rgba(255,251,245,0.86)] border-[#d8cdc0]")}>
+        <span className="text-lg shrink-0">✨</span>
+        <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>
+          This helps us personalize your call scripts — using your name naturally and tailoring the language to you.
+        </p>
+      </div>
+      <div className="flex-1 overflow-y-auto scrollbar-hide space-y-5 pb-2">
+        <div className="space-y-2">
+          <p className={cn("text-xs font-bold uppercase tracking-widest px-1", isDark ? "text-zinc-400" : "text-zinc-500")}>First name <span className="text-blue-500">*</span></p>
+          <input
+            ref={nameRef}
+            type="text"
+            autoFocus
+            defaultValue={initialName}
+            onChange={e => setHasName(!!e.target.value.trim())}
+            placeholder="e.g. Alex"
+            className={cn("w-full px-4 py-3.5 rounded-2xl border text-base font-medium focus:outline-none transition-all", isDark ? "bg-[#202926] border-[#415049] text-white placeholder:text-[#81918a] focus:border-[#7b9d76]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0] text-[#22312b] placeholder:text-[#95a19c] focus:border-[#7b9d76]")}
+          />
+        </div>
+        <div className="space-y-2">
+          <p className={cn("text-xs font-bold uppercase tracking-widest px-1", isDark ? "text-zinc-400" : "text-zinc-500")}>
+            Gender <span className={cn("font-normal normal-case tracking-normal text-[11px]", isDark ? "text-zinc-600" : "text-zinc-400")}>· optional</span>
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {['Male', 'Female', 'Non-binary', 'Prefer not to say'].map(g => (
+              <button
+                key={g}
+                onClick={() => setDraftGender(g === draftGender ? '' : g)}
+                className={cn("px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                  draftGender === g
+                    ? "bg-[#5d8a7a] border-[#5d8a7a] text-white"
+                    : isDark ? "bg-[#202926] border-[#415049] text-[#c8d2cc] hover:border-[#66756f]" : "bg-[#f6f0e8] border-[#d8cdc0] text-[#66756f] hover:border-[#b7aa96]"
+                )}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <p className={cn("text-xs font-bold uppercase tracking-widest px-1", isDark ? "text-zinc-400" : "text-zinc-500")}>
+            Age range <span className={cn("font-normal normal-case tracking-normal text-[11px]", isDark ? "text-zinc-600" : "text-zinc-400")}>· optional</span>
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {['18–24', '25–34', '35–44', '45–54', '55+'].map(a => (
+              <button
+                key={a}
+                onClick={() => setDraftAgeRange(a === draftAgeRange ? '' : a)}
+                className={cn("px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                  draftAgeRange === a
+                    ? "bg-[#5d8a7a] border-[#5d8a7a] text-white"
+                    : isDark ? "bg-[#202926] border-[#415049] text-[#c8d2cc] hover:border-[#66756f]" : "bg-[#f6f0e8] border-[#d8cdc0] text-[#66756f] hover:border-[#b7aa96]"
+                )}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="shrink-0 pt-5">
+        <Button
+          size="lg"
+          variant="primary"
+          isDark={isDark}
+          className="w-full h-14 font-bold"
+          disabled={!hasName}
+          onClick={() => onContinue({ name: nameRef.current?.value.trim() || '', gender: draftGender, ageRange: draftAgeRange })}
+        >
+          Continue <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </motion.div>
+  );
+});
+
+const DISCOVERY_OPTIONS = [
+  { value: 'Facebook', asset: facebookIcon, assetClassName: 'w-[1.05rem] h-[1.05rem]' },
+  { value: 'TikTok', asset: tiktokIcon, assetClassName: 'w-[1.05rem] h-[1.05rem]' },
+  { value: 'YouTube', asset: youtubeIcon, assetClassName: 'w-[1.15rem] h-[1.15rem]' },
+  { value: 'Instagram', asset: instagramIcon, assetClassName: 'w-[1.05rem] h-[1.05rem]' },
+  { value: 'X', asset: xIcon, assetClassName: 'w-[1rem] h-[1rem]' },
+  { value: 'Google', badge: 'G' },
+  { value: 'App Store', asset: appStoreIcon, assetClassName: 'w-[1.15rem] h-[1.15rem]' },
+  { value: 'Family or friend', icon: Users },
+  { value: 'TV', icon: Tv },
+  { value: 'Other', icon: Ellipsis },
+] as const;
+
+const OnboardingDiscoveryStep = React.memo(function OnboardingDiscoveryStep({
+  isDark,
+  initialValue,
+  onBack,
+  onContinue,
+}: {
+  isDark: boolean;
+  initialValue: string;
+  onBack: () => void;
+  onContinue: (value: string) => void;
+}) {
+  const [selection, setSelection] = React.useState(initialValue);
+
+  React.useEffect(() => {
+    setSelection(initialValue);
+  }, [initialValue]);
+
+  return (
+    <motion.div key="s0" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.22 }} className="flex flex-col h-full pt-7">
+      <div className="shrink-0 mb-5">
+        <div className="flex items-center gap-3 mb-7">
+          <button
+            onClick={onBack}
+            className={cn(
+              "w-10 h-10 rounded-full flex items-center justify-center border transition-colors",
+              isDark ? "border-[#415049] bg-[#202926] text-[#f6f2ea]" : "border-[#e8dfd4] bg-[rgba(255,251,245,0.86)] text-[#22312b]"
+            )}
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+        </div>
+        <h2 className="text-[2.1rem] font-bold tracking-tight leading-[0.95] max-w-[12ch]">Where did you hear about us?</h2>
+      </div>
+
+      <div className="flex-1 overflow-y-auto scrollbar-hide space-y-3 pb-3">
+        {DISCOVERY_OPTIONS.map(option => {
+          const selected = selection === option.value;
+          const Icon = 'icon' in option ? option.icon : null;
+          const asset = 'asset' in option ? option.asset : null;
+          return (
+            <button
+              key={option.value}
+              onClick={() => setSelection(option.value)}
+              className={cn(
+                "w-full rounded-[1.6rem] border px-4 py-4 text-left transition-all flex items-center gap-4",
+                selected
+                  ? isDark
+                    ? "bg-[#f3efe6] border-[#f3efe6] text-[#111111] shadow-[0_18px_50px_rgba(0,0,0,0.24)]"
+                    : "bg-[#22312b] border-[#22312b] text-white shadow-[0_18px_40px_rgba(34,49,43,0.18)]"
+                  : isDark
+                    ? "bg-[#202926] border-[#415049] text-[#f6f2ea] hover:border-[#6a7a73]"
+                    : "bg-[rgba(255,251,245,0.86)] border-[#ece5db] text-[#1a241f] hover:border-[#cfc4b5]"
+              )}
+            >
+              <div
+                className={cn(
+                  "w-11 h-11 rounded-2xl shrink-0 flex items-center justify-center",
+                  selected
+                    ? isDark
+                      ? "bg-[#111111] text-white"
+                      : "bg-white/14 text-white"
+                    : isDark
+                      ? "bg-[#2c3833] text-[#d7e0db]"
+                      : "bg-[#eef1ed] text-[#5d6c65]"
+                )}
+              >
+                {asset ? (
+                  <img
+                    src={asset}
+                    alt=""
+                    aria-hidden="true"
+                    className={cn(
+                      "object-contain",
+                      option.assetClassName,
+                      selected && !isDark ? "brightness-0 invert" : selected && isDark ? "brightness-0 invert" : "brightness-0"
+                    )}
+                  />
+                ) : Icon ? (
+                  <Icon className="w-5 h-5" />
+                ) : (
+                  <span className="text-[0.95rem] font-black leading-none tracking-[-0.04em] uppercase">{option.badge}</span>
+                )}
+              </div>
+              <span className="text-lg font-semibold tracking-tight">{option.value}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="shrink-0 pt-4">
+        <Button
+          size="lg"
+          variant="primary"
+          isDark={isDark}
+          className="w-full h-14 font-bold text-base"
+          disabled={!selection}
+          onClick={() => onContinue(selection)}
+        >
+          Continue <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </motion.div>
+  );
+});
+
+const OnboardingThankYouStep = React.memo(function OnboardingThankYouStep({
+  isDark,
+  onBack,
+  onContinue,
+}: {
+  isDark: boolean;
+  onBack: () => void;
+  onContinue: () => void;
+}) {
+  return (
+    <motion.div key="thank-you" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.22 }} className="flex flex-col h-full pt-4">
+      <div className="shrink-0 mb-3">
+        <div className="flex items-center gap-3 mb-7">
+          <button
+            onClick={onBack}
+            className={cn(
+              "w-10 h-10 rounded-full flex items-center justify-center border transition-colors",
+              isDark ? "border-[#415049] bg-[#202926] text-[#f6f2ea]" : "border-[#e8dfd4] bg-[rgba(255,251,245,0.86)] text-[#22312b]"
+            )}
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col">
+        <div className="space-y-5">
+          <div className={cn(
+            "mx-auto w-48 h-48 rounded-full flex items-center justify-center relative overflow-hidden",
+            isDark ? "bg-[radial-gradient(circle_at_30%_30%,#33403b,transparent_62%),linear-gradient(135deg,#2a3531,#202926)]" : "bg-[radial-gradient(circle_at_30%_30%,#efe4d7,transparent_62%),linear-gradient(135deg,#f2e7da,#e7ece7)]"
+          )}>
+            <div className={cn(
+              "absolute inset-[16%] rounded-full border",
+              isDark ? "border-[#54635d]" : "border-[#d5ccc1]"
+            )} />
+            <div className={cn(
+              "relative z-10 w-28 h-28 rounded-[2rem] flex items-center justify-center text-5xl",
+              isDark ? "bg-[#161d1b]/75" : "bg-white/70"
+            )}>
+              <span aria-hidden="true">🤝</span>
+            </div>
+          </div>
+
+          <div className="space-y-3 text-center">
+            <h2 className={cn("text-4xl font-bold tracking-tight leading-[0.95]", isDark ? "text-[#f6f2ea]" : "text-[#22312b]")}>
+              Thank you for
+              <br />
+              trusting us
+            </h2>
+          </div>
+
+          <div className={cn(
+            "rounded-[1.8rem] border px-5 py-5 text-center",
+            isDark ? "bg-[#202926] border-[#415049]" : "bg-[rgba(255,251,245,0.9)] border-[#e6ddd1]"
+          )}>
+            <div className={cn(
+              "mx-auto mb-3 w-10 h-10 rounded-full flex items-center justify-center",
+              isDark ? "bg-[#2f3c37] text-[#d7e0db]" : "bg-[#f1e8dd] text-[#5d8a7a]"
+            )}>
+              <Check className="w-5 h-5" />
+            </div>
+            <p className={cn("text-xl font-bold leading-tight", isDark ? "text-[#f6f2ea]" : "text-[#22312b]")}>
+              Your privacy and security matter to us.
+            </p>
+            <p className={cn("mt-2 text-sm leading-relaxed", isDark ? "text-[#b7c3bd]" : "text-[#66756f]")}>
+              We promise to always keep your personal information private and secure.
+            </p>
+          </div>
+        </div>
+
+        <div className="shrink-0 pt-6">
+          <Button size="lg" variant="primary" isDark={isDark} className="w-full h-14 font-bold text-base" onClick={onContinue}>
+            Continue <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  );
+});
+
+const OnboardingNotificationsStep = React.memo(function OnboardingNotificationsStep({
+  isDark,
+  onContinue,
+}: {
+  isDark: boolean;
+  onContinue: () => void;
+}) {
+  return (
+    <div className={cn("app-screen warm-therapeutic-bg flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
+      <div className="keyboard-aware flex-1 flex flex-col px-7 pb-8 max-w-md mx-auto w-full relative z-10 overflow-hidden">
+        <motion.div key="notifications" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.22 }} className="flex flex-col h-full pt-3">
+          <div className="flex-1 flex flex-col justify-start pt-12">
+            <div className="space-y-9">
+              <div className="space-y-3 text-center">
+                <h2 className={cn("text-[2.25rem] font-bold tracking-tight leading-[1.02]", isDark ? "text-[#f6f2ea]" : "text-[#22312b]")}>
+                  Be reminded to log calls
+                </h2>
+              </div>
+
+              <div className={cn(
+                "mx-auto w-full max-w-[18.5rem] rounded-[1.9rem] border overflow-hidden shadow-[0_24px_70px_rgba(35,49,43,0.12)]",
+                isDark ? "bg-[#e8ddd0] border-[#d2c7bb]" : "bg-[#ece3d8] border-[#d8cdc0]"
+              )}>
+                <div className="px-6 pt-7 pb-5 text-center">
+                  <div className={cn(
+                    "mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center",
+                    isDark ? "bg-[#f7f2eb] text-[#22312b]" : "bg-white/85 text-[#22312b]"
+                  )}>
+                    <BellRing className="w-6 h-6" />
+                  </div>
+                  <p className="text-[1.05rem] font-medium leading-[1.3] text-[#1f1c22]">
+                    Cellmate would like to
+                    <br />
+                    send you Notifications
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 border-t border-black/10">
+                  <div className="h-[4.35rem] flex items-center justify-center text-base font-medium text-[#4e4954] bg-black/[0.04]">
+                    Don&apos;t Allow
+                  </div>
+                  <button
+                    onClick={onContinue}
+                    className="h-[4.35rem] flex items-center justify-center text-base font-semibold text-[#f7f0e7] bg-[#1f1c22]"
+                  >
+                    Allow
+                  </button>
+                </div>
+              </div>
+
+              <motion.div
+                aria-hidden="true"
+                className="flex justify-end pr-16"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 1.7, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <span className="text-[2rem] select-none">☝️</span>
+              </motion.div>
+            </div>
+          </div>
+
+          <div className="shrink-0 pt-6">
+            <p className={cn("text-center text-sm leading-relaxed", isDark ? "text-[#a7b5af]" : "text-[#66756f]")}>
+              You can change this anytime in your iPhone settings.
+            </p>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+});
+
 function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
   isDark: boolean;
   userName: string;
@@ -2964,7 +3655,19 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
     const normalized = message?.toLowerCase() ?? '';
     if (!normalized) return fallback;
     if (normalized.includes('email rate limit exceeded') || normalized.includes('over_email_send_rate_limit') || normalized.includes('429')) {
-      return 'Too many email attempts. Try again in a few minutes or use Apple Sign In.';
+      return 'Too many attempts. Try again in a few minutes or use Google/Apple Sign In.';
+    }
+    if (normalized.includes('user already registered') || normalized.includes('already exists')) {
+      return 'This email is already registered. Please sign in instead.';
+    }
+    if (normalized.includes('invalid login credentials') || normalized.includes('incorrect email or password')) {
+      return 'Incorrect email or password.';
+    }
+    if (normalized.includes('email not confirmed')) {
+      return 'Please confirm your email address first.';
+    }
+    if (normalized.includes('password is too short')) {
+      return 'Password must be at least 6 characters.';
     }
     return message ?? fallback;
   };
@@ -3051,6 +3754,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
       const result = await signInWithApple();
       const { error, data } = result as { error: any; data: any };
       if (error) {
+        localStorage.removeItem(AUTH_INTENT_KEY);
         const msg = error.message?.toLowerCase() ?? '';
         setEmailError(
           msg.includes('client') || msg.includes('provider') || msg.includes('enabled')
@@ -3106,11 +3810,24 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
     }
   };
 
+  React.useEffect(() => {
+    // If somehow mounted while already having a session, proceed to completion
+    const checkSession = async () => {
+      const { supabase: sb } = await import('./services/supabase');
+      const { data: { session } } = await sb.auth.getSession();
+      if (session?.user) {
+        const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
+        const inferredNewUser = session.user.created_at
+          ? Date.now() - new Date(session.user.created_at).getTime() < 30000
+          : false;
+        const isNewUser = authIntent === 'signup' || inferredNewUser;
+        await onComplete(session.user.email || '', isNewUser);
+      }
+    };
+    checkSession();
+  }, [onComplete]);
   return (
     <div className={cn("app-screen warm-therapeutic-bg flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
-      <motion.div animate={{ scale: [1, 1.05, 1], opacity: [0.08, 0.14, 0.08] }} transition={{ duration: 10, repeat: Infinity }}
-        className="absolute top-[-30%] right-[-20%] w-[70vw] h-[70vw] rounded-full blur-[130px] bg-[#7b9d76] pointer-events-none" />
-
       <div className="keyboard-aware flex-1 flex flex-col px-6 py-10 overflow-y-auto max-w-lg mx-auto w-full justify-center">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
@@ -3121,7 +3838,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
             <span className="font-bold text-xl">Callmate</span>
           </div>
           <p className={cn("text-xs font-black uppercase tracking-[0.25em] mb-2", isDark ? "text-[#a9c2b5]" : "text-[#5d8a7a]")}>
-            {tier === 'annual' ? 'Annual Plan · Save 30%' : 'Monthly Plan'}
+            {tier === 'annual' ? 'Annual Plan · Save 35%' : 'Monthly Plan'}
           </p>
           <h1 className="text-3xl font-bold leading-tight mb-2">
             {mode === 'login' ? 'Welcome back.' : (userName ? `One last step, ${userName}.` : 'One last step.')}
@@ -3286,9 +4003,9 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
           {mode === 'signup' && (
             <p className={cn("text-center text-[11px] leading-relaxed", isDark ? "text-zinc-600" : "text-zinc-400")}>
               By creating an account you agree to our{' '}
-              <button type="button" onClick={() => openInAppBrowser('https://callmate.app/terms')} className={cn("underline underline-offset-2 transition-colors", isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-black")}>Terms of Service</button>
+              <button type="button" onClick={() => openInAppBrowser('https://www.trycallmate.app/terms.html')} className={cn("underline underline-offset-2 transition-colors", isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-black")}>Terms of Service</button>
               {' '}and{' '}
-              <button type="button" onClick={() => openInAppBrowser('https://callmate.app/privacy')} className={cn("underline underline-offset-2 transition-colors", isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-black")}>Privacy Policy</button>.
+              <button type="button" onClick={() => openInAppBrowser('https://www.trycallmate.app/privacy.html')} className={cn("underline underline-offset-2 transition-colors", isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-black")}>Privacy Policy</button>.
             </p>
           )}
           <p className={cn("text-center text-sm pt-1", isDark ? "text-zinc-500" : "text-zinc-400")}>
@@ -3326,13 +4043,12 @@ function AnimatedCounter({ to, duration = 2.2, active }: { to: number; duration?
 }
 
 function OnboardingDemoDashboard({ isDark }: { isDark: boolean }) {
-  const [phase, setPhase] = React.useState(0);
+  const [phase, setPhase] = React.useState(1);
   // phase 0 = before, phase 1 = animating, phase 2 = milestones, phase 3 = done
   React.useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 700);
-    const t2 = setTimeout(() => setPhase(2), 3000);
-    const t3 = setTimeout(() => setPhase(3), 4200);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    const t2 = setTimeout(() => setPhase(2), 2900);
+    const t3 = setTimeout(() => setPhase(3), 4500);
+    return () => { clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
   const demoMilestones = [
@@ -3344,11 +4060,12 @@ function OnboardingDemoDashboard({ isDark }: { isDark: boolean }) {
     { icon: '🏆', title: 'Week Strong', unlocked: false },
   ];
 
-  // Anxiety: starts high (y=10=top) trends down to low (y=62=bottom)
-  const anxietyPath = "M 0,10 C 18,12 30,16 44,22 S 72,30 90,36 S 118,44 140,48 S 168,54 192,57 S 220,60 252,62";
-  // Confidence: starts low (y=62=bottom) trends up to high (y=10=top) — inverse of anxiety
-  const confidencePath = "M 0,62 C 18,60 30,56 44,50 S 72,42 90,36 S 118,28 140,24 S 168,18 192,15 S 220,12 252,10";
+  const benchmarkPath = "M 0,20 C 28,20 52,24 72,34 S 118,54 152,62 S 214,70 252,70";
+  const benchmarkAreaPath = `${benchmarkPath} L 252,72 L 0,72 Z`;
+  const callmatePath = "M 0,20 C 26,19 44,24 62,37 S 104,49 130,34 S 172,10 214,6 S 238,5 252,5";
+  const callmateAreaPath = `${callmatePath} L 252,72 L 0,72 Z`;
   const pathLen = 290;
+  const graphEase: [number, number, number, number] = [0.72, 0.02, 0.98, 0.42];
 
   return (
     <div className="space-y-3">
@@ -3357,8 +4074,8 @@ function OnboardingDemoDashboard({ isDark }: { isDark: boolean }) {
         <div className={cn("flex-1 h-px", isDark ? "bg-zinc-800" : "bg-zinc-200")} />
         <AnimatePresence mode="wait">
           {phase === 0
-            ? <motion.span key="before" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Starting out</motion.span>
-            : <motion.span key="after" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[10px] font-black uppercase tracking-widest text-emerald-500">After 2 weeks</motion.span>
+            ? <motion.span key="before" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Week 1</motion.span>
+            : <motion.span key="after" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Week 6</motion.span>
           }
         </AnimatePresence>
         <div className={cn("flex-1 h-px", isDark ? "bg-zinc-800" : "bg-zinc-200")} />
@@ -3382,95 +4099,104 @@ function OnboardingDemoDashboard({ isDark }: { isDark: boolean }) {
         </div>
       </div>
 
-      {/* Dual-line chart: Anxiety ↓ + Confidence ↑ */}
       <div className={cn("rounded-2xl border p-4 transition-colors", isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-50 border-zinc-200")}>
-        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">Anxiety vs. Confidence · Over 2 weeks</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">Call confidence over 6 weeks</p>
         <div className="flex gap-5 mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-[3px] rounded-full bg-red-500" />
-            <p className="text-xs font-semibold text-zinc-400">Anxiety</p>
+            <div className="w-8 h-[2px] rounded-full bg-[#1f2937]" />
+            <p className="text-xs font-semibold text-zinc-400">Without support</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-[3px] rounded-full bg-indigo-400" />
-            <p className="text-xs font-semibold text-zinc-400">Confidence</p>
+            <div className="w-8 h-[2px] rounded-full bg-[#7b9d76]" />
+            <p className="text-xs font-semibold text-zinc-400">Callmate</p>
           </div>
         </div>
         <div className="relative">
           <svg viewBox="0 0 252 72" className="w-full" style={{ overflow: 'visible' }}>
             <defs>
-              <linearGradient id="lineGradAnxiety" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#ef4444" />
-                <stop offset="60%" stopColor="#f97316" />
-                <stop offset="100%" stopColor="#fbbf24" />
+              <linearGradient id="lineGradBenchmark" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor={isDark ? "#d4d4d8" : "#1f2937"} stopOpacity="0.8" />
+                <stop offset="100%" stopColor={isDark ? "#71717a" : "#52525b"} stopOpacity="0.95" />
               </linearGradient>
-              <linearGradient id="lineGradConf" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#818cf8" stopOpacity="0.5" />
-                <stop offset="100%" stopColor="#6366f1" />
+              <linearGradient id="lineGradCallmate" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#8ca79a" />
+                <stop offset="55%" stopColor="#7b9d76" />
+                <stop offset="100%" stopColor="#5d8a7a" />
+              </linearGradient>
+              <linearGradient id="fillGradCallmate" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#7b9d76" stopOpacity="0.18" />
+                <stop offset="100%" stopColor="#7b9d76" stopOpacity="0" />
+              </linearGradient>
+              <linearGradient id="fillGradBenchmark" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={isDark ? "#71717a" : "#52525b"} stopOpacity="0.1" />
+                <stop offset="100%" stopColor={isDark ? "#71717a" : "#52525b"} stopOpacity="0" />
               </linearGradient>
             </defs>
-            {/* Grid lines */}
-            {[16, 36, 56].map(y => (
+            {[20, 44, 68].map(y => (
               <line key={y} x1="0" y1={y} x2="252" y2={y} stroke={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'} strokeWidth="1" />
             ))}
-            {/* Crossing highlight */}
-            {phase >= 1 && (
-              <motion.circle cx="126" cy="36" r="5" fill={isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)"} initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 1.4 }} />
-            )}
-            {/* Anxiety line */}
             <motion.path
-              d={anxietyPath}
+              d={benchmarkAreaPath}
+              fill="url(#fillGradBenchmark)"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: phase >= 1 ? 1 : 0 }}
+              transition={{ duration: 0.6, delay: 1.2 }}
+            />
+            <motion.path
+              d={callmateAreaPath}
+              fill="url(#fillGradCallmate)"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: phase >= 1 ? 1 : 0 }}
+              transition={{ duration: 0.8, delay: 2.1 }}
+            />
+            <motion.path
+              d={benchmarkPath}
               fill="none"
-              stroke="url(#lineGradAnxiety)"
-              strokeWidth="2.5"
+              stroke="url(#lineGradBenchmark)"
+              strokeWidth="1.6"
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeDasharray={pathLen}
               initial={{ strokeDashoffset: pathLen }}
               animate={{ strokeDashoffset: phase >= 1 ? 0 : pathLen }}
-              transition={{ duration: 2, ease: "easeInOut", delay: 0.2 }}
+              transition={{ duration: 2.9, ease: graphEase, delay: 0.18 }}
             />
-            {/* Confidence line */}
             <motion.path
-              d={confidencePath}
+              d={callmatePath}
               fill="none"
-              stroke="url(#lineGradConf)"
-              strokeWidth="2.5"
+              stroke="url(#lineGradCallmate)"
+              strokeWidth="1.7"
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeDasharray={pathLen}
               initial={{ strokeDashoffset: pathLen }}
               animate={{ strokeDashoffset: phase >= 1 ? 0 : pathLen }}
-              transition={{ duration: 2, ease: "easeInOut", delay: 0.4 }}
+              transition={{ duration: 3.1, ease: graphEase, delay: 0.42 }}
             />
-            {/* Anxiety: start dot (red, top-left) */}
-            <circle cx="0" cy="10" r="4" fill="#ef4444" />
-            {/* Anxiety: end dot (amber, bottom-right) */}
+            <circle cx="0" cy="20" r="3.6" fill={isDark ? "#f4f4f5" : "#ffffff"} stroke={isDark ? "#71717a" : "#3f3f46"} strokeWidth="1.5" />
+            <circle cx="252" cy="70" r="3.8" fill={isDark ? "#161d1b" : "#ffffff"} stroke={isDark ? "#d4d4d8" : "#27272a"} strokeWidth="1.6" />
             {phase >= 1 && (
-              <motion.circle cx="252" cy="62" r="4" fill="#fbbf24" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 2.1, type: 'spring' }} />
+              <motion.circle cx="252" cy="5" r="3.8" fill={isDark ? "#161d1b" : "#ffffff"} stroke="#7b9d76" strokeWidth="1.8" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 3.05, type: 'spring', stiffness: 260 }} />
             )}
-            {/* Confidence: start dot (muted indigo, bottom-left) */}
-            <circle cx="0" cy="62" r="4" fill="#818cf8" fillOpacity="0.5" />
-            {/* Confidence: end dot (bright indigo, top-right) */}
             {phase >= 1 && (
-              <motion.circle cx="252" cy="10" r="4" fill="#6366f1" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 2.3, type: 'spring' }} />
-            )}
-            {/* Trophy at the peak of the confidence line */}
-            {phase >= 1 && (
-              <motion.g
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 2.6, type: 'spring', stiffness: 320, damping: 14 }}
-                style={{ transformOrigin: '252px 10px' }}
-              >
-                <text x="252" y="-5" textAnchor="middle" fontSize="15">🏆</text>
+              <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.2 }}>
+                <text x="188" y="22" fontSize="10" fill={isDark ? "#c5d0ca" : "#51615b"} fontWeight="700">Callmate</text>
+                <text x="188" y="32" fontSize="10" fill={isDark ? "#8f9b95" : "#8a948f"}>builds lasting</text>
+                <text x="188" y="42" fontSize="10" fill={isDark ? "#8f9b95" : "#8a948f"}>confidence</text>
               </motion.g>
             )}
+            {phase >= 1 && (
+              <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}>
+                <text x="18" y="58" fontSize="10" fill={isDark ? "#b5b8c3" : "#6b7280"} fontWeight="700">Without support</text>
+              </motion.g>
+            )}
+            <text x="0" y="83" fontSize="10" fill={isDark ? "#a1a1aa" : "#6b7280"}>Week 1</text>
+            <text x="226" y="83" fontSize="10" fill={isDark ? "#a1a1aa" : "#6b7280"}>Week 6</text>
           </svg>
         </div>
-        {/* Crossover label */}
         {phase >= 1 && (
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }} className="text-center text-[9px] font-bold uppercase tracking-widest text-zinc-500 mt-2">
-            <span className="text-indigo-400">78%</span> of our members successfully increased their confidence with <span className="text-indigo-400">Callmate</span>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.4 }} className="text-center text-[10px] font-semibold leading-relaxed text-zinc-500 mt-5">
+            <span className={cn("font-bold", isDark ? "text-[#f6f2ea]" : "text-[#22312b]")}>78%</span> of Callmate members maintain stronger call confidence by week 6.
           </motion.p>
         )}
       </div>
