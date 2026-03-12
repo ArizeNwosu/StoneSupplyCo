@@ -1,0 +1,33 @@
+{
+	"appId": "com.trycallmate.app",
+	"appName": "Callmate",
+	"webDir": "dist",
+	"ios": {
+		"scheme": "Callmate",
+		"contentInset": "automatic"
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 2000,
+			"backgroundColor": "#F2F2F2",
+			"showSpinner": false
+		},
+		"Keyboard": {
+			"resize": "body",
+			"resizeOnFullScreen": true
+		},
+		"StatusBar": {
+			"overlaysWebView": false
+		}
+	},
+	"packageClassList": [
+		"AppPlugin",
+		"CAPBrowserPlugin",
+		"HapticsPlugin",
+		"KeyboardPlugin",
+		"StatusBarPlugin",
+		"OAuthSessionPlugin",
+		"StoreKitPlugin",
+		"NotificationSettingsPlugin"
+	]
+}
