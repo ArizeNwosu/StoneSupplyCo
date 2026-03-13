@@ -51,7 +51,7 @@ import instagramIcon from '../icons/instagram (1).svg';
 import tiktokIcon from '../icons/tiktok.svg';
 import xIcon from '../icons/x.svg';
 import youtubeIcon from '../icons/youtube.svg';
-import loginBackground from '../backgrounds/login.png';
+import loginBackground from '../backgrounds/login.mp4';
 
 const RotatingText = () => {
   const words = ["putting off?", "dreading?", "avoiding?"];
@@ -4176,7 +4176,7 @@ function AccountSetup({ isDark, userName, tier, selectedPlan, trialStartDate, on
 }
 
 function AuthBenefitHero({ isDark, selectedPlanLabel }: { isDark: boolean; selectedPlanLabel: string | null }) {
-  const backgroundImageUrl: string | null = loginBackground;
+  const backgroundVideoUrl: string | null = loginBackground;
   const steps = [
     { label: 'Before', value: 'When the call starts spiraling in your head, Callmate gives you grounding and prep that stay with your account every time you come back.' },
     { label: 'Support', value: 'Callmate builds the script, organizes what to say next, and keeps that support with your account every time you come back.' },
@@ -4200,16 +4200,21 @@ function AuthBenefitHero({ isDark, selectedPlanLabel }: { isDark: boolean; selec
       isDark
         ? "bg-[linear-gradient(180deg,rgba(32,41,38,0.98)_0%,rgba(23,31,29,0.96)_100%)] border-[#415049]"
         : "bg-[linear-gradient(180deg,rgba(255,252,247,0.98)_0%,rgba(245,239,230,0.95)_100%)] border-[#d8cdc0]"
-    )}
-    style={
-      backgroundImageUrl
-        ? {
-            backgroundImage: `linear-gradient(180deg, rgba(12,18,16,0.06) 0%, rgba(12,18,16,0.16) 42%, rgba(12,18,16,0.42) 100%), url(${backgroundImageUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center top',
-          }
-        : undefined
-    }>
+    )}>
+      {backgroundVideoUrl && (
+        <video
+          className="absolute inset-0 h-full w-full object-cover object-top"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+        >
+          <source src={backgroundVideoUrl} type="video/mp4" />
+        </video>
+      )}
+
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,18,16,0.06)_0%,rgba(12,18,16,0.16)_42%,rgba(12,18,16,0.42)_100%)]" />
       <div className="absolute inset-x-0 top-0 h-32 pointer-events-none">
         <div className={cn(
           "absolute left-[-10%] top-[-25%] w-40 h-40 rounded-full blur-3xl",
