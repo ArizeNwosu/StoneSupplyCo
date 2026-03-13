@@ -16,6 +16,8 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		74547AE92F5F99570069112A /* OAuthSessionPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74547AE82F5F99570069112A /* OAuthSessionPlugin.swift */; };
+		746AC0012F7000010069112A /* NotificationSettingsPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 746AC0002F7000010069112A /* NotificationSettingsPlugin.swift */; };
+		74547AF12F5FA0010069112A /* StoreKitPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74547AF02F5FA0010069112A /* StoreKitPlugin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +33,8 @@
 		74547AE62F5F82510069112A /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		74547AE82F5F99570069112A /* OAuthSessionPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthSessionPlugin.swift; sourceTree = "<group>"; };
 		74547AEB2F5F998C0069112A /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
+		74547AF02F5FA0010069112A /* StoreKitPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitPlugin.swift; sourceTree = "<group>"; };
+		746AC0002F7000010069112A /* NotificationSettingsPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsPlugin.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -71,6 +75,8 @@
 				74547AE62F5F82510069112A /* App.entitlements */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
+				746AC0002F7000010069112A /* NotificationSettingsPlugin.swift */,
+				74547AF02F5FA0010069112A /* StoreKitPlugin.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -163,6 +169,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				74547AE92F5F99570069112A /* OAuthSessionPlugin.swift in Sources */,
+				74547AF12F5FA0010069112A /* StoreKitPlugin.swift in Sources */,
+				746AC0012F7000010069112A /* NotificationSettingsPlugin.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

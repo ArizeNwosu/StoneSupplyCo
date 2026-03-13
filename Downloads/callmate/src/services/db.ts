@@ -91,6 +91,10 @@ export async function deleteScript(scriptId: string) {
   return supabase.from('scripts').delete().eq('id', scriptId);
 }
 
+export async function deleteAllScriptsForUser(userId: string) {
+  return supabase.from('scripts').delete().eq('user_id', userId);
+}
+
 // ─── Reflections ─────────────────────────────────────────────────────────────
 
 function reflectionToRow(userId: string, r: Reflection) {

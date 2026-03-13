@@ -59,6 +59,18 @@ export async function hapticError() {
   await Haptics.notification({ type: NotificationType.Error });
 }
 
+export async function vibrate(options?: { duration?: number }) {
+  if (!isNative) {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(options?.duration ?? 500);
+    }
+    return;
+  }
+
+  const { Haptics } = await import('@capacitor/haptics');
+  await Haptics.vibrate({ duration: options?.duration ?? 500 });
+}
+
 // ─── Status Bar ───────────────────────────────────────────────────────────────
 
 export async function setStatusBarDark() {
@@ -120,4 +132,22 @@ export async function openInAppBrowser(url: string) {
   }
   const { Browser } = await import('@capacitor/browser');
   await Browser.open({ url, presentationStyle: 'popover' });
+}
+
+interface NotificationSettingsPlugin {
+  requestPermission(options?: { openSettings?: boolean }): Promise<{ status: string; openedSettings?: boolean }>;
+}
+
+const NotificationSettings = registerPlugin<NotificationSettingsPlugin>('NotificationSettings');
+
+export async function requestNotificationsAccess() {
+  if (!isNative) {
+    if (typeof Notification === 'undefined') {
+      return { status: 'unsupported', openedSettings: false };
+    }
+    const status = await Notification.requestPermission();
+    return { status, openedSettings: false };
+  }
+
+  return NotificationSettings.requestPermission({ openSettings: true });
 }

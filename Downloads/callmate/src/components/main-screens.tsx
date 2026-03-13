@@ -117,7 +117,31 @@ export function HomeScreen(props: HomeScreenProps) {
             ))}
           </div>
         </div>
-        <CallTypeGrid items={sortedCallTypes} onSelect={setDescription} selectedItem={description} isDark={isDark} />
+        <div className={cn('rounded-[1.8rem] border p-3 transition-colors', isDark ? 'bg-[linear-gradient(180deg,#202926_0%,#19211f_100%)] border-[#415049]' : 'bg-[linear-gradient(180deg,rgba(255,251,245,0.96)_0%,rgba(247,241,233,0.96)_100%)] border-[#d8cdc0]')}>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
+            {sortedCallTypes.map((item) => {
+              const selected = item === description;
+              return (
+                <button
+                  key={item}
+                  onClick={() => setDescription(item)}
+                  className={cn(
+                    'snap-start shrink-0 rounded-[1.35rem] border px-4 py-3 text-left text-sm font-medium leading-snug transition-all duration-200 min-w-[160px]',
+                    selected
+                      ? isDark
+                        ? 'bg-[linear-gradient(135deg,#f3eee4_0%,#d8cdbf_100%)] border-[#f3eee4] text-[#22312b] shadow-[0_12px_26px_rgba(243,238,228,0.12)]'
+                        : 'bg-[linear-gradient(135deg,#22312b_0%,#385046_100%)] border-[#22312b] text-white shadow-[0_14px_28px_rgba(34,49,43,0.16)]'
+                      : isDark
+                      ? 'bg-[linear-gradient(180deg,#242d2a_0%,#1d2523_100%)] border-[#415049] text-[#dbe3de] hover:border-[#66756f]'
+                      : 'bg-[linear-gradient(180deg,rgba(255,251,245,0.96)_0%,rgba(247,241,233,0.96)_100%)] border-[#d8cdc0] text-[#22312b] hover:border-[#b7aa96]'
+                  )}
+                >
+                  {item}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
       {isPremium && personas.length > 0 && (
@@ -382,11 +406,15 @@ export function SettingsScreen(props: SettingsScreenProps) {
         </section>
 
         {!isPremium && (
-          <Card isDark={isDark} className="bg-gradient-to-br from-[#7b9d76] to-[#5d8a7a] border-none p-6 text-white overflow-hidden relative">
+          <Card isDark={isDark} className="!bg-[linear-gradient(135deg,#6f927f_0%,#5d8a7a_45%,#486c60_100%)] !border-none p-6 text-white overflow-hidden relative shadow-[0_24px_48px_rgba(93,138,122,0.24)]">
             <div className="relative z-10">
               <h3 className="text-2xl font-bold mb-2">Complete Your Trial Setup</h3>
-              <p className="text-[#edf5ef] text-sm mb-4">Choose a plan to unlock full access and start your 3-day free trial.</p>
-              <Button variant="glass" isDark={true} className="w-full bg-[#fbf8f2] text-[#4d6f62] border-none" onClick={() => setShowUpgradeModal(true)}>
+              <p className="text-[#f3f8f4] text-sm mb-4">Choose a plan to unlock full access and start your 3-day free trial.</p>
+              <Button
+                isDark={false}
+                className="w-full bg-[linear-gradient(135deg,#22312b_0%,#31463d_100%)] text-white border-none shadow-[0_18px_36px_rgba(34,49,43,0.18)] hover:brightness-[1.03]"
+                onClick={() => setShowUpgradeModal(true)}
+              >
                 Start Free Trial
               </Button>
             </div>
@@ -1034,16 +1062,16 @@ export function ScriptScreen(props: ScriptScreenProps) {
   return (
     <div className="space-y-6">
       {isMedicalCall && showMedicalPrep && (
-        <div className={cn('rounded-2xl border p-4 transition-colors', isDark ? 'bg-blue-950/50 border-blue-500/25' : 'bg-blue-50 border-blue-200')}>
+        <div className={cn('rounded-2xl border p-4 transition-colors', isDark ? 'bg-[#203039]/70 border-[#4f7588]' : 'bg-[#eef5fb] border-[#c7d9e8]')}>
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-2">
               <span className="text-base">🏥</span>
-              <p className={cn('text-xs font-black uppercase tracking-widest', isDark ? 'text-blue-400' : 'text-blue-600')}>Medical Call Prep</p>
+              <p className={cn('text-xs font-black uppercase tracking-widest', isDark ? 'text-[#9ac7df]' : 'text-[#557f99]')}>Medical Call Prep</p>
             </div>
             <button
               type="button"
               onClick={onHideMedicalPrep}
-              className={cn('shrink-0 p-1 rounded-full transition-colors', isDark ? 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5' : 'text-zinc-500 hover:text-zinc-700 hover:bg-black/5')}
+              className={cn('shrink-0 p-1 rounded-full transition-colors', isDark ? 'text-[#89a2ad] hover:text-[#d7e5ea] hover:bg-white/5' : 'text-[#6d7f88] hover:text-[#3f5561] hover:bg-black/5')}
               aria-label="Close medical call prep"
             >
               <X className="w-4 h-4" />
@@ -1058,24 +1086,24 @@ export function ScriptScreen(props: ScriptScreenProps) {
               "It's okay to ask them to repeat or slow down - they're used to it",
             ].map((tip, i) => (
               <div key={i} className="flex items-start gap-2">
-                <div className={cn('w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5', isDark ? 'border-blue-500/40' : 'border-blue-300')}>
-                  <span className="text-[9px] font-black text-blue-400">{i + 1}</span>
+                <div className={cn('w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5', isDark ? 'border-[#6e96ac]' : 'border-[#9ebbd0]')}>
+                  <span className={cn('text-[9px] font-black', isDark ? 'text-[#9ac7df]' : 'text-[#557f99]')}>{i + 1}</span>
                 </div>
-                <p className={cn('text-xs leading-snug', isDark ? 'text-zinc-300' : 'text-zinc-700')}>{tip}</p>
+                <p className={cn('text-xs leading-snug', isDark ? 'text-[#d8e3e8]' : 'text-[#425863]')}>{tip}</p>
               </div>
             ))}
           </div>
-          <p className={cn('text-[10px] mt-3 leading-relaxed', isDark ? 'text-zinc-500' : 'text-zinc-400')}>They deal with these calls all day. You are not bothering them.</p>
+          <p className={cn('text-[10px] mt-3 leading-relaxed', isDark ? 'text-[#89a2ad]' : 'text-[#6d7f88]')}>They deal with these calls all day. You are not bothering them.</p>
         </div>
       )}
 
       {showSpeakerPrompt && (
-        <div className={cn('rounded-2xl border p-4 flex items-start justify-between gap-3 transition-colors', isDark ? 'bg-blue-500/10 border-blue-500/20' : 'bg-blue-50 border-blue-200')}>
+        <div className={cn('rounded-2xl border p-4 flex items-start justify-between gap-3 transition-colors', isDark ? 'bg-[#264138]/45 border-[#527a6c]' : 'bg-[#eef5f1] border-[#bfd2c8]')}>
           <div>
-            <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-1">Put it on speaker</p>
-            <p className={cn('text-sm leading-snug', isDark ? 'text-zinc-300' : 'text-zinc-700')}>Both hands free to read and type during the call. Screen stays on.</p>
+            <p className={cn('text-xs font-bold uppercase tracking-widest mb-1', isDark ? 'text-[#b9d5c8]' : 'text-[#5d8a7a]')}>Put it on speaker</p>
+            <p className={cn('text-sm leading-snug', isDark ? 'text-[#dbe3de]' : 'text-[#425863]')}>Both hands free to read and type during the call. Screen stays on.</p>
           </div>
-          <button onClick={() => setShowSpeakerPrompt(false)} className="text-zinc-500 hover:text-zinc-300 shrink-0 mt-0.5">
+          <button onClick={() => setShowSpeakerPrompt(false)} className={cn('shrink-0 mt-0.5 transition-colors', isDark ? 'text-[#89a2ad] hover:text-[#d7e5ea]' : 'text-[#6d7f88] hover:text-[#3f5561]')}>
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -1101,16 +1129,16 @@ export function ScriptScreen(props: ScriptScreenProps) {
         </div>
       </div>
 
-      <div className={cn('rounded-3xl border p-5 transition-colors', isDark ? 'bg-zinc-900/70 border-zinc-800' : 'bg-zinc-50 border-zinc-200')}>
+      <div className={cn('rounded-3xl border p-5 transition-colors', isDark ? 'bg-[linear-gradient(180deg,#202926_0%,#19211f_100%)] border-[#415049]' : 'bg-[linear-gradient(180deg,rgba(255,252,247,0.96)_0%,rgba(245,239,230,0.96)_100%)] border-[#d8cdc0]')}>
         <div className="flex items-start justify-between gap-3">
-          <p className={cn('text-lg font-bold leading-snug flex-1', isDark ? 'text-white' : 'text-black')}>{currentScript.description}</p>
+          <p className={cn('text-lg font-bold leading-snug flex-1', isDark ? 'text-[#f6f2ea]' : 'text-[#22312b]')}>{currentScript.description}</p>
           <span
             className={cn(
               'shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border',
-              currentScript.tone === 'Professional' ? (isDark ? 'bg-blue-500/15 border-blue-500/30 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-600')
-                : currentScript.tone === 'Assertive' ? (isDark ? 'bg-amber-500/15 border-amber-500/30 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-600')
-                : currentScript.tone === 'Friendly' ? (isDark ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-600')
-                : (isDark ? 'bg-rose-500/15 border-rose-500/30 text-rose-400' : 'bg-rose-50 border-rose-200 text-rose-600')
+              currentScript.tone === 'Professional' ? (isDark ? 'bg-[#304c57] border-[#4f7588] text-[#9ac7df]' : 'bg-[#eef5fb] border-[#c7d9e8] text-[#557f99]')
+                : currentScript.tone === 'Assertive' ? (isDark ? 'bg-[#4b3a1f] border-[#9b7a37] text-[#dfc090]' : 'bg-[#f6eddc] border-[#ddc8a5] text-[#a17e4d]')
+                : currentScript.tone === 'Friendly' ? (isDark ? 'bg-[#274136] border-[#527a6c] text-[#b9d5c8]' : 'bg-[#eef5f1] border-[#bfd2c8] text-[#5d8a7a]')
+                : (isDark ? 'bg-[#4c2d34] border-[#8a4f5d] text-[#e0b7c0]' : 'bg-[#f8ecef] border-[#e3c1ca] text-[#a25d6d]')
             )}
           >
             {currentScript.tone}
@@ -1118,23 +1146,23 @@ export function ScriptScreen(props: ScriptScreenProps) {
         </div>
       </div>
 
-      <div className={cn('rounded-3xl border overflow-hidden transition-all', showAlterEgo ? (isDark ? 'bg-indigo-950/50 border-indigo-500/30' : 'bg-indigo-50 border-indigo-200') : (isDark ? 'bg-zinc-900/50 border-zinc-800' : 'bg-zinc-50 border-zinc-200'))}>
+      <div className={cn('rounded-3xl border overflow-hidden transition-all', showAlterEgo ? (isDark ? 'bg-[#2b233f] border-[#7867a7]' : 'bg-[#f1edfb] border-[#d7cef2]') : (isDark ? 'bg-[linear-gradient(180deg,#202926_0%,#19211f_100%)] border-[#415049]' : 'bg-[linear-gradient(180deg,rgba(255,252,247,0.96)_0%,rgba(245,239,230,0.96)_100%)] border-[#d8cdc0]'))}>
         <button onClick={() => setShowAlterEgo((p) => !p)} className="w-full flex items-center justify-between p-4 text-left">
           <div className="flex items-center gap-3">
             <span className="text-xl">🎭</span>
             <div>
-              <p className={cn('text-sm font-bold', isDark ? 'text-white' : 'text-black')}>Alter Ego Mode</p>
-              <p className="text-xs text-zinc-500">{showAlterEgo ? 'You are Alex - confident caller' : "Pretend you're someone else"}</p>
+              <p className={cn('text-sm font-bold', isDark ? 'text-[#f6f2ea]' : 'text-[#22312b]')}>Alter Ego Mode</p>
+              <p className={cn('text-xs', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>{showAlterEgo ? 'You are Alex - confident caller' : "Pretend you're someone else"}</p>
             </div>
           </div>
-          <div className={cn('w-11 h-6 rounded-full transition-colors relative shrink-0', showAlterEgo ? 'bg-indigo-500' : (isDark ? 'bg-zinc-700' : 'bg-zinc-300'))}>
+          <div className={cn('w-11 h-6 rounded-full transition-colors relative shrink-0', showAlterEgo ? 'bg-[#7867a7]' : (isDark ? 'bg-[#4a5a53]' : 'bg-[#d8cdc0]'))}>
             <div className="absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200" style={{ transform: `translateX(${showAlterEgo ? 22 : 2}px)` }} />
           </div>
         </button>
         {showAlterEgo && (
-          <div className={cn('mx-4 mb-4 p-4 rounded-2xl border', isDark ? 'bg-indigo-900/30 border-indigo-500/20' : 'bg-indigo-100 border-indigo-200')}>
-            <p className={cn('text-sm font-bold mb-1', isDark ? 'text-indigo-200' : 'text-indigo-900')}>You are Alex Stone.</p>
-            <p className={cn('text-sm leading-relaxed', isDark ? 'text-indigo-300/80' : 'text-indigo-800')}>
+          <div className={cn('mx-4 mb-4 p-4 rounded-2xl border', isDark ? 'bg-[#34294b] border-[#7867a7]/50' : 'bg-[#f1edfb] border-[#d7cef2]')}>
+            <p className={cn('text-sm font-bold mb-1', isDark ? 'text-[#d8cff4]' : 'text-[#5b4a87]')}>You are Alex Stone.</p>
+            <p className={cn('text-sm leading-relaxed', isDark ? 'text-[#c9bee8]' : 'text-[#6d5c98]')}>
               A confident public speaker who makes phone calls every single day. Calls are just conversations - you start them, guide them, and end them on your terms. This is just another call.
             </p>
           </div>
@@ -1153,28 +1181,28 @@ export function ScriptScreen(props: ScriptScreenProps) {
       )}
 
       {voicemailScript && (
-        <Card isDark={isDark} className="bg-emerald-500/5 border-emerald-500/20">
+        <Card isDark={isDark} className={cn(isDark ? 'bg-[#274136]/45 border-[#527a6c]' : 'bg-[#eef5f1] border-[#bfd2c8]')}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-[10px] font-bold text-emerald-500 uppercase">Voicemail Script</p>
             <CopyButton text={voicemailScript} isDark={isDark} />
           </div>
-          <p className={cn('text-lg italic leading-relaxed', isDark ? 'text-emerald-100' : 'text-emerald-900')}>"{voicemailScript}"</p>
+          <p className={cn('text-lg italic leading-relaxed', isDark ? 'text-[#e2efe8]' : 'text-[#365347]')}>"{voicemailScript}"</p>
         </Card>
       )}
 
       {emailFallback && (
-        <Card isDark={isDark} className="bg-blue-500/5 border-blue-500/20">
+        <Card isDark={isDark} className={cn(isDark ? 'bg-[#203039]/70 border-[#4f7588]' : 'bg-[#eef5fb] border-[#c7d9e8]')}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-[10px] font-bold text-blue-500 uppercase">Follow-up Email</p>
             <CopyButton text={emailFallback} isDark={isDark} />
           </div>
-          <p className={cn('text-lg italic leading-relaxed whitespace-pre-wrap', isDark ? 'text-blue-100' : 'text-blue-900')}>{emailFallback}</p>
+          <p className={cn('text-lg italic leading-relaxed whitespace-pre-wrap', isDark ? 'text-[#d8e3e8]' : 'text-[#425863]')}>{emailFallback}</p>
         </Card>
       )}
 
-      <div className={cn('border rounded-3xl p-4 flex flex-col gap-3 transition-colors', isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-100 border-zinc-200')}>
+      <div className={cn('border rounded-3xl p-4 flex flex-col gap-3 transition-colors', isDark ? 'bg-[linear-gradient(180deg,#202926_0%,#19211f_100%)] border-[#415049]' : 'bg-[linear-gradient(180deg,rgba(255,252,247,0.96)_0%,rgba(245,239,230,0.96)_100%)] border-[#d8cdc0]')}>
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Adjust Tone</span>
+          <span className={cn('text-xs font-bold uppercase tracking-widest', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>Adjust Tone</span>
           {isRewriting && <Loader2 className="animate-spin" />}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -1186,7 +1214,7 @@ export function ScriptScreen(props: ScriptScreenProps) {
                 setTone(t);
                 handleGenerate(t);
               }}
-              className={cn('px-3 py-1.5 rounded-full text-xs font-semibold transition-all', currentScript.tone === t ? (isDark ? 'bg-white text-black' : 'bg-black text-white') : (isDark ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-200 text-zinc-500'))}
+              className={cn('px-3 py-1.5 rounded-full text-xs font-semibold transition-all', currentScript.tone === t ? (isDark ? 'bg-[#f3eee4] text-[#22312b]' : 'bg-[#5d8a7a] text-white') : (isDark ? 'bg-[#242d2a] text-[#a8b4ae] border border-[#415049] hover:bg-[#2d3834]' : 'bg-[#ece5da] text-[#66756f] border border-[#d8cdc0] hover:bg-[#e3dacd]'))}
             >
               {t}
             </button>
@@ -1194,10 +1222,10 @@ export function ScriptScreen(props: ScriptScreenProps) {
         </div>
       </div>
 
-      <div className={cn('flex items-start gap-3 px-4 py-3 rounded-2xl border transition-colors', isDark ? 'bg-zinc-900/40 border-zinc-800/60' : 'bg-zinc-50 border-zinc-200')}>
+      <div className={cn('flex items-start gap-3 px-4 py-3 rounded-2xl border transition-colors', isDark ? 'bg-[#202926]/80 border-[#415049]' : 'bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]')}>
         <span className="text-base shrink-0 mt-0.5">💙</span>
-        <p className={cn('text-xs leading-relaxed', isDark ? 'text-zinc-500' : 'text-zinc-500')}>
-          The person on the other line is <span className={isDark ? 'text-zinc-300 font-semibold' : 'text-zinc-700 font-semibold'}>not annoyed at you</span>. They're just doing their job - same as you.
+        <p className={cn('text-xs leading-relaxed', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>
+          The person on the other line is <span className={isDark ? 'text-[#f6f2ea] font-semibold' : 'text-[#22312b] font-semibold'}>not annoyed at you</span>. They're just doing their job - same as you.
         </p>
       </div>
 

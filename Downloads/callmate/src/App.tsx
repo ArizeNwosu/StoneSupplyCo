@@ -2782,6 +2782,7 @@ function BreathingGuide({
     exhale: { label: 'Breathe Out',    sub: 'Slowly exhale through your mouth',          color: '#5d8a7a', scale: 0.38, dur: EXHALE / 1000 },
     done:   { label: 'You are steady', sub: "Your body is calmer now.",                  color: '#5d8a7a', scale: 0.38, dur: 0.5 },
   };
+  const darkPrimaryButtonClass = "bg-[linear-gradient(135deg,#22312b_0%,#31463d_100%)] text-white shadow-[0_18px_36px_rgba(34,49,43,0.18)] hover:brightness-[1.03]";
 
   const c = cfg[phase];
 
@@ -2864,7 +2865,7 @@ function BreathingGuide({
       {phase === 'done' && (
         <button
           onClick={onComplete}
-          className="mt-1 px-8 py-3.5 rounded-2xl bg-[#5d8a7a] hover:bg-[#527a6c] active:scale-[0.98] text-white font-bold text-sm transition-all shadow-lg shadow-[#5d8a7a]/20"
+          className={cn("mt-1 px-8 py-3.5 rounded-2xl font-bold text-sm transition-all active:scale-[0.98]", darkPrimaryButtonClass)}
         >
           Continue
         </button>
@@ -2886,6 +2887,7 @@ function PreCallCheck({
   const [mantraTaps, setMantraTaps] = React.useState(0);
   const [soundEnabled, setSoundEnabled] = React.useState(() => localStorage.getItem(BREATHE_SOUND_KEY) !== 'false');
   const [vibrationEnabled, setVibrationEnabled] = React.useState(() => localStorage.getItem(BREATHE_VIBRATION_KEY) !== 'false');
+  const darkPrimaryButtonClass = "bg-[linear-gradient(135deg,#22312b_0%,#31463d_100%)] text-white shadow-[0_18px_36px_rgba(34,49,43,0.18)] hover:brightness-[1.03]";
 
   React.useEffect(() => {
     localStorage.setItem(BREATHE_SOUND_KEY, String(soundEnabled));
@@ -3042,8 +3044,8 @@ function PreCallCheck({
             className={cn(
               "w-full py-4 rounded-2xl font-bold text-base transition-all",
               step === 1
-                ? (isDark ? "bg-[#202926] text-[#5b6962] cursor-not-allowed" : "bg-[#ece5da] text-[#97a59f] cursor-not-allowed")
-                : "bg-[#5d8a7a] hover:bg-[#527a6c] active:scale-[0.99] text-white shadow-lg shadow-[#5d8a7a]/20"
+                ? cn(darkPrimaryButtonClass, "opacity-45 cursor-not-allowed")
+                : cn(darkPrimaryButtonClass, "active:scale-[0.99]")
             )}
           >
             {step === 1 ? 'Follow the breathing guide above' : 'Next'}
@@ -3051,7 +3053,7 @@ function PreCallCheck({
         ) : (
           <button
             onClick={onClose}
-            className="w-full py-4 rounded-2xl bg-[#5d8a7a] hover:bg-[#527a6c] active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-[#5d8a7a]/20"
+            className={cn("w-full py-4 rounded-2xl font-bold text-base transition-all active:scale-[0.99]", darkPrimaryButtonClass)}
           >
             {mode === 'breathe' ? 'Back to App' : "I'm Ready to Start the Call"}
           </button>
@@ -3147,6 +3149,7 @@ function PostCallReinforcement({ isDark, rating, onClose }: { isDark: boolean; r
 function SetupAnimation({ isDark, userName, onDone }: { isDark: boolean; userName: string; onDone: () => void }) {
   const [step, setStep] = React.useState(-1); // -1 = none started yet
   const [showFinale, setShowFinale] = React.useState(false);
+  const darkPrimaryButtonClass = "bg-[linear-gradient(135deg,#22312b_0%,#31463d_100%)] text-white shadow-[0_18px_36px_rgba(34,49,43,0.18)] hover:brightness-[1.03]";
 
   const steps = [
     "Building your anxiety profile",
@@ -3241,7 +3244,7 @@ function SetupAnimation({ isDark, userName, onDone }: { isDark: boolean; userNam
           </div>
           <button
             onClick={onDone}
-            className="w-full py-4 rounded-2xl bg-[#5d8a7a] hover:bg-[#527a6c] active:scale-[0.99] text-white font-bold text-base transition-all shadow-lg shadow-[#5d8a7a]/20"
+            className={cn("w-full py-4 rounded-2xl font-bold text-base transition-all active:scale-[0.99]", darkPrimaryButtonClass)}
           >
             Enter Callmate
           </button>
@@ -3412,8 +3415,8 @@ const OnboardingDiscoveryStep = React.memo(function OnboardingDiscoveryStep({
                 "w-full rounded-[1.6rem] border px-4 py-4 text-left transition-all flex items-center gap-4",
                 selected
                   ? isDark
-                    ? "bg-[#f3efe6] border-[#f3efe6] text-[#111111] shadow-[0_18px_50px_rgba(0,0,0,0.24)]"
-                    : "bg-[#22312b] border-[#22312b] text-white shadow-[0_18px_40px_rgba(34,49,43,0.18)]"
+                    ? "bg-[#5d8a7a]/18 border-[#7b9d76] text-[#f6f2ea] shadow-[0_18px_50px_rgba(0,0,0,0.24)]"
+                    : "bg-[#dbe8df] border-[#8fae9e] text-[#22312b] shadow-[0_18px_40px_rgba(93,138,122,0.12)]"
                   : isDark
                     ? "bg-[#202926] border-[#415049] text-[#f6f2ea] hover:border-[#6a7a73]"
                     : "bg-[rgba(255,251,245,0.86)] border-[#ece5db] text-[#1a241f] hover:border-[#cfc4b5]"
@@ -3424,8 +3427,8 @@ const OnboardingDiscoveryStep = React.memo(function OnboardingDiscoveryStep({
                   "w-11 h-11 rounded-2xl shrink-0 flex items-center justify-center",
                   selected
                     ? isDark
-                      ? "bg-[#111111] text-white"
-                      : "bg-white/14 text-white"
+                      ? "bg-[#466b5f] text-white"
+                      : "bg-[#5d8a7a] text-white"
                     : isDark
                       ? "bg-[#2c3833] text-[#d7e0db]"
                       : "bg-[#eef1ed] text-[#5d6c65]"
