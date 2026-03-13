@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   ios: {
     scheme: 'Callmate',
-    contentInset: 'automatic',
+    contentInset: 'never',
   },
   plugins: {
     SplashScreen: {
@@ -20,7 +20,7 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       // Controlled at runtime via StatusBar.setStyle()
-      overlaysWebView: false,
+      overlaysWebView: true,
     },
   },
 };

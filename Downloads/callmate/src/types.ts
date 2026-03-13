@@ -1,6 +1,6 @@
 export type Tone = 'Professional' | 'Assertive' | 'Friendly' | 'Firm';
 
-export type Tier = 'free' | 'trial' | 'monthly' | 'annual';
+export type Tier = 'free' | 'trial' | 'monthly' | 'annual' | 'admin';
 
 export type CallPerspective = 'outgoing' | 'incoming';
 

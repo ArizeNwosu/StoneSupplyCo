@@ -78,12 +78,25 @@ create table if not exists public.personas (
 
 create index if not exists personas_user_id_idx on public.personas(user_id);
 
+-- ─── Admin Access Allowlist ─────────────────────────────────────────────────
+create table if not exists public.admin_users (
+  id            uuid primary key default gen_random_uuid(),
+  email         text not null unique,
+  is_active     boolean not null default true,
+  notes         text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+create unique index if not exists admin_users_email_lower_idx on public.admin_users ((lower(email)));
+
 -- ─── Row Level Security ───────────────────────────────────────────────────────
 alter table public.profiles       enable row level security;
 alter table public.scripts        enable row level security;
 alter table public.reflections    enable row level security;
 alter table public.anxiety_ratings enable row level security;
 alter table public.personas       enable row level security;
+alter table public.admin_users    enable row level security;
 
 -- Profiles
 create policy "profiles: own read"   on public.profiles for select using (auth.uid() = id);
@@ -101,6 +114,15 @@ create policy "anxiety_ratings: own all" on public.anxiety_ratings for all using
 
 -- Personas
 create policy "personas: own all" on public.personas for all using (auth.uid() = user_id);
+
+-- Admin allowlist
+create policy "admin_users: own email lookup"
+  on public.admin_users
+  for select
+  using (
+    auth.role() = 'authenticated'
+    and lower(email) = lower(coalesce(auth.jwt()->>'email', ''))
+  );
 
 -- ─── Auto-create profile on signup ───────────────────────────────────────────
 create or replace function public.handle_new_user()

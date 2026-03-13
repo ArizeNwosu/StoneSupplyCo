@@ -494,12 +494,14 @@ export function SettingsScreen(props: SettingsScreenProps) {
               <div>
                 <p className="font-bold text-lg">Current Plan</p>
                 <p className="text-zinc-500 text-sm">
-                  {tier === 'annual' ? 'Annual Plan' : tier === 'monthly' ? 'Monthly Plan' : tier === 'trial' ? '3-Day Free Trial' : 'Trial required'}
+                  {tier === 'admin' ? 'Admin Access' : tier === 'annual' ? 'Annual Plan' : tier === 'monthly' ? 'Monthly Plan' : tier === 'trial' ? '3-Day Free Trial' : 'Trial required'}
                 </p>
               </div>
-              <Button variant="outline" size="sm" isDark={isDark} onClick={() => setShowUpgradeModal(true)}>
-                {tier === 'free' ? 'Start Trial' : 'Manage'}
-              </Button>
+              {tier !== 'admin' && (
+                <Button variant="outline" size="sm" isDark={isDark} onClick={() => setShowUpgradeModal(true)}>
+                  {tier === 'free' ? 'Start Trial' : 'Manage'}
+                </Button>
+              )}
             </div>
           </Card>
         </section>
@@ -905,7 +907,7 @@ export function HistoryScreen(props: HistoryScreenProps) {
   } = props;
 
   return (
-    <div className="space-y-5 pt-4 pb-28">
+    <div className="space-y-5 pb-28">
       <div className="flex flex-col gap-6 mb-12 px-2 relative z-[100]">
         <div className="flex items-center justify-between">
           <h2 className="text-4xl font-bold tracking-tight">History</h2>
@@ -1060,7 +1062,7 @@ export function ScriptScreen(props: ScriptScreenProps) {
   } = props;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-8">
       {isMedicalCall && showMedicalPrep && (
         <div className={cn('rounded-2xl border p-4 transition-colors', isDark ? 'bg-[#203039]/70 border-[#4f7588]' : 'bg-[#eef5fb] border-[#c7d9e8]')}>
           <div className="flex items-start justify-between gap-3 mb-3">

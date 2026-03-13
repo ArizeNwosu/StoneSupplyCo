@@ -267,7 +267,7 @@ export default function App() {
   const TRIAL_DAYS = 3;
   const enforceAccessGate = (candidateTier = tier, candidateTrialStart = trialStartDate) => {
     const trialActive = candidateTier === 'trial' && !!candidateTrialStart && Math.floor((Date.now() - candidateTrialStart) / 86400000) < TRIAL_DAYS;
-    const hasAccess = candidateTier === 'monthly' || candidateTier === 'annual' || trialActive;
+    const hasAccess = candidateTier === 'admin' || candidateTier === 'monthly' || candidateTier === 'annual' || trialActive;
     if (!hasAccess) {
       setShowUpgradeModal(true);
       setUpgradeModalForced(true);
@@ -345,7 +345,7 @@ export default function App() {
       const restoredProductIds = await restorePurchases();
       const access = await loadAccessState();
 
-      if (access.tier === 'monthly' || access.tier === 'annual') {
+      if (access.tier === 'admin' || access.tier === 'monthly' || access.tier === 'annual') {
         setShowUpgradeModal(false);
         return;
       }
@@ -504,7 +504,7 @@ export default function App() {
   };
 
   const isTrialPlanAnnual = tier === 'trial' && selectedPlan === 'annual';
-  const canUsePracticeMode = tier === 'annual' || isTrialPlanAnnual;
+  const canUsePracticeMode = tier === 'admin' || tier === 'annual' || isTrialPlanAnnual;
 
   const trialDaysRemaining = useMemo(() => {
     if (tier !== 'trial' || !trialStartDate) return null;
@@ -521,7 +521,7 @@ export default function App() {
   }, [supabaseUser, tier]);
 
   const isTrialActive = tier === 'trial' && (trialDaysRemaining ?? 0) > 0;
-  const isPremium = tier === 'monthly' || tier === 'annual' || isTrialActive;
+  const isPremium = tier === 'admin' || tier === 'monthly' || tier === 'annual' || isTrialActive;
   const showComebackNudge = isTrialActive && lastScriptDate !== null &&
     (Date.now() - lastScriptDate) > 48 * 3600000 && !comebackNudgeDismissed;
   const isMedicalCall = useMemo(() => {
@@ -662,6 +662,19 @@ export default function App() {
     const originalScrollPositions = new Map<HTMLElement | Window, number>();
     let restoreTimer: number | null = null;
 
+    const applyReturnKeyHint = (element: Element | null) => {
+      if (element instanceof HTMLInputElement) {
+        const type = (element.type || 'text').toLowerCase();
+        if (!['button', 'checkbox', 'color', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit'].includes(type)) {
+          element.setAttribute('enterkeyhint', 'done');
+        }
+        return;
+      }
+      if (element instanceof HTMLTextAreaElement) {
+        element.setAttribute('enterkeyhint', 'done');
+      }
+    };
+
     const isEditable = (element: Element | null): element is HTMLElement => {
       return !!element && element instanceof HTMLElement && element.matches(editableSelector);
     };
@@ -762,6 +775,7 @@ export default function App() {
         window.clearTimeout(restoreTimer);
         restoreTimer = null;
       }
+      applyReturnKeyHint(event.target as Element | null);
       scheduleEnsureVisible(event.target as Element | null);
     };
 
@@ -782,10 +796,27 @@ export default function App() {
       scheduleEnsureVisible(document.activeElement, 'auto');
     };
 
+    const handleEditableKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Enter' || event.shiftKey) return;
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) return;
+
+      const type = (target.type || 'text').toLowerCase();
+      if (['checkbox', 'file', 'radio', 'submit'].includes(type)) return;
+
+      window.setTimeout(() => {
+        if (document.activeElement === target) {
+          target.blur();
+        }
+      }, 0);
+    };
+
     setViewportMetrics();
+    document.querySelectorAll(editableSelector).forEach((element) => applyReturnKeyHint(element));
 
     document.addEventListener('focusin', handleFocusIn);
     document.addEventListener('focusout', handleFocusOut);
+    document.addEventListener('keydown', handleEditableKeyDown, true);
     window.addEventListener('resize', handleViewportChange);
     window.visualViewport?.addEventListener('resize', handleViewportChange);
     window.visualViewport?.addEventListener('scroll', handleViewportChange);
@@ -797,6 +828,7 @@ export default function App() {
       }
       document.removeEventListener('focusin', handleFocusIn);
       document.removeEventListener('focusout', handleFocusOut);
+      document.removeEventListener('keydown', handleEditableKeyDown, true);
       delete document.documentElement.dataset.keyboardOpen;
       window.removeEventListener('resize', handleViewportChange);
       window.visualViewport?.removeEventListener('resize', handleViewportChange);
@@ -819,7 +851,7 @@ export default function App() {
           localStorage.removeItem(AUTH_INTENT_KEY);
           const { access, isReturningUser } = await hydrateSignedInUser(session.user, authIntent);
           
-          if (isReturningUser) {
+          if (access?.tier === 'admin' || isReturningUser) {
             setView('home');
           } else {
             setView('notifications');
@@ -876,7 +908,7 @@ export default function App() {
           // Only automatically set view if we are currently in an onboarding/auth view
           // This avoids interrupting the user if they are already using the app
           if (['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
-            if (isReturningUser) {
+            if (result.access?.tier === 'admin' || isReturningUser) {
               setView('home');
             } else {
               setView('notifications');
@@ -915,7 +947,8 @@ export default function App() {
             const profile = (await hydrateSignedInUser(session.user, authIntent)).profile;
             localStorage.removeItem(AUTH_INTENT_KEY);
             const isReturningUser = profile?.name || authIntent === 'login' || (Date.now() - new Date(session.user.created_at).getTime() > 30000);
-            if (isReturningUser) {
+            const access = await loadAccessStateSafely();
+            if (access?.tier === 'admin' || isReturningUser) {
               setView('home');
             } else {
               setView('notifications');
@@ -1391,7 +1424,7 @@ export default function App() {
 
   if (view === 'splash') return (
     <div className={cn("fixed inset-0 warm-therapeutic-bg flex flex-col items-center justify-center p-6 overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
-      <div className="absolute top-7 left-6 z-10">
+      <div className="absolute top-11 left-6 z-10">
         <p className={cn("text-2xl font-semibold tracking-tight", isDark ? "text-[#f2ede3]" : "text-[#22312b]")}>Callmate</p>
       </div>
       <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative">
@@ -2002,7 +2035,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <header className={cn("sticky top-0 z-40 border-b px-6 py-4 flex items-center justify-between transition-colors", isDark ? "bg-[#161d1b]/95 border-[#33403b]" : "bg-[rgba(243,238,228,0.92)] border-[#d8cdc0]")}>
+      <header className={cn("sticky top-0 z-40 border-b px-6 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] flex items-center justify-between transition-colors", isDark ? "bg-[#161d1b]/95 border-[#33403b]" : "bg-[rgba(243,238,228,0.92)] border-[#d8cdc0]")}>
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setCurrentScript(null); setActiveTab('home'); setView('home'); }}>
           <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center", isDark ? "bg-[#22312b]" : "bg-[#5d8a7a]")}>
             <Logo className="w-6 h-6 text-[#fbf8f2]" />
@@ -2470,7 +2503,7 @@ export default function App() {
           <>
             <div onClick={() => { if (!upgradeModalForced) setShowUpgradeModal(false); }} className="fixed inset-0 bg-black/80 z-[100]" />
             <div className={cn("fixed inset-0 z-[110] shadow-2xl overflow-y-auto transition-colors", isDark ? "bg-[#202926]" : "bg-[rgba(255,251,245,0.99)]")}>
-              <div className="px-6 pt-8 pb-10 max-w-2xl mx-auto min-h-full space-y-6">
+              <div className="px-6 pt-14 pb-10 max-w-2xl mx-auto min-h-full space-y-6">
                 {/* Personalised header */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">

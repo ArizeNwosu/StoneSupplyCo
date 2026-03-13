@@ -76,6 +76,7 @@ export async function vibrate(options?: { duration?: number }) {
 export async function setStatusBarDark() {
   if (!isNative) return;
   const { StatusBar, Style } = await import('@capacitor/status-bar');
+  await StatusBar.setOverlaysWebView({ overlay: true });
   await StatusBar.setStyle({ style: Style.Dark });
   await StatusBar.setBackgroundColor({ color: '#0A0A0A' });
 }
@@ -83,6 +84,7 @@ export async function setStatusBarDark() {
 export async function setStatusBarLight() {
   if (!isNative) return;
   const { StatusBar, Style } = await import('@capacitor/status-bar');
+  await StatusBar.setOverlaysWebView({ overlay: true });
   await StatusBar.setStyle({ style: Style.Light });
   await StatusBar.setBackgroundColor({ color: '#FFFFFF' });
 }
