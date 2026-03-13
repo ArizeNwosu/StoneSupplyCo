@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Capacitor } from '@capacitor/core';
 import {
   Phone,
   ChevronRight,
@@ -36,13 +35,11 @@ import { DashboardScreen, HistoryScreen, HomeScreen, ScriptScreen, SettingsScree
 import { Tone, CallScript, SAFE_LINES, PANIC_OPTIONS, PanicOption, COMMON_CALL_TYPES, Persona, Reflection, Tier, CallPerspective } from './types';
 import { generateCallScript, generatePanicResponse, generateTTS, generateVoicemailScript, generateEmailFallback, generateBranch } from './services/gemini';
 import { signUp, signIn, signInWithApple, signInWithGoogle, signOut, onAuthStateChange, sendPasswordReset } from './services/auth';
-import { pushLocalDataToSupabase, upsertProfile, saveScript, saveReflection as dbSaveReflection, savePersona, syncAnxietyRatings, deleteAllScriptsForUser, deleteAllReflectionsForUser, deleteAllAnxietyRatingsForUser, deletePersona as dbDeletePersona } from './services/db';
+import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchAnxietyRatings, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection as dbSaveReflection, savePersona, syncAnxietyRatings, deleteAllScriptsForUser, deletePersona as dbDeletePersona } from './services/db';
 import { fetchAccessState, startTrial } from './services/access';
-import type { AccessState } from './services/access';
 import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, vibrate, setStatusBarDark, setStatusBarLight, openInAppBrowser, requestNotificationsAccess } from './services/native';
 import type { User, RealtimeChannel } from '@supabase/supabase-js';
 import type { ImportPreview } from './services/exportImport';
-import { loadUserDataFromSupabase as hydrateUserDataFromSupabase } from './services/hydration';
 import breatheAudio from '../breathe.mp3';
 import appStoreIcon from '../icons/app-store.svg';
 import reviewAvatar1 from '../avatar/1.png';
@@ -151,127 +148,8 @@ const IMPACT_AREAS = [
   { icon: '💰', label: "Money (can't negotiate)" },
 ];
 
-const LANDING_STATS = [
-  { value: '3 min', label: 'to build a call script with branches and fallback lines' },
-  { value: '30 sec', label: 'to steady your breathing before you dial' },
-  { value: '5 steps', label: 'to personalize the app around your telephobia' },
-];
-
-const LANDING_PILLARS = [
-  {
-    icon: Phone,
-    eyebrow: 'Before the call',
-    title: 'Turn dread into a plan',
-    body: 'Describe the call you have been avoiding and Callmate writes a structured opener, ask, close, and likely responses.',
-  },
-  {
-    icon: BellRing,
-    eyebrow: 'During the call',
-    title: 'Stay steady when it goes off-script',
-    body: 'Quick response branches and panic support keep you from freezing when the other person says something unexpected.',
-  },
-  {
-    icon: RotateCcw,
-    eyebrow: 'After the call',
-    title: 'See proof that you are getting better',
-    body: 'Track anxiety ratings, streaks, and milestones so progress feels visible instead of vague.',
-  },
-];
-
-const LANDING_DIFFERENTIATORS = [
-  'Built specifically for telephobia, not generic writing prompts',
-  'Structured scripts with openings, asks, closes, and branch responses',
-  'Pre-call breathing reset designed into the core flow',
-  'Recovery tracking that shows confidence building over time',
-];
-
-const LANDING_TESTIMONIALS = [
-  { name: "Sarah M.", location: "Chicago", quote: "I finally called my doctor after putting it off for 3 years. I literally cried after I hung up.", tag: "Medical / Doctor Call", avatar: reviewAvatar1 },
-  { name: "Jenna T.", location: "Austin", quote: "Negotiated my rent down $150 a month. The Firm tone was unreal and my landlord didn't push back.", tag: "Landlord Call", avatar: reviewAvatar2 },
-  { name: "Chase K.", location: "New York", quote: "I used to let every work call go to voicemail and make up excuses. Not anymore.", tag: "Work Call", avatar: reviewAvatar3 },
-  { name: "Meritas R.", location: "Seattle", quote: "I'm autistic and phone calls are my nightmare. This app is genuinely life-changing.", tag: "Customer Service", avatar: reviewAvatar4 },
-];
-
-const LANDING_FAQS = [
-  {
-    question: 'What does Callmate actually do?',
-    answer: 'It helps you prepare for difficult calls with a calming reset, a custom script, fallback branches, and post-call reinforcement.',
-  },
-  {
-    question: 'Is this for real phone anxiety or just awkward calls?',
-    answer: 'It is designed around telephobia and call avoidance, but it also helps with any high-stakes call where you need structure.',
-  },
-  {
-    question: 'Do I need to talk to AI on the call?',
-    answer: 'No. The primary experience is pre-call preparation and on-screen support, so you can stay in control without juggling a second conversation.',
-  },
-];
-
-const COMPANY_REVENUE_FACTORS = [
-  {
-    title: 'Faster follow-up',
-    body: 'When employees stop delaying calls, leads get contacted sooner, invoices move faster, and unresolved issues stop sitting in limbo.',
-  },
-  {
-    title: 'More confident conversations',
-    body: 'A steadier employee is more likely to ask for the sale, handle objections clearly, and finish the call with a next step.',
-  },
-  {
-    title: 'Less hidden avoidance',
-    body: 'Call anxiety often shows up as “I’ll email them later.” Callmate reduces avoidance that quietly drags down conversion and response speed.',
-  },
-];
-
-const COMPANY_USE_CASES = [
-  'Sales reps who hesitate to make outbound calls',
-  'Customer support teams handling difficult conversations',
-  'Account managers following up on renewals and billing',
-  'Operations teams calling vendors, landlords, or service providers',
-];
-
-const COMPANY_CAPABILITIES = [
-  {
-    eyebrow: 'Employee side',
-    title: 'A repeatable call-prep system',
-    body: 'Employees get pre-call regulation, structured scripts, and fallback responses so they can enter more calls prepared instead of avoidant.',
-  },
-  {
-    eyebrow: 'Manager side',
-    title: 'Confidence-building, not surveillance',
-    body: 'Position Callmate as a performance support tool that helps employees handle revenue-critical calls with less stress and more consistency.',
-  },
-  {
-    eyebrow: 'Business side',
-    title: 'Small gains compound quickly',
-    body: 'If your team makes more successful calls, the downstream effect is faster collections, tighter follow-up, better retention, and more closed revenue.',
-  },
-];
-
-const COMPANY_FAQS = [
-  {
-    question: 'Why would a business pay for a call anxiety tool?',
-    answer: 'Because phone avoidance is expensive. Missed outbound calls, delayed follow-ups, weak objection handling, and admin procrastination all create real revenue drag.',
-  },
-  {
-    question: 'Is this only for sales teams?',
-    answer: 'No. It also fits customer support, account management, recruiting, front-desk operations, healthcare admin, and any role where phone calls move work forward.',
-  },
-  {
-    question: 'What is the business outcome?',
-    answer: 'More calls made, more calls handled well, and fewer revenue-critical conversations pushed off because someone feels overwhelmed or unprepared.',
-  },
-];
-
 const HAS_SEEN_ONBOARDING_KEY = 'callmate_has_seen_onboarding';
 const AUTH_INTENT_KEY = 'callmate_auth_intent';
-const PENDING_PURCHASE_STORAGE_KEY = 'callmate_pending_purchase';
-
-type PendingPurchase = {
-  transactionId: string;
-  jwsToken: string;
-  productId: string;
-  createdAt: number;
-};
 const BREATHE_SOUND_KEY = 'callmate_breathe_sound_enabled';
 const BREATHE_VIBRATION_KEY = 'callmate_breathe_vibration_enabled';
 
@@ -286,23 +164,9 @@ function readStoredJson<T>(key: string, fallback: T): T {
   }
 }
 
-const USER_PROFILE_STORAGE_KEYS = [
-  'callmate_user_name',
-  'callmate_user_gender',
-  'callmate_user_age_range',
-  'callmate_severity',
-  'callmate_triggers',
-  'callmate_impact',
-  'callmate_heard_about_us',
-  'callmate_streak',
-  'callmate_last_call_date',
-] as const;
-
-const isNativeApp = Capacitor.isNativePlatform();
-
 export default function App() {
   const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
-  const [view, setView] = useState<'splash' | 'explainer' | 'companyPlans' | 'reset' | 'onboarding' | 'reviews' | 'account' | 'setup' | 'notifications' | 'home' | 'history' | 'dashboard' | 'script' | 'settings'>('splash');
+  const [view, setView] = useState<'splash' | 'explainer' | 'reset' | 'onboarding' | 'reviews' | 'account' | 'setup' | 'notifications' | 'home' | 'history' | 'dashboard' | 'script' | 'settings'>('splash');
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [description, setDescription] = useState('');
   const [perspective, setPerspective] = useState<CallPerspective>('outgoing');
@@ -433,69 +297,6 @@ export default function App() {
     }
   };
 
-  const readPendingPurchase = (): PendingPurchase | null =>
-    readStoredJson<PendingPurchase | null>(PENDING_PURCHASE_STORAGE_KEY, null);
-
-  const writePendingPurchase = (pending: PendingPurchase | null) => {
-    if (!pending) {
-      localStorage.removeItem(PENDING_PURCHASE_STORAGE_KEY);
-      return;
-    }
-    localStorage.setItem(PENDING_PURCHASE_STORAGE_KEY, JSON.stringify(pending));
-  };
-
-  const verifyPurchaseWithRetry = async (
-    pending: PendingPurchase,
-    maxAttempts = 4
-  ) => {
-    const { invokeFunctionDirect } = await import('./services/supabase');
-    let lastError: unknown = null;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-      const { data, error } = await invokeFunctionDirect<AccessState>('verify-purchase', {
-        body: {
-          transactionId: pending.transactionId,
-          jwsToken: pending.jwsToken,
-          productId: pending.productId,
-        },
-      });
-
-      if (!error) {
-        writePendingPurchase(null);
-        applyAccessState(data);
-        return data;
-      }
-
-      lastError = error;
-      const message = error.message ?? '';
-      const isRetryable =
-        /failed to fetch/i.test(message) ||
-        /load failed/i.test(message) ||
-        /network/i.test(message);
-
-      if (!isRetryable || attempt === maxAttempts) {
-        throw new Error(message);
-      }
-
-      await new Promise((resolve) => window.setTimeout(resolve, 750 * attempt));
-    }
-
-    throw lastError instanceof Error ? lastError : new Error('Purchase verification failed.');
-  };
-
-  const retryPendingPurchase = async () => {
-    if (!supabaseUser) return null;
-    const pending = readPendingPurchase();
-    if (!pending) return null;
-
-    try {
-      return await verifyPurchaseWithRetry(pending, 3);
-    } catch (error) {
-      console.error('Pending purchase verification failed', error);
-      return null;
-    }
-  };
-
   const beginTrial = async (plan: 'monthly' | 'annual') => {
     if (!supabaseUser) {
       setShowUpgradeModal(false);
@@ -517,26 +318,16 @@ export default function App() {
     if (!supabaseUser) { setShowUpgradeModal(false); setView('account'); return; }
     try {
       const { purchaseProduct, PRODUCT_IDS } = await import('./services/iap');
+      const { supabase } = await import('./services/supabase');
       const productId = PRODUCT_IDS[plan];
       const { transactionId, jwsToken } = await purchaseProduct(productId);
-      const pendingPurchase: PendingPurchase = {
-        transactionId,
-        jwsToken,
-        productId,
-        createdAt: Date.now(),
-      };
-      writePendingPurchase(pendingPurchase);
-      await verifyPurchaseWithRetry(pendingPurchase);
+      const { data, error } = await supabase.functions.invoke('verify-purchase', { body: { transactionId, jwsToken, productId } });
+      if (error) throw error;
+      applyAccessState(data);
     } catch (error: any) {
       if (error?.message === 'cancelled') return;
       const detail = error?.context?.message ?? error?.message ?? String(error);
       console.error('Purchase failed:', detail, error);
-      const pending = readPendingPurchase();
-      if (pending) {
-        alert('Purchase was completed, but account activation is still syncing. Keep the app open for a moment and it will retry automatically.');
-        void retryPendingPurchase();
-        return;
-      }
       alert(`Purchase failed: ${detail}`);
     }
   };
@@ -550,32 +341,20 @@ export default function App() {
 
     try {
       const { restorePurchases } = await import('./services/iap');
-      const restoredEntitlements = await restorePurchases();
+      const restoredProductIds = await restorePurchases();
+      const access = await loadAccessState();
 
-      if (!restoredEntitlements.length) {
-        alert('No previous purchases were found for this Apple ID.');
-        return;
-      }
-
-      const access = await loadAccessStateSafely();
-      if (access?.tier === 'monthly' || access?.tier === 'annual') {
+      if (access.tier === 'monthly' || access.tier === 'annual') {
         setShowUpgradeModal(false);
         return;
       }
 
-      const preferredEntitlement =
-        restoredEntitlements.find((item) => item.productId.includes('annual')) ??
-        restoredEntitlements[0];
+      if (!restoredProductIds.length) {
+        alert('No previous purchases were found for this Apple ID.');
+        return;
+      }
 
-      const pendingPurchase: PendingPurchase = {
-        transactionId: preferredEntitlement.transactionId,
-        jwsToken: preferredEntitlement.jwsToken,
-        productId: preferredEntitlement.productId,
-        createdAt: Date.now(),
-      };
-      writePendingPurchase(pendingPurchase);
-      await verifyPurchaseWithRetry(pendingPurchase);
-      setShowUpgradeModal(false);
+      alert('We found a previous purchase, but your account has not updated yet. Please try again in a moment.');
     } catch (error: any) {
       const detail = error?.context?.message ?? error?.message ?? String(error);
       console.error('Restore purchases failed:', detail, error);
@@ -609,80 +388,6 @@ export default function App() {
     });
   };
 
-  const onReflectionChange = (reflection: Reflection | null, event: 'INSERT' | 'UPDATE' | 'DELETE', id?: string) => {
-    if (event === 'DELETE' && id) {
-      setReflections(prev => {
-        const next = prev.filter(item => item.id !== id);
-        localStorage.setItem('ringtone_reflections', JSON.stringify(next));
-        return next;
-      });
-      return;
-    }
-    if (!reflection) return;
-    setReflections(prev => {
-      const existingIndex = prev.findIndex(item => item.id === reflection.id);
-      if (existingIndex === -1) {
-        const next = [reflection, ...prev];
-        localStorage.setItem('ringtone_reflections', JSON.stringify(next));
-        return next;
-      }
-      const existing = prev[existingIndex];
-      if (reflection.updated_at && existing.updated_at && reflection.updated_at <= existing.updated_at) return prev;
-      const next = [...prev];
-      next[existingIndex] = reflection;
-      localStorage.setItem('ringtone_reflections', JSON.stringify(next));
-      return next;
-    });
-  };
-
-  const onAnxietyRatingChange = (
-    rating: { id?: string; scriptId: string; rating: number; timestamp: number } | null,
-    event: 'INSERT' | 'UPDATE' | 'DELETE',
-    id?: string
-  ) => {
-    if (event === 'DELETE' && id) {
-      setCallAnxietyRatings(prev => {
-        const next = prev.filter(item => item.id !== id);
-        localStorage.setItem('callmate_anxiety_ratings', JSON.stringify(next));
-        return next;
-      });
-      return;
-    }
-    if (!rating) return;
-    setCallAnxietyRatings(prev => {
-      const existingIndex = prev.findIndex(item => item.id === rating.id);
-      const next = existingIndex === -1 ? [...prev, rating] : prev.map(item => item.id === rating.id ? rating : item);
-      next.sort((a, b) => a.timestamp - b.timestamp);
-      localStorage.setItem('callmate_anxiety_ratings', JSON.stringify(next));
-      return next;
-    });
-  };
-
-  const onPersonaChange = (persona: Persona | null, event: 'INSERT' | 'UPDATE' | 'DELETE', id?: string) => {
-    if (event === 'DELETE' && id) {
-      setPersonas(prev => {
-        const next = prev.filter(item => item.id !== id);
-        localStorage.setItem('callmate_personas', JSON.stringify(next));
-        return next;
-      });
-      return;
-    }
-    if (!persona) return;
-    setPersonas(prev => {
-      const existingIndex = prev.findIndex(item => item.id === persona.id);
-      if (existingIndex === -1) {
-        const next = [...prev, persona];
-        localStorage.setItem('callmate_personas', JSON.stringify(next));
-        return next;
-      }
-      const existing = prev[existingIndex];
-      if (persona.updated_at && existing.updated_at && persona.updated_at <= existing.updated_at) return prev;
-      const next = prev.map(item => item.id === persona.id ? persona : item);
-      localStorage.setItem('callmate_personas', JSON.stringify(next));
-      return next;
-    });
-  };
-
   const handleExportJSON = async () => {
     const { exportToJSON, downloadFile } = await import('./services/exportImport');
     downloadFile(exportToJSON(history, reflections), 'callmate-backup.json', 'application/json');
@@ -701,7 +406,7 @@ export default function App() {
 
   const handleImportConfirm = async (preview: ImportPreview, mode: 'merge' | 'replace') => {
     const { applyImport } = await import('./services/exportImport');
-    const result = applyImport(preview, { scripts: history, reflections }, mode);
+    const result = applyImport(preview, history, mode);
     setHistory(result.scripts);
     localStorage.setItem('ringtone_history', JSON.stringify(result.scripts));
     setReflections(result.reflections);
@@ -756,74 +461,8 @@ export default function App() {
     setCurrentScript(null);
   };
 
-  const clearLocalProfileState = () => {
-    setUserName('');
-    setUserGender('');
-    setUserAgeRange('');
-    setAnxietySeverity(null);
-    setAnxietyTriggers([]);
-    setLifeImpact([]);
-    setHeardAboutUs('');
-    setCallStreak(0);
-    setShowOnboardingDiscovery(true);
-    for (const key of USER_PROFILE_STORAGE_KEYS) {
-      localStorage.removeItem(key);
-    }
-  };
-
-  const loadUserDataFromSupabase = async (userId: string) => {
-    clearLocalProfileState();
-    const profile = await hydrateUserDataFromSupabase(userId, {
-      setHistory: (scripts) => persistScriptLocally(sanitizeHistory(scripts)),
-      setReflections: persistReflectionsLocally,
-      setCallAnxietyRatings: (ratings) =>
-        persistRatingsLocally([...ratings].sort((a, b) => a.timestamp - b.timestamp)),
-      setPersonas: persistPersonasLocally,
-      setUserName: (value) => {
-        setUserName(value);
-        localStorage.setItem('callmate_user_name', value);
-      },
-      setUserGender: (value) => {
-        setUserGender(value);
-        localStorage.setItem('callmate_user_gender', value);
-      },
-      setUserAgeRange: (value) => {
-        setUserAgeRange(value);
-        localStorage.setItem('callmate_user_age_range', value);
-      },
-      setAnxietySeverity: (value) => {
-        setAnxietySeverity(value);
-        localStorage.setItem('callmate_severity', value);
-      },
-      setAnxietyTriggers: (value) => {
-        setAnxietyTriggers(value);
-        localStorage.setItem('callmate_triggers', JSON.stringify(value));
-      },
-      setLifeImpact: (value) => {
-        setLifeImpact(value);
-        localStorage.setItem('callmate_impact', JSON.stringify(value));
-      },
-      setHeardAboutUs: (value) => {
-        setHeardAboutUs(value);
-        localStorage.setItem('callmate_heard_about_us', value);
-        setShowOnboardingDiscovery(false);
-      },
-      setCallStreak: (value) => {
-        setCallStreak(value);
-        localStorage.setItem('callmate_streak', String(value));
-      },
-      setTheme,
-    });
-    return profile;
-  };
-
   const hydrateSignedInUser = async (user: User, authIntent: 'signup' | 'login' | null = null) => {
     setSupabaseUser(user);
-    {
-      const { supabase: sb, setCachedAccessToken } = await import('./services/supabase');
-      const { data: { session } } = await sb.auth.getSession();
-      setCachedAccessToken(session?.access_token ?? null);
-    }
     if (user.email) {
       setUserEmail(user.email);
       localStorage.setItem('callmate_user_email', user.email);
@@ -841,12 +480,7 @@ export default function App() {
     try {
       const { createSyncSubscriptions } = await import('./services/sync');
       channelRef.current?.unsubscribe();
-      channelRef.current = createSyncSubscriptions(user.id, {
-        onScriptChange,
-        onReflectionChange,
-        onAnxietyRatingChange,
-        onPersonaChange,
-      });
+      channelRef.current = createSyncSubscriptions(user.id, { onScriptChange });
     } catch (error) {
       console.error('Failed to create sync subscriptions', error);
     }
@@ -1127,8 +761,6 @@ export default function App() {
           sb.auth.getSession(),
           new Promise<void>(resolve => setTimeout(resolve, 3200)),
         ]);
-        const { setCachedAccessToken } = await import('./services/supabase');
-        setCachedAccessToken(session?.access_token ?? null);
         if (session?.user) {
           const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
           localStorage.removeItem(AUTH_INTENT_KEY);
@@ -1142,16 +774,10 @@ export default function App() {
           if (access) {
             enforceAccessGate(access.tier, access.trialStartedAt);
           }
-          void retryPendingPurchase();
         } else {
-          clearLocalUserCollections();
-          clearLocalProfileState();
           const hasSeenOnboarding = localStorage.getItem(HAS_SEEN_ONBOARDING_KEY) === 'true';
           if (hasSeenOnboarding) {
             setView('account');
-          } else if (isNativeApp) {
-            localStorage.setItem(HAS_SEEN_ONBOARDING_KEY, 'true');
-            setView('reset');
           } else {
             localStorage.setItem(HAS_SEEN_ONBOARDING_KEY, 'true');
             setView('explainer');
@@ -1163,8 +789,6 @@ export default function App() {
         try {
           const { supabase: sb } = await import('./services/supabase');
           const { data: { session } } = await sb.auth.getSession();
-          const { setCachedAccessToken } = await import('./services/supabase');
-          setCachedAccessToken(session?.access_token ?? null);
           if (session?.user) {
             await hydrateSignedInUser(session.user, 'login');
             setView('home');
@@ -1173,8 +797,6 @@ export default function App() {
         } catch (sessionError) {
           console.error('Session recovery failed after init error', sessionError);
         }
-        clearLocalUserCollections();
-        clearLocalProfileState();
         setSupabaseUser(null);
         setUserEmail('');
         setView('account');
@@ -1184,8 +806,6 @@ export default function App() {
 
     // Listen for future auth state changes (login / logout)
     const { data: { subscription } } = onAuthStateChange(async (event, session) => {
-      const { setCachedAccessToken } = await import('./services/supabase');
-      setCachedAccessToken(session?.access_token ?? null);
       if (session?.user) {
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
           let isReturningUser = true;
@@ -1202,7 +822,7 @@ export default function App() {
 
           // Only automatically set view if we are currently in an onboarding/auth view
           // This avoids interrupting the user if they are already using the app
-          if (['splash', 'explainer', 'companyPlans', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
+          if (['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
             if (isReturningUser) {
               setView('home');
             } else {
@@ -1211,18 +831,16 @@ export default function App() {
           }
         }
       } else {
+        setSupabaseUser(null);
         if (event === 'SIGNED_OUT') {
-          setSupabaseUser(null);
           channelRef.current?.unsubscribe();
           channelRef.current = null;
           clearLocalUserCollections();
-          clearLocalProfileState();
           setTier('free');
           setTrialStartDate(null);
           setTrialScriptsUsed(0);
           setSelectedPlan(null);
           setUserEmail('');
-          setCachedAccessToken(null);
           localStorage.removeItem('callmate_user_email');
           setView('account');
         }
@@ -1273,11 +891,6 @@ export default function App() {
             console.error('OAuth code exchange failed', error);
             return;
           }
-          {
-            const { data: { session } } = await sb.auth.getSession();
-            const { setCachedAccessToken } = await import('./services/supabase');
-            setCachedAccessToken(session?.access_token ?? null);
-          }
           await completePendingAuthIfNeeded();
           return;
         }
@@ -1293,11 +906,6 @@ export default function App() {
             console.error('OAuth token session restore failed', error, { hasRefreshToken: !!refreshToken });
             return;
           }
-          {
-            const { data: { session } } = await sb.auth.getSession();
-            const { setCachedAccessToken } = await import('./services/supabase');
-            setCachedAccessToken(session?.access_token ?? null);
-          }
         }
 
         await completePendingAuthIfNeeded();
@@ -1305,7 +913,6 @@ export default function App() {
 
       const launchUrl = await CapApp.getLaunchUrl();
       await handleAuthCallbackUrl(launchUrl?.url);
-      await retryPendingPurchase();
 
       CapApp.addListener('appUrlOpen', async ({ url }) => {
         await handleAuthCallbackUrl(url);
@@ -1314,7 +921,6 @@ export default function App() {
       CapApp.addListener('appStateChange', async ({ isActive }) => {
         if (!isActive) return;
         await completePendingAuthIfNeeded();
-        await retryPendingPurchase();
       });
     };
     setupDeepLink();
@@ -1361,7 +967,7 @@ export default function App() {
   // Safeguard: Redirect to home if logged in and trying to access onboarding
   useEffect(() => {
     const isAuthenticating = ['account', 'setup'].includes(view);
-    const isOnboarding = ['explainer', 'companyPlans', 'onboarding', 'reviews'].includes(view);
+    const isOnboarding = ['explainer', 'onboarding', 'reviews'].includes(view);
     
     // Only redirect to home if we have a verified email AND we are on a landing/onboarding page
     // and NOT currently in the middle of the auth/setup flow.
@@ -1370,13 +976,41 @@ export default function App() {
     }
   }, [userEmail, view]);
 
-  useEffect(() => {
-    if (!isNativeApp) return;
-    if (view === 'explainer' || view === 'companyPlans') {
-      const hasSeenOnboarding = localStorage.getItem(HAS_SEEN_ONBOARDING_KEY) === 'true';
-      setView(hasSeenOnboarding ? 'account' : 'reset');
+  const loadUserDataFromSupabase = async (userId: string) => {
+    const [remoteScripts, remoteReflections, remoteRatings, remotePersonas, profile] = await Promise.all([
+      fetchScripts(userId),
+      fetchReflections(userId),
+      fetchAnxietyRatings(userId),
+      fetchPersonas(userId),
+      fetchProfile(userId),
+    ]);
+
+    const sanitizedRemoteScripts = sanitizeHistory(remoteScripts);
+    persistScriptLocally(sanitizedRemoteScripts);
+    persistReflectionsLocally(remoteReflections);
+    const mappedRatings = remoteRatings
+      .map(r => ({
+        id: r.id,
+        scriptId: r.script_id,
+        rating: r.rating,
+        timestamp: r.timestamp,
+      }))
+      .sort((a, b) => a.timestamp - b.timestamp);
+    persistRatingsLocally(mappedRatings);
+    persistPersonasLocally(remotePersonas);
+    if (profile) {
+      if (profile.name) { setUserName(profile.name); localStorage.setItem('callmate_user_name', profile.name); }
+      if (profile.gender !== undefined && profile.gender !== null) { setUserGender(profile.gender); localStorage.setItem('callmate_user_gender', profile.gender); }
+      if (profile.age_range !== undefined && profile.age_range !== null) { setUserAgeRange(profile.age_range); localStorage.setItem('callmate_user_age_range', profile.age_range); }
+      if (profile.anxiety_severity) { setAnxietySeverity(profile.anxiety_severity as AnxietySeverity); localStorage.setItem('callmate_severity', profile.anxiety_severity); }
+      if (Array.isArray(profile.anxiety_triggers)) { setAnxietyTriggers(profile.anxiety_triggers); localStorage.setItem('callmate_triggers', JSON.stringify(profile.anxiety_triggers)); }
+      if (Array.isArray(profile.life_impact)) { setLifeImpact(profile.life_impact); localStorage.setItem('callmate_impact', JSON.stringify(profile.life_impact)); }
+      if (profile.discovery_source) { setHeardAboutUs(profile.discovery_source); localStorage.setItem('callmate_heard_about_us', profile.discovery_source); }
+      if (typeof profile.call_streak === 'number') { setCallStreak(profile.call_streak); localStorage.setItem('callmate_streak', String(profile.call_streak)); }
+      setTheme(profile.dark_mode ? 'dark' : 'light');
     }
-  }, [view]);
+    return profile;
+  };
 
   // Keep screen awake during active call
   useEffect(() => {
@@ -1618,8 +1252,6 @@ export default function App() {
       setCurrentScript(null);
       if (supabaseUser) {
         void deleteAllScriptsForUser(supabaseUser.id);
-        void deleteAllReflectionsForUser(supabaseUser.id);
-        void deleteAllAnxietyRatingsForUser(supabaseUser.id);
       }
     }
   };
@@ -1738,584 +1370,49 @@ export default function App() {
   );
 
   if (view === 'explainer') return (
-    <div className={cn("min-h-[100dvh] warm-therapeutic-bg transition-colors duration-500 relative overflow-x-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
-      <div className="absolute inset-0 pointer-events-none">
-        <div className={cn("absolute -top-16 -left-12 h-72 w-72 rounded-full blur-3xl", isDark ? "bg-[#2b4338]/35" : "bg-[#dce7df]/70")} />
-        <div className={cn("absolute top-[28rem] -right-16 h-80 w-80 rounded-full blur-3xl", isDark ? "bg-[#6e8f69]/18" : "bg-[#e3d0b1]/65")} />
-      </div>
+    <div className={cn("app-screen warm-therapeutic-bg flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
+      <div className="relative z-10 flex-1 flex flex-col justify-between px-7 pt-14 pb-10 max-w-md mx-auto w-full">
 
-      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-7 pt-6 pb-14">
-        <motion.header
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className={cn("sticky top-0 z-20 mb-8 rounded-[2rem] border backdrop-blur-xl px-5 py-4 flex items-center justify-between gap-4", isDark ? "bg-[#161d1b]/80 border-[#33403b]" : "bg-[rgba(251,248,242,0.84)] border-[#d8cdc0]")}
-        >
-          <div className="flex items-center gap-3">
-            <div className={cn("w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg", isDark ? "bg-[#22312b]" : "bg-[#5d8a7a]")}>
-              <Logo className="w-7 h-7 text-[#fbf8f2]" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold tracking-tight">Callmate</p>
-              <p className={cn("text-[10px] font-black uppercase tracking-[0.28em]", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>For telephobia</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              isDark={isDark}
-              className="h-11 px-4 font-semibold"
-              onClick={() => setView('companyPlans')}
-            >
-              Company Plans
-            </Button>
-            <Button
-              size="sm"
-              variant="glass"
-              isDark={isDark}
-              className="h-11 px-4 font-semibold"
-              onClick={() => setView('reset')}
-            >
-              Start free trial
-            </Button>
-          </div>
-        </motion.header>
+        {/* Top section */}
+        <div className="space-y-8">
+          <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className={cn("text-[10px] font-black uppercase tracking-[0.3em]", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>
+            A real form of anxiety
+          </motion.p>
 
-        <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center pt-4">
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08, duration: 0.4 }}
-            className="space-y-6"
-          >
-            <div className={cn("inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-[0.24em]", isDark ? "bg-[#202926]/80 border-[#415049] text-[#b7d0c4]" : "bg-[rgba(255,251,245,0.88)] border-[#d8cdc0] text-[#5d8a7a]")}>
-              <span className="h-2 w-2 rounded-full bg-[#7b9d76]" />
-              A calmer way to make hard calls
-            </div>
-            <div className="space-y-4">
-              <h1 className="max-w-[12ch] text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-tight leading-[0.92]">
-                Phone calls made easier.
-              </h1>
-              <p className={cn("max-w-[36rem] text-base sm:text-lg leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>
-                Callmate helps people with telephobia calm down, know what to say, and stop avoiding the calls that quietly run their life.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button size="lg" variant="primary" isDark={isDark} className="h-14 px-6 font-bold text-base" onClick={() => setView('reset')}>
-                Start your 3-day free trial <ChevronRight className="w-4 h-4" />
-              </Button>
-              <Button
-                size="lg"
-                variant="secondary"
-                isDark={isDark}
-                className="h-14 px-6 font-semibold text-base"
-                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-              >
-                See how it works
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                isDark={isDark}
-                className="h-14 px-6 font-semibold text-base"
-                onClick={() => setView('companyPlans')}
-              >
-                For companies
-              </Button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <div className={cn("inline-flex items-center gap-2 rounded-full px-3 py-2 border text-sm font-medium", isDark ? "bg-[#202926]/80 border-[#415049] text-[#dbe3de]" : "bg-[rgba(255,251,245,0.86)] border-[#d8cdc0] text-[#476f61]")}>
-                <Check className="w-4 h-4 text-[#7b9d76]" />
-                No payment due now
-              </div>
-              <div className={cn("inline-flex items-center gap-2 rounded-full px-3 py-2 border text-sm font-medium", isDark ? "bg-[#202926]/80 border-[#415049] text-[#dbe3de]" : "bg-[rgba(255,251,245,0.86)] border-[#d8cdc0] text-[#476f61]")}>
-                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                Loved by people who avoid calls
-              </div>
-            </div>
+          {/* Definition */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="space-y-3">
+            <h1 className="text-6xl font-semibold tracking-tight leading-none">Tele&shy;phobia</h1>
+            <p className={cn("text-sm tracking-wide", isDark ? "text-[#96a49e]" : "text-[#87938d]")}>/ˌtelɪˈfəʊbiə/ · noun</p>
+            <p className={cn("text-base leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>
+              The fear or reluctance to make or receive phone calls — a real, diagnosed condition that affects daily life.
+            </p>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.16, duration: 0.45 }}
-            className="relative"
-          >
-            <div className={cn("rounded-[2.25rem] border p-4 sm:p-5 shadow-[0_30px_80px_rgba(43,54,49,0.18)]", isDark ? "bg-[#1d2623]/88 border-[#415049]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]")}>
-              <div className={cn("rounded-[1.9rem] p-5 sm:p-6", isDark ? "bg-[#111715]" : "bg-[#f4eee4]")}>
-                <div className="flex items-center justify-between gap-4 mb-5">
-                  <div>
-                    <p className={cn("text-[10px] font-black uppercase tracking-[0.28em] mb-1", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>Today&apos;s call</p>
-                    <p className="text-2xl font-semibold tracking-tight">Call your landlord</p>
-                  </div>
-                  <div className={cn("rounded-2xl px-3 py-2 text-xs font-black uppercase tracking-[0.2em]", isDark ? "bg-[#202926] text-[#b7d0c4]" : "bg-white text-[#5d8a7a]")}>
-                    Firm tone
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {[
-                    ['Open', 'Hi, I’m calling about the repair request I sent on Monday.'],
-                    ['Ask', 'Can you confirm when someone will come out and what the next step is?'],
-                    ['If they push back', 'I understand, but the issue is still unresolved and I need a concrete timeline.'],
-                    ['Close', 'Thank you. I’ll watch for that update today.'],
-                  ].map(([label, text], index) => (
-                    <div key={label} className={cn("rounded-2xl border p-4", isDark ? "bg-[#1a221f] border-[#313d38]" : "bg-[rgba(255,255,255,0.72)] border-[#ddd2c4]")}>
-                      <div className="flex items-start gap-3">
-                        <div className={cn("mt-0.5 w-7 h-7 rounded-xl flex items-center justify-center text-[11px] font-black", isDark ? "bg-[#25302c] text-[#b7d0c4]" : "bg-[#e9e1d4] text-[#5d8a7a]")}>
-                          {index + 1}
-                        </div>
-                        <div>
-                          <p className={cn("text-[10px] font-black uppercase tracking-[0.22em] mb-1", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>{label}</p>
-                          <p className={cn("text-sm leading-relaxed", isDark ? "text-[#f2ede3]" : "text-[#22312b]")}>{text}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className={cn("mt-4 rounded-2xl border p-4 flex items-start gap-3", isDark ? "bg-[#202926] border-[#3a4742]" : "bg-[#fffaf1] border-[#dfd4c6]")}>
-                  <AlertCircle className={cn("w-5 h-5 shrink-0 mt-0.5", isDark ? "text-[#d9c4a4]" : "text-[#9b7a44]")} />
-                  <div>
-                    <p className={cn("text-[10px] font-black uppercase tracking-[0.22em] mb-1", isDark ? "text-[#d9c4a4]" : "text-[#9b7a44]")}>Panic support</p>
-                    <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>If the call goes sideways, Callmate gives you a calm next line instead of leaving you blank.</p>
-                  </div>
-                </div>
+          {/* Stats */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }} className="space-y-2.5">
+            {[
+              { stat: '76%',  desc: 'of millennials experience telephobia' },
+              { stat: '1 in 3', desc: 'adults actively avoid phone calls' },
+              { stat: '40M+', desc: 'Americans affected — most never seek help' },
+            ].map(({ stat, desc }) => (
+              <div key={stat} className={cn("flex items-center gap-4 p-4 rounded-2xl border warm-panel", isDark ? "bg-[#202926]/80 border-[#415049]" : "")}>
+                <p className={cn("text-xl font-black w-14 shrink-0 tabular-nums", isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>{stat}</p>
+                <p className={cn("text-sm leading-snug", isDark ? "text-[#d8e0db]" : "text-[#51615b]")}>{desc}</p>
               </div>
-            </div>
-
-            <div className={cn("absolute -bottom-5 -left-2 sm:left-auto sm:-right-6 rounded-[1.75rem] border px-4 py-3 shadow-xl", isDark ? "bg-[#202926] border-[#415049]" : "bg-[rgba(255,251,245,0.94)] border-[#d8cdc0]")}>
-              <p className={cn("text-[10px] font-black uppercase tracking-[0.2em] mb-1", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>Pre-call reset</p>
-              <p className="text-sm font-semibold">Breathe in 4 · hold 4 · out 6</p>
-            </div>
+            ))}
           </motion.div>
-        </section>
+        </div>
 
-        <section className="grid gap-3 sm:grid-cols-3 mt-10 sm:mt-14">
-          {LANDING_STATS.map((item, index) => (
-            <motion.div
-              key={item.value}
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.22 + index * 0.06 }}
-              className={cn("rounded-[1.75rem] border p-5", isDark ? "bg-[#202926]/75 border-[#415049]" : "bg-[rgba(255,251,245,0.9)] border-[#d8cdc0]")}
-            >
-              <p className={cn("text-3xl font-semibold tracking-tight", isDark ? "text-[#f5efe5]" : "text-[#22312b]")}>{item.value}</p>
-              <p className={cn("mt-2 text-sm leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>{item.label}</p>
-            </motion.div>
-          ))}
-        </section>
-
-        <section id="how-it-works" className="pt-18 sm:pt-24">
-          <div className="max-w-2xl space-y-3 mb-8">
-            <p className={cn("text-[11px] font-black uppercase tracking-[0.3em]", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>How it works</p>
-            <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-tight">Built around the exact moment people freeze.</h2>
-            <p className={cn("text-base leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>
-              The structure follows one job: help you make the call you have been avoiding, then help the next one feel easier.
-            </p>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-3">
-            {LANDING_PILLARS.map(({ icon: Icon, eyebrow, title, body }, index) => (
-              <motion.div
-                key={title}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ delay: index * 0.08 }}
-                className={cn("rounded-[2rem] border p-6", isDark ? "bg-[#202926]/82 border-[#415049]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]")}
-              >
-                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-5", isDark ? "bg-[#2c3834] text-[#b7d0c4]" : "bg-[#e7eee9] text-[#476f61]")}>
-                  <Icon className="w-5 h-5" />
-                </div>
-                <p className={cn("text-[10px] font-black uppercase tracking-[0.24em] mb-2", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>{eyebrow}</p>
-                <h3 className="text-2xl font-semibold tracking-tight leading-snug">{title}</h3>
-                <p className={cn("mt-3 text-sm leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>{body}</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        <section className="pt-18 sm:pt-24 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="space-y-4">
-            <p className={cn("text-[11px] font-black uppercase tracking-[0.3em]", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>Why it feels different</p>
-            <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-tight">Not a generic AI writer. A call companion.</h2>
-            <p className={cn("text-base leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>
-              Generic tools can rewrite text. Callmate is designed for avoidance, panic spikes, branching conversations, and the recovery loop after the call ends.
-            </p>
-            <div className="space-y-3 pt-2">
-              {LANDING_DIFFERENTIATORS.map((item) => (
-                <div key={item} className={cn("rounded-2xl border px-4 py-3 flex items-center gap-3", isDark ? "bg-[#202926]/72 border-[#415049]" : "bg-[rgba(255,251,245,0.88)] border-[#d8cdc0]")}>
-                  <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0", isDark ? "bg-[#2d3834]" : "bg-[#e8efe9]")}>
-                    <Check className="w-4 h-4 text-[#7b9d76]" />
-                  </div>
-                  <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#22312b]")}>{item}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className={cn("rounded-[2.2rem] border p-5 sm:p-6", isDark ? "bg-[#1c2421] border-[#415049]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]")}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className={cn("rounded-[1.7rem] border p-5", isDark ? "bg-[#202926] border-[#3a4742]" : "bg-[#fffdf9] border-[#ddd2c4]")}>
-                <p className={cn("text-[10px] font-black uppercase tracking-[0.22em] mb-2", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>Steady first</p>
-                <p className="text-2xl font-semibold tracking-tight mb-2">Regulate before you speak.</p>
-                <p className={cn("text-sm leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>The pre-call breathing flow lowers the surge before the conversation starts.</p>
-              </div>
-              <div className={cn("rounded-[1.7rem] border p-5", isDark ? "bg-[#202926] border-[#3a4742]" : "bg-[#fffdf9] border-[#ddd2c4]")}>
-                <p className={cn("text-[10px] font-black uppercase tracking-[0.22em] mb-2", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>Read while calling</p>
-                <p className="text-2xl font-semibold tracking-tight mb-2">Words that stay visible.</p>
-                <p className={cn("text-sm leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>A script is only useful if it is structured clearly enough to use under stress.</p>
-              </div>
-              <div className={cn("rounded-[1.7rem] border p-5 sm:col-span-2", isDark ? "bg-[#202926] border-[#3a4742]" : "bg-[#fffdf9] border-[#ddd2c4]")}>
-                <p className={cn("text-[10px] font-black uppercase tracking-[0.22em] mb-2", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>Proof you are improving</p>
-                <p className="text-2xl font-semibold tracking-tight mb-2">Progress stops the “I’m still bad at this” spiral.</p>
-                <p className={cn("text-sm leading-relaxed max-w-[44ch]", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>Callmate tracks reflections, anxiety scores, and milestones so progress feels earned and visible instead of easy to dismiss.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="pt-18 sm:pt-24">
-          <div className="max-w-2xl space-y-3 mb-8">
-            <p className={cn("text-[11px] font-black uppercase tracking-[0.3em]", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>Social proof</p>
-            <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-tight">People are using it for the calls they have been dodging for years.</h2>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {LANDING_TESTIMONIALS.map((review, index) => (
-              <motion.div
-                key={review.name}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ delay: index * 0.08 }}
-                className={cn("rounded-[2rem] border p-5", isDark ? "bg-[#202926]/82 border-[#415049]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]")}
-              >
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <img src={review.avatar} alt="" aria-hidden="true" className="w-12 h-12 rounded-full object-cover border border-white/20 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold truncate">{review.name}</p>
-                      <p className={cn("text-[11px] leading-snug", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>{review.location} · {review.tag}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-0.5 shrink-0">
-                    {[...Array(5)].map((_, starIndex) => (
-                      <Star key={starIndex} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                </div>
-                <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>&quot;{review.quote}&quot;</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        <section className="pt-18 sm:pt-24">
-          <div className="max-w-2xl space-y-3 mb-8">
-            <p className={cn("text-[11px] font-black uppercase tracking-[0.3em]", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>FAQ</p>
-            <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-tight">A few things people ask before they start.</h2>
-          </div>
-
-          <div className="space-y-3">
-            {LANDING_FAQS.map((item) => (
-              <div key={item.question} className={cn("rounded-[1.75rem] border p-5 sm:p-6", isDark ? "bg-[#202926]/72 border-[#415049]" : "bg-[rgba(255,251,245,0.88)] border-[#d8cdc0]")}>
-                <p className="text-lg sm:text-xl font-semibold tracking-tight">{item.question}</p>
-                <p className={cn("mt-2 text-sm sm:text-base leading-relaxed max-w-[56rem]", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>{item.answer}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="pt-18 sm:pt-24">
-          <div className={cn("rounded-[2.5rem] border p-6 sm:p-8 lg:p-10 overflow-hidden relative", isDark ? "bg-[#1d2623] border-[#415049]" : "bg-[rgba(255,251,245,0.94)] border-[#d8cdc0]")}>
-            <div className={cn("absolute inset-0 opacity-80", isDark ? "bg-[radial-gradient(circle_at_top_right,rgba(123,157,118,0.18),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(216,197,166,0.14),transparent_32%)]" : "bg-[radial-gradient(circle_at_top_right,rgba(123,157,118,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(216,197,166,0.24),transparent_32%)]")} />
-            <div className="relative z-10 max-w-3xl">
-              <p className={cn("text-[11px] font-black uppercase tracking-[0.3em] mb-3", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>Final step</p>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-[0.95]">You do not need to keep white-knuckling every call.</h2>
-              <p className={cn("mt-4 text-base sm:text-lg leading-relaxed max-w-[40rem]", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>
-                Start with one avoided call. Let Callmate help you prepare, stay steady, and finally get it done.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-3 mt-7">
-                <Button size="lg" variant="primary" isDark={isDark} className="h-14 px-6 font-bold text-base" onClick={() => setView('reset')}>
-                  Start your free trial <ChevronRight className="w-4 h-4" />
-                </Button>
-                <Button size="lg" variant="outline" isDark={isDark} className="h-14 px-6 font-semibold text-base" onClick={() => setView('account')}>
-                  I already have an account
-                </Button>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-4 mt-6">
-                <div className={cn("inline-flex items-center gap-2 text-sm", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>
-                  <img src={appStoreIcon} alt="" aria-hidden="true" className="w-4 h-4" />
-                  App Store ready
-                </div>
-                <div className={cn("inline-flex items-center gap-2 text-sm", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>
-                  <Users className="w-4 h-4" />
-                  Personalized onboarding
-                </div>
-                <div className={cn("inline-flex items-center gap-2 text-sm", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>
-                  <Volume2 className="w-4 h-4" />
-                  Breathing reset included
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <footer className={cn("pt-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>
-          <div className="flex items-center gap-3">
-            <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center", isDark ? "bg-[#22312b]" : "bg-[#5d8a7a]")}>
-              <Logo className="w-6 h-6 text-[#fbf8f2]" />
-            </div>
-            <div>
-              <p className="font-semibold text-[#22312b] dark:text-[#f6f2ea]">Callmate</p>
-              <p className="text-xs">Phone calls made easier.</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setView('companyPlans')}
-              className={cn("px-4 py-2 rounded-2xl border text-sm font-semibold transition-colors", isDark ? "bg-[#202926] border-[#415049] hover:border-[#66756f]" : "bg-[rgba(255,251,245,0.86)] border-[#d8cdc0] hover:border-[#b7aa96]")}
-            >
-              Company Plans
-            </button>
-            {[facebookIcon, instagramIcon, tiktokIcon, xIcon, youtubeIcon].map((icon, index) => (
-              <div key={index} className={cn("w-10 h-10 rounded-2xl border flex items-center justify-center", isDark ? "bg-[#202926] border-[#415049]" : "bg-[rgba(255,251,245,0.86)] border-[#d8cdc0]")}>
-                <img src={icon} alt="" aria-hidden="true" className="w-4 h-4 opacity-80" />
-              </div>
-            ))}
-          </div>
-        </footer>
-      </div>
-    </div>
-  );
-
-  if (view === 'companyPlans') return (
-    <div className={cn("min-h-[100dvh] warm-therapeutic-bg transition-colors duration-500 relative overflow-x-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
-      <div className="absolute inset-0 pointer-events-none">
-        <div className={cn("absolute -top-20 right-0 h-80 w-80 rounded-full blur-3xl", isDark ? "bg-[#2d4237]/34" : "bg-[#dde7dd]/75")} />
-        <div className={cn("absolute top-[32rem] -left-20 h-80 w-80 rounded-full blur-3xl", isDark ? "bg-[#d9c4a4]/10" : "bg-[#e7d7be]/60")} />
-      </div>
-
-      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-7 pt-6 pb-14">
-        <motion.header
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className={cn("sticky top-0 z-20 mb-8 rounded-[2rem] border backdrop-blur-xl px-5 py-4 flex items-center justify-between gap-4", isDark ? "bg-[#161d1b]/80 border-[#33403b]" : "bg-[rgba(251,248,242,0.84)] border-[#d8cdc0]")}
-        >
-          <div className="flex items-center gap-3">
-            <div className={cn("w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg", isDark ? "bg-[#22312b]" : "bg-[#5d8a7a]")}>
-              <Logo className="w-7 h-7 text-[#fbf8f2]" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold tracking-tight">Callmate</p>
-              <p className={cn("text-[10px] font-black uppercase tracking-[0.28em]", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>Company Plans</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" isDark={isDark} className="h-11 px-4 font-semibold" onClick={() => setView('explainer')}>
-              Consumer page
-            </Button>
-            <Button size="sm" variant="glass" isDark={isDark} className="h-11 px-4 font-semibold" onClick={() => setView('reset')}>
-              Try employee flow
-            </Button>
-          </div>
-        </motion.header>
-
-        <section className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center pt-4">
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08, duration: 0.4 }}
-            className="space-y-6"
-          >
-            <div className={cn("inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-[0.24em]", isDark ? "bg-[#202926]/80 border-[#415049] text-[#b7d0c4]" : "bg-[rgba(255,251,245,0.88)] border-[#d8cdc0] text-[#5d8a7a]")}>
-              <span className="h-2 w-2 rounded-full bg-[#7b9d76]" />
-              Revenue starts with calls that actually happen
-            </div>
-            <div className="space-y-4">
-              <h1 className="max-w-[13ch] text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-tight leading-[0.92]">
-                Phone confidence is a business lever.
-              </h1>
-              <p className={cn("max-w-[42rem] text-base sm:text-lg leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>
-                Every delayed follow-up, avoided collections call, weak sales conversation, or postponed customer callback costs money. Callmate helps teams make more successful phone calls with less avoidance and more consistency.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button size="lg" variant="primary" isDark={isDark} className="h-14 px-6 font-bold text-base" onClick={() => setView('reset')}>
-                Start an employee pilot <ChevronRight className="w-4 h-4" />
-              </Button>
-              <Button size="lg" variant="secondary" isDark={isDark} className="h-14 px-6 font-semibold text-base" onClick={() => document.getElementById('company-impact')?.scrollIntoView({ behavior: 'smooth' })}>
-                See the business case
-              </Button>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                ['More calls made', 'Less avoidance means more conversations started on time.'],
-                ['Better call outcomes', 'Scripts and branch prep improve consistency under pressure.'],
-                ['Higher revenue velocity', 'Faster follow-up and steadier objection handling move money sooner.'],
-              ].map(([title, body]) => (
-                <div key={title} className={cn("rounded-[1.6rem] border p-4", isDark ? "bg-[#202926]/78 border-[#415049]" : "bg-[rgba(255,251,245,0.9)] border-[#d8cdc0]")}>
-                  <p className="text-lg font-semibold tracking-tight">{title}</p>
-                  <p className={cn("mt-2 text-sm leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>{body}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.16, duration: 0.45 }}
-            className={cn("rounded-[2.3rem] border p-5 sm:p-6 shadow-[0_30px_80px_rgba(43,54,49,0.16)]", isDark ? "bg-[#1c2421] border-[#415049]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]")}
-          >
-            <div className={cn("rounded-[1.9rem] p-5 sm:p-6", isDark ? "bg-[#111715]" : "bg-[#f4eee4]")}>
-              <div className="flex items-center justify-between gap-4 mb-5">
-                <div>
-                  <p className={cn("text-[10px] font-black uppercase tracking-[0.28em] mb-1", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>Revenue-critical calls</p>
-                  <p className="text-2xl font-semibold tracking-tight">Where Callmate helps</p>
-                </div>
-                <div className={cn("rounded-2xl px-3 py-2 text-xs font-black uppercase tracking-[0.2em]", isDark ? "bg-[#202926] text-[#b7d0c4]" : "bg-white text-[#5d8a7a]")}>
-                  Team support
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  ['Lead follow-up', 'Faster calls to new leads before interest cools off.'],
-                  ['Objection handling', 'Stronger responses when a prospect pushes back on price or timing.'],
-                  ['Collections and billing', 'More confident asks when money is owed or overdue.'],
-                  ['Retention and support', 'Steadier conversations when a customer is upset or at risk.'],
-                ].map(([label, text], index) => (
-                  <div key={label} className={cn("rounded-2xl border p-4", isDark ? "bg-[#1a221f] border-[#313d38]" : "bg-[rgba(255,255,255,0.72)] border-[#ddd2c4]")}>
-                    <div className="flex items-start gap-3">
-                      <div className={cn("mt-0.5 w-7 h-7 rounded-xl flex items-center justify-center text-[11px] font-black", isDark ? "bg-[#25302c] text-[#b7d0c4]" : "bg-[#e9e1d4] text-[#5d8a7a]")}>
-                        {index + 1}
-                      </div>
-                      <div>
-                        <p className={cn("text-[10px] font-black uppercase tracking-[0.22em] mb-1", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>{label}</p>
-                        <p className={cn("text-sm leading-relaxed", isDark ? "text-[#f2ede3]" : "text-[#22312b]")}>{text}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className={cn("mt-4 rounded-2xl border p-4", isDark ? "bg-[#202926] border-[#3a4742]" : "bg-[#fffaf1] border-[#dfd4c6]")}>
-                <p className={cn("text-[10px] font-black uppercase tracking-[0.22em] mb-2", isDark ? "text-[#d9c4a4]" : "text-[#9b7a44]")}>Bottom-line logic</p>
-                <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>
-                  More successful calls directly influence conversion, retention, collections, and response times. The companies that win on the phone usually win downstream in revenue too.
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </section>
-
-        <section id="company-impact" className="pt-18 sm:pt-24">
-          <div className="max-w-2xl space-y-3 mb-8">
-            <p className={cn("text-[11px] font-black uppercase tracking-[0.3em]", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>Business impact</p>
-            <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-tight">Avoided calls create hidden revenue drag.</h2>
-            <p className={cn("text-base leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>
-              Businesses obsess over pipeline, retention, and operational speed. But if employees are quietly avoiding calls, all three suffer.
-            </p>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-3">
-            {COMPANY_REVENUE_FACTORS.map((item, index) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ delay: index * 0.08 }}
-                className={cn("rounded-[2rem] border p-6", isDark ? "bg-[#202926]/82 border-[#415049]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]")}
-              >
-                <p className={cn("text-[10px] font-black uppercase tracking-[0.24em] mb-2", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>Revenue factor {index + 1}</p>
-                <h3 className="text-2xl font-semibold tracking-tight leading-snug">{item.title}</h3>
-                <p className={cn("mt-3 text-sm leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>{item.body}</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        <section className="pt-18 sm:pt-24 grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
-          <div className="space-y-4">
-            <p className={cn("text-[11px] font-black uppercase tracking-[0.3em]", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>Best fit teams</p>
-            <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-tight">For any team that still wins or loses over the phone.</h2>
-            <p className={cn("text-base leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>
-              If conversations drive revenue, service quality, or operational speed, phone avoidance is not a soft issue. It is a performance issue.
-            </p>
-            <div className="space-y-3 pt-2">
-              {COMPANY_USE_CASES.map((item) => (
-                <div key={item} className={cn("rounded-2xl border px-4 py-3 flex items-center gap-3", isDark ? "bg-[#202926]/72 border-[#415049]" : "bg-[rgba(255,251,245,0.88)] border-[#d8cdc0]")}>
-                  <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0", isDark ? "bg-[#2d3834]" : "bg-[#e8efe9]")}>
-                    <Check className="w-4 h-4 text-[#7b9d76]" />
-                  </div>
-                  <p className={cn("text-sm leading-relaxed", isDark ? "text-[#dbe3de]" : "text-[#22312b]")}>{item}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className={cn("rounded-[2.2rem] border p-5 sm:p-6", isDark ? "bg-[#1c2421] border-[#415049]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]")}>
-            <div className="grid gap-4">
-              {COMPANY_CAPABILITIES.map((item) => (
-                <div key={item.title} className={cn("rounded-[1.7rem] border p-5", isDark ? "bg-[#202926] border-[#3a4742]" : "bg-[#fffdf9] border-[#ddd2c4]")}>
-                  <p className={cn("text-[10px] font-black uppercase tracking-[0.22em] mb-2", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>{item.eyebrow}</p>
-                  <p className="text-2xl font-semibold tracking-tight mb-2">{item.title}</p>
-                  <p className={cn("text-sm leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>{item.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="pt-18 sm:pt-24">
-          <div className={cn("rounded-[2.5rem] border p-6 sm:p-8 lg:p-10 overflow-hidden relative", isDark ? "bg-[#1d2623] border-[#415049]" : "bg-[rgba(255,251,245,0.94)] border-[#d8cdc0]")}>
-            <div className={cn("absolute inset-0 opacity-80", isDark ? "bg-[radial-gradient(circle_at_top_right,rgba(123,157,118,0.18),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(216,197,166,0.14),transparent_32%)]" : "bg-[radial-gradient(circle_at_top_right,rgba(123,157,118,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(216,197,166,0.24),transparent_32%)]")} />
-            <div className="relative z-10 max-w-4xl">
-              <p className={cn("text-[11px] font-black uppercase tracking-[0.3em] mb-3", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>Company rollout</p>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-[0.95]">If calls matter to the business, confidence on calls should too.</h2>
-              <p className={cn("mt-4 text-base sm:text-lg leading-relaxed max-w-[42rem]", isDark ? "text-[#dbe3de]" : "text-[#51615b]")}>
-                Start with a small pilot, prove the effect on call completion and follow-up speed, then expand to the teams where the phone has the biggest revenue impact.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-3 mt-7">
-                <Button size="lg" variant="primary" isDark={isDark} className="h-14 px-6 font-bold text-base" onClick={() => setView('reset')}>
-                  Start an employee pilot <ChevronRight className="w-4 h-4" />
-                </Button>
-                <Button size="lg" variant="outline" isDark={isDark} className="h-14 px-6 font-semibold text-base" onClick={() => setView('explainer')}>
-                  Back to consumer page
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="pt-18 sm:pt-24">
-          <div className="max-w-2xl space-y-3 mb-8">
-            <p className={cn("text-[11px] font-black uppercase tracking-[0.3em]", isDark ? "text-[#9fc0b0]" : "text-[#5d8a7a]")}>FAQ</p>
-            <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-tight">Questions a team lead will ask.</h2>
-          </div>
-
-          <div className="space-y-3">
-            {COMPANY_FAQS.map((item) => (
-              <div key={item.question} className={cn("rounded-[1.75rem] border p-5 sm:p-6", isDark ? "bg-[#202926]/72 border-[#415049]" : "bg-[rgba(255,251,245,0.88)] border-[#d8cdc0]")}>
-                <p className="text-lg sm:text-xl font-semibold tracking-tight">{item.question}</p>
-                <p className={cn("mt-2 text-sm sm:text-base leading-relaxed max-w-[56rem]", isDark ? "text-[#c5d0ca]" : "text-[#51615b]")}>{item.answer}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Bottom section */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85 }} className="space-y-5 pt-6">
+          <p className={cn("text-2xl font-semibold text-center", isDark ? "text-[#f5efe5]" : "text-[#22312b]")}>
+            You are not broken.
+          </p>
+          <Button size="lg" variant="primary" isDark={isDark} className="w-full h-14 font-bold text-base" onClick={() => setView('reset')}>
+            Help me feel steadier <ChevronRight className="w-4 h-4" />
+          </Button>
+        </motion.div>
       </div>
     </div>
   );
@@ -2431,7 +1528,7 @@ export default function App() {
             <OnboardingDiscoveryStep
               isDark={isDark}
               initialValue={heardAboutUs}
-              onBack={() => setView(isNativeApp ? 'reset' : 'explainer')}
+              onBack={() => setView('explainer')}
               onContinue={(value) => {
                 setHeardAboutUs(value);
                 localStorage.setItem('callmate_heard_about_us', value);
@@ -2653,10 +1750,6 @@ export default function App() {
       const { data: { session: freshSession } } = await sb.auth.getSession();
       if (!freshSession?.user) {
         throw new Error('No active auth session found.');
-      }
-      {
-        const { setCachedAccessToken } = await import('./services/supabase');
-        setCachedAccessToken(freshSession.access_token ?? null);
       }
 
       setSupabaseUser(freshSession.user);
@@ -4311,8 +3404,6 @@ const OnboardingDiscoveryStep = React.memo(function OnboardingDiscoveryStep({
           const selected = selection === option.value;
           const Icon = 'icon' in option ? option.icon : null;
           const asset = 'asset' in option ? option.asset : null;
-          const assetClassName = 'assetClassName' in option ? option.assetClassName : undefined;
-          const badge = 'badge' in option ? option.badge : null;
           return (
             <button
               key={option.value}
@@ -4347,14 +3438,14 @@ const OnboardingDiscoveryStep = React.memo(function OnboardingDiscoveryStep({
                     aria-hidden="true"
                     className={cn(
                       "object-contain",
-                      assetClassName,
+                      option.assetClassName,
                       selected && !isDark ? "brightness-0 invert" : selected && isDark ? "brightness-0 invert" : "brightness-0"
                     )}
                   />
                 ) : Icon ? (
                   <Icon className="w-5 h-5" />
                 ) : (
-                  <span className="text-[0.95rem] font-black leading-none tracking-[-0.04em] uppercase">{badge}</span>
+                  <span className="text-[0.95rem] font-black leading-none tracking-[-0.04em] uppercase">{option.badge}</span>
                 )}
               </div>
               <span className="text-lg font-semibold tracking-tight">{option.value}</span>
