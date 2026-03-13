@@ -35,6 +35,11 @@ body {
   padding-bottom: max(1.5rem, calc(var(--keyboard-inset) + 1.5rem));
 }
 
+html[data-keyboard-open="true"] .auth-keyboard-aware {
+  justify-content: flex-start;
+  padding-top: 1.5rem;
+}
+
 input,
 textarea,
 select,

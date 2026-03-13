@@ -66,8 +66,27 @@ export function exportScriptsToCSV(scripts: CallScript[]): string {
   return [headers.join(','), ...rows].join('\r\n');
 }
 
-export function downloadFile(content: string, filename: string, mimeType: string): void {
+type ShareCapableNavigator = Navigator & {
+  canShare?: (data: { files?: File[] }) => boolean;
+  share?: (data: { files?: File[]; title?: string }) => Promise<void>;
+};
+
+export async function downloadFile(content: string, filename: string, mimeType: string): Promise<void> {
   const blob = new Blob([content], { type: mimeType });
+
+  if (typeof File !== 'undefined') {
+    const shareNavigator = navigator as ShareCapableNavigator;
+    const file = new File([blob], filename, { type: mimeType });
+    if (
+      typeof shareNavigator.share === 'function' &&
+      typeof shareNavigator.canShare === 'function' &&
+      shareNavigator.canShare({ files: [file] })
+    ) {
+      await shareNavigator.share({ files: [file], title: filename });
+      return;
+    }
+  }
+
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
@@ -76,7 +95,7 @@ export function downloadFile(content: string, filename: string, mimeType: string
   document.body.appendChild(anchor);
   anchor.click();
   document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

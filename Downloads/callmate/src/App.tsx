@@ -51,6 +51,7 @@ import instagramIcon from '../icons/instagram (1).svg';
 import tiktokIcon from '../icons/tiktok.svg';
 import xIcon from '../icons/x.svg';
 import youtubeIcon from '../icons/youtube.svg';
+import loginBackground from '../backgrounds/login.png';
 
 const RotatingText = () => {
   const words = ["putting off?", "dreading?", "avoiding?"];
@@ -390,12 +391,22 @@ export default function App() {
 
   const handleExportJSON = async () => {
     const { exportToJSON, downloadFile } = await import('./services/exportImport');
-    downloadFile(exportToJSON(history, reflections), 'callmate-backup.json', 'application/json');
+    try {
+      await downloadFile(exportToJSON(history, reflections), 'callmate-backup.json', 'application/json');
+    } catch (error) {
+      console.error('Failed to export all data:', error);
+      alert('Export failed. Please try again.');
+    }
   };
 
   const handleExportCSV = async () => {
     const { exportScriptsToCSV, downloadFile } = await import('./services/exportImport');
-    downloadFile(exportScriptsToCSV(history), 'callmate-scripts.csv', 'text/csv');
+    try {
+      await downloadFile(exportScriptsToCSV(history), 'callmate-scripts.csv', 'text/csv');
+    } catch (error) {
+      console.error('Failed to export scripts:', error);
+      alert('Export failed. Please try again.');
+    }
   };
 
   const handleImportFile = async (file: File): Promise<ImportPreview | { error: string }> => {
@@ -648,6 +659,8 @@ export default function App() {
   useEffect(() => {
     const editableSelector = 'input, textarea, select, [contenteditable="true"]';
     const ensureTimers = new Set<number>();
+    const originalScrollPositions = new Map<HTMLElement | Window, number>();
+    let restoreTimer: number | null = null;
 
     const isEditable = (element: Element | null): element is HTMLElement => {
       return !!element && element instanceof HTMLElement && element.matches(editableSelector);
@@ -670,6 +683,7 @@ export default function App() {
       const keyboardInset = Math.max(0, window.innerHeight - height - (visualViewport?.offsetTop ?? 0));
       document.documentElement.style.setProperty('--app-vh', `${height}px`);
       document.documentElement.style.setProperty('--keyboard-inset', `${keyboardInset}px`);
+      document.documentElement.dataset.keyboardOpen = keyboardInset > 0 ? 'true' : 'false';
     };
 
     const ensureVisible = (target: Element | null, behavior: ScrollBehavior) => {
@@ -688,6 +702,9 @@ export default function App() {
 
       const scrollParent = findScrollableParent(target);
       if (scrollParent) {
+        if (!originalScrollPositions.has(scrollParent)) {
+          originalScrollPositions.set(scrollParent, scrollParent.scrollTop);
+        }
         const parentRect = scrollParent.getBoundingClientRect();
         const parentVisibleTop = Math.max(parentRect.top + topPadding, visibleTop);
         const parentVisibleBottom = Math.min(parentRect.bottom - bottomPadding, visibleBottom);
@@ -705,6 +722,9 @@ export default function App() {
         return;
       }
 
+      if (!originalScrollPositions.has(window)) {
+        originalScrollPositions.set(window, window.scrollY);
+      }
       target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior });
       const adjustedRect = target.getBoundingClientRect();
       if (adjustedRect.bottom > visibleBottom) {
@@ -712,6 +732,17 @@ export default function App() {
       } else if (adjustedRect.top < visibleTop) {
         window.scrollBy({ top: adjustedRect.top - visibleTop - 20, behavior });
       }
+    };
+
+    const restoreScrollPositions = () => {
+      originalScrollPositions.forEach((top, target) => {
+        if (target === window) {
+          window.scrollTo({ top, behavior: 'smooth' });
+          return;
+        }
+        target.scrollTo({ top, behavior: 'smooth' });
+      });
+      originalScrollPositions.clear();
     };
 
     const scheduleEnsureVisible = (target: Element | null, behavior: ScrollBehavior = 'smooth') => {
@@ -727,7 +758,23 @@ export default function App() {
     };
 
     const handleFocusIn = (event: FocusEvent) => {
+      if (restoreTimer !== null) {
+        window.clearTimeout(restoreTimer);
+        restoreTimer = null;
+      }
       scheduleEnsureVisible(event.target as Element | null);
+    };
+
+    const handleFocusOut = () => {
+      if (restoreTimer !== null) {
+        window.clearTimeout(restoreTimer);
+      }
+      restoreTimer = window.setTimeout(() => {
+        if (!isEditable(document.activeElement)) {
+          restoreScrollPositions();
+        }
+        restoreTimer = null;
+      }, 160);
     };
 
     const handleViewportChange = () => {
@@ -738,13 +785,19 @@ export default function App() {
     setViewportMetrics();
 
     document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
     window.addEventListener('resize', handleViewportChange);
     window.visualViewport?.addEventListener('resize', handleViewportChange);
     window.visualViewport?.addEventListener('scroll', handleViewportChange);
 
     return () => {
       ensureTimers.forEach(timer => window.clearTimeout(timer));
+      if (restoreTimer !== null) {
+        window.clearTimeout(restoreTimer);
+      }
       document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+      delete document.documentElement.dataset.keyboardOpen;
       window.removeEventListener('resize', handleViewportChange);
       window.visualViewport?.removeEventListener('resize', handleViewportChange);
       window.visualViewport?.removeEventListener('scroll', handleViewportChange);
@@ -1523,7 +1576,7 @@ export default function App() {
           </div>
         )}
 
-        <div className="keyboard-aware flex-1 flex flex-col px-7 pb-8 max-w-md mx-auto w-full relative z-10 overflow-hidden">
+        <div className="keyboard-aware flex-1 flex flex-col px-7 pb-8 max-w-md mx-auto w-full relative z-10 overflow-y-auto">
           {showOnboardingDiscovery ? (
             <OnboardingDiscoveryStep
               isDark={isDark}
@@ -1533,6 +1586,10 @@ export default function App() {
                 setHeardAboutUs(value);
                 localStorage.setItem('callmate_heard_about_us', value);
                 setShowOnboardingDiscovery(false);
+                setOnboardingStep(1);
+                window.requestAnimationFrame(() => {
+                  window.scrollTo({ top: 0, behavior: 'auto' });
+                });
               }}
             />
           ) : showOnboardingThankYou ? (
@@ -1606,6 +1663,35 @@ export default function App() {
                   <p className={cn("text-sm", isDark ? "text-zinc-500" : "text-zinc-500")}>Select all that apply — this shapes your recovery plan.</p>
                 </div>
                 <div className="flex-1 overflow-y-auto scrollbar-hide space-y-2 pb-2">
+                  {anxietyTriggers.some(trigger => !TRIGGERS.includes(trigger)) && (
+                    <div className={cn("w-full rounded-2xl border p-4 space-y-3", isDark ? "border-[#415049] bg-[#202926]/70" : "border-[#d8cdc0] bg-[rgba(255,251,245,0.88)]")}>
+                      <p className={cn("text-[10px] font-black uppercase tracking-widest", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>Your custom answers</p>
+                      <div className="flex flex-wrap gap-2">
+                        {anxietyTriggers
+                          .filter(trigger => !TRIGGERS.includes(trigger))
+                          .map(trigger => (
+                            <button
+                              key={trigger}
+                              type="button"
+                              onClick={() => {
+                                const next = anxietyTriggers.filter(t => t !== trigger);
+                                setAnxietyTriggers(next);
+                                localStorage.setItem('callmate_triggers', JSON.stringify(next));
+                              }}
+                              className={cn(
+                                "inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium border transition-all",
+                                isDark
+                                  ? "border-[#7b9d76] bg-[#5d8a7a]/15 text-[#dbe8df]"
+                                  : "border-[#8fae9e] bg-[#dbe8df] text-[#476f61]"
+                              )}
+                            >
+                              <span>{trigger}</span>
+                              <span className="text-xs font-black">×</span>
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                   {TRIGGERS.map(trigger => {
                     const selected = anxietyTriggers.includes(trigger);
                     return (
@@ -1743,6 +1829,7 @@ export default function App() {
     isDark={isDark}
     userName={userName}
     tier={tier}
+    selectedPlan={selectedPlan}
     trialStartDate={trialStartDate}
     onComplete={async (email, isNewUser) => {
       // Get fresh session — supabaseUser closure may be stale at this point
@@ -3268,9 +3355,27 @@ const OnboardingProfileStep = React.memo(function OnboardingProfileStep({
   onContinue: (profile: { name: string; gender: string; ageRange: string }) => void;
 }) {
   const nameRef = React.useRef<HTMLInputElement>(null);
+  const [draftName, setDraftName] = React.useState(initialName);
   const [draftGender, setDraftGender] = React.useState(initialGender);
   const [draftAgeRange, setDraftAgeRange] = React.useState(initialAgeRange);
   const [hasName, setHasName] = React.useState(!!initialName);
+
+  React.useEffect(() => {
+    setDraftName(initialName);
+    setHasName(!!initialName.trim());
+  }, [initialName]);
+
+  React.useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const input = nameRef.current;
+      if (!input) return;
+      input.focus();
+      const end = input.value.length;
+      input.setSelectionRange(end, end);
+    }, 260);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   return (
     <motion.div key="s1" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.22 }} className="flex flex-col h-full pt-7">
@@ -3290,9 +3395,12 @@ const OnboardingProfileStep = React.memo(function OnboardingProfileStep({
           <input
             ref={nameRef}
             type="text"
-            autoFocus
-            defaultValue={initialName}
-            onChange={e => setHasName(!!e.target.value.trim())}
+            value={draftName}
+            onChange={e => {
+              const next = e.target.value;
+              setDraftName(next);
+              setHasName(!!next.trim());
+            }}
             placeholder="e.g. Alex"
             className={cn("w-full px-4 py-3.5 rounded-2xl border text-base font-medium focus:outline-none transition-all", isDark ? "bg-[#202926] border-[#415049] text-white placeholder:text-[#81918a] focus:border-[#7b9d76]" : "bg-[rgba(255,251,245,0.92)] border-[#d8cdc0] text-[#22312b] placeholder:text-[#95a19c] focus:border-[#7b9d76]")}
           />
@@ -3345,7 +3453,7 @@ const OnboardingProfileStep = React.memo(function OnboardingProfileStep({
           isDark={isDark}
           className="w-full h-14 font-bold"
           disabled={!hasName}
-          onClick={() => onContinue({ name: nameRef.current?.value.trim() || '', gender: draftGender, ageRange: draftAgeRange })}
+          onClick={() => onContinue({ name: draftName.trim(), gender: draftGender, ageRange: draftAgeRange })}
         >
           Continue <ChevronRight className="w-4 h-4" />
         </Button>
@@ -3563,7 +3671,7 @@ const OnboardingNotificationsStep = React.memo(function OnboardingNotificationsS
 }) {
   return (
     <div className={cn("app-screen warm-therapeutic-bg flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
-      <div className="keyboard-aware flex-1 flex flex-col px-7 pb-8 max-w-md mx-auto w-full relative z-10 overflow-hidden">
+      <div className="keyboard-aware flex-1 flex flex-col px-7 pb-8 max-w-md mx-auto w-full relative z-10 overflow-y-auto">
         <motion.div key="notifications" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.22 }} className="flex flex-col h-full pt-3">
           <div className="flex-1 flex flex-col justify-start pt-12">
             <div className="space-y-9">
@@ -3626,10 +3734,11 @@ const OnboardingNotificationsStep = React.memo(function OnboardingNotificationsS
   );
 });
 
-function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
+function AccountSetup({ isDark, userName, tier, selectedPlan, trialStartDate, onComplete }: {
   isDark: boolean;
   userName: string;
   tier: string;
+  selectedPlan: 'monthly' | 'annual' | null;
   trialStartDate: number | null;
   onComplete: (email: string, isNewUser: boolean) => Promise<void>;
 }) {
@@ -3641,10 +3750,25 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
   const [pendingConfirmationEmail, setPendingConfirmationEmail] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [appleLoading, setAppleLoading] = React.useState(false);
+  const emailAuthHidden = true;
+  const selectedPlanLabel =
+    tier === 'annual' || selectedPlan === 'annual'
+      ? 'Annual Plan · Save 35%'
+      : tier === 'monthly' || selectedPlan === 'monthly'
+      ? 'Monthly Plan'
+      : null;
+  const [displayName, setDisplayName] = React.useState(userName.trim());
 
   const trialEndDate = trialStartDate
     ? new Date(trialStartDate + 3 * 86400000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     : null;
+
+  React.useEffect(() => {
+    const nextName = userName.trim();
+    if (nextName) {
+      setDisplayName(nextName);
+    }
+  }, [userName]);
 
   const switchMode = (next: 'signup' | 'login') => {
     setMode(next);
@@ -3831,34 +3955,29 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
   }, [onComplete]);
   return (
     <div className={cn("app-screen warm-therapeutic-bg flex flex-col transition-colors duration-500 relative overflow-hidden", isDark ? "bg-[#161d1b] text-[#f6f2ea]" : "text-[#22312b]")}>
-      <div className="keyboard-aware flex-1 flex flex-col px-6 py-10 overflow-y-auto max-w-lg mx-auto w-full justify-center">
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
-          <div className="flex items-center gap-2 mb-6">
-            <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center", isDark ? "bg-[#22312b]" : "bg-[#5d8a7a]")}>
-              <Logo className="w-5 h-5 text-[#fbf8f2]" />
-            </div>
-            <span className="font-bold text-xl">Callmate</span>
-          </div>
-          <p className={cn("text-xs font-black uppercase tracking-[0.25em] mb-2", isDark ? "text-[#a9c2b5]" : "text-[#5d8a7a]")}>
-            {tier === 'annual' ? 'Annual Plan · Save 35%' : 'Monthly Plan'}
-          </p>
-          <h1 className="text-3xl font-bold leading-tight mb-2">
-            {mode === 'login' ? 'Welcome back.' : (userName ? `One last step, ${userName}.` : 'One last step.')}
-          </h1>
-          <p className={cn("text-sm leading-relaxed", isDark ? "text-[#c5d0ca]" : "text-[#607068]")}>
-            {mode === 'login'
-              ? 'Sign in to pick up right where you left off.'
-              : 'Your scripts and progress stay with your account, so your support is there when you need it.'}
-          </p>
+      <div className="keyboard-aware auth-keyboard-aware flex-1 flex flex-col px-5 pt-6 pb-6 overflow-y-auto max-w-lg mx-auto w-full justify-start">
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }} className="mb-4">
+          <AuthBenefitHero isDark={isDark} selectedPlanLabel={selectedPlanLabel} />
         </motion.div>
+
+        <div className="pb-2">
 
         {!showConfirmationState && (
           <>
         {/* Social auth */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="space-y-3 mb-5">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className={cn(
+            "space-y-3 mb-4 rounded-[2rem] border p-4 shadow-[0_24px_70px_rgba(19,28,24,0.1)] backdrop-blur-sm",
+            isDark
+              ? "bg-[#1c2522]/92 border-[#3d4d46]"
+              : "bg-[rgba(255,252,247,0.88)] border-[#e6dbcf]"
+          )}
+        >
           <button onClick={handleApple} disabled={loading || appleLoading} className={cn(
-            "w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border font-semibold text-sm transition-all active:scale-[0.99] disabled:opacity-50",
+            "w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border font-semibold text-sm transition-all active:scale-[0.99] disabled:opacity-50 shadow-sm",
             isDark ? "bg-[#f4efe6] text-[#22312b] border-[#f4efe6] hover:bg-[#ebe4d8]" : "bg-[#22312b] text-[#fbf8f2] border-[#22312b] hover:bg-[#2e4039]"
           )}>
             {appleLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
@@ -3877,16 +3996,17 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
           </button>
         </motion.div>
 
-        {/* Divider */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.18 }} className="flex items-center gap-3 mb-5">
-          <div className={cn("flex-1 h-px", isDark ? "bg-[#415049]" : "bg-[#d8cdc0]")} />
-          <span className={cn("text-xs font-bold", isDark ? "text-[#8f9d97]" : "text-[#87938d]")}>{mode === 'login' ? 'or sign in with email' : 'or sign up with email'}</span>
-          <div className={cn("flex-1 h-px", isDark ? "bg-[#415049]" : "bg-[#d8cdc0]")} />
-        </motion.div>
+        {!emailAuthHidden && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.18 }} className="flex items-center gap-3 mb-5">
+            <div className={cn("flex-1 h-px", isDark ? "bg-[#415049]" : "bg-[#d8cdc0]")} />
+            <span className={cn("text-xs font-bold", isDark ? "text-[#8f9d97]" : "text-[#87938d]")}>{mode === 'login' ? 'or sign in with email' : 'or sign up with email'}</span>
+            <div className={cn("flex-1 h-px", isDark ? "bg-[#415049]" : "bg-[#d8cdc0]")} />
+          </motion.div>
+        )}
           </>
         )}
 
-        {showConfirmationState ? (
+        {!emailAuthHidden && showConfirmationState ? (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -3908,7 +4028,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
               If you don&apos;t see it, check spam or promotions. If you already confirmed, continue below.
             </div>
           </motion.div>
-        ) : (
+        ) : !emailAuthHidden ? (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="space-y-3 mb-4">
           <input
             type="email"
@@ -3954,11 +4074,36 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
             <p className="text-red-400 text-xs px-1">{emailError}</p>
           )}
         </motion.div>
+        ) : (
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+            className={cn("text-center text-sm leading-relaxed mb-4 px-2", isDark ? "text-[#b8c5bf]" : "text-[#5e6f67]")}
+          >
+            By continuing, you agree to our{' '}
+            <button
+              type="button"
+              onClick={() => openInAppBrowser('https://www.trycallmate.app/terms.html')}
+              className={cn("underline underline-offset-2 transition-colors", isDark ? "text-zinc-300 hover:text-white" : "text-zinc-700 hover:text-black")}
+            >
+              Terms of Service
+            </button>
+            {' '}and{' '}
+            <button
+              type="button"
+              onClick={() => openInAppBrowser('https://www.trycallmate.app/privacy.html')}
+              className={cn("underline underline-offset-2 transition-colors", isDark ? "text-zinc-300 hover:text-white" : "text-zinc-700 hover:text-black")}
+            >
+              Privacy Policy
+            </button>
+            .
+          </motion.p>
         )}
 
         {/* CTA */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.28 }} className="space-y-3">
-          {showConfirmationState ? (
+          {!emailAuthHidden && showConfirmationState ? (
             <>
               <button
                 type="button"
@@ -3989,7 +4134,7 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
                 Use a different email
               </button>
             </>
-          ) : (
+          ) : !emailAuthHidden ? (
             <button
               onClick={handleSubmit}
               disabled={loading}
@@ -3997,13 +4142,13 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (mode === 'login' ? 'Sign In' : 'Create Account & Start Free Trial')}
             </button>
-          )}
-          {mode === 'signup' && trialEndDate && (
+          ) : null}
+          {!emailAuthHidden && mode === 'signup' && trialEndDate && (
             <p className={cn("text-center text-xs leading-relaxed", isDark ? "text-zinc-500" : "text-zinc-400")}>
               Your 3-day free trial starts now. No charge until {trialEndDate}.<br />Cancel anytime.
             </p>
           )}
-          {mode === 'signup' && (
+          {!emailAuthHidden && mode === 'signup' && (
             <p className={cn("text-center text-[11px] leading-relaxed", isDark ? "text-zinc-600" : "text-zinc-400")}>
               By creating an account you agree to our{' '}
               <button type="button" onClick={() => openInAppBrowser('https://www.trycallmate.app/terms.html')} className={cn("underline underline-offset-2 transition-colors", isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-black")}>Terms of Service</button>
@@ -4011,17 +4156,134 @@ function AccountSetup({ isDark, userName, tier, trialStartDate, onComplete }: {
               <button type="button" onClick={() => openInAppBrowser('https://www.trycallmate.app/privacy.html')} className={cn("underline underline-offset-2 transition-colors", isDark ? "text-zinc-400 hover:text-white" : "text-zinc-600 hover:text-black")}>Privacy Policy</button>.
             </p>
           )}
-          <p className={cn("text-center text-sm pt-1", isDark ? "text-zinc-500" : "text-zinc-400")}>
-            {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
-            <button
-              type="button"
-              onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')}
-              className={cn("font-semibold", isDark ? "text-indigo-400 hover:text-indigo-300" : "text-indigo-600 hover:text-indigo-500")}
-            >
-              {mode === 'login' ? 'Sign up →' : 'Sign in →'}
-            </button>
-          </p>
+          {!emailAuthHidden && (
+            <p className={cn("text-center text-sm pt-1", isDark ? "text-zinc-500" : "text-zinc-400")}>
+              {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+              <button
+                type="button"
+                onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')}
+                className={cn("font-semibold", isDark ? "text-indigo-400 hover:text-indigo-300" : "text-indigo-600 hover:text-indigo-500")}
+              >
+                {mode === 'login' ? 'Sign up →' : 'Sign in →'}
+              </button>
+            </p>
+          )}
         </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AuthBenefitHero({ isDark, selectedPlanLabel }: { isDark: boolean; selectedPlanLabel: string | null }) {
+  const backgroundImageUrl: string | null = loginBackground;
+  const steps = [
+    { label: 'Before', value: 'When the call starts spiraling in your head, Callmate gives you grounding and prep that stay with your account every time you come back.' },
+    { label: 'Support', value: 'Callmate builds the script, organizes what to say next, and keeps that support with your account every time you come back.' },
+    { label: 'Result', value: 'You come in calmer, clearer, and more ready to follow through with support that stays with your account every time you come back.' },
+  ] as const;
+
+  const [phase, setPhase] = React.useState(0);
+
+  React.useEffect(() => {
+    const timer = window.setInterval(() => {
+      setPhase((current) => (current + 1) % steps.length);
+    }, 4200);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const active = steps[phase];
+
+  return (
+    <div className={cn(
+      "rounded-[2.25rem] border px-5 pt-5 pb-5 overflow-hidden relative min-h-[25rem]",
+      isDark
+        ? "bg-[linear-gradient(180deg,rgba(32,41,38,0.98)_0%,rgba(23,31,29,0.96)_100%)] border-[#415049]"
+        : "bg-[linear-gradient(180deg,rgba(255,252,247,0.98)_0%,rgba(245,239,230,0.95)_100%)] border-[#d8cdc0]"
+    )}
+    style={
+      backgroundImageUrl
+        ? {
+            backgroundImage: `linear-gradient(180deg, rgba(12,18,16,0.06) 0%, rgba(12,18,16,0.16) 42%, rgba(12,18,16,0.42) 100%), url(${backgroundImageUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center top',
+          }
+        : undefined
+    }>
+      <div className="absolute inset-x-0 top-0 h-32 pointer-events-none">
+        <div className={cn(
+          "absolute left-[-10%] top-[-25%] w-40 h-40 rounded-full blur-3xl",
+          isDark ? "bg-[#dff0e4]/14" : "bg-[#d8c5a6]/26"
+        )} />
+        <div className={cn(
+          "absolute right-[-12%] top-[-20%] w-36 h-36 rounded-full blur-3xl",
+          isDark ? "bg-[#dff0e4]/10" : "bg-[#8fae9e]/18"
+        )} />
+      </div>
+
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_44%,rgba(16,24,20,0.22)_67%,rgba(16,24,20,0.72)_100%)]" />
+
+      <div className="relative flex min-h-[22.5rem] flex-col">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <Logo className="w-9 h-9 text-[#111111]" />
+            <div>
+              <p className="text-[1.65rem] font-black leading-none tracking-tight text-white">Callmate</p>
+              <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#edf7f0]/90">Call support that calms the spiral</p>
+            </div>
+          </div>
+
+          {selectedPlanLabel && (
+            <div className="rounded-full border border-white/25 bg-white/14 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-white/95 backdrop-blur-md">
+              {selectedPlanLabel}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-auto pt-28">
+          <div className="max-w-[18.5rem]">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={`eyebrow-${phase}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22 }}
+                className="mb-3 text-[11px] font-black uppercase tracking-[0.28em] text-[#edf7f0]"
+              >
+                {active.label}
+              </motion.p>
+            </AnimatePresence>
+            <h2 className="text-[2.25rem] font-black leading-[0.92] tracking-[-0.04em] text-white">
+              Feel ready
+              <br />
+              before you call.
+            </h2>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={`benefit-${phase}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.24 }}
+                className="mt-3 max-w-[18rem] text-[15px] leading-relaxed text-[#edf3ef]"
+              >
+                {active.value}
+              </motion.p>
+            </AnimatePresence>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mt-5">
+          {steps.map((_, index) => (
+            <motion.div
+              key={index}
+              animate={{ width: index === phase ? 24 : 8, opacity: index === phase ? 1 : 0.35 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+              className={cn("h-1.5 rounded-full", index === phase ? "bg-[#edf7f0]" : "bg-white/35")}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
