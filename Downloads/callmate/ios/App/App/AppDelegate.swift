@@ -8,9 +8,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
     private var appleSignInHandlerAdded = false
-    private var oauthSessionPluginRegistered = false
-    private var storeKitPluginRegistered = false
-    private var notificationSettingsPluginRegistered = false
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         return true
@@ -21,9 +18,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if !appleSignInHandlerAdded {
             registerAppleSignInHandler()
         }
-        registerOAuthSessionPlugin()
-        registerStoreKitPlugin()
-        registerNotificationSettingsPlugin()
     }
 
     private func registerAppleSignInHandler(retries: Int = 10) {
@@ -41,68 +35,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         appleSignInHandlerAdded = true
     }
 
-    private func registerOAuthSessionPlugin(retries: Int = 10) {
-        guard !oauthSessionPluginRegistered else { return }
-        
-        let bridgeVC = window?.rootViewController as? CAPBridgeViewController
-        let bridge = bridgeVC?.bridge
-        
-        if let bridge = bridge {
-            bridge.registerPluginType(OAuthSessionPlugin.self)
-            oauthSessionPluginRegistered = true
-            return
-        }
-        
-        if retries > 0 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.registerOAuthSessionPlugin(retries: retries - 1)
-            }
-        }
-    }
-
-    private func registerStoreKitPlugin(retries: Int = 10) {
-        guard !storeKitPluginRegistered else { return }
-        
-        let bridgeVC = window?.rootViewController as? CAPBridgeViewController
-        let bridge = bridgeVC?.bridge
-        
-        if let bridge = bridge {
-            bridge.registerPluginType(StoreKitPlugin.self)
-            storeKitPluginRegistered = true
-            return
-        }
-        
-        if retries > 0 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.registerStoreKitPlugin(retries: retries - 1)
-            }
-        }
-    }
-
-    private func registerNotificationSettingsPlugin(retries: Int = 10) {
-        guard !notificationSettingsPluginRegistered else { return }
-        
-        let bridgeVC = window?.rootViewController as? CAPBridgeViewController
-        let bridge = bridgeVC?.bridge
-        
-        if let bridge = bridge {
-            bridge.registerPluginType(NotificationSettingsPlugin.self)
-            notificationSettingsPluginRegistered = true
-            return
-        }
-        
-        if retries > 0 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.registerNotificationSettingsPlugin(retries: retries - 1)
-            }
-        }
-    }
-
     // Called by AppleSignInHandler when JavaScript posts a message
-    func handleAppleSignInRequest() {
+    func handleAppleSignInRequest(nonce: String?) {
         let provider = ASAuthorizationAppleIDProvider()
         let request = provider.createRequest()
         request.requestedScopes = [.fullName, .email]
+        if let nonce = nonce { request.nonce = nonce }
         let controller = ASAuthorizationController(authorizationRequests: [request])
         controller.delegate = self
         controller.presentationContextProvider = self
@@ -140,7 +78,8 @@ class AppleSignInHandler: NSObject, WKScriptMessageHandler {
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "appleSignIn" else { return }
-        appDelegate?.handleAppleSignInRequest()
+        let nonce = (message.body as? [String: Any])?["nonce"] as? String
+        appDelegate?.handleAppleSignInRequest(nonce: nonce)
     }
 }
 
@@ -168,7 +107,11 @@ extension AppDelegate: ASAuthorizationControllerDelegate {
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
         let msg = (error as? ASAuthorizationError)?.code == .canceled ? "cancelled" : error.localizedDescription
-        dispatchToWebView("window.dispatchEvent(new CustomEvent('nativeAppleSignIn',{detail:{error:'\(msg)'}}))")
+        let payload: [String: String] = ["error": msg]
+        if let json = try? JSONSerialization.data(withJSONObject: payload),
+           let jsonStr = String(data: json, encoding: .utf8) {
+            dispatchToWebView("window.dispatchEvent(new CustomEvent('nativeAppleSignIn',{detail:\(jsonStr)}))")
+        }
     }
 }
 
