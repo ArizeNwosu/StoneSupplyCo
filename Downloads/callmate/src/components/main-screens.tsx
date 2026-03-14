@@ -363,7 +363,6 @@ export function SettingsScreen(props: SettingsScreenProps) {
         <Button variant="ghost" size="sm" isDark={isDark} onClick={() => setView(activeTab)}>
           <ArrowLeft className="w-4 h-4" /> Back
         </Button>
-        <h2 className="text-3xl font-bold">Settings</h2>
       </div>
 
       <div className="space-y-6">
@@ -719,8 +718,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
   return (
     <div className="space-y-5 pb-32">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Your Progress</h2>
-        <p className={cn('text-sm mt-1', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>
+        <p className={cn('text-sm', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>
           {historyLength === 0 ? 'Complete your first call to start tracking.' : `${historyLength} call${historyLength !== 1 ? 's' : ''} logged · telephobia recovery in progress`}
         </p>
       </div>
@@ -910,7 +908,6 @@ export function HistoryScreen(props: HistoryScreenProps) {
     <div className="space-y-5 pb-28">
       <div className="flex flex-col gap-6 mb-12 px-2 relative z-[100]">
         <div className="flex items-center justify-between">
-          <h2 className="text-4xl font-bold tracking-tight">History</h2>
           {currentScript && (
             <Button variant="outline" size="sm" isDark={isDark} onClick={() => setView('script')}>
               <ArrowLeft className="w-4 h-4" /> Active Script

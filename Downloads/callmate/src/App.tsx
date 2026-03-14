@@ -28,7 +28,6 @@ import {
   WifiOff,
   BellRing
 } from 'lucide-react';
-import { Logo } from './components/Logo';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button, Card, CallTypeGrid, cn } from './components/ui';
 import { DashboardScreen, HistoryScreen, HomeScreen, ScriptScreen, SettingsScreen } from './components/main-screens';
@@ -2072,19 +2071,30 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <header className={cn("sticky top-0 z-40 border-b px-6 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] flex items-center justify-end transition-colors", isDark ? "bg-[#161d1b]/95 border-[#33403b]" : "bg-[rgba(243,238,228,0.92)] border-[#d8cdc0]")}>
+      <header className={cn("sticky top-0 z-40 border-b px-6 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] flex items-center justify-between transition-colors", isDark ? "bg-[#161d1b]/95 border-[#33403b]" : "bg-[rgba(243,238,228,0.92)] border-[#d8cdc0]")}>
+        <p className={cn("text-2xl font-semibold tracking-tight", isDark ? "text-[#f2ede3]" : "text-[#22312b]")}>
+          {view === 'script'
+            ? 'Call Script'
+            : view === 'dashboard'
+              ? 'Your Progress'
+              : view === 'history'
+                ? 'History'
+                : view === 'settings'
+                  ? 'Settings'
+                  : 'Home'}
+        </p>
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setView('settings')}
-            className={cn(
-              "p-2 rounded-xl transition-all",
-              view === 'settings' 
-                ? (isDark ? "bg-[#f3eee4] text-[#22312b]" : "bg-[#5d8a7a] text-white") 
-                : (isDark ? "bg-[#202926] text-[#97a59f] hover:bg-[#293330]" : "bg-[#ece5da] text-[#66756f] hover:bg-[#e3dacd]")
-            )}
-          >
-            <Settings className="w-5 h-5" />
-          </button>
+          {view !== 'settings' && (
+            <button 
+              onClick={() => setView('settings')}
+              className={cn(
+                "p-2 rounded-xl transition-all",
+                isDark ? "bg-[#202926] text-[#97a59f] hover:bg-[#293330]" : "bg-[#ece5da] text-[#66756f] hover:bg-[#e3dacd]"
+              )}
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </header>
 
@@ -3330,12 +3340,6 @@ function SetupAnimation({ isDark, userName, onDone }: { isDark: boolean; userNam
           transition={{ duration: 0.5 }}
           className="mb-10"
         >
-          <div className="flex items-center gap-2 mb-5">
-            <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center", isDark ? "bg-[#22312b]" : "bg-[#5d8a7a]")}>
-              <Logo className="w-5 h-5 text-[#fbf8f2]" />
-            </div>
-            <span className="font-bold text-xl">Callmate</span>
-          </div>
           <h1 className="text-2xl font-black leading-tight">
             {userName ? `Setting things up for you, ${userName}.` : 'Setting things up for you.'}
           </h1>
@@ -3389,9 +3393,7 @@ function SetupAnimation({ isDark, userName, onDone }: { isDark: boolean; userNam
         >
           <div>
             <p className={cn("text-xs font-black uppercase tracking-widest mb-1.5", isDark ? "text-[#a9c2b5]" : "text-[#5d8a7a]")}>All set</p>
-            <h2 className="text-2xl font-black leading-tight">
-              {userName ? `Your Callmate is ready, ${userName}.` : 'Your Callmate is ready.'}
-            </h2>
+            <h2 className="text-2xl font-black leading-tight">Your Callmate is ready.</h2>
           </div>
           <button
             onClick={onDone}
