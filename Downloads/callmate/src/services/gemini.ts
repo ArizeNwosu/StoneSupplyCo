@@ -1,13 +1,27 @@
 import { Tone, CallScript, Persona, CallPerspective } from "../types";
 
+type UserProfileContext = {
+  name?: string;
+  gender?: string;
+  ageRange?: string;
+  anxietySeverity?: string;
+  anxietyTriggers?: string[];
+  lifeImpact?: string[];
+};
+
+function resolveUserName(name?: string | null) {
+  const candidate = name?.trim() || localStorage.getItem('callmate_user_name')?.trim() || '';
+  return candidate || null;
+}
+
 function buildPersonaPrefix(persona?: Persona) {
   return persona ? ` speaking as ${persona.name}` : '';
 }
 
-function buildPerspectiveLine(perspective: CallPerspective) {
+function buildPerspectiveLine(perspective: CallPerspective, name?: string) {
   return perspective === 'incoming'
     ? 'Thanks for calling. Give me a second to get oriented.'
-    : 'Hi, this is [Your Name]. Do you have a minute?';
+    : `Hi, this is ${resolveUserName(name) || 'there'}. Do you have a minute?`;
 }
 
 function buildToneLine(tone: Tone) {
@@ -27,15 +41,18 @@ export async function generateCallScript(
   description: string,
   tone: Tone,
   perspective: CallPerspective,
-  persona?: Persona
+  persona?: Persona,
+  userProfile?: UserProfileContext
 ): Promise<CallScript> {
-  const opening = `${buildPerspectiveLine(perspective)}${buildPersonaPrefix(persona)}`;
+  const resolvedName = resolveUserName(userProfile?.name) || undefined;
+  const opening = `${buildPerspectiveLine(perspective, resolvedName)}${buildPersonaPrefix(persona)}`;
   const mainAsk = `${buildToneLine(tone)} ${description.trim()}`.trim();
 
   return {
     id: crypto.randomUUID(),
     description,
     tone,
+    name: resolvedName,
     opening,
     mainAsk,
     branchX: {
@@ -60,7 +77,7 @@ export async function generateVoicemailScript(originalScript: CallScript): Promi
 }
 
 export async function generateEmailFallback(originalScript: CallScript): Promise<string> {
-  return `Hi,\n\nI’m following up about ${originalScript.description}.\n\n${originalScript.mainAsk}\n\nThank you,\n[Your Name]`;
+  return `Hi,\n\nI’m following up about ${originalScript.description}.\n\n${originalScript.mainAsk}\n\nThank you,\n${resolveUserName(originalScript.name) || 'Callmate User'}`;
 }
 
 export async function generateBranch(

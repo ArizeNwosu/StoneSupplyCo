@@ -14,6 +14,7 @@ export interface CallScript {
   id: string;
   description: string;
   tone: Tone;
+  name?: string;
   opening: string;
   mainAsk: string;
   branchX: { condition: string; response: string };

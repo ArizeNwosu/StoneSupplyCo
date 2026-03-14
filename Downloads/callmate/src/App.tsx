@@ -52,6 +52,7 @@ import tiktokIcon from '../icons/tiktok.svg';
 import xIcon from '../icons/x.svg';
 import youtubeIcon from '../icons/youtube.svg';
 import loginBackground from '../backgrounds/login.mp4';
+import appIconPng from '../ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png';
 
 const RotatingText = () => {
   const words = ["putting off?", "dreading?", "avoiding?"];
@@ -229,6 +230,8 @@ export default function App() {
   const [shareToast, setShareToast] = useState(false);
   const [expandedSafeLineIndex, setExpandedSafeLineIndex] = useState<number | null>(null);
   const [showMedicalPrep, setShowMedicalPrep] = useState(true);
+  const [showSplashPulse, setShowSplashPulse] = useState(false);
+  const [showSplashText, setShowSplashText] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     opening: true, mainAsk: true, branchX: true, branchY: true, close: true
   });
@@ -864,7 +867,6 @@ export default function App() {
           if (hasSeenOnboarding) {
             setView('account');
           } else {
-            localStorage.setItem(HAS_SEEN_ONBOARDING_KEY, 'true');
             setView('explainer');
           }
         }
@@ -1017,6 +1019,22 @@ export default function App() {
   // Scroll to top whenever navigating to the main home view
   useEffect(() => {
     if (view === 'home') window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [view]);
+
+  useEffect(() => {
+    if (view !== 'splash') {
+      setShowSplashPulse(false);
+      setShowSplashText(false);
+      return;
+    }
+
+    const pulseTimer = window.setTimeout(() => setShowSplashPulse(true), 260);
+    const textTimer = window.setTimeout(() => setShowSplashText(true), 760);
+
+    return () => {
+      window.clearTimeout(pulseTimer);
+      window.clearTimeout(textTimer);
+    };
   }, [view]);
 
   useEffect(() => {
@@ -1427,31 +1445,49 @@ export default function App() {
       <div className="absolute top-11 left-6 z-10">
         <p className={cn("text-2xl font-semibold tracking-tight", isDark ? "text-[#f2ede3]" : "text-[#22312b]")}>Callmate</p>
       </div>
-      <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative">
+      <motion.div initial={false} animate={{ opacity: 1, scale: 1 }} className="relative">
         <motion.div
-          animate={{ scale: [1, 1.6, 1], opacity: [0.35, 0, 0.35] }}
-          transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut" }}
-          className="absolute inset-0 rounded-[3rem] bg-[#8fae9e]/35"
+          initial={false}
+          animate={showSplashPulse ? { scale: [1, 1.55, 1], opacity: [0.36, 0.05, 0.36] } : { scale: 1, opacity: 0 }}
+          transition={{ duration: 3.1, repeat: Infinity, ease: "easeOut" }}
+          className="absolute inset-0 rounded-[3rem] bg-[#709283]/45"
         />
         <motion.div
-          animate={{ scale: [1, 1.35, 1], opacity: [0.25, 0, 0.25] }}
-          transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut", delay: 0.7 }}
-          className="absolute inset-0 rounded-[3rem] bg-[#d9c4a4]/28"
+          initial={false}
+          animate={showSplashPulse ? { scale: [1, 1.32, 1], opacity: [0.26, 0.04, 0.26] } : { scale: 1, opacity: 0 }}
+          transition={{ duration: 3.1, repeat: Infinity, ease: "easeOut", delay: 0.75 }}
+          className="absolute inset-0 rounded-[3rem] bg-[#b59e7f]/32"
         />
-        <div className={cn("w-24 h-24 rounded-[2.5rem] flex items-center justify-center shadow-2xl relative z-10", isDark ? "bg-[#22312b]" : "bg-[#4d6f62]")}>
-          <Logo className="w-18 h-18 text-[#f8f4ed]" />
-        </div>
+        <motion.div
+          initial={false}
+          animate={showSplashPulse ? { scale: [1.012, 0.988, 1.012], opacity: [1, 0.97, 1] } : { scale: 1, opacity: 1 }}
+          transition={{ duration: 3.1, repeat: Infinity, ease: "easeInOut", delay: 1.55 }}
+          className="w-24 h-24 rounded-[2rem] overflow-hidden shadow-2xl relative z-10 ring-1 ring-black/8"
+        >
+          <img
+            src={appIconPng}
+            alt="Callmate app icon"
+            className="w-full h-full object-cover"
+          />
+        </motion.div>
       </motion.div>
-      <p
-        className={cn(
-          "mt-8 relative z-10 text-center text-4xl font-semibold tracking-tight leading-[0.95]",
-          isDark ? "text-[#f2ede3]" : "text-[#111111]"
-        )}
+      <motion.div
+        initial={false}
+        animate={showSplashText ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10"
       >
-        <span className="block">Phone calls</span>
-        <span className="block">made easy</span>
-      </p>
-      <p className={cn("mt-8 relative z-10 text-base", isDark ? "text-[#e1e8e3]" : "text-[#3f5049]")}>You can handle this call.</p>
+        <p
+          className={cn(
+            "mt-8 text-center text-4xl font-semibold tracking-tight leading-[0.95]",
+            isDark ? "text-[#f2ede3]" : "text-[#111111]"
+          )}
+        >
+          <span className="block">Phone calls</span>
+          <span className="block">made easy</span>
+        </p>
+        <p className={cn("mt-8 text-center text-base", isDark ? "text-[#e1e8e3]" : "text-[#3f5049]")}>You can handle this call.</p>
+      </motion.div>
     </div>
   );
 
@@ -1630,6 +1666,7 @@ export default function App() {
               isDark={isDark}
               onBack={() => setShowOnboardingThankYou(false)}
               onContinue={() => {
+                localStorage.setItem(HAS_SEEN_ONBOARDING_KEY, 'true');
                 setSetupNextView('reviews');
                 setView('setup');
               }}
@@ -2035,13 +2072,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <header className={cn("sticky top-0 z-40 border-b px-6 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] flex items-center justify-between transition-colors", isDark ? "bg-[#161d1b]/95 border-[#33403b]" : "bg-[rgba(243,238,228,0.92)] border-[#d8cdc0]")}>
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setCurrentScript(null); setActiveTab('home'); setView('home'); }}>
-          <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center", isDark ? "bg-[#22312b]" : "bg-[#5d8a7a]")}>
-            <Logo className="w-6 h-6 text-[#fbf8f2]" />
-          </div>
-          <span className="font-bold text-xl">Callmate</span>
-        </div>
+      <header className={cn("sticky top-0 z-40 border-b px-6 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] flex items-center justify-end transition-colors", isDark ? "bg-[#161d1b]/95 border-[#33403b]" : "bg-[rgba(243,238,228,0.92)] border-[#d8cdc0]")}>
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setView('settings')}
@@ -4262,15 +4293,11 @@ function AuthBenefitHero({ isDark, selectedPlanLabel }: { isDark: boolean; selec
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0)_44%,rgba(16,24,20,0.22)_67%,rgba(16,24,20,0.72)_100%)]" />
 
       <div className="relative flex min-h-[22.5rem] flex-col">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <Logo className="w-9 h-9 text-[#111111]" />
-            <div>
-              <p className="text-[1.65rem] font-black leading-none tracking-tight text-white">Callmate</p>
-              <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#edf7f0]/90">Call support that calms the spiral</p>
-            </div>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[1.65rem] font-black leading-none tracking-tight text-white">Callmate</p>
+            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#edf7f0]/90">Call support that calms the spiral</p>
           </div>
-
           {selectedPlanLabel && (
             <div className="rounded-full border border-white/25 bg-white/14 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-white/95 backdrop-blur-md">
               {selectedPlanLabel}
