@@ -4,7 +4,12 @@ import UserNotifications
 import UIKit
 
 @objc(NotificationSettingsPlugin)
-public class NotificationSettingsPlugin: CAPPlugin {
+public class NotificationSettingsPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "NotificationSettingsPlugin"
+    public let jsName = "NotificationSettingsPlugin"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "requestPermission", returnType: CAPPluginReturnPromise),
+    ]
     @objc func requestPermission(_ call: CAPPluginCall) {
         let openSettings = call.getBool("openSettings") ?? false
 

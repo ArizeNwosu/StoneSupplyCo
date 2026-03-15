@@ -3,7 +3,12 @@ import Capacitor
 import AuthenticationServices
 
 @objc(OAuthSessionPlugin)
-public class OAuthSessionPlugin: CAPPlugin, ASWebAuthenticationPresentationContextProviding {
+public class OAuthSessionPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPresentationContextProviding {
+    public let identifier = "OAuthSessionPlugin"
+    public let jsName = "OAuthSessionPlugin"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "start", returnType: CAPPluginReturnPromise),
+    ]
     private var authSession: ASWebAuthenticationSession?
 
     public func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {

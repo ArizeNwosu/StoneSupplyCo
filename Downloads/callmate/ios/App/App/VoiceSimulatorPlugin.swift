@@ -4,7 +4,17 @@ import AVFoundation
 import Speech
 
 @objc(VoiceSimulatorPlugin)
-public class VoiceSimulatorPlugin: CAPPlugin, AVSpeechSynthesizerDelegate {
+public class VoiceSimulatorPlugin: CAPPlugin, CAPBridgedPlugin, AVSpeechSynthesizerDelegate {
+    public let identifier = "VoiceSimulatorPlugin"
+    public let jsName = "VoiceSimulatorPlugin"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "prepareAudioSession", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "deactivateAudioSession", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "startRecognition", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "stopRecognition", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "speak", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "stopSpeaking", returnType: CAPPluginReturnPromise),
+    ]
     private let audioEngine = AVAudioEngine()
     private let synthesizer = AVSpeechSynthesizer()
     private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))

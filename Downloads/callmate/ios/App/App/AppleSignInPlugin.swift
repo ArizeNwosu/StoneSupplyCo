@@ -3,7 +3,12 @@ import Capacitor
 import AuthenticationServices
 
 @objc(AppleSignInPlugin)
-public class AppleSignInPlugin: CAPPlugin {
+public class AppleSignInPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "AppleSignInPlugin"
+    public let jsName = "AppleSignInPlugin"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "signIn", returnType: CAPPluginReturnPromise),
+    ]
     private var call: CAPPluginCall?
 
     @objc func signIn(_ call: CAPPluginCall) {

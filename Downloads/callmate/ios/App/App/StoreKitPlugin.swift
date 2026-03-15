@@ -3,7 +3,15 @@ import Capacitor
 import StoreKit
 
 @objc(StoreKitPlugin)
-public class StoreKitPlugin: CAPPlugin {
+public class StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "StoreKitPlugin"
+    public let jsName = "StoreKitPlugin"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "fetchProducts", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "purchase", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "restorePurchases", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getEntitlements", returnType: CAPPluginReturnPromise),
+    ]
     private let productIds = [
         "com.trycallmate.app.monthly",
         "com.trycallmate.app.annual",
