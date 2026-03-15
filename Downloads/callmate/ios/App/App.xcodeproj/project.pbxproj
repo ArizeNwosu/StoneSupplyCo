@@ -16,13 +16,17 @@
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
-		504EC3141FED79650016851E /* StoreKitPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3131FED79650016851E /* StoreKitPlugin.m */; };
 		504EC3161FED79650016851E /* NotificationSettingsPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3151FED79650016851E /* NotificationSettingsPlugin.m */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		74547AE92F5F99570069112A /* OAuthSessionPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74547AE82F5F99570069112A /* OAuthSessionPlugin.swift */; };
-		74547AF12F5FA0010069112A /* StoreKitPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74547AF02F5FA0010069112A /* StoreKitPlugin.swift */; };
 		746AC0012F7000010069112A /* NotificationSettingsPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 746AC0002F7000010069112A /* NotificationSettingsPlugin.swift */; };
-		74920D032F6568C000164901 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 74920D022F6568C000164901 /* StoreKit.framework */; };
+		74920D052F65E5AD00164901 /* StoreKitPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 74920D042F65E5AD00164901 /* StoreKitPlugin.m */; };
+		74920D072F65E5D500164901 /* StoreKitPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74920D062F65E5D500164901 /* StoreKitPlugin.swift */; };
+		74920D0B2F65FCDE00164901 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 74920D0A2F65FCDE00164901 /* StoreKit.framework */; };
+		7A1100012F8000000069112A /* VoiceSimulatorPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A1100022F8000000069112A /* VoiceSimulatorPlugin.m */; };
+		7A1100032F8000000069112A /* VoiceSimulatorPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1100042F8000000069112A /* VoiceSimulatorPlugin.swift */; };
+		8E0000012F65E5AD00164901 /* AppleSignInPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 8E0000022F65E5AD00164901 /* AppleSignInPlugin.m */; };
+		8E0000032F65E5AD00164901 /* AppleSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0000042F65E5AD00164901 /* AppleSignInPlugin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,16 +39,20 @@
 		504EC30C1FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		504EC30E1FED79650016851F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		504EC3131FED79650016851E /* StoreKitPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StoreKitPlugin.m; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		504EC3151FED79650016851E /* NotificationSettingsPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NotificationSettingsPlugin.m; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		74547AE62F5F82510069112A /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		74547AE82F5F99570069112A /* OAuthSessionPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthSessionPlugin.swift; sourceTree = "<group>"; };
 		74547AEB2F5F998C0069112A /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
-		74547AF02F5FA0010069112A /* StoreKitPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitPlugin.swift; sourceTree = "<group>"; };
 		746AC0002F7000010069112A /* NotificationSettingsPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsPlugin.swift; sourceTree = "<group>"; };
-		74920D022F6568C000164901 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		74920D042F65E5AD00164901 /* StoreKitPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StoreKitPlugin.m; sourceTree = "<group>"; };
+		74920D062F65E5D500164901 /* StoreKitPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitPlugin.swift; sourceTree = "<group>"; };
+		74920D0A2F65FCDE00164901 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		7A1100022F8000000069112A /* VoiceSimulatorPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VoiceSimulatorPlugin.m; sourceTree = "<group>"; };
+		7A1100042F8000000069112A /* VoiceSimulatorPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSimulatorPlugin.swift; sourceTree = "<group>"; };
+		8E0000022F65E5AD00164901 /* AppleSignInPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppleSignInPlugin.m; sourceTree = "<group>"; };
+		8E0000042F65E5AD00164901 /* AppleSignInPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInPlugin.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -54,7 +62,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */,
-				74920D032F6568C000164901 /* StoreKit.framework in Frameworks */,
+				74920D0B2F65FCDE00164901 /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -64,7 +72,6 @@
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
-				74547AE82F5F99570069112A /* OAuthSessionPlugin.swift */,
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				504EC3051FED79650016851F /* Products */,
@@ -84,15 +91,20 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				74920D062F65E5D500164901 /* StoreKitPlugin.swift */,
+				74920D042F65E5AD00164901 /* StoreKitPlugin.m */,
+				8E0000042F65E5AD00164901 /* AppleSignInPlugin.swift */,
+				8E0000022F65E5AD00164901 /* AppleSignInPlugin.m */,
+				74547AE82F5F99570069112A /* OAuthSessionPlugin.swift */,
+				504EC3051FED79650016851E /* OAuthSessionPlugin.m */,
+				746AC0002F7000010069112A /* NotificationSettingsPlugin.swift */,
+				504EC3151FED79650016851E /* NotificationSettingsPlugin.m */,
+				7A1100042F8000000069112A /* VoiceSimulatorPlugin.swift */,
+				7A1100022F8000000069112A /* VoiceSimulatorPlugin.m */,
 				74547AE62F5F82510069112A /* App.entitlements */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3061FED79650016851E /* AppViewController.swift */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
-				504EC3051FED79650016851E /* OAuthSessionPlugin.m */,
-				746AC0002F7000010069112A /* NotificationSettingsPlugin.swift */,
-				504EC3151FED79650016851E /* NotificationSettingsPlugin.m */,
-				74547AF02F5FA0010069112A /* StoreKitPlugin.swift */,
-				504EC3131FED79650016851E /* StoreKitPlugin.m */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -106,7 +118,7 @@
 		74920D012F6568C000164901 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				74920D022F6568C000164901 /* StoreKit.framework */,
+				74920D0A2F65FCDE00164901 /* StoreKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -194,13 +206,17 @@
 			buildActionMask = 2147483647;
 			files = (
 				504EC30A1FED79650016851F /* OAuthSessionPlugin.m in Sources */,
-				74547AE92F5F99570069112A /* OAuthSessionPlugin.swift in Sources */,
-				504EC3141FED79650016851E /* StoreKitPlugin.m in Sources */,
-				74547AF12F5FA0010069112A /* StoreKitPlugin.swift in Sources */,
 				504EC3161FED79650016851E /* NotificationSettingsPlugin.m in Sources */,
+				74920D072F65E5D500164901 /* StoreKitPlugin.swift in Sources */,
 				746AC0012F7000010069112A /* NotificationSettingsPlugin.swift in Sources */,
 				504EC3091FED79650016851F /* AppViewController.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				74920D052F65E5AD00164901 /* StoreKitPlugin.m in Sources */,
+				7A1100012F8000000069112A /* VoiceSimulatorPlugin.m in Sources */,
+				8E0000012F65E5AD00164901 /* AppleSignInPlugin.m in Sources */,
+				8E0000032F65E5AD00164901 /* AppleSignInPlugin.swift in Sources */,
+				74547AE92F5F99570069112A /* OAuthSessionPlugin.swift in Sources */,
+				7A1100032F8000000069112A /* VoiceSimulatorPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -252,7 +268,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -315,7 +331,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;

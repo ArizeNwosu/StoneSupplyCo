@@ -36,7 +36,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Callmate uses the microphone for voice-guided breathing exercises during pre-call preparation.</string>
+	<string>Callmate uses the microphone so you can practice simulated phone calls and voice-guided prep exercises.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Callmate uses speech recognition to turn your practice call responses into live conversation during simulated calls.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>We use anonymized data to improve anxiety-reduction features. No personal information is shared.</string>
 	<key>UIApplicationSceneManifest</key>
@@ -52,6 +54,8 @@
 	<array>
 		<string>armv7</string>
 	</array>
+	<key>UIRequiresFullScreen</key>
+	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

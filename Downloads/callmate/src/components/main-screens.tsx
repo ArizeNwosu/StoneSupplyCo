@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { AlertCircle, ArrowLeft, Check, ChevronDown, ChevronRight, ChevronUp, Copy, Download, History, Loader2, Moon, Phone, Search, Settings, Share2, Square, Star, Sun, Trash2, Upload, Volume2, X, Instagram, ShieldAlert, LifeBuoy, Flag } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Check, ChevronDown, ChevronRight, ChevronUp, Copy, Download, History, Loader2, Moon, Phone, Search, Settings, Share2, Star, Sun, Trash2, Upload, X, Instagram, ShieldAlert, LifeBuoy, Flag } from 'lucide-react';
 import type { ImportPreview } from '../services/exportImport';
-import { Tone, SAFE_LINES, Persona, CallScript, Tier, CallPerspective } from '../types';
+import { Tone, SAFE_LINES, Persona, CallScript, Tier, CallPerspective, PracticeSessionSummary } from '../types';
 import { Button, Card, CallTypeGrid, cn } from './ui';
 import type { User } from '@supabase/supabase-js';
 import { motion } from 'motion/react';
@@ -678,6 +678,7 @@ type DashboardScreenProps = {
   recoveryScore: number;
   callStreak: number;
   callAnxietyRatings: Array<{ rating: number }>;
+  practiceSessions: PracticeSessionSummary[];
   milestones: Array<{ id: string; icon: string; title: string }>;
   unlockedMilestones: Set<string>;
   anxietySeverity: string;
@@ -691,29 +692,50 @@ export function DashboardScreen(props: DashboardScreenProps) {
     recoveryScore,
     callStreak,
     callAnxietyRatings,
+    practiceSessions,
     milestones,
     unlockedMilestones,
     anxietySeverity,
     lifeImpact,
   } = props;
-  const chartPoints = callAnxietyRatings.slice(-6).map((entry, index, array) => {
+  const recentPracticeSessions = practiceSessions.slice(-6);
+  const recentActualCalls = callAnxietyRatings.slice(-6);
+  const practiceChartPoints = recentPracticeSessions.map((entry, index, array) => {
     const x = array.length === 1 ? 126 : (index / (array.length - 1)) * 252;
-    const confidence = 6 - entry.rating;
-    const y = 72 - ((confidence - 1) / 4) * 62;
+    const y = 72 - (Math.max(0, Math.min(entry.confidenceScore, 100)) / 100) * 62;
     return { x, y };
   });
-  const progressPath = chartPoints.reduce((path, point, index) => (
+  const actualChartPoints = recentActualCalls.map((entry, index, array) => {
+    const x = array.length === 1 ? 126 : (index / (array.length - 1)) * 252;
+    const confidenceScore = Math.max(0, Math.min((6 - entry.rating) * 20, 100));
+    const y = 72 - (confidenceScore / 100) * 62;
+    return { x, y };
+  });
+  const practicePath = practiceChartPoints.reduce((path, point, index) => (
     index === 0 ? `M ${point.x},${point.y}` : `${path} L ${point.x},${point.y}`
   ), '');
-  const progressAreaPath = progressPath ? `${progressPath} L ${chartPoints[chartPoints.length - 1]?.x ?? 252},72 L ${chartPoints[0]?.x ?? 0},72 Z` : '';
-  const latestConfidence = callAnxietyRatings.length > 0 ? 6 - callAnxietyRatings[callAnxietyRatings.length - 1].rating : null;
-  const trendLabel = callAnxietyRatings.length < 2
-    ? 'First data point'
-    : latestConfidence !== null && latestConfidence >= 4
-      ? 'Calmer recent calls'
-      : latestConfidence !== null && latestConfidence >= 3
-        ? 'Building steadier calls'
-        : 'Still finding your footing';
+  const actualPath = actualChartPoints.reduce((path, point, index) => (
+    index === 0 ? `M ${point.x},${point.y}` : `${path} L ${point.x},${point.y}`
+  ), '');
+  const practiceAreaPath = practicePath ? `${practicePath} L ${practiceChartPoints[practiceChartPoints.length - 1]?.x ?? 252},72 L ${practiceChartPoints[0]?.x ?? 0},72 Z` : '';
+  const latestConfidence = practiceSessions.length > 0 ? practiceSessions[practiceSessions.length - 1].confidenceScore : null;
+  const averageConfidence = practiceSessions.length > 0
+    ? Math.round(practiceSessions.slice(-5).reduce((sum, session) => sum + session.confidenceScore, 0) / Math.min(practiceSessions.length, 5))
+    : null;
+  const averageActualConfidence = callAnxietyRatings.length > 0
+    ? Math.round(callAnxietyRatings.slice(-5).reduce((sum, entry) => sum + ((6 - entry.rating) * 20), 0) / Math.min(callAnxietyRatings.length, 5))
+    : null;
+  const latestActualConfidence = callAnxietyRatings.length > 0 ? (6 - callAnxietyRatings[callAnxietyRatings.length - 1].rating) * 20 : null;
+  const convergenceGap = latestConfidence !== null && latestActualConfidence !== null
+    ? Math.abs(latestConfidence - latestActualConfidence)
+    : null;
+  const trendLabel = practiceSessions.length < 2
+    ? 'First practice score logged'
+    : latestConfidence !== null && latestConfidence >= 80
+      ? 'Strong recent practice confidence'
+      : latestConfidence !== null && latestConfidence >= 65
+        ? 'Confidence is trending up'
+        : 'Confidence is still building';
 
   return (
     <div className="space-y-5 pb-32">
@@ -752,8 +774,8 @@ export function DashboardScreen(props: DashboardScreenProps) {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: 'Calls Scripted', value: historyLength, color: 'text-blue-400' },
-          { label: 'Low-Anxiety Calls', value: callAnxietyRatings.filter((r) => r.rating <= 2).length, color: 'text-emerald-400' },
-          { label: 'Avg Anxiety', value: callAnxietyRatings.length > 0 ? (callAnxietyRatings.slice(-5).reduce((s, r) => s + r.rating, 0) / Math.min(callAnxietyRatings.length, 5)).toFixed(1) : '—', color: 'text-purple-400' },
+          { label: 'Practice Calls', value: practiceSessions.length, color: 'text-emerald-400' },
+          { label: 'Avg Confidence', value: averageConfidence !== null ? `${averageConfidence}/${averageActualConfidence ?? '—'}` : '—', color: 'text-purple-400' },
         ].map((stat, i) => (
           <div key={i} className={cn('rounded-2xl border p-4 text-center transition-colors', isDark ? 'bg-[#202926] border-[#415049]' : 'bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]')}>
             <p className={cn('text-2xl font-black', stat.color)}>{stat.value}</p>
@@ -763,21 +785,32 @@ export function DashboardScreen(props: DashboardScreenProps) {
       </div>
 
       <div className={cn('rounded-3xl border p-5 transition-colors', isDark ? 'bg-[#202926] border-[#415049]' : 'bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]')}>
-        <p className={cn('text-[10px] font-black uppercase tracking-widest mb-4', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>Anxiety Trend</p>
+        <p className={cn('text-[10px] font-black uppercase tracking-widest mb-4', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>Confidence Correlation</p>
         <div className="flex gap-5 mb-4">
           <div className="flex items-center gap-2">
-            <div className={cn('w-8 h-[2px] rounded-full', isDark ? 'bg-[#c9d3cd]' : 'bg-[#1f2937]')} />
-            <p className={cn('text-xs font-semibold', isDark ? 'text-[#b7c3bd]' : 'text-[#66756f]')}>Earlier calls</p>
+            <div className="w-8 h-[2px] rounded-full bg-[#7b9d76]" />
+            <p className={cn('text-xs font-semibold', isDark ? 'text-[#b7c3bd]' : 'text-[#66756f]')}>Practice calls</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-[2px] rounded-full bg-[#7b9d76]" />
-            <p className={cn('text-xs font-semibold', isDark ? 'text-[#b7c3bd]' : 'text-[#66756f]')}>Recent calls</p>
+            <svg className="w-8 h-[4px]" viewBox="0 0 32 4" aria-hidden="true">
+              <line
+                x1="0"
+                y1="2"
+                x2="32"
+                y2="2"
+                stroke={isDark ? '#d4d4d8' : '#1f2937'}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeDasharray="4 4"
+              />
+            </svg>
+            <p className={cn('text-xs font-semibold', isDark ? 'text-[#b7c3bd]' : 'text-[#66756f]')}>Actual calls</p>
           </div>
         </div>
-        {callAnxietyRatings.length === 0 ? (
+        {practiceSessions.length === 0 && callAnxietyRatings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 gap-2">
             <p className="text-4xl">📉</p>
-            <p className={cn('text-sm text-center', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>Rate your anxiety after each call to see your trend here.</p>
+            <p className={cn('text-sm text-center', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>Complete a simulated call or log a real call to start tracking confidence here.</p>
           </div>
         ) : (
           <div className="relative">
@@ -800,10 +833,21 @@ export function DashboardScreen(props: DashboardScreenProps) {
               {[18, 40, 62].map((y) => (
                 <line key={y} x1="0" y1={y} x2="252" y2={y} stroke={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'} strokeWidth="1" />
               ))}
-              {progressAreaPath && <path d={progressAreaPath} fill="url(#progressFillGrad)" />}
-              {progressPath && (
+              {practiceAreaPath && <path d={practiceAreaPath} fill="url(#progressFillGrad)" />}
+              {actualPath && (
                 <path
-                  d={progressPath}
+                  d={actualPath}
+                  fill="none"
+                  stroke="url(#progressLineGradMuted)"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeDasharray="4 4"
+                />
+              )}
+              {practicePath && (
+                <path
+                  d={practicePath}
                   fill="none"
                   stroke="url(#progressLineGradActive)"
                   strokeWidth="1.7"
@@ -811,32 +855,42 @@ export function DashboardScreen(props: DashboardScreenProps) {
                   strokeLinejoin="round"
                 />
               )}
-              {chartPoints.map((point, index) => (
+              {actualChartPoints.map((point, index) => (
                 <circle
-                  key={`${point.x}-${point.y}`}
+                  key={`actual-${point.x}-${point.y}`}
+                  cx={point.x}
+                  cy={point.y}
+                  r="3.2"
+                  fill={isDark ? '#161d1b' : '#ffffff'}
+                  stroke={isDark ? '#d4d4d8' : '#1f2937'}
+                  strokeWidth="1.3"
+                />
+              ))}
+              {practiceChartPoints.map((point, index) => (
+                <circle
+                  key={`practice-${point.x}-${point.y}`}
                   cx={point.x}
                   cy={point.y}
                   r="3.6"
                   fill={isDark ? '#161d1b' : '#ffffff'}
-                  stroke={index === chartPoints.length - 1 ? '#7b9d76' : (isDark ? '#7b8580' : '#5f6d67')}
-                  strokeWidth={index === chartPoints.length - 1 ? '1.8' : '1.4'}
+                  stroke={index === practiceChartPoints.length - 1 ? '#7b9d76' : (isDark ? '#7b8580' : '#5f6d67')}
+                  strokeWidth={index === practiceChartPoints.length - 1 ? '1.8' : '1.4'}
                 />
               ))}
-              <text x="166" y="18" fontSize="10" fill={isDark ? '#c5d0ca' : '#51615b'} fontWeight="700">Callmate</text>
-              <text x="166" y="28" fontSize="10" fill={isDark ? '#8f9b95' : '#8a948f'}>builds lasting</text>
-              <text x="166" y="38" fontSize="10" fill={isDark ? '#8f9b95' : '#8a948f'}>confidence</text>
-              <text x="12" y="58" fontSize="10" fill={isDark ? '#b5b8c3' : '#6b7280'} fontWeight="700">Without support</text>
               <text x="0" y="86" fontSize="10" fill={isDark ? '#a1a1aa' : '#6b7280'}>Earlier</text>
               <text x="220" y="86" fontSize="10" fill={isDark ? '#a1a1aa' : '#6b7280'}>Recent</text>
             </svg>
           </div>
         )}
-        {callAnxietyRatings.length === 1 && (
-          <p className={cn('text-xs mt-2 text-center', isDark ? 'text-[#97a59f]' : 'text-[#6f7d75]')}>Your first anxiety datapoint is in. Log one more call to see the trend line.</p>
+        {practiceSessions.length + callAnxietyRatings.length === 1 && (
+          <p className={cn('text-xs mt-2 text-center', isDark ? 'text-[#97a59f]' : 'text-[#6f7d75]')}>You have your first confidence datapoint. Add another practice or real call to see the trend line.</p>
         )}
-        {callAnxietyRatings.length > 1 && (
+        {(practiceSessions.length > 1 || callAnxietyRatings.length > 1) && (
           <p className={cn('text-xs mt-3 text-center leading-relaxed', isDark ? 'text-[#97a59f]' : 'text-[#6f7d75]')}>
-            <span className={cn('font-bold', isDark ? 'text-[#f6f2ea]' : 'text-[#22312b]')}>{trendLabel}.</span> Lower anxiety scores lift the line higher, from earlier calls on the left to more recent calls on the right.
+            <span className={cn('font-bold', isDark ? 'text-[#f6f2ea]' : 'text-[#22312b]')}>{trendLabel}.</span>{' '}
+            {convergenceGap !== null
+              ? `The current gap between practice and actual confidence is ${convergenceGap} points. The goal is for both lines to keep rising until that gap narrows.`
+              : 'Practice and actual confidence are plotted together so you can see whether real calls are catching up to practice.'}
           </p>
         )}
       </div>
@@ -1001,9 +1055,8 @@ type ScriptScreenProps = {
   setActiveTab: React.Dispatch<React.SetStateAction<'home' | 'history' | 'dashboard'>>;
   setView: (view: 'home' | 'history') => void;
   isPremium: boolean;
-  handlePractice: () => void;
-  isPracticeMode: boolean;
-  isPracticePlaying: boolean;
+  handleSimulateCall: () => void;
+  isLaunchingSimulator: boolean;
   toggleStar: (id: string) => void;
   starredScripts: string[];
   handleShare: () => void;
@@ -1036,9 +1089,8 @@ export function ScriptScreen(props: ScriptScreenProps) {
     setActiveTab,
     setView,
     isPremium,
-    handlePractice,
-    isPracticeMode,
-    isPracticePlaying,
+    handleSimulateCall,
+    isLaunchingSimulator,
     toggleStar,
     starredScripts,
     handleShare,
@@ -1114,9 +1166,8 @@ export function ScriptScreen(props: ScriptScreenProps) {
         </Button>
         <div className="flex gap-2">
           {isPremium && (
-            <Button variant="outline" size="sm" isDark={isDark} onClick={handlePractice} className={cn((isPracticeMode || isPracticePlaying) && 'bg-emerald-500/20 border-emerald-500/50 text-emerald-500')}>
-              {isPracticeMode ? <Loader2 className="animate-spin w-4 h-4" /> : isPracticePlaying ? <Square className="w-4 h-4 fill-current" /> : <Volume2 className="w-4 h-4" />}
-              {isPracticePlaying ? 'Stop' : 'Practice'}
+            <Button variant="outline" size="sm" isDark={isDark} onClick={handleSimulateCall} className={cn(isLaunchingSimulator && 'bg-emerald-500/20 border-emerald-500/50 text-emerald-500')}>
+              {isLaunchingSimulator ? <Loader2 className="animate-spin w-4 h-4" /> : <Phone className="w-4 h-4" />}
             </Button>
           )}
           <Button variant="outline" size="sm" isDark={isDark} onClick={() => toggleStar(currentScript.id)} className={cn(starredScripts.includes(currentScript.id) && 'bg-amber-500/20 border-amber-500/50 text-amber-500')}>

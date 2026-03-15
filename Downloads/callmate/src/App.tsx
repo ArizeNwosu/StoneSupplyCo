@@ -5,7 +5,6 @@ import {
   AlertCircle,
   History,
   Check,
-  Volume2,
   ArrowLeft,
   Loader2,
   Star,
@@ -21,7 +20,6 @@ import {
   Trash2,
   Sun,
   Moon,
-  Square,
   Copy,
   Ellipsis,
   Users,
@@ -31,14 +29,17 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Button, Card, CallTypeGrid, cn } from './components/ui';
 import { DashboardScreen, HistoryScreen, HomeScreen, ScriptScreen, SettingsScreen } from './components/main-screens';
-import { Tone, CallScript, SAFE_LINES, PANIC_OPTIONS, PanicOption, COMMON_CALL_TYPES, Persona, Reflection, Tier, CallPerspective } from './types';
-import { generateCallScript, generatePanicResponse, generateTTS, generateVoicemailScript, generateEmailFallback, generateBranch } from './services/gemini';
+import { CallSimulator } from './components/call-simulator';
+import { Tone, CallScript, SAFE_LINES, PANIC_OPTIONS, PanicOption, COMMON_CALL_TYPES, Persona, Reflection, Tier, CallPerspective, PracticeScenario, PracticeSessionSummary } from './types';
+import { generateCallScript, generatePanicResponse, generateVoicemailScript, generateEmailFallback, generateBranch } from './services/gemini';
 import { signUp, signIn, signInWithApple, signInWithGoogle, signOut, onAuthStateChange, sendPasswordReset } from './services/auth';
 import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchAnxietyRatings, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection as dbSaveReflection, savePersona, syncAnxietyRatings, deleteAllScriptsForUser, deletePersona as dbDeletePersona } from './services/db';
 import { fetchAccessState, startTrial } from './services/access';
 import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, vibrate, setStatusBarDark, setStatusBarLight, openInAppBrowser, requestNotificationsAccess } from './services/native';
-import type { User, RealtimeChannel } from '@supabase/supabase-js';
+import type { Session, User, RealtimeChannel } from '@supabase/supabase-js';
+import { supabase } from './services/supabase';
 import type { ImportPreview } from './services/exportImport';
+import { buildPracticeScenario } from './services/practiceSimulator';
 import breatheAudio from '../breathe.mp3';
 import appStoreIcon from '../icons/app-store.svg';
 import reviewAvatar1 from '../avatar/1.png';
@@ -97,6 +98,7 @@ const RotatingText = () => {
 
 type AnxietySeverity = 'mild' | 'moderate' | 'severe' | 'debilitating';
 type AnxietyRating = { id?: string; scriptId: string; rating: number; timestamp: number };
+const PRACTICE_SESSIONS_KEY = 'callmate_practice_sessions';
 
 const isCallScript = (value: unknown): value is CallScript => {
   if (!value || typeof value !== 'object') return false;
@@ -151,6 +153,7 @@ const IMPACT_AREAS = [
 
 const HAS_SEEN_ONBOARDING_KEY = 'callmate_has_seen_onboarding';
 const AUTH_INTENT_KEY = 'callmate_auth_intent';
+const PENDING_OAUTH_CALLBACK_KEY = 'callmate_pending_oauth_callback';
 const BREATHE_SOUND_KEY = 'callmate_breathe_sound_enabled';
 const BREATHE_VIBRATION_KEY = 'callmate_breathe_vibration_enabled';
 
@@ -180,7 +183,6 @@ export default function App() {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [reflections, setReflections] = useState<Reflection[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isPracticeMode, setIsPracticeMode] = useState(false);
   const [voicemailScript, setVoicemailScript] = useState<string | null>(null);
   const [emailFallback, setEmailFallback] = useState<string | null>(null);
   const [showReflectionPrompt, setShowReflectionPrompt] = useState(false);
@@ -214,6 +216,7 @@ export default function App() {
   const [anxietyTriggers, setAnxietyTriggers] = useState<string[]>(() => readStoredJson('callmate_triggers', []));
   const [lifeImpact, setLifeImpact] = useState<string[]>(() => readStoredJson('callmate_impact', []));
   const [callAnxietyRatings, setCallAnxietyRatings] = useState<AnxietyRating[]>([]);
+  const [practiceSessions, setPracticeSessions] = useState<PracticeSessionSummary[]>(() => readStoredJson(PRACTICE_SESSIONS_KEY, []));
   const [callStreak, setCallStreak] = useState(0);
   const [activeTab, setActiveTab] = useState<'home' | 'history' | 'dashboard'>('home');
   const [showAlterEgo, setShowAlterEgo] = useState(false);
@@ -238,15 +241,21 @@ export default function App() {
   const [hasBeenReviewPrompted, setHasBeenReviewPrompted] = useState(() => localStorage.getItem('callmate_review_prompted') === 'true');
   const [lastScriptDate, setLastScriptDate] = useState<number | null>(null);
   const [comebackNudgeDismissed, setComebackNudgeDismissed] = useState(false);
-  const [isPracticePlaying, setIsPracticePlaying] = useState(false);
+  const [showCallSimulator, setShowCallSimulator] = useState(false);
+  const [simulatorScenario, setSimulatorScenario] = useState<PracticeScenario | null>(null);
+  const [isLaunchingSimulator, setIsLaunchingSimulator] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [milestoneToast, setMilestoneToast] = useState<{ icon: string; title: string } | null>(null);
   const [customTriggerInput, setCustomTriggerInput] = useState('');
-  const practiceAudioRef = useRef<HTMLAudioElement | null>(null);
   const prevMilestoneIdsRef = useRef<Set<string>>(new Set());
-  const channelRef = useRef<RealtimeChannel | null>(null);
+  const channelRef = useRef<RealtimeChannel[]>([]);
 
   const isDark = theme === 'dark';
+
+  const persistPracticeSessions = (items: PracticeSessionSummary[]) => {
+    setPracticeSessions(items);
+    localStorage.setItem(PRACTICE_SESSIONS_KEY, JSON.stringify(items));
+  };
 
   // Sync native status bar with theme
   useEffect(() => {
@@ -492,8 +501,8 @@ export default function App() {
 
     try {
       const { createSyncSubscriptions } = await import('./services/sync');
-      channelRef.current?.unsubscribe();
-      channelRef.current = createSyncSubscriptions(user.id, { onScriptChange });
+      channelRef.current.forEach(ch => ch.unsubscribe());
+      channelRef.current = await createSyncSubscriptions(supabase, user, { onScriptChange });
     } catch (error) {
       console.error('Failed to create sync subscriptions', error);
     }
@@ -851,6 +860,7 @@ export default function App() {
         if (session?.user) {
           const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
           localStorage.removeItem(AUTH_INTENT_KEY);
+          localStorage.removeItem(PENDING_OAUTH_CALLBACK_KEY);
           const { access, isReturningUser } = await hydrateSignedInUser(session.user, authIntent);
           
           if (access?.tier === 'admin' || isReturningUser) {
@@ -895,13 +905,15 @@ export default function App() {
       if (session?.user) {
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
           let isReturningUser = true;
+          let result: Awaited<ReturnType<typeof hydrateSignedInUser>> | null = null;
           try {
             const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
-            const result = await hydrateSignedInUser(session.user, authIntent);
+            result = await hydrateSignedInUser(session.user, authIntent);
             isReturningUser = result.isReturningUser;
             if (authIntent) {
               localStorage.removeItem(AUTH_INTENT_KEY);
             }
+            localStorage.removeItem(PENDING_OAUTH_CALLBACK_KEY);
           } catch (error) {
             console.error('Failed to hydrate user after auth change', error);
           }
@@ -909,7 +921,7 @@ export default function App() {
           // Only automatically set view if we are currently in an onboarding/auth view
           // This avoids interrupting the user if they are already using the app
           if (['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
-            if (result.access?.tier === 'admin' || isReturningUser) {
+            if (result?.access?.tier === 'admin' || isReturningUser) {
               setView('home');
             } else {
               setView('notifications');
@@ -919,8 +931,8 @@ export default function App() {
       } else {
         setSupabaseUser(null);
         if (event === 'SIGNED_OUT') {
-          channelRef.current?.unsubscribe();
-          channelRef.current = null;
+          channelRef.current.forEach(ch => ch.unsubscribe());
+          channelRef.current = [];
           clearLocalUserCollections();
           setTier('free');
           setTrialStartDate(null);
@@ -928,6 +940,7 @@ export default function App() {
           setSelectedPlan(null);
           setUserEmail('');
           localStorage.removeItem('callmate_user_email');
+          localStorage.removeItem(PENDING_OAUTH_CALLBACK_KEY);
           setView('account');
         }
       }
@@ -940,13 +953,15 @@ export default function App() {
       const { App: CapApp } = await import('@capacitor/app');
       const completePendingAuthIfNeeded = async () => {
         const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
-        if (!authIntent) return;
+        const hasPendingOAuthCallback = localStorage.getItem(PENDING_OAUTH_CALLBACK_KEY) === '1';
+        if (!authIntent || !hasPendingOAuthCallback) return;
         const { supabase: sb } = await import('./services/supabase');
         for (let attempt = 0; attempt < 6; attempt += 1) {
           const { data: { session } } = await sb.auth.getSession();
           if (session?.user) {
             const profile = (await hydrateSignedInUser(session.user, authIntent)).profile;
             localStorage.removeItem(AUTH_INTENT_KEY);
+            localStorage.removeItem(PENDING_OAUTH_CALLBACK_KEY);
             const isReturningUser = profile?.name || authIntent === 'login' || (Date.now() - new Date(session.user.created_at).getTime() > 30000);
             const access = await loadAccessStateSafely();
             if (access?.tier === 'admin' || isReturningUser) {
@@ -960,11 +975,12 @@ export default function App() {
           await new Promise(resolve => window.setTimeout(resolve, 250));
         }
 
-        console.error('Pending auth session was not available after callback.');
+        console.error('Pending OAuth session was not available after callback.');
       };
 
       const handleAuthCallbackUrl = async (url?: string | null) => {
         if (!url?.startsWith('com.trycallmate.app://')) return;
+        localStorage.setItem(PENDING_OAUTH_CALLBACK_KEY, '1');
         // Close the browser immediately so the user is back in the app
         const { Browser } = await import('@capacitor/browser');
         await Browser.close();
@@ -976,6 +992,7 @@ export default function App() {
           const { error } = await sb.auth.exchangeCodeForSession(code);
           if (error) {
             console.error('OAuth code exchange failed', error);
+            localStorage.removeItem(PENDING_OAUTH_CALLBACK_KEY);
             return;
           }
           await completePendingAuthIfNeeded();
@@ -985,13 +1002,16 @@ export default function App() {
         const accessToken = params.get('access_token');
         if (accessToken) {
           const refreshToken = params.get('refresh_token');
-          const { error } = await sb.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken ?? '',
-          });
-          if (error) {
-            console.error('OAuth token session restore failed', error, { hasRefreshToken: !!refreshToken });
-            return;
+          if (refreshToken) {
+            const { error } = await sb.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (error) {
+              console.error('OAuth token session restore failed', error);
+            }
+          } else {
+            console.warn('OAuth callback missing refresh_token — waiting for onAuthStateChange');
           }
         }
 
@@ -1235,38 +1255,22 @@ export default function App() {
     }
   };
 
-  const handlePractice = async () => {
+  const handleSimulateCall = async () => {
     if (!currentScript) return;
     if (!canUsePracticeMode) {
       setShowUpgradeModal(true);
       return;
     }
-    // If already playing, stop
-    if (isPracticePlaying) {
-      practiceAudioRef.current?.pause();
-      practiceAudioRef.current = null;
-      setIsPracticePlaying(false);
-      setIsPracticeMode(false);
-      return;
-    }
-    setIsPracticeMode(true);
+
+    setIsLaunchingSimulator(true);
     try {
-      const textToRead = `${currentScript.opening}. ${currentScript.mainAsk}. ${currentScript.close}`;
-      const audioUrl = await generateTTS(textToRead);
-      const audio = new Audio(audioUrl);
-      practiceAudioRef.current = audio;
-      audio.play();
-      setIsPracticePlaying(true);
-      setIsPracticeMode(false);
-      audio.onended = () => {
-        setIsPracticePlaying(false);
-        practiceAudioRef.current = null;
-        URL.revokeObjectURL(audioUrl);
-      };
+      setSimulatorScenario(buildPracticeScenario(currentScript, perspective));
+      setShowCallSimulator(true);
     } catch (error) {
       console.error(error);
-      setIsPracticeMode(false);
-      setIsPracticePlaying(false);
+      alert('Unable to start the simulated call right now.');
+    } finally {
+      setIsLaunchingSimulator(false);
     }
   };
 
@@ -1901,9 +1905,16 @@ export default function App() {
     selectedPlan={selectedPlan}
     trialStartDate={trialStartDate}
     onComplete={async (email, isNewUser) => {
-      // Get fresh session — supabaseUser closure may be stale at this point
       const { supabase: sb } = await import('./services/supabase');
-      const { data: { session: freshSession } } = await sb.auth.getSession();
+      let freshSession: Session | null = null;
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session?.user) {
+          freshSession = session;
+          break;
+        }
+        await new Promise(resolve => window.setTimeout(resolve, 250));
+      }
       if (!freshSession?.user) {
         throw new Error('No active auth session found.');
       }
@@ -1930,6 +1941,8 @@ export default function App() {
           lifeImpact,
           discoverySource: heardAboutUs,
           callStreak,
+          tier,
+          trialStartDate,
           darkMode: isDark,
         });
         applyAccessState(await startTrial('monthly'));
@@ -2196,6 +2209,7 @@ export default function App() {
               recoveryScore={recoveryScore}
               callStreak={callStreak}
               callAnxietyRatings={callAnxietyRatings}
+              practiceSessions={practiceSessions}
               milestones={MILESTONES}
               unlockedMilestones={unlockedMilestones}
               anxietySeverity={anxietySeverity}
@@ -2234,9 +2248,8 @@ export default function App() {
               setActiveTab={setActiveTab}
               setView={setView}
               isPremium={isPremium}
-              handlePractice={handlePractice}
-              isPracticeMode={isPracticeMode}
-              isPracticePlaying={isPracticePlaying}
+              handleSimulateCall={handleSimulateCall}
+              isLaunchingSimulator={isLaunchingSimulator}
               toggleStar={toggleStar}
               starredScripts={starredScripts}
               handleShare={handleShare}
@@ -2338,6 +2351,19 @@ export default function App() {
           </motion.button>
         </div>
       )}
+
+      <CallSimulator
+        isOpen={showCallSimulator}
+        isDark={isDark}
+        scenario={simulatorScenario}
+        onSessionComplete={(session) => {
+          persistPracticeSessions([...practiceSessions, session]);
+        }}
+        onClose={() => {
+          setShowCallSimulator(false);
+          setSimulatorScenario(null);
+        }}
+      />
 
       <nav className={cn("fixed bottom-0 left-0 right-0 border-t px-4 py-3 pb-8 z-50 flex items-center justify-around max-w-2xl mx-auto shadow-2xl transition-colors", isDark ? "bg-black border-white/5" : "bg-white border-black/5")}>
         {/* New Call */}
@@ -2544,18 +2570,36 @@ export default function App() {
           <>
             <div onClick={() => { if (!upgradeModalForced) setShowUpgradeModal(false); }} className="fixed inset-0 bg-black/80 z-[100]" />
             <div className={cn("fixed inset-0 z-[110] shadow-2xl overflow-y-auto transition-colors", isDark ? "bg-[#202926]" : "bg-[rgba(255,251,245,0.99)]")}>
-              <div className="px-6 pt-14 pb-10 max-w-2xl mx-auto min-h-full space-y-6">
-                {/* Personalised header */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <h2 className={cn("text-2xl font-black leading-tight", isDark ? "text-white" : "text-black")}>
-                      {userName ? (
-                        <>Hey <span className={cn(isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>{userName}</span>,<br /></>
-                      ) : null}
-                      Unlock <span className={cn(isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>Callmate</span> for help with phone anxiety.
-                    </h2>
-                    <p className={cn("text-sm", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>3 days free · Pay nothing today · Cancel anytime</p>
-                  </div>
+              <header className={cn("sticky top-0 z-10 border-b px-6 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] flex items-center justify-between transition-colors", isDark ? "bg-[#202926]/95 border-[#33403b]" : "bg-[rgba(243,238,228,0.92)] border-[#d8cdc0]")}>
+                <div>
+                  <p className={cn("text-2xl font-semibold tracking-tight", isDark ? "text-[#f2ede3]" : "text-[#22312b]")}>Subscription</p>
+                  <p className={cn("text-xs mt-1", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>3 days free · Pay nothing today · Cancel anytime</p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    onClick={() => { void handleRestorePurchases(); }}
+                    className={cn("text-sm font-semibold transition-colors", isDark ? "text-[#b7d0c4] hover:text-white" : "text-[#5d8a7a] hover:text-[#22312b]")}
+                  >
+                    Restore
+                  </button>
+                  {!upgradeModalForced && (
+                    <button onClick={() => setShowUpgradeModal(false)} className={cn("p-2 rounded-xl transition-all", isDark ? "bg-[#171f1d] hover:bg-[#2b3632] text-[#97a59f]" : "bg-[#ece5da] hover:bg-[#e2d8ca] text-[#66756f]")}>
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              </header>
+              <div className="px-6 py-6 pb-10 max-w-2xl mx-auto min-h-full space-y-6">
+                <div className="space-y-1">
+                  <h2 className={cn("text-2xl font-black leading-tight", isDark ? "text-white" : "text-black")}>
+                    {userName ? (
+                      <>Hey <span className={cn(isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>{userName}</span>,<br /></>
+                    ) : null}
+                    Unlock <span className={cn(isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>Callmate</span> for help with phone anxiety.
+                  </h2>
+                  <p className={cn("text-sm", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>Choose your plan and keep every support tool available before difficult calls.</p>
+                </div>
+                <div className="hidden">
                   <div className="flex items-center gap-3 shrink-0 mt-1">
                     <button
                       onClick={() => { void handleRestorePurchases(); }}
@@ -2580,7 +2624,7 @@ export default function App() {
                     { icon: '📉', text: 'Anxiety progress tracking — see your telephobia improve' },
                     { icon: '🚨', text: 'Panic mode — real-time help when calls go sideways' },
                     { icon: '🧘', text: 'Pre-call prep and breathing exercise' },
-                    { icon: '🔊', text: 'Practice mode — hear your script read aloud by AI' },
+                    { icon: '📞', text: 'Simulate Call — practice a guided two-way call with AI' },
                     { icon: '🎭', text: 'Alter ego mode, custom personas & more' },
                   ].map(({ icon, text }) => (
                     <div key={text} className="flex items-start gap-3">
@@ -3615,14 +3659,14 @@ const OnboardingDiscoveryStep = React.memo(function OnboardingDiscoveryStep({
                     aria-hidden="true"
                     className={cn(
                       "object-contain",
-                      option.assetClassName,
+                      'assetClassName' in option ? option.assetClassName : undefined,
                       selected && !isDark ? "brightness-0 invert" : selected && isDark ? "brightness-0 invert" : "brightness-0"
                     )}
                   />
                 ) : Icon ? (
                   <Icon className="w-5 h-5" />
                 ) : (
-                  <span className="text-[0.95rem] font-black leading-none tracking-[-0.04em] uppercase">{option.badge}</span>
+                  <span className="text-[0.95rem] font-black leading-none tracking-[-0.04em] uppercase">{'badge' in option ? option.badge : null}</span>
                 )}
               </div>
               <span className="text-lg font-semibold tracking-tight">{option.value}</span>

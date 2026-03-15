@@ -22,6 +22,7 @@ export interface CallScript {
   extraBranches?: Array<{ condition: string; response: string }>;
   close: string;
   timestamp: number;
+  updated_at?: number;
 }
 
 export interface Persona {
@@ -34,6 +35,63 @@ export interface Reflection {
   id: string;
   scriptId: string;
   feedback: string;
+  timestamp: number;
+}
+
+export type PracticeDifficulty = 'easy' | 'medium' | 'hard';
+
+export interface PracticeScenarioStep {
+  id: string;
+  label: string;
+  prompt: string;
+  suggestions: string[];
+  expectedKeywords: string[];
+  successReply: string;
+  retryReply: string;
+  isFinal?: boolean;
+}
+
+export interface PracticeScenario {
+  scenarioId: string;
+  title: string;
+  contactName: string;
+  category: string;
+  difficulty: PracticeDifficulty;
+  perspective: CallPerspective;
+  estimatedDuration: string;
+  reasonSummary: string;
+  openingLine: string;
+  possibleQuestions: string[];
+  exitLine: string;
+  introLine: string;
+  steps: PracticeScenarioStep[];
+}
+
+export interface PracticeTurn {
+  id: string;
+  role: 'ai' | 'user';
+  text: string;
+  stepId: string;
+  timestamp: number;
+  responseMs?: number;
+  usedSuggestion?: boolean;
+}
+
+export interface PracticeFeedback {
+  confidenceScore: number;
+  strengths: string[];
+  suggestions: string[];
+  averageResponseMs: number;
+  completed: boolean;
+  ownWordsTurns: number;
+  suggestionTurns: number;
+}
+
+export interface PracticeSessionSummary {
+  id: string;
+  scenarioId: string;
+  confidenceScore: number;
+  completed: boolean;
   timestamp: number;
 }
 
