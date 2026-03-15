@@ -228,6 +228,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
   const [isMuted, setIsMuted] = useState(false);
   const [turns, setTurns] = useState<PracticeTurn[]>([]);
   const [feedback, setFeedback] = useState<PracticeFeedback | null>(null);
+  const [showTranscript, setShowTranscript] = useState(false);
   const [activePromptAt, setActivePromptAt] = useState<number | null>(null);
   const [elapsedTick, setElapsedTick] = useState(0);
   const [isListening, setIsListening] = useState(false);
@@ -237,6 +238,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const connectTimersRef = useRef<number[]>([]);
   const submitResponseRef = useRef<(text: string, usedSuggestion: boolean) => void>(() => {});
+  const isProcessingResponseRef = useRef(false);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const remoteAudioUrlRef = useRef<string | null>(null);
   const ringAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -277,6 +279,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
       window.clearTimeout(aiTurnTimerRef.current);
       aiTurnTimerRef.current = null;
     }
+    isProcessingResponseRef.current = false;
     stop();
     cleanupRemoteAudio(remoteAudioRef, remoteAudioUrlRef);
     ringAudioRef.current?.pause();
@@ -655,8 +658,13 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
   };
 
   const submitResponse = async (text: string, usedSuggestion: boolean) => {
+    // Prevent concurrent calls — drop if a response is already being processed
+    if (isProcessingResponseRef.current) return;
+
     const transcript = text.trim();
     if (!transcript) return;
+
+    isProcessingResponseRef.current = true;
 
     const responseMs = activePromptAt ? Date.now() - activePromptAt : undefined;
     const userTurn: PracticeTurn = {
@@ -707,6 +715,8 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
     } catch (error) {
       console.error('Failed to process simulator response', error);
       setCallStatus('Connection issue. Try again.');
+    } finally {
+      isProcessingResponseRef.current = false;
     }
   };
 
@@ -995,6 +1005,61 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
                   </div>
                 </Card>
 
+                {/* ── Full Transcript ─────────────────────────────────── */}
+                {turns.length > 0 && (
+                  <Card isDark={isDark} className="overflow-hidden">
+                    <button
+                      onClick={() => setShowTranscript((v) => !v)}
+                      className={cn(
+                        'w-full flex items-center justify-between px-6 py-4 text-left',
+                        isDark ? 'hover:bg-white/[0.03]' : 'hover:bg-black/[0.02]'
+                      )}
+                    >
+                      <p className={cn('text-[10px] font-black uppercase tracking-[0.22em]', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>
+                        Full Transcript
+                      </p>
+                      <span className={cn('text-xs font-semibold', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>
+                        {showTranscript ? '▲ Hide' : '▼ View'}
+                      </span>
+                    </button>
+                    {showTranscript && (
+                      <div className="px-4 pb-4 space-y-2 max-h-64 overflow-y-auto">
+                        {turns.map((turn) => (
+                          <div
+                            key={turn.id}
+                            className={cn(
+                              'flex',
+                              turn.role === 'user' ? 'justify-end' : 'justify-start'
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                'max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
+                                turn.role === 'user'
+                                  ? isDark
+                                    ? 'bg-[linear-gradient(135deg,#7ea18d,#5d8a7a)] text-white'
+                                    : 'bg-[linear-gradient(135deg,#22312b,#385046)] text-white'
+                                  : isDark
+                                  ? 'bg-[#202926] text-[#dbe3de]'
+                                  : 'bg-[#ede8e0] text-[#22312b]'
+                              )}
+                            >
+                              <p className="text-[10px] font-bold uppercase tracking-wider mb-1 opacity-60">
+                                {turn.role === 'user' ? 'You' : 'Caller'}
+                              </p>
+                              {turn.text}
+                              {turn.usedSuggestion && (
+                                <p className="text-[9px] opacity-50 mt-1">used suggestion</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+                )}
+                {/* ──────────────────────────────────────────────────── */}
+
                 <div className="grid grid-cols-2 gap-3">
                   <Button size="lg" variant="outline" isDark={isDark} onClick={() => {
                     setStage('prep');
@@ -1004,6 +1069,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
                     setStepAttempt(0);
                     setInputValue('');
                     setActiveSuggestions([]);
+                    setShowTranscript(false);
                   }}>
                     Practice Again
                   </Button>

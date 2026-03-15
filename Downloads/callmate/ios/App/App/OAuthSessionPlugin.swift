@@ -2,19 +2,21 @@ import UIKit
 import Capacitor
 import AuthenticationServices
 
-private class OAuthPresentationContext: NSObject, ASWebAuthenticationPresentationContextProviding {
-    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        return UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap { $0.windows }
-            .first { $0.isKeyWindow } ?? UIWindow()
-    }
-}
-
 @objc(OAuthSessionPlugin)
-public class OAuthSessionPlugin: CAPPlugin {
+public class OAuthSessionPlugin: CAPPlugin, ASWebAuthenticationPresentationContextProviding {
     private var authSession: ASWebAuthenticationSession?
-    private let context = OAuthPresentationContext()
+
+    public func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        guard let window = self.bridge?.viewController?.view.window else {
+            // Fallback: find the foreground key window via connected scenes
+            let scene = UIApplication.shared.connectedScenes
+                .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
+            return scene?.windows.first(where: { $0.isKeyWindow })
+                ?? scene?.windows.first
+                ?? UIWindow()
+        }
+        return window
+    }
 
     @objc func start(_ call: CAPPluginCall) {
         guard
@@ -46,7 +48,7 @@ public class OAuthSessionPlugin: CAPPlugin {
                 }
                 call.resolve(["url": callbackURL.absoluteString])
             }
-            self.authSession?.presentationContextProvider = self.context
+            self.authSession?.presentationContextProvider = self
             self.authSession?.prefersEphemeralWebBrowserSession = false
             self.authSession?.start()
         }

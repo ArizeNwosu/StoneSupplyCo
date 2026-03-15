@@ -12,28 +12,25 @@ interface StoreKitPlugin {
   getEntitlements(): Promise<{ entitlements: Array<{ productId: string; transactionId: string; jwsToken: string }> }>;
 }
 
-const pluginNames = ['StoreKit', 'Storekit', 'StoreKitPlugin'] as const;
-const plugins = pluginNames.map((name) => registerPlugin<StoreKitPlugin>(name));
+const StoreKit = registerPlugin<StoreKitPlugin>('StoreKitPlugin');
 
 function isNotImplemented(error: unknown) {
   return error instanceof Error && /plugin is not implemented/i.test(error.message);
 }
 
 async function withStoreKit<T>(fn: (plugin: StoreKitPlugin) => Promise<T>): Promise<T> {
-  let lastError: unknown = null;
-
-  for (const plugin of plugins) {
-    try {
-      return await fn(plugin);
-    } catch (error) {
-      lastError = error;
-      if (!isNotImplemented(error)) {
-        throw error;
-      }
+  try {
+    console.log('[IAP] Attempting StoreKit call');
+    const result = await fn(StoreKit);
+    console.log('[IAP] StoreKit call successful');
+    return result;
+  } catch (error: any) {
+    console.error('[IAP] StoreKit call failed:', error?.message, error?.code);
+    if (isNotImplemented(error)) {
+      throw new Error('StoreKit plugin is not implemented on iOS. Ensure the .m and .swift files are correctly added to the Xcode project.');
     }
+    throw error;
   }
-
-  throw lastError instanceof Error ? lastError : new Error('StoreKit plugin is not available on this device.');
 }
 
 export async function fetchProducts() {

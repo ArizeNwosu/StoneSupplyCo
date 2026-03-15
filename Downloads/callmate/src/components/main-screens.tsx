@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { AlertCircle, ArrowLeft, Check, ChevronDown, ChevronRight, ChevronUp, Copy, Download, History, Loader2, Moon, Phone, Search, Settings, Share2, Star, Sun, Trash2, Upload, X, Instagram, ShieldAlert, LifeBuoy, Flag } from 'lucide-react';
 import type { ImportPreview } from '../services/exportImport';
 import { Tone, SAFE_LINES, Persona, CallScript, Tier, CallPerspective, PracticeSessionSummary } from '../types';
-import { Button, Card, CallTypeGrid, cn } from './ui';
+import { Button, Card, CallTypeGrid, ScriptCardSkeleton, ScriptViewSkeleton, cn } from './ui';
 import type { User } from '@supabase/supabase-js';
 import { motion } from 'motion/react';
 import { openInAppBrowser } from '../services/native';
@@ -27,6 +27,8 @@ type HomeScreenProps = {
   tone: Tone;
   setTone: React.Dispatch<React.SetStateAction<Tone>>;
   loading: boolean;
+  generateError?: string | null;
+  generateAttempt?: number;
   handleGenerate: () => void;
   expandedSafeLineIndex: number | null;
   toggleSafeLine: (index: number) => void;
@@ -70,6 +72,8 @@ export function HomeScreen(props: HomeScreenProps) {
     tone,
     setTone,
     loading,
+    generateError = null,
+    generateAttempt = 0,
     handleGenerate,
     expandedSafeLineIndex,
     toggleSafeLine,
@@ -176,10 +180,16 @@ export function HomeScreen(props: HomeScreenProps) {
         <Card isDark={isDark} className="p-0 overflow-hidden">
           <textarea
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => setDescription(e.target.value.slice(0, 500))}
             placeholder={perspective === 'outgoing' ? 'I need to call my landlord...' : 'My bank is calling about a suspicious charge...'}
+            maxLength={500}
             className={cn('w-full h-32 p-6 text-xl bg-transparent focus:outline-none resize-none transition-colors font-medium', isDark ? 'placeholder:text-[#798780] text-white' : 'placeholder:text-[#95a19c] text-[#22312b]')}
           />
+          <div className={cn('px-4 pb-2 flex justify-end transition-colors', isDark ? 'bg-transparent' : 'bg-transparent')}>
+            <span className={cn('text-[10px] tabular-nums transition-colors', description.length >= 450 ? (description.length >= 500 ? 'text-red-500' : 'text-amber-500') : (isDark ? 'text-[#798780]' : 'text-[#95a19c]'))}>
+              {description.length}/500
+            </span>
+          </div>
           <div className={cn('p-4 border-t flex flex-wrap gap-2 transition-colors', isDark ? 'bg-[#171f1d] border-[#415049]' : 'bg-[#f5efe6] border-[#d8cdc0]')}>
             {(['Professional', 'Assertive', 'Friendly', 'Firm'] as Tone[]).map((t) => (
               <button
@@ -200,6 +210,48 @@ export function HomeScreen(props: HomeScreenProps) {
         <Button size="xl" variant="primary" isDark={isDark} className="w-full mt-4 h-14 font-bold tracking-tight" disabled={!description.trim() || loading} onClick={handleGeneratePress}>
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Phone className="w-5 h-5" /> Get Ready for This Call</>}
         </Button>
+
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 space-y-1"
+          >
+            <p className={cn('text-xs text-center font-semibold mb-4', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>
+              {generateAttempt > 0 ? `Retrying… (attempt ${generateAttempt + 1} of 3)` : 'Crafting your script…'}
+            </p>
+            <ScriptViewSkeleton isDark={isDark} />
+          </motion.div>
+        )}
+
+        {!loading && generateError && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={cn(
+              'mt-4 p-4 rounded-2xl border flex items-start justify-between gap-3',
+              isDark ? 'bg-red-950/30 border-red-800/50' : 'bg-red-50 border-red-200'
+            )}
+          >
+            <div className="flex-1 min-w-0">
+              <p className={cn('text-xs font-bold uppercase tracking-widest mb-1', isDark ? 'text-red-400' : 'text-red-600')}>
+                Generation Failed
+              </p>
+              <p className={cn('text-sm leading-snug', isDark ? 'text-red-300' : 'text-red-700')}>
+                {generateError}
+              </p>
+            </div>
+            <button
+              onClick={handleGenerate}
+              className={cn(
+                'shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all',
+                isDark ? 'bg-red-900/60 text-red-300 hover:bg-red-800/60' : 'bg-red-100 text-red-700 hover:bg-red-200'
+              )}
+            >
+              Retry
+            </button>
+          </motion.div>
+        )}
       </section>
 
       <section>
@@ -934,6 +986,7 @@ type HistoryScreenProps = {
   currentScript: CallScript | null;
   setView: (view: 'script') => void;
   isPremium: boolean;
+  isLoading?: boolean;
   searchQuery: string;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   filteredHistory: CallScript[];
@@ -949,6 +1002,7 @@ export function HistoryScreen(props: HistoryScreenProps) {
     currentScript,
     setView,
     isPremium,
+    isLoading = false,
     searchQuery,
     setSearchQuery,
     filteredHistory,
@@ -996,7 +1050,13 @@ export function HistoryScreen(props: HistoryScreenProps) {
         )}
       </div>
 
-      {filteredHistory.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map((k) => (
+            <ScriptCardSkeleton key={k} isDark={isDark} />
+          ))}
+        </div>
+      ) : filteredHistory.length === 0 ? (
         <div className={cn('py-20 text-center space-y-4 rounded-[2.5rem] border relative z-10 transition-colors', isDark ? 'bg-[#202926]/60 border-[#415049]' : 'bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]')}>
           <div className={cn('w-16 h-16 rounded-full flex items-center justify-center mx-auto transition-colors', isDark ? 'bg-[#171f1d]' : 'bg-[#ece5da]')}>
             <History className="w-8 h-8 text-zinc-500" />

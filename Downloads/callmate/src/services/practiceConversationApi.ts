@@ -1,6 +1,7 @@
 import { apiJson } from './api';
 import type { PracticeFeedback, PracticeScenario, PracticeTurn } from '../types';
 import { buildPracticeFeedback } from './practiceSimulator';
+import { API_ENDPOINTS } from '../constants/api';
 
 type TurnRequest = {
   scenario: PracticeScenario;
@@ -30,30 +31,43 @@ async function endSessionLocally(request: EndSessionRequest): Promise<PracticeFe
   return buildPracticeFeedback(request.turns, request.completed);
 }
 
-async function postToPracticeApi<T>(path: string, body: unknown): Promise<T> {
+async function postToPracticeApi<T>(path: string, body: unknown, timeoutMs = 30_000): Promise<T> {
   if (!PRACTICE_API_URL) {
     return apiJson<T>(path, {
       method: 'POST',
       body: JSON.stringify(body),
+    }, timeoutMs);
+  }
+
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(`${PRACTICE_API_URL.replace(/\/$/, '')}${path}`, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
     });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || `Practice API request failed with status ${response.status}`);
+    }
+
+    return response.json() as Promise<T>;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Request timed out. Please check your connection and try again.');
+    }
+    throw err;
+  } finally {
+    window.clearTimeout(timeoutId);
   }
-
-  const response = await fetch(`${PRACTICE_API_URL.replace(/\/$/, '')}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `Practice API request failed with status ${response.status}`);
-  }
-
-  return response.json() as Promise<T>;
 }
 
 export async function processPracticeResponse(request: TurnRequest): Promise<TurnResponse> {
-  return postToPracticeApi<TurnResponse>('/api/practice-call/next-turn', {
+  return postToPracticeApi<TurnResponse>(API_ENDPOINTS.practiceNextTurn, {
       scenarioId: request.scenario.scenarioId,
       currentStep: request.scenario.steps[request.currentStepIndex]?.id ?? null,
       currentStepIndex: request.currentStepIndex,
@@ -69,5 +83,5 @@ export async function endPracticeSession(request: EndSessionRequest): Promise<Pr
     return endSessionLocally(request);
   }
 
-  return postToPracticeApi<PracticeFeedback>('/api/practice-call/end', request);
+  return postToPracticeApi<PracticeFeedback>(API_ENDPOINTS.practiceEnd, request);
 }

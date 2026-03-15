@@ -35,7 +35,8 @@ import { generateCallScript, generatePanicResponse, generateVoicemailScript, gen
 import { signUp, signIn, signInWithApple, signInWithGoogle, signOut, onAuthStateChange, sendPasswordReset } from './services/auth';
 import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchAnxietyRatings, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection as dbSaveReflection, savePersona, syncAnxietyRatings, deleteAllScriptsForUser, deletePersona as dbDeletePersona } from './services/db';
 import { fetchAccessState, startTrial } from './services/access';
-import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, vibrate, setStatusBarDark, setStatusBarLight, openInAppBrowser, requestNotificationsAccess } from './services/native';
+import { enqueueFailedSave, drainOfflineQueue } from './services/offlineQueue';
+import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, vibrate, setStatusBarDark, setStatusBarLight, openInAppBrowser, requestNotificationsAccess, scheduleLocalNotification } from './services/native';
 import type { Session, User, RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './services/supabase';
 import type { ImportPreview } from './services/exportImport';
@@ -176,7 +177,10 @@ export default function App() {
   const [perspective, setPerspective] = useState<CallPerspective>('outgoing');
   const [tone, setTone] = useState<Tone>('Professional');
   const [loading, setLoading] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [generateAttempt, setGenerateAttempt] = useState(0);
   const [currentScript, setCurrentScript] = useState<CallScript | null>(null);
   const [history, setHistory] = useState<CallScript[]>([]);
   const [tier, setTier] = useState<Tier>('free');
@@ -245,6 +249,8 @@ export default function App() {
   const [simulatorScenario, setSimulatorScenario] = useState<PracticeScenario | null>(null);
   const [isLaunchingSimulator, setIsLaunchingSimulator] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [iapPrices, setIapPrices] = useState<{ monthly?: string; annual?: string }>({});
   const [milestoneToast, setMilestoneToast] = useState<{ icon: string; title: string } | null>(null);
   const [customTriggerInput, setCustomTriggerInput] = useState('');
   const prevMilestoneIdsRef = useRef<Set<string>>(new Set());
@@ -262,9 +268,38 @@ export default function App() {
     if (isDark) setStatusBarDark(); else setStatusBarLight();
   }, [isDark]);
 
-  // Online / offline detection
+  // Load real IAP prices from StoreKit (native only, non-blocking)
   useEffect(() => {
-    const onOnline = () => setIsOnline(true);
+    void (async () => {
+      try {
+        const { fetchProducts, PRODUCT_IDS } = await import('./services/iap');
+        const products = await fetchProducts();
+        const priceMap: { monthly?: string; annual?: string } = {};
+        for (const p of products) {
+          if (p.id === PRODUCT_IDS.monthly) priceMap.monthly = p.displayPrice;
+          if (p.id === PRODUCT_IDS.annual) priceMap.annual = p.displayPrice;
+        }
+        if (priceMap.monthly || priceMap.annual) setIapPrices(priceMap);
+      } catch {
+        // Not on native or StoreKit unavailable — fallback to hardcoded prices
+      }
+    })();
+  }, []);
+
+  // Online / offline detection + queue drain on reconnect
+  useEffect(() => {
+    const onOnline = async () => {
+      setIsOnline(true);
+      if (!supabaseUser) return;
+      setIsSyncing(true);
+      try {
+        await drainOfflineQueue();
+      } catch {
+        // non-critical
+      } finally {
+        setIsSyncing(false);
+      }
+    };
     const onOffline = () => setIsOnline(false);
     window.addEventListener('online', onOnline);
     window.addEventListener('offline', onOffline);
@@ -272,7 +307,7 @@ export default function App() {
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
     };
-  }, []);
+  }, [supabaseUser]);
 
   const TRIAL_SCRIPT_LIMIT = 5;
   const TRIAL_DAYS = 3;
@@ -434,8 +469,12 @@ export default function App() {
     setReflections(result.reflections);
     localStorage.setItem('ringtone_reflections', JSON.stringify(result.reflections));
     if (supabaseUser) {
-      for (const script of result.scripts) {
-        void saveScript(supabaseUser.id, script);
+      const results = await Promise.allSettled(
+        result.scripts.map((script) => saveScript(supabaseUser.id, script))
+      );
+      const failures = results.filter((r) => r.status === 'rejected');
+      if (failures.length > 0) {
+        console.error(`Failed to sync ${failures.length} script(s) to server during import.`);
       }
     }
   };
@@ -1100,6 +1139,7 @@ export default function App() {
   }, [userEmail, view]);
 
   const loadUserDataFromSupabase = async (userId: string) => {
+    setIsHistoryLoading(true);
     const [remoteScripts, remoteReflections, remoteRatings, remotePersonas, profile] = await Promise.all([
       fetchScripts(userId),
       fetchReflections(userId),
@@ -1132,6 +1172,7 @@ export default function App() {
       if (typeof profile.call_streak === 'number') { setCallStreak(profile.call_streak); localStorage.setItem('callmate_streak', String(profile.call_streak)); }
       setTheme(profile.dark_mode ? 'dark' : 'light');
     }
+    setIsHistoryLoading(false);
     return profile;
   };
 
@@ -1193,6 +1234,8 @@ export default function App() {
 
     const sanitizedDescription = targetDescription.trim().slice(0, 500);
     if (!sanitizedDescription) return;
+    setGenerateError(null);
+    setGenerateAttempt(0);
     if (overrideTone) setIsRewriting(true); else setLoading(true);
     try {
       const userProfile = {
@@ -1203,14 +1246,38 @@ export default function App() {
         anxietyTriggers: anxietyTriggers.length > 0 ? anxietyTriggers : undefined,
         lifeImpact: lifeImpact.length > 0 ? lifeImpact : undefined,
       };
-      const script = await generateCallScript(sanitizedDescription, targetTone, perspective, selectedPersona || undefined, userProfile);
+
+      // Exponential backoff — up to 3 attempts (0 ms, 1 000 ms, 2 000 ms)
+      const DELAYS = [0, 1000, 2000];
+      let script = null;
+      let lastError: unknown = null;
+      for (let attempt = 0; attempt < DELAYS.length; attempt++) {
+        if (attempt > 0) {
+          setGenerateAttempt(attempt);
+          await new Promise<void>((res) => window.setTimeout(res, DELAYS[attempt]));
+        }
+        try {
+          script = await generateCallScript(sanitizedDescription, targetTone, perspective, selectedPersona || undefined, userProfile);
+          break;
+        } catch (err) {
+          lastError = err;
+          console.warn(`Script generation attempt ${attempt + 1} failed`, err);
+        }
+      }
+      if (!script) throw lastError;
+
       setCurrentScript(script);
 
       // Auto-save to history for all tiers
       const newHistory = [script, ...history].slice(0, 100);
       persistScriptLocally(newHistory);
       if (supabaseUser) {
-        await saveScript(supabaseUser.id, script);
+        try {
+          await saveScript(supabaseUser.id, script);
+        } catch (saveErr) {
+          console.warn('Script save failed (offline?), queuing for retry.', saveErr);
+          enqueueFailedSave(supabaseUser.id, script);
+        }
         await loadAccessState();
       }
 
@@ -1247,11 +1314,12 @@ export default function App() {
     } catch (error) {
       console.error('Failed to generate script', error);
       hapticError();
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to generate script. ${message}`);
+      const message = error instanceof Error ? error.message : 'Connection error. Please try again.';
+      setGenerateError(message);
     } finally {
       setLoading(false);
       setIsRewriting(false);
+      setGenerateAttempt(0);
     }
   };
 
@@ -1327,6 +1395,33 @@ export default function App() {
       if (supabaseUser) {
         void syncAnxietyRatings(supabaseUser.id, [newRating]);
       }
+
+      // ── Anxiety trend notification ─────────────────────────────────────────
+      // Fire at most once per hour to avoid spamming the user.
+      const TREND_NOTIF_KEY = 'callmate_trend_notif_last';
+      const lastNotifAt = Number(localStorage.getItem(TREND_NOTIF_KEY) ?? 0);
+      const hourMs = 60 * 60 * 1000;
+      if (newRatings.length >= 3 && Date.now() - lastNotifAt > hourMs) {
+        const last3 = newRatings.slice(-3).map((r) => r.rating);
+        const avg = last3.reduce((s, r) => s + r, 0) / 3;
+        const isDecreasing = last3[2] < last3[1] && last3[1] <= last3[0];
+        if (isDecreasing && avg <= 3) {
+          // Consistent improvement — celebrate
+          scheduleLocalNotification(
+            "You're making real progress! 🎉",
+            'Your anxiety scores have been trending down. Keep it up!'
+          );
+          localStorage.setItem(TREND_NOTIF_KEY, String(Date.now()));
+        } else if (avg >= 4) {
+          // Consistently high anxiety — encourage practice
+          scheduleLocalNotification(
+            "A tough stretch — you've got this 💪",
+            'Try a quick practice call to build confidence before your next real one.'
+          );
+          localStorage.setItem(TREND_NOTIF_KEY, String(Date.now()));
+        }
+      }
+      // ──────────────────────────────────────────────────────────────────────
 
       // Update streak
       const today = new Date().toDateString();
@@ -2063,6 +2158,16 @@ export default function App() {
             <WifiOff className="w-3.5 h-3.5" /> You're offline — scripts saved locally
           </motion.div>
         )}
+        {isOnline && isSyncing && (
+          <motion.div
+            initial={{ y: -40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -40, opacity: 0 }}
+            className="fixed top-0 left-0 right-0 z-[200] flex items-center justify-center gap-2 bg-emerald-900 text-emerald-200 text-xs font-semibold py-2 px-4"
+          >
+            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Syncing saved scripts…
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Milestone toast */}
@@ -2158,6 +2263,8 @@ export default function App() {
                 tone={tone}
                 setTone={setTone}
                 loading={loading}
+                generateError={generateError}
+                generateAttempt={generateAttempt}
                 handleGenerate={handleGenerate}
                 expandedSafeLineIndex={expandedSafeLineIndex}
                 toggleSafeLine={toggleSafeLine}
@@ -2224,6 +2331,7 @@ export default function App() {
               currentScript={currentScript}
               setView={setView}
               isPremium={isPremium}
+              isLoading={isHistoryLoading}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               filteredHistory={filteredHistory}
@@ -2658,12 +2766,12 @@ export default function App() {
                         <p className={cn("text-xs", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>Billed monthly after trial</p>
                       </div>
                       <div className="text-right">
-                        <p className={cn("text-2xl font-black tabular-nums", isDark ? "text-white" : "text-black")}>$8.99<span className={cn("text-sm font-normal", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>/mo</span></p>
+                        <p className={cn("text-2xl font-black tabular-nums", isDark ? "text-white" : "text-black")}>{iapPrices.monthly ?? '$8.99'}<span className={cn("text-sm font-normal", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>/mo</span></p>
                       </div>
                     </div>
                     <div className={cn("rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-2", isDark ? "bg-[#274136]/35 text-[#d7e6df]" : "bg-[#eef5f1] text-[#4d6f62]")}>
                       <Check className="w-3.5 h-3.5 shrink-0" />
-                      3 days free, then $8.99/month · Pay nothing today
+                      3 days free, then {iapPrices.monthly ?? '$8.99'}/month · Pay nothing today
                     </div>
                   </div>
 
@@ -2689,13 +2797,13 @@ export default function App() {
                         <p className={cn("text-xs", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>Best value · Billed yearly after trial</p>
                       </div>
                       <div className="text-right">
-                        <p className={cn("text-2xl font-black tabular-nums", isDark ? "text-white" : "text-black")}>$69.99<span className={cn("text-sm font-normal", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>/yr</span></p>
-                        <p className={cn("text-[10px] font-black", isDark ? "text-[#c6ddb7]" : "text-[#6e8f69]")}>≈ $5.83/mo</p>
+                        <p className={cn("text-2xl font-black tabular-nums", isDark ? "text-white" : "text-black")}>{iapPrices.annual ?? '$69.99'}<span className={cn("text-sm font-normal", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>/yr</span></p>
+                        {!iapPrices.annual && <p className={cn("text-[10px] font-black", isDark ? "text-[#c6ddb7]" : "text-[#6e8f69]")}>≈ $5.83/mo</p>}
                       </div>
                     </div>
                     <div className={cn("rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-2", isDark ? "bg-[#314230]/35 text-[#d9e6cf]" : "bg-[#edf4e8] text-[#587651]")}>
                       <Check className="w-3.5 h-3.5 shrink-0" />
-                      3 days free, then $69.99/year · Cancel anytime
+                      3 days free, then {iapPrices.annual ?? '$69.99'}/year · Cancel anytime
                     </div>
                   </div>
                 </div>

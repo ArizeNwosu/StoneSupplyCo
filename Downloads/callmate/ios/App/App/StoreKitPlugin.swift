@@ -10,8 +10,12 @@ public class StoreKitPlugin: CAPPlugin {
         "com.trycallmate.app.annual",
     ]
 
+    override public func load() {
+        print("🛠️ StoreKitPlugin loaded")
+    }
+
     @objc func fetchProducts(_ call: CAPPluginCall) {
-        Task {
+        Task { @MainActor in
             do {
                 let products = try await Product.products(for: productIds)
                 let payload = products.map { product in
@@ -34,7 +38,7 @@ public class StoreKitPlugin: CAPPlugin {
             return
         }
 
-        Task {
+        Task { @MainActor in
             do {
                 let products = try await Product.products(for: [productId])
                 guard let product = products.first else {
@@ -63,7 +67,7 @@ public class StoreKitPlugin: CAPPlugin {
     }
 
     @objc func restorePurchases(_ call: CAPPluginCall) {
-        Task {
+        Task { @MainActor in
             do {
                 try await AppStore.sync()
                 let entitlements = try await self.collectCurrentEntitlements()
@@ -75,7 +79,7 @@ public class StoreKitPlugin: CAPPlugin {
     }
 
     @objc func getEntitlements(_ call: CAPPluginCall) {
-        Task {
+        Task { @MainActor in
             do {
                 let entitlements = try await self.collectCurrentEntitlements()
                 call.resolve(["entitlements": entitlements])

@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 
 type ClassValue = string | false | null | undefined;
 
@@ -72,6 +73,62 @@ export function Card({ className, isDark = false, ...props }: CardProps) {
       )}
       {...props}
     />
+  );
+}
+
+// ─── Skeleton / Shimmer ───────────────────────────────────────────────────────
+
+type SkeletonProps = { className?: string; isDark?: boolean; style?: React.CSSProperties };
+
+export function Skeleton({ className, isDark = false, style }: SkeletonProps) {
+  return (
+    <div
+      style={style}
+      className={cn(
+        'rounded-2xl overflow-hidden relative',
+        isDark ? 'bg-[#202926]' : 'bg-[#e8e0d4]',
+        className
+      )}
+    >
+      <motion.div
+        className={cn(
+          'absolute inset-0',
+          isDark
+            ? 'bg-gradient-to-r from-transparent via-white/[0.04] to-transparent'
+            : 'bg-gradient-to-r from-transparent via-white/50 to-transparent'
+        )}
+        animate={{ x: ['-100%', '100%'] }}
+        transition={{ duration: 1.4, repeat: Infinity, ease: 'linear' }}
+      />
+    </div>
+  );
+}
+
+/** Skeleton shaped like a script history card */
+export function ScriptCardSkeleton({ isDark = false }: { isDark?: boolean }) {
+  return (
+    <Card isDark={isDark} className="p-5 space-y-3">
+      <Skeleton isDark={isDark} className="h-4 w-2/3" />
+      <Skeleton isDark={isDark} className="h-3 w-1/3" />
+      <div className="flex gap-2 pt-1">
+        <Skeleton isDark={isDark} className="h-7 w-20 rounded-full" />
+        <Skeleton isDark={isDark} className="h-7 w-16 rounded-full" />
+      </div>
+    </Card>
+  );
+}
+
+/** Skeleton shaped like the script sections (opening / mainAsk / branches) */
+export function ScriptViewSkeleton({ isDark = false }: { isDark?: boolean }) {
+  return (
+    <div className="space-y-4">
+      {[110, 80, 90, 75, 70].map((h, i) => (
+        <Card key={i} isDark={isDark} className="p-5 space-y-3">
+          <Skeleton isDark={isDark} className="h-3 w-24" />
+          <Skeleton isDark={isDark} className={`h-${Math.floor(h / 20)} w-full`} style={{ height: h }} />
+        </Card>
+      ))}
+    </div>
   );
 }
 

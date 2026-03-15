@@ -39,10 +39,12 @@ export function exportScriptsToCSV(scripts: CallScript[]): string {
 
   const escape = (value: string | number | undefined | null) => {
     const text = String(value ?? '');
-    if (/[",\n]/.test(text)) {
-      return `"${text.replace(/"/g, '""')}"`;
+    // Prefix formula-injection characters so spreadsheet apps don't execute them
+    const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
+    if (/[",\r\n]/.test(safe)) {
+      return `"${safe.replace(/"/g, '""')}"`;
     }
-    return text;
+    return safe;
   };
 
   const rows = scripts.map((script) =>

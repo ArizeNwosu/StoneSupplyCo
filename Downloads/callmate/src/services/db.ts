@@ -11,6 +11,7 @@ export interface UserProfile {
   anxiety_severity: string | null;
   anxiety_triggers: string[] | null;
   life_impact: string[] | null;
+  discovery_source: string | null;
   call_streak: number;
   tier: string;
   trial_start_date: number | null;
@@ -23,7 +24,7 @@ export async function fetchProfile(userId: string): Promise<UserProfile | null> 
     .from('profiles')
     .select('*')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
   return data ?? null;
 }
 
@@ -224,6 +225,7 @@ export async function pushLocalDataToSupabase(
     anxietySeverity: string | null;
     anxietyTriggers: string[];
     lifeImpact: string[];
+    discoverySource: string;
     callStreak: number;
     tier: string;
     trialStartDate: number | null;
@@ -242,6 +244,7 @@ export async function pushLocalDataToSupabase(
       anxiety_severity: data.anxietySeverity || null,
       anxiety_triggers: data.anxietyTriggers.length ? data.anxietyTriggers : null,
       life_impact: data.lifeImpact.length ? data.lifeImpact : null,
+      discovery_source: data.discoverySource || null,
       call_streak: data.callStreak,
       tier: data.tier,
       trial_start_date: data.trialStartDate,

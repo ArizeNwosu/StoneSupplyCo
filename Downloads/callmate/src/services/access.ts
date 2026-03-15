@@ -76,19 +76,21 @@ export async function fetchAccessState(): Promise<AccessState> {
 
   const normalizedEmail = user.email?.trim().toLowerCase() ?? '';
 
+  const adminQuery = normalizedEmail
+    ? supabase
+        .from('admin_users')
+        .select('email, is_active')
+        .eq('email', normalizedEmail)
+        .eq('is_active', true)
+        .maybeSingle()
+    : Promise.resolve({ data: null as { email: string; is_active: boolean } | null, error: null });
+
   const [
     { data: adminRow, error: adminError },
     { data: profile, error: profileError },
     { count: scriptCount, error: scriptCountError },
   ] = await Promise.all([
-    normalizedEmail
-      ? supabase
-          .from('admin_users')
-          .select('email, is_active')
-          .eq('email', normalizedEmail)
-          .eq('is_active', true)
-          .maybeSingle()
-      : Promise.resolve({ data: null, error: null } as any),
+    adminQuery,
     supabase
       .from('profiles')
       .select('tier, trial_start_date')

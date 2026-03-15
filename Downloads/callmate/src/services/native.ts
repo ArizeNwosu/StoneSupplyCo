@@ -164,6 +164,20 @@ export async function requestNotificationsAccess() {
   return NotificationSettings.requestPermission({ openSettings: true });
 }
 
+/**
+ * Fire a local notification using the Web Notification API.
+ * No-ops if permission is not granted or the API is unavailable.
+ */
+export function scheduleLocalNotification(title: string, body: string) {
+  if (typeof Notification === 'undefined') return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    new Notification(title, { body, icon: '/icons/icon-192.png' });
+  } catch {
+    // Some browsers disallow Notification from service-worker-less pages — silently ignore
+  }
+}
+
 // ─── Voice Simulator (native streaming STT + native TTS) ────────────────────
 
 type VoiceSpeechState = 'listening' | 'stopped' | 'error';
