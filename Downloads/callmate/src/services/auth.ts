@@ -28,11 +28,12 @@ export async function signInWithApple() {
   if (Capacitor.isNativePlatform()) {
     // Use native Apple Sign In sheet via WKScriptMessageHandler bridge in AppDelegate.swift
     const { nativeAppleSignIn } = await import('./native');
-    const { identityToken } = await nativeAppleSignIn();
+    const { identityToken, nonce } = await nativeAppleSignIn();
     if (!identityToken) throw new Error('Apple did not return an identity token');
     return supabase.auth.signInWithIdToken({
       provider: 'apple',
       token: identityToken,
+      nonce,
     });
   }
   return supabase.auth.signInWithOAuth({
