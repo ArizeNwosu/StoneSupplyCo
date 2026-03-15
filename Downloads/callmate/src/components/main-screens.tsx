@@ -626,7 +626,7 @@ export function SettingsScreen(props: SettingsScreenProps) {
                     onClick={() => { onImportConfirm(importPreview, 'replace'); setImportPreview(null); }}
                     className="flex-1 py-2 rounded-xl bg-blue-500 text-white font-bold text-sm"
                   >
-                    Replace All
+                    Replace
                   </button>
                   <button
                     onClick={() => setImportPreview(null)}
