@@ -7,6 +7,10 @@
    <FileRef
       location = "group:StoreKitPlugin.m">
    </FileRef>
+   <Group
+      location = "group:New Group"
+      name = "New Group">
+   </Group>
    <FileRef
       location = "group:unknows.h">
    </FileRef>

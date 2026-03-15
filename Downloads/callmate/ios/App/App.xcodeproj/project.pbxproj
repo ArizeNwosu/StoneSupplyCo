@@ -23,6 +23,7 @@
 		74920D052F65E5AD00164901 /* StoreKitPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 74920D042F65E5AD00164901 /* StoreKitPlugin.m */; };
 		74920D072F65E5D500164901 /* StoreKitPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74920D062F65E5D500164901 /* StoreKitPlugin.swift */; };
 		74920D0B2F65FCDE00164901 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 74920D0A2F65FCDE00164901 /* StoreKit.framework */; };
+		74920D0D2F66AF1300164901 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74920D0C2F66AF1300164901 /* SceneDelegate.swift */; };
 		7A1100012F8000000069112A /* VoiceSimulatorPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A1100022F8000000069112A /* VoiceSimulatorPlugin.m */; };
 		7A1100032F8000000069112A /* VoiceSimulatorPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1100042F8000000069112A /* VoiceSimulatorPlugin.swift */; };
 		8E0000012F65E5AD00164901 /* AppleSignInPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 8E0000022F65E5AD00164901 /* AppleSignInPlugin.m */; };
@@ -49,6 +50,7 @@
 		74920D042F65E5AD00164901 /* StoreKitPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StoreKitPlugin.m; sourceTree = "<group>"; };
 		74920D062F65E5D500164901 /* StoreKitPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitPlugin.swift; sourceTree = "<group>"; };
 		74920D0A2F65FCDE00164901 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		74920D0C2F66AF1300164901 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		7A1100022F8000000069112A /* VoiceSimulatorPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VoiceSimulatorPlugin.m; sourceTree = "<group>"; };
 		7A1100042F8000000069112A /* VoiceSimulatorPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSimulatorPlugin.swift; sourceTree = "<group>"; };
 		8E0000022F65E5AD00164901 /* AppleSignInPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppleSignInPlugin.m; sourceTree = "<group>"; };
@@ -99,6 +101,7 @@
 				504EC3051FED79650016851E /* OAuthSessionPlugin.m */,
 				746AC0002F7000010069112A /* NotificationSettingsPlugin.swift */,
 				504EC3151FED79650016851E /* NotificationSettingsPlugin.m */,
+				74920D0C2F66AF1300164901 /* SceneDelegate.swift */,
 				7A1100042F8000000069112A /* VoiceSimulatorPlugin.swift */,
 				7A1100022F8000000069112A /* VoiceSimulatorPlugin.m */,
 				74547AE62F5F82510069112A /* App.entitlements */,
@@ -213,6 +216,7 @@
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				74920D052F65E5AD00164901 /* StoreKitPlugin.m in Sources */,
 				7A1100012F8000000069112A /* VoiceSimulatorPlugin.m in Sources */,
+				74920D0D2F66AF1300164901 /* SceneDelegate.swift in Sources */,
 				8E0000012F65E5AD00164901 /* AppleSignInPlugin.m in Sources */,
 				8E0000032F65E5AD00164901 /* AppleSignInPlugin.swift in Sources */,
 				74547AE92F5F99570069112A /* OAuthSessionPlugin.swift in Sources */,
