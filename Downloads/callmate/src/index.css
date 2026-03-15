@@ -59,6 +59,11 @@ select,
     linear-gradient(180deg, var(--warm-bg-soft) 0%, var(--warm-bg) 100%);
 }
 
+/* Dark mode: strip the light gradient so the solid dark bg-[#161d1b] Tailwind class takes effect */
+html.dark-mode .warm-therapeutic-bg {
+  background: #161d1b;
+}
+
 .warm-panel {
   background: var(--warm-surface);
   border: 1px solid var(--warm-border);

@@ -263,9 +263,15 @@ export default function App() {
     localStorage.setItem(PRACTICE_SESSIONS_KEY, JSON.stringify(items));
   };
 
-  // Sync native status bar with theme
+  // Sync native status bar and html class with theme
   useEffect(() => {
-    if (isDark) setStatusBarDark(); else setStatusBarLight();
+    if (isDark) {
+      setStatusBarDark();
+      document.documentElement.classList.add('dark-mode');
+    } else {
+      setStatusBarLight();
+      document.documentElement.classList.remove('dark-mode');
+    }
   }, [isDark]);
 
   // Load real IAP prices from StoreKit (native only, non-blocking)
@@ -1140,6 +1146,7 @@ export default function App() {
 
   const loadUserDataFromSupabase = async (userId: string) => {
     setIsHistoryLoading(true);
+    try {
     const [remoteScripts, remoteReflections, remoteRatings, remotePersonas, profile] = await Promise.all([
       fetchScripts(userId),
       fetchReflections(userId),
@@ -1172,8 +1179,13 @@ export default function App() {
       if (typeof profile.call_streak === 'number') { setCallStreak(profile.call_streak); localStorage.setItem('callmate_streak', String(profile.call_streak)); }
       setTheme(profile.dark_mode ? 'dark' : 'light');
     }
-    setIsHistoryLoading(false);
     return profile;
+    } catch (err) {
+      console.error('[loadUserData] failed:', err);
+      return null;
+    } finally {
+      setIsHistoryLoading(false);
+    }
   };
 
   // Keep screen awake during active call
@@ -2331,7 +2343,7 @@ export default function App() {
               currentScript={currentScript}
               setView={setView}
               isPremium={isPremium}
-              isLoading={isHistoryLoading}
+              isLoading={isHistoryLoading && history.length === 0}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               filteredHistory={filteredHistory}
