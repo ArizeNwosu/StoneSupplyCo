@@ -791,7 +791,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
     <div className="space-y-5 pb-32">
       <div>
         <p className={cn('text-sm', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>
-          {historyLength === 0 ? 'Complete your first call to start tracking.' : `${historyLength} call${historyLength !== 1 ? 's' : ''} logged · telephobia recovery in progress`}
+          {historyLength === 0 ? 'Complete your first call to start tracking.' : `${historyLength} call${historyLength !== 1 ? 's' : ''} logged · Telephobia recovery in progress`}
         </p>
       </div>
 
@@ -971,7 +971,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
       {anxietySeverity && (
         <div className={cn('rounded-2xl border p-4 transition-colors', isDark ? 'bg-[#202926]/80 border-[#415049]' : 'bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]')}>
           <p className={cn('text-[10px] font-black uppercase tracking-widest mb-1', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>Your Starting Point</p>
-          <p className={cn('text-sm font-semibold capitalize', isDark ? 'text-white' : 'text-black')}>{anxietySeverity} telephobia</p>
+          <p className={cn('text-sm font-semibold capitalize', isDark ? 'text-white' : 'text-black')}>{anxietySeverity} Telephobia</p>
           {lifeImpact.length > 0 && <p className={cn('text-xs mt-1', isDark ? 'text-[#97a59f]' : 'text-[#6f7d75]')}>Focus areas: {lifeImpact.join(' · ')}</p>}
         </div>
       )}

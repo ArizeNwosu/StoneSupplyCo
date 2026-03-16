@@ -36,7 +36,7 @@ import { signUp, signIn, signInWithApple, signInWithGoogle, signOut, onAuthState
 import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchAnxietyRatings, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection as dbSaveReflection, savePersona, syncAnxietyRatings, deleteAllScriptsForUser, deletePersona as dbDeletePersona } from './services/db';
 import { fetchAccessState, startTrial } from './services/access';
 import { enqueueFailedSave, drainOfflineQueue } from './services/offlineQueue';
-import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, vibrate, setStatusBarDark, setStatusBarLight, openInAppBrowser, requestNotificationsAccess, scheduleLocalNotification } from './services/native';
+import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, vibrate, setStatusBarDark, setStatusBarLight, openInAppBrowser, requestNotificationsAccess, requestVoiceSimulatorPermissions, scheduleLocalNotification } from './services/native';
 import type { Session, User, RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './services/supabase';
 import type { ImportPreview } from './services/exportImport';
@@ -155,6 +155,9 @@ const IMPACT_AREAS = [
 const HAS_SEEN_ONBOARDING_KEY = 'callmate_has_seen_onboarding';
 const AUTH_INTENT_KEY = 'callmate_auth_intent';
 const PENDING_OAUTH_CALLBACK_KEY = 'callmate_pending_oauth_callback';
+// Module-level guard: prevents re-entry into Apple/Google SSO even if AccountSetup remounts
+// mid-flow (e.g. due to a SIGNED_OUT event triggering setView('account')).
+let ssoInFlight = false;
 const BREATHE_SOUND_KEY = 'callmate_breathe_sound_enabled';
 const BREATHE_VIBRATION_KEY = 'callmate_breathe_vibration_enabled';
 
@@ -529,28 +532,33 @@ export default function App() {
   };
 
   const hydrateSignedInUser = async (user: User, authIntent: 'signup' | 'login' | null = null) => {
-    setSupabaseUser(user);
+    // setSupabaseUser is deferred until after loadAccessStateSafely runs so that
+    // the enforceAccessGate useEffect sees the real tier (not the default 'free')
+    // when it fires. Setting it here would trigger the effect before the DB resolves.
     if (user.email) {
       setUserEmail(user.email);
       localStorage.setItem('callmate_user_email', user.email);
     }
 
-    let profile = null;
-    try {
-      profile = await loadUserDataFromSupabase(user.id);
-    } catch (error) {
-      console.error('Failed to load user data for signed-in user', error);
-    }
+    const [profile, access] = await Promise.all([
+      loadUserDataFromSupabase(user.id).catch(err => {
+        console.error('Failed to load user data for signed-in user', err);
+        return null;
+      }),
+      loadAccessStateSafely(),
+    ]);
 
-    const access = await loadAccessStateSafely();
+    // Now that tier/trialStartDate are set via applyAccessState inside loadAccessStateSafely,
+    // setting supabaseUser here ensures enforceAccessGate useEffect sees the real tier.
+    setSupabaseUser(user);
 
-    try {
-      const { createSyncSubscriptions } = await import('./services/sync');
+    // Fire-and-forget — does not block navigation
+    import('./services/sync').then(({ createSyncSubscriptions }) => {
       channelRef.current.forEach(ch => ch.unsubscribe());
-      channelRef.current = await createSyncSubscriptions(supabase, user, { onScriptChange });
-    } catch (error) {
-      console.error('Failed to create sync subscriptions', error);
-    }
+      createSyncSubscriptions(supabase, user, { onScriptChange })
+        .then(channels => { channelRef.current = channels; })
+        .catch(err => console.error('Failed to create sync subscriptions', err));
+    }).catch(err => console.error('Failed to import sync module', err));
 
     return {
       profile,
@@ -569,6 +577,13 @@ export default function App() {
   }, [tier, trialStartDate]);
 
   useEffect(() => { if (!showUpgradeModal) setUpgradeModalForced(false); }, [showUpgradeModal]);
+
+  useEffect(() => {
+    if (view === 'account') {
+      // Pre-warm chunks used by Apple/Google Sign In
+      void import('./services/native');
+    }
+  }, [view]);
 
   useEffect(() => {
     if (supabaseUser) {
@@ -958,6 +973,7 @@ export default function App() {
 
     // Listen for future auth state changes (login / logout)
     const { data: { subscription } } = onAuthStateChange(async (event, session) => {
+      console.log('[Auth] onAuthStateChange event=%s user=%s view=%s signingOut=%s authKey=%s', event, session?.user?.email ?? 'none', viewRef.current, isSigningOutRef.current, !!localStorage.getItem(AUTH_INTENT_KEY));
       if (session?.user) {
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
           let isReturningUser = true;
@@ -966,9 +982,10 @@ export default function App() {
             const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
             result = await hydrateSignedInUser(session.user, authIntent);
             isReturningUser = result.isReturningUser;
-            if (authIntent) {
-              localStorage.removeItem(AUTH_INTENT_KEY);
-            }
+            // AUTH_INTENT_KEY is intentionally NOT removed here.
+            // It is removed in handleGoogle/handleApple's finally blocks so it stays set
+            // for the full duration of the SSO flow, preventing SIGNED_OUT from
+            // calling setView('account') if Supabase replaces the session mid-flow.
             localStorage.removeItem(PENDING_OAUTH_CALLBACK_KEY);
           } catch (error) {
             console.error('Failed to hydrate user after auth change', error);
@@ -978,6 +995,7 @@ export default function App() {
           // This avoids interrupting the user if they are already using the app.
           // isSigningOutRef guard prevents a stale auth event from immediately
           // redirecting the user back to home after they sign out.
+          console.log('[Auth] SIGNED_IN nav check: signingOut=%s view=%s isReturning=%s tier=%s', isSigningOutRef.current, viewRef.current, isReturningUser, result?.access?.tier);
           if (!isSigningOutRef.current && ['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
             if (result?.access?.tier === 'admin' || isReturningUser) {
               setView('home');
@@ -989,8 +1007,17 @@ export default function App() {
       } else {
         setSupabaseUser(null);
         if (event === 'SIGNED_OUT') {
-          isSigningOutRef.current = true;
-          setTimeout(() => { isSigningOutRef.current = false; }, 2000);
+          // If AUTH_INTENT_KEY is set, a sign-in is actively in progress.
+          // This SIGNED_OUT is fired by supabase.auth.setSession() when it replaces the
+          // old session with the new OAuth session — it is NOT a real user sign-out.
+          // Skipping the isSigningOutRef flag and setView('account') lets the subsequent
+          // SIGNED_IN event (and onComplete) navigate correctly without being blocked.
+          const signingInActive = !!localStorage.getItem(AUTH_INTENT_KEY);
+          console.log('[Auth] SIGNED_OUT: signingInActive=%s view=%s', signingInActive, viewRef.current);
+          if (!signingInActive) {
+            isSigningOutRef.current = true;
+            setTimeout(() => { isSigningOutRef.current = false; }, 2000);
+          }
           channelRef.current.forEach(ch => ch.unsubscribe());
           channelRef.current = [];
           clearLocalUserCollections();
@@ -1001,7 +1028,9 @@ export default function App() {
           setUserEmail('');
           localStorage.removeItem('callmate_user_email');
           localStorage.removeItem(PENDING_OAUTH_CALLBACK_KEY);
-          setView('account');
+          if (!signingInActive) {
+            setView('account');
+          }
         }
       }
     });
@@ -1359,11 +1388,12 @@ export default function App() {
 
     setIsLaunchingSimulator(true);
     try {
+      await requestVoiceSimulatorPermissions();
       setSimulatorScenario(buildPracticeScenario(currentScript, perspective));
       setShowCallSimulator(true);
     } catch (error) {
       console.error(error);
-      alert('Unable to start the simulated call right now.');
+      alert('Microphone and Speech Recognition access are required to start the simulated call.');
     } finally {
       setIsLaunchingSimulator(false);
     }
@@ -2049,29 +2079,39 @@ export default function App() {
       }
 
       // Push local data to Supabase on first signup
-      if (isNewUser) {
-        await pushLocalDataToSupabase(freshSession.user.id, {
-          scripts: history,
-          reflections,
-          anxietyRatings: callAnxietyRatings,
-          personas,
-          name: userName,
-          gender: userGender,
-          ageRange: userAgeRange,
-          anxietySeverity,
-          anxietyTriggers,
-          lifeImpact,
-          discoverySource: heardAboutUs,
-          callStreak,
-          tier,
-          trialStartDate,
-          darkMode: isDark,
-        });
-        applyAccessState(await startTrial('monthly'));
-      } else {
-        await loadAccessState();
+      try {
+        if (isNewUser) {
+          await pushLocalDataToSupabase(freshSession.user.id, {
+            scripts: history,
+            reflections,
+            anxietyRatings: callAnxietyRatings,
+            personas,
+            name: userName,
+            gender: userGender,
+            ageRange: userAgeRange,
+            anxietySeverity,
+            anxietyTriggers,
+            lifeImpact,
+            discoverySource: heardAboutUs,
+            callStreak,
+            tier,
+            trialStartDate,
+            darkMode: isDark,
+          });
+          applyAccessState(await startTrial('monthly'));
+        } else {
+          await loadAccessState();
+        }
+      } catch (err) {
+        console.error('onComplete DB operations failed, navigating anyway', err);
       }
-      setView(isNewUser ? 'setup' : 'home');
+      // Only navigate if onAuthStateChange hasn't already moved us past the account screen.
+      // onComplete can be slow (pushLocalDataToSupabase + startTrial), and if the
+      // onAuthStateChange SIGNED_IN handler already navigated to 'notifications' or 'home',
+      // this late setView would override the user's current position and cause a loop.
+      if (viewRef.current === 'account') {
+        setView(isNewUser ? 'setup' : 'home');
+      }
     }}
   />;
 
@@ -2703,12 +2743,11 @@ export default function App() {
       <AnimatePresence>
         {showUpgradeModal && (
           <>
-            <div onClick={() => { if (!upgradeModalForced) setShowUpgradeModal(false); }} className="fixed inset-0 bg-black/80 z-[100]" />
+            <div onClick={() => { setShowUpgradeModal(false); if (['notifications', 'reviews', 'setup', 'onboarding', 'explainer'].includes(viewRef.current)) setView('home'); }} className="fixed inset-0 bg-black/80 z-[100]" />
             <div className={cn("fixed inset-0 z-[110] shadow-2xl overflow-y-auto transition-colors", isDark ? "bg-[#202926]" : "bg-[rgba(255,251,245,0.99)]")}>
               <header className={cn("sticky top-0 z-10 border-b px-6 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] flex items-center justify-between transition-colors", isDark ? "bg-[#202926]/95 border-[#33403b]" : "bg-[rgba(243,238,228,0.92)] border-[#d8cdc0]")}>
                 <div>
                   <p className={cn("text-2xl font-semibold tracking-tight", isDark ? "text-[#f2ede3]" : "text-[#22312b]")}>Subscription</p>
-                  <p className={cn("text-xs mt-1", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>3 days free · Pay nothing today · Cancel anytime</p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <button
@@ -2717,11 +2756,9 @@ export default function App() {
                   >
                     Restore
                   </button>
-                  {!upgradeModalForced && (
-                    <button onClick={() => setShowUpgradeModal(false)} className={cn("p-2 rounded-xl transition-all", isDark ? "bg-[#171f1d] hover:bg-[#2b3632] text-[#97a59f]" : "bg-[#ece5da] hover:bg-[#e2d8ca] text-[#66756f]")}>
-                      <X className="w-5 h-5" />
-                    </button>
-                  )}
+                  <button onClick={() => { setShowUpgradeModal(false); if (['notifications', 'reviews', 'setup', 'onboarding', 'explainer'].includes(viewRef.current)) setView('home'); }} className={cn("p-2 rounded-xl transition-all", isDark ? "bg-[#171f1d] hover:bg-[#2b3632] text-[#97a59f]" : "bg-[#ece5da] hover:bg-[#e2d8ca] text-[#66756f]")}>
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
               </header>
               <div className="px-6 py-6 pb-10 max-w-2xl mx-auto min-h-full space-y-6">
@@ -2732,7 +2769,6 @@ export default function App() {
                     ) : null}
                     Unlock <span className={cn(isDark ? "text-[#b7d0c4]" : "text-[#5d8a7a]")}>Callmate</span> for help with phone anxiety.
                   </h2>
-                  <p className={cn("text-sm", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>Choose your plan and keep every support tool available before difficult calls.</p>
                 </div>
                 <div className="hidden">
                   <div className="flex items-center gap-3 shrink-0 mt-1">
@@ -2742,11 +2778,9 @@ export default function App() {
                     >
                       Restore
                     </button>
-                    {!upgradeModalForced && (
-                      <button onClick={() => setShowUpgradeModal(false)} className={cn("p-2 rounded-full transition-colors", isDark ? "bg-[#171f1d] hover:bg-[#2b3632]" : "bg-[#ece5da] hover:bg-[#e2d8ca]")}>
-                        <X className="w-5 h-5" />
-                      </button>
-                    )}
+                    <button onClick={() => { setShowUpgradeModal(false); if (['notifications', 'reviews', 'setup', 'onboarding', 'explainer'].includes(viewRef.current)) setView('home'); }} className={cn("p-2 rounded-full transition-colors", isDark ? "bg-[#171f1d] hover:bg-[#2b3632]" : "bg-[#ece5da] hover:bg-[#e2d8ca]")}>
+                      <X className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
 
@@ -2848,9 +2882,7 @@ export default function App() {
                   <button onClick={() => openInAppBrowser('https://www.trycallmate.app/privacy.html')} className={cn("text-xs transition-colors underline underline-offset-2", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#66756f] hover:text-[#4d5d56]")}>Privacy Policy</button>
                 </div>
 
-                {!upgradeModalForced && (
-                  <button onClick={() => setShowUpgradeModal(false)} className={cn("w-full text-sm font-medium py-1 transition-colors", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#87938d] hover:text-[#66756f]")}>Maybe later</button>
-                )}
+                <button onClick={() => { setShowUpgradeModal(false); if (['notifications', 'reviews', 'setup', 'onboarding', 'explainer'].includes(viewRef.current)) setView('home'); }} className={cn("w-full text-sm font-medium py-1 transition-colors", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#87938d] hover:text-[#66756f]")}>Maybe later</button>
               </div>
             </div>
           </>
@@ -3018,7 +3050,7 @@ function BreathingGuide({
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const TOTAL = 3;
-  const START_DELAY = 4000;
+  const START_DELAY = 1000;
   const PAUSE_BETWEEN = 4000;
   const INHALE = 5000, HOLD = 6000, EXHALE = 9000;
   const ACTIVE_CYCLE = INHALE + HOLD + EXHALE;
@@ -3613,11 +3645,12 @@ const OnboardingProfileStep = React.memo(function OnboardingProfileStep({
   React.useEffect(() => {
     const timer = window.setTimeout(() => {
       const input = nameRef.current;
-      if (!input) return;
+      // Skip if the user already tapped the field or started typing
+      if (!input || document.activeElement === input || input.value.trim()) return;
       input.focus();
       const end = input.value.length;
       input.setSelectionRange(end, end);
-    }, 260);
+    }, 50);
 
     return () => window.clearTimeout(timer);
   }, []);
@@ -4119,6 +4152,8 @@ function AccountSetup({ isDark, userName, tier, selectedPlan, trialStartDate, on
   const showConfirmationState = mode === 'signup' && !!pendingConfirmationEmail;
 
   const handleApple = async () => {
+    if (ssoInFlight) return;
+    ssoInFlight = true;
     setAppleLoading(true);
     setEmailError('');
     localStorage.setItem(AUTH_INTENT_KEY, mode);
@@ -4126,7 +4161,6 @@ function AccountSetup({ isDark, userName, tier, selectedPlan, trialStartDate, on
       const result = await signInWithApple();
       const { error, data } = result as { error: any; data: any };
       if (error) {
-        localStorage.removeItem(AUTH_INTENT_KEY);
         const msg = error.message?.toLowerCase() ?? '';
         setEmailError(
           msg.includes('client') || msg.includes('provider') || msg.includes('enabled')
@@ -4140,22 +4174,25 @@ function AccountSetup({ isDark, userName, tier, selectedPlan, trialStartDate, on
         }
       }
     } catch (e: any) {
-      localStorage.removeItem(AUTH_INTENT_KEY);
       const msg = e?.message ?? '';
       if (!msg.toLowerCase().includes('cancel')) {
         setEmailError(`Apple Sign In failed: ${formatAuthError(msg)}`);
       }
     } finally {
+      ssoInFlight = false;
       setAppleLoading(false);
     }
   };
 
   const handleGoogle = async () => {
+    if (ssoInFlight) return;
+    ssoInFlight = true;
     setLoading(true);
     setEmailError('');
     localStorage.setItem(AUTH_INTENT_KEY, mode);
     try {
       const { data, error } = await signInWithGoogle();
+      console.log('[Google] handleGoogle resolved: error=%s hasUser=%s hasSession=%s', error?.message ?? 'none', !!(data as any)?.user, !!(data as any)?.session);
       if (error) {
         localStorage.removeItem(AUTH_INTENT_KEY);
         const msg = error.message?.toLowerCase() ?? '';
@@ -4178,6 +4215,7 @@ function AccountSetup({ isDark, userName, tier, selectedPlan, trialStartDate, on
         setEmailError(`Google Sign In failed: ${formatAuthError(msg)}`);
       }
     } finally {
+      ssoInFlight = false;
       setLoading(false);
     }
   };

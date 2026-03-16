@@ -164,7 +164,8 @@ function normalizeConditionPrompt(condition: string, fallback: string) {
   return toSentence(cleaned);
 }
 
-function buildIntroLine(kind: ScenarioKind, description: string, contactName: string) {
+export function buildPracticeIntroLine(description: string, contactName: string) {
+  const kind = inferScenarioKind(description);
   if (inferInformalCall(description)) {
     return 'Hello?';
   }
@@ -233,7 +234,7 @@ export function buildPracticeScenario(script: CallScript, perspective: CallPersp
     openingLine,
     possibleQuestions,
     exitLine: compact(script.close),
-    introLine: buildIntroLine(kind, script.description, contactName),
+    introLine: buildPracticeIntroLine(script.description, contactName),
     steps,
   };
 }

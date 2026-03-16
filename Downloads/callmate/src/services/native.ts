@@ -185,6 +185,7 @@ type VoiceTtsState = 'started' | 'finished' | 'cancelled';
 
 interface VoiceSimulatorPlugin {
   prepareAudioSession(): Promise<{ available: boolean }>;
+  requestSpeechPermissions(): Promise<{ granted: boolean }>;
   deactivateAudioSession(): Promise<void>;
   startRecognition(): Promise<{ started: boolean }>;
   stopRecognition(): Promise<{ transcript?: string }>;
@@ -213,6 +214,26 @@ const VoiceSimulator = registerPlugin<VoiceSimulatorPlugin>('VoiceSimulatorPlugi
 export async function prepareVoiceSimulatorAudioSession() {
   if (!isVoiceSimulatorNativeAvailable) return { available: false };
   return VoiceSimulator.prepareAudioSession();
+}
+
+export async function requestVoiceSimulatorPermissions() {
+  if (isVoiceSimulatorNativeAvailable) {
+    return VoiceSimulator.requestSpeechPermissions();
+  }
+
+  if (typeof window === 'undefined') {
+    return { granted: false };
+  }
+
+  try {
+    if (navigator.mediaDevices?.getUserMedia) {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+    }
+    return { granted: true };
+  } catch (error) {
+    throw error instanceof Error ? error : new Error('Microphone permission denied');
+  }
 }
 
 export async function deactivateVoiceSimulatorAudioSession() {

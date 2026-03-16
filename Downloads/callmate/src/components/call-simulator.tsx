@@ -5,7 +5,7 @@ import { Button, Card, cn } from './ui';
 import type { PracticeFeedback, PracticeScenario, PracticeSessionSummary, PracticeTurn } from '../types';
 import { generateTTS } from '../services/gemini';
 import { endPracticeSession, processPracticeResponse } from '../services/practiceConversationApi';
-import { buildPracticeFeedback } from '../services/practiceSimulator';
+import { buildPracticeFeedback, buildPracticeIntroLine } from '../services/practiceSimulator';
 import {
   addVoiceSimulatorListeners,
   deactivateVoiceSimulatorAudioSession,
@@ -225,6 +225,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
   const [stepAttempt, setStepAttempt] = useState(0);
   const [inputValue, setInputValue] = useState('');
   const [activeSuggestions, setActiveSuggestions] = useState<string[]>([]);
+  const [contactName, setContactName] = useState('');
   const [isMuted, setIsMuted] = useState(false);
   const [turns, setTurns] = useState<PracticeTurn[]>([]);
   const [feedback, setFeedback] = useState<PracticeFeedback | null>(null);
@@ -265,6 +266,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
     setStepAttempt(0);
     setInputValue('');
     setActiveSuggestions([]);
+    setContactName(scenario.contactName);
     setTurns([]);
     setFeedback(null);
     setActivePromptAt(null);
@@ -387,6 +389,13 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
   if (!isOpen || !scenario) return null;
 
   const currentSuggestions = activeSuggestions;
+  const activeContactName = contactName.trim() || scenario.contactName;
+  const activeIntroLine = buildPracticeIntroLine(scenario.reasonSummary, activeContactName);
+  const scenarioForCall = {
+    ...scenario,
+    contactName: activeContactName,
+    introLine: activeIntroLine,
+  };
 
   const cancelQueuedAiTurn = () => {
     aiPlaybackTokenRef.current += 1;
@@ -611,12 +620,12 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
         {
           id: crypto.randomUUID(),
           role: 'ai',
-          text: scenario.introLine,
+          text: activeIntroLine,
           stepId: 'intro',
           timestamp: Date.now(),
         },
       ]);
-      await speakAi(scenario.introLine);
+      await speakAi(activeIntroLine);
       setActivePromptAt(Date.now());
       await startListening();
     }, 6900);
@@ -686,7 +695,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
 
     try {
       const result = await processPracticeResponse({
-        scenario,
+        scenario: scenarioForCall,
         currentStepIndex: stepIndex,
         attemptCount: stepAttempt,
         userTranscript: transcript,
@@ -747,7 +756,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
                 Simulate Call
               </p>
               <p className={cn('text-xs mt-1', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>
-                {scenario.contactName}
+                {activeContactName}
               </p>
             </div>
             <button
@@ -793,7 +802,15 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
                     </div>
                     <div className={cn('rounded-2xl border p-4', isDark ? 'border-[#415049] bg-[#1d2623]' : 'border-[#d8cdc0] bg-[#f5efe6]')}>
                       <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-1">Contact</p>
-                      <p>{scenario.contactName}</p>
+                      <input
+                        value={contactName}
+                        onChange={(event) => setContactName(event.target.value)}
+                        placeholder="Business or contact name"
+                        className={cn(
+                          'w-full bg-transparent text-sm font-medium focus:outline-none',
+                          isDark ? 'text-[#f6f2ea] placeholder:text-[#798780]' : 'text-[#22312b] placeholder:text-[#95a19c]'
+                        )}
+                      />
                     </div>
                   </div>
                 </Card>
@@ -831,7 +848,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
                   <div className={cn('w-32 h-32 rounded-full border flex items-center justify-center mb-6', isDark ? 'border-[#415049] bg-[#202926]' : 'border-[#d8cdc0] bg-[#f5efe6]')}>
                     <Volume2 className={cn('w-10 h-10', isDark ? 'text-[#b9d5c8]' : 'text-[#5d8a7a]')} />
                   </div>
-                  <p className="text-3xl font-semibold tracking-tight mb-2">{scenario.contactName}</p>
+                  <p className="text-3xl font-semibold tracking-tight mb-2">{activeContactName}</p>
                   <p className={cn('text-sm', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>{callStatus}</p>
                 </div>
               </div>
@@ -842,7 +859,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
                 <Card isDark={isDark} className="p-5 mb-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-lg font-semibold">{scenario.contactName}</p>
+                      <p className="text-lg font-semibold">{activeContactName}</p>
                       <p className={cn('text-xs mt-1', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>{callStatus}</p>
                     </div>
                     <div className={cn('text-xl font-semibold tabular-nums', isDark ? 'text-[#b9d5c8]' : 'text-[#5d8a7a]')}>

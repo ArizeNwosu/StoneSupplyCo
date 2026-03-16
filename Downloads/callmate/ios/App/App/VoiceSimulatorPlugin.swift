@@ -3,12 +3,14 @@ import Capacitor
 import AVFoundation
 import Speech
 
+@MainActor
 @objc(VoiceSimulatorPlugin)
 public class VoiceSimulatorPlugin: CAPPlugin, CAPBridgedPlugin, AVSpeechSynthesizerDelegate {
     public let identifier = "VoiceSimulatorPlugin"
     public let jsName = "VoiceSimulatorPlugin"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "prepareAudioSession", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestSpeechPermissions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "deactivateAudioSession", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "startRecognition", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "stopRecognition", returnType: CAPPluginReturnPromise),
@@ -51,8 +53,20 @@ public class VoiceSimulatorPlugin: CAPPlugin, CAPBridgedPlugin, AVSpeechSynthesi
         }
     }
 
+    @objc public func requestSpeechPermissions(_ call: CAPPluginCall) {
+        requestPermissionsInternal { granted, message in
+            DispatchQueue.main.async {
+                if granted {
+                    call.resolve(["granted": true])
+                } else {
+                    call.reject(message ?? "Speech permission denied")
+                }
+            }
+        }
+    }
+
     @objc func startRecognition(_ call: CAPPluginCall) {
-        requestPermissions { [weak self] granted, message in
+        requestPermissionsInternal { [weak self] granted, message in
             guard let self else { return }
             guard granted else {
                 DispatchQueue.main.async {
@@ -115,7 +129,7 @@ public class VoiceSimulatorPlugin: CAPPlugin, CAPBridgedPlugin, AVSpeechSynthesi
         call.resolve()
     }
 
-    private func requestPermissions(completion: @escaping (Bool, String?) -> Void) {
+    private func requestPermissionsInternal(completion: @escaping (Bool, String?) -> Void) {
         AVAudioSession.sharedInstance().requestRecordPermission { microphoneGranted in
             guard microphoneGranted else {
                 completion(false, "Microphone access is required for simulated calls.")
@@ -141,7 +155,7 @@ public class VoiceSimulatorPlugin: CAPPlugin, CAPBridgedPlugin, AVSpeechSynthesi
 
     private func configureAudioSession(active: Bool) throws {
         let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth, .allowBluetoothA2DP])
+        try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetoothHFP, .allowBluetoothA2DP])
         try session.setPreferredSampleRate(44_100)
         try session.setPreferredIOBufferDuration(0.005)
         try session.setActive(active, options: [.notifyOthersOnDeactivation])

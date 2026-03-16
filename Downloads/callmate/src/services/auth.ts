@@ -43,49 +43,63 @@ export async function signInWithApple() {
 }
 
 export async function signInWithGoogle() {
+  console.log('[Google] signInWithGoogle start (native implicit flow)');
   const redirectTo = await getAuthRedirectUrl();
   const { Capacitor } = await import('@capacitor/core');
   if (Capacitor.isNativePlatform()) {
+    console.log('[Google] native path, redirectTo:', redirectTo);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo,
         skipBrowserRedirect: true,
+        queryParams: {
+          prompt: 'select_account',
+        }
       },
     });
 
     if (error || !data?.url) {
+      console.log('[Google] signInWithOAuth error or no URL:', error);
       return { data: null, error: error ?? new Error('No OAuth URL') };
     }
 
+    console.log('[Google] opening OAuth session');
     try {
       const { openOAuthSession } = await import('./native');
       const callbackUrl = await openOAuthSession(data.url, 'com.trycallmate.app');
+      console.log('[Google] callbackUrl received:', callbackUrl ? callbackUrl.substring(0, 80) : 'null/cancelled');
       if (!callbackUrl) return { data: null, error: new Error('OAuth cancelled') };
 
-      const urlObj = new URL(callbackUrl.replace('#', '?'));
-      const code = urlObj.searchParams.get('code');
-      if (code) return supabase.auth.exchangeCodeForSession(code);
+      // Parse parameters from both hash and query
+      const fragment = callbackUrl.split('#')[1] || '';
+      const query = callbackUrl.split('?')[1] || '';
+      const params = new URLSearchParams(fragment || query);
+      
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      const code = params.get('code');
 
-      const accessToken = urlObj.searchParams.get('access_token');
+      console.log('[Google] parsed: token=%s refresh=%s code=%s', !!accessToken, !!refreshToken, !!code);
+
       if (accessToken) {
-        const refreshToken = urlObj.searchParams.get('refresh_token');
-        return supabase.auth.setSession({
+        console.log('[Google] implicit flow: setting session');
+        return await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken ?? ''
         });
       }
 
-      return { data: null, error: new Error('No code or token in callback') };
-    } catch (nativeError: any) {
-      const message = nativeError?.message?.toLowerCase?.() ?? '';
-      if (!message.includes('not implemented')) {
-        throw nativeError;
+      if (code) {
+        console.log('[Google] PKCE flow: exchanging code');
+        return await supabase.auth.exchangeCodeForSession(code);
       }
 
-      const { Browser } = await import('@capacitor/browser');
-      await Browser.open({ url: data.url, presentationStyle: 'fullscreen' });
-      return { data, error: null };
+      console.log('[Google] no code or token found in callback');
+      return { data: null, error: new Error('No code or token in callback') };
+    } catch (nativeError: any) {
+      console.log('[Google] native error:', nativeError?.message);
+      throw nativeError;
     }
   }
 
