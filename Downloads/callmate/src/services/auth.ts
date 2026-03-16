@@ -59,11 +59,9 @@ export async function signInWithApple() {
 }
 
 export async function signInWithGoogle() {
-  console.log('[Google] signInWithGoogle start (native PKCE flow)');
   const redirectTo = await getAuthRedirectUrl();
   const { Capacitor } = await import('@capacitor/core');
   if (Capacitor.isNativePlatform()) {
-    console.log('[Google] native path, redirectTo:', redirectTo);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -77,15 +75,12 @@ export async function signInWithGoogle() {
     });
 
     if (error || !data?.url) {
-      console.log('[Google] signInWithOAuth error or no URL:', error);
       return { data: null, error: error ?? new Error('No OAuth URL') };
     }
 
-    console.log('[Google] opening OAuth session');
     try {
       const { openOAuthSession } = await import('./native');
       const callbackUrl = await openOAuthSession(data.url, 'com.trycallmate.app');
-      console.log('[Google] callbackUrl received:', callbackUrl ? callbackUrl.substring(0, 80) : 'null/cancelled');
       if (!callbackUrl) return { data: null, error: new Error('OAuth cancelled') };
 
       const params = parseOAuthCallbackParams(callbackUrl);
@@ -93,28 +88,22 @@ export async function signInWithGoogle() {
       const accessToken = params.get('access_token');
       const refreshToken = params.get('refresh_token');
 
-      console.log('[Google] parsed: token=%s refresh=%s code=%s', !!accessToken, !!refreshToken, !!code);
-
       if (code) {
-        console.log('[Google] PKCE flow: exchanging code');
         return await supabase.auth.exchangeCodeForSession(code);
       }
 
       if (accessToken && refreshToken) {
-        console.log('[Google] token fallback: setting session');
         return await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
       }
 
-      console.log('[Google] callback missing usable session credentials');
       return {
         data: null,
         error: new Error('Google sign-in did not return a complete session. Please try again.'),
       };
     } catch (nativeError: any) {
-      console.log('[Google] native error:', nativeError?.message);
       throw nativeError;
     }
   }

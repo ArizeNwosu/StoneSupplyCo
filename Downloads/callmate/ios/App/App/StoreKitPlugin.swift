@@ -18,7 +18,6 @@ public class StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
     ]
 
     override public func load() {
-        print("🛠️ StoreKitPlugin loaded")
     }
 
     @objc func fetchProducts(_ call: CAPPluginCall) {

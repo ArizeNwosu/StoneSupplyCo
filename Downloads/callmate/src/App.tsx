@@ -996,7 +996,6 @@ export default function App() {
 
     // Listen for future auth state changes (login / logout)
     const { data: { subscription } } = onAuthStateChange(async (event, session) => {
-      console.log('[Auth] onAuthStateChange event=%s user=%s view=%s signingOut=%s authKey=%s', event, session?.user?.email ?? 'none', viewRef.current, isSigningOutRef.current, !!localStorage.getItem(AUTH_INTENT_KEY));
       if (session?.user) {
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
           const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
@@ -1034,7 +1033,6 @@ export default function App() {
           // This avoids interrupting the user if they are already using the app.
           // isSigningOutRef guard prevents a stale auth event from immediately
           // redirecting the user back to home after they sign out.
-          console.log('[Auth] SIGNED_IN nav check: signingOut=%s view=%s isReturning=%s tier=%s', isSigningOutRef.current, viewRef.current, isReturningUser, result?.access?.tier);
           if (!isSigningOutRef.current && ['splash', 'explainer', 'onboarding', 'reviews', 'account', 'setup'].includes(viewRef.current)) {
             if (result?.access?.tier === 'admin' || isReturningUser) {
               setView('home');
@@ -1052,7 +1050,6 @@ export default function App() {
           // Skipping the isSigningOutRef flag and setView('account') lets the subsequent
           // SIGNED_IN event (and onComplete) navigate correctly without being blocked.
           const signingInActive = !!localStorage.getItem(AUTH_INTENT_KEY);
-          console.log('[Auth] SIGNED_OUT: signingInActive=%s view=%s', signingInActive, viewRef.current);
           if (!signingInActive) {
             isSigningOutRef.current = true;
             setTimeout(() => { isSigningOutRef.current = false; }, 2000);
@@ -4240,7 +4237,6 @@ function AccountSetup({ isDark, userName, tier, selectedPlan, trialStartDate, on
     localStorage.setItem(AUTH_INTENT_KEY, mode);
     try {
       const { data, error } = await signInWithGoogle();
-      console.log('[Google] handleGoogle resolved: error=%s hasUser=%s hasSession=%s', error?.message ?? 'none', !!(data as any)?.user, !!(data as any)?.session);
       if (error) {
         localStorage.removeItem(AUTH_INTENT_KEY);
         const msg = error.message?.toLowerCase() ?? '';

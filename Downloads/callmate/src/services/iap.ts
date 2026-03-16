@@ -20,10 +20,7 @@ function isNotImplemented(error: unknown) {
 
 async function withStoreKit<T>(fn: (plugin: StoreKitPlugin) => Promise<T>): Promise<T> {
   try {
-    console.log('[IAP] Attempting StoreKit call');
-    const result = await fn(StoreKit);
-    console.log('[IAP] StoreKit call successful');
-    return result;
+    return await fn(StoreKit);
   } catch (error: any) {
     console.error('[IAP] StoreKit call failed:', error?.message, error?.code);
     if (isNotImplemented(error)) {

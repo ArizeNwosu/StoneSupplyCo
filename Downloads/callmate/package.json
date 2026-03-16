@@ -7,10 +7,13 @@
     "dev": "vite --port=3000 --host=0.0.0.0",
     "api": "node server/index.mjs",
     "build": "vite build",
+    "verify:release-env": "node scripts/verify-release-env.mjs",
+    "build:release": "npm run verify:release-env && vite build --mode production",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "ios": "npm run build && npx cap sync ios && npx cap open ios"
+    "ios": "npm run build && npx cap sync ios && npx cap open ios",
+    "ios:release": "npm run build:release && npx cap sync ios && npx cap open ios"
   },
   "dependencies": {
     "@capacitor/app": "^8.0.1",
