@@ -16,18 +16,31 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchMark" translatesAutoresizingMaskIntoConstraints="NO" id="snD-IY-ifK">
-                                <rect key="frame" x="139.5" y="285.5" width="96" height="96"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="96" id="9EC-LR-hgu"/>
-                                    <constraint firstAttribute="height" constant="96" id="mnL-T6-SdP"/>
-                                </constraints>
-                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="take a deep breath" textAlignment="center" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="aB1-cd-EF2">
+                                <rect key="frame" x="32" y="301" width="311" height="24"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                <color key="textColor" red="0.13333333330000001" green="0.19215686270000001" blue="0.16862745099999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="you've got this" textAlignment="center" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cD2-ef-GH3">
+                                <rect key="frame" x="32" y="337" width="311" height="24"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                <color key="textColor" red="0.40000000000000002" green="0.45882352940000001" blue="0.43529411759999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" red="0.95294117650000003" green="0.93333333329999998" blue="0.89411764709999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="snD-IY-ifK" firstAttribute="centerX" secondItem="HI6-H3-4tQ" secondAttribute="centerX" id="4M0-JP-J5z"/>
-                            <constraint firstItem="snD-IY-ifK" firstAttribute="centerY" secondItem="HI6-H3-4tQ" secondAttribute="centerY" id="feC-0v-d8A"/>
+                            <!-- Line 1: center horizontally, bottom rests just above view vertical center -->
+                            <constraint firstItem="aB1-cd-EF2" firstAttribute="centerX" secondItem="HI6-H3-4tQ" secondAttribute="centerX" id="xC1-YZ-AB2"/>
+                            <constraint firstItem="HI6-H3-4tQ" firstAttribute="centerY" secondItem="aB1-cd-EF2" secondAttribute="bottom" constant="4" id="yD2-WX-CD3"/>
+                            <constraint firstItem="aB1-cd-EF2" firstAttribute="leading" secondItem="HI6-H3-4tQ" secondAttribute="leading" constant="32" id="eE3-VU-EF4"/>
+                            <constraint firstItem="HI6-H3-4tQ" firstAttribute="trailing" secondItem="aB1-cd-EF2" secondAttribute="trailing" constant="32" id="fF4-TS-GH5"/>
+                            <!-- Line 2: center horizontally, top rests just below view vertical center -->
+                            <constraint firstItem="cD2-ef-GH3" firstAttribute="centerX" secondItem="HI6-H3-4tQ" secondAttribute="centerX" id="gG5-RQ-IJ6"/>
+                            <constraint firstItem="cD2-ef-GH3" firstAttribute="top" secondItem="HI6-H3-4tQ" secondAttribute="centerY" constant="4" id="hH6-PO-KL7"/>
+                            <constraint firstItem="cD2-ef-GH3" firstAttribute="leading" secondItem="HI6-H3-4tQ" secondAttribute="leading" constant="32" id="iI7-NM-MN8"/>
+                            <constraint firstItem="HI6-H3-4tQ" firstAttribute="trailing" secondItem="cD2-ef-GH3" secondAttribute="trailing" constant="32" id="jJ8-LK-OP9"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -36,7 +49,4 @@
             <point key="canvasLocation" x="53" y="375"/>
         </scene>
     </scenes>
-    <resources>
-        <image name="LaunchMark" width="1024" height="1024"/>
-    </resources>
 </document>

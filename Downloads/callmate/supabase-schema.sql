@@ -24,6 +24,7 @@ alter table public.profiles add column if not exists anxiety_severity text;
 alter table public.profiles add column if not exists anxiety_triggers jsonb not null default '[]';
 alter table public.profiles add column if not exists life_impact jsonb not null default '[]';
 alter table public.profiles add column if not exists call_streak integer not null default 0;
+alter table public.profiles add column if not exists discovery_source text;
 
 -- ─── Scripts ─────────────────────────────────────────────────────────────────
 create table if not exists public.scripts (
