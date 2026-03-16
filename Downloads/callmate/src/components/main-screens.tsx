@@ -378,11 +378,9 @@ export function SettingsScreen(props: SettingsScreenProps) {
     localStorage.removeItem('callmate_user_email');
     setView('account');
 
-    window.setTimeout(() => {
-      void signOut().catch((error) => {
-        console.error('Sign out failed', error);
-      });
-    }, 40);
+    void signOut().catch((error) => {
+      console.error('Sign out failed', error);
+    });
   };
 
   const handleShareCallmate = async () => {

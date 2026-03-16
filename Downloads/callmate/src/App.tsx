@@ -712,6 +712,17 @@ export default function App() {
     viewRef.current = view;
   }, [view]);
 
+  // Prevents a stale SIGNED_IN/INITIAL_SESSION event from redirecting
+  // the user back to home immediately after they sign out.
+  const isSigningOutRef = React.useRef(false);
+
+  // Wrapper passed as the `signOut` prop so the flag is set synchronously
+  // before any stale auth events can fire through the JS event loop.
+  const handleSignOut = React.useCallback(() => {
+    isSigningOutRef.current = true;
+    return signOut();
+  }, []);
+
   useEffect(() => {
     const editableSelector = 'input, textarea, select, [contenteditable="true"]';
     const ensureTimers = new Set<number>();
@@ -964,8 +975,10 @@ export default function App() {
           }
 
           // Only automatically set view if we are currently in an onboarding/auth view
-          // This avoids interrupting the user if they are already using the app
-          if (['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
+          // This avoids interrupting the user if they are already using the app.
+          // isSigningOutRef guard prevents a stale auth event from immediately
+          // redirecting the user back to home after they sign out.
+          if (!isSigningOutRef.current && ['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
             if (result?.access?.tier === 'admin' || isReturningUser) {
               setView('home');
             } else {
@@ -976,6 +989,8 @@ export default function App() {
       } else {
         setSupabaseUser(null);
         if (event === 'SIGNED_OUT') {
+          isSigningOutRef.current = true;
+          setTimeout(() => { isSigningOutRef.current = false; }, 2000);
           channelRef.current.forEach(ch => ch.unsubscribe());
           channelRef.current = [];
           clearLocalUserCollections();
@@ -2294,7 +2309,7 @@ export default function App() {
               supabaseUser={supabaseUser}
               userEmail={userEmail}
               userName={userName}
-              signOut={signOut}
+              signOut={handleSignOut}
               setSupabaseUser={setSupabaseUser}
               setUserEmail={setUserEmail}
               isPremium={isPremium}
