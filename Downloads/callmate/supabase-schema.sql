@@ -78,6 +78,28 @@ create table if not exists public.personas (
 
 create index if not exists personas_user_id_idx on public.personas(user_id);
 
+-- ─── Purchases ───────────────────────────────────────────────────────────────
+-- Stores verified Apple StoreKit 2 JWS transactions.
+-- The UNIQUE constraint on transaction_id enforces idempotency so duplicate
+-- purchase attempts from the same or different users are safe to handle.
+create table if not exists public.purchases (
+  id                      uuid primary key default gen_random_uuid(),
+  user_id                 uuid not null references auth.users(id) on delete cascade,
+  transaction_id          text not null unique,
+  original_transaction_id text not null,
+  product_id              text not null,
+  bundle_id               text not null,
+  purchase_date           bigint,
+  expires_date            bigint,
+  environment             text not null default 'Production',
+  jws_token               text not null,
+  verified_at             timestamptz not null default now(),
+  created_at              timestamptz not null default now()
+);
+
+create index if not exists purchases_user_id_idx       on public.purchases(user_id);
+create index if not exists purchases_transaction_id_idx on public.purchases(transaction_id);
+
 -- ─── Admin Access Allowlist ─────────────────────────────────────────────────
 create table if not exists public.admin_users (
   id            uuid primary key default gen_random_uuid(),
@@ -91,12 +113,13 @@ create table if not exists public.admin_users (
 create unique index if not exists admin_users_email_lower_idx on public.admin_users ((lower(email)));
 
 -- ─── Row Level Security ───────────────────────────────────────────────────────
-alter table public.profiles       enable row level security;
-alter table public.scripts        enable row level security;
-alter table public.reflections    enable row level security;
+alter table public.profiles        enable row level security;
+alter table public.scripts         enable row level security;
+alter table public.reflections     enable row level security;
 alter table public.anxiety_ratings enable row level security;
-alter table public.personas       enable row level security;
-alter table public.admin_users    enable row level security;
+alter table public.personas        enable row level security;
+alter table public.admin_users     enable row level security;
+alter table public.purchases       enable row level security;
 
 -- Profiles
 create policy "profiles: own read"   on public.profiles for select using (auth.uid() = id);
@@ -114,6 +137,10 @@ create policy "anxiety_ratings: own all" on public.anxiety_ratings for all using
 
 -- Personas
 create policy "personas: own all" on public.personas for all using (auth.uid() = user_id);
+
+-- Purchases (read-only from the client; writes happen only via the service-role Edge Function)
+create policy "purchases: own read" on public.purchases
+  for select using (auth.uid() = user_id);
 
 -- Admin allowlist
 create policy "admin_users: own email lookup"
