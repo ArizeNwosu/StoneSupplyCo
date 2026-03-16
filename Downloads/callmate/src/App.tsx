@@ -230,6 +230,7 @@ export default function App() {
   const [trialStartDate, setTrialStartDate] = useState<number | null>(null);
   const [trialScriptsUsed, setTrialScriptsUsed] = useState(0);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual' | null>(null);
+  const [purchasingPlan, setPurchasingPlan] = useState<'monthly' | 'annual' | null>(null);
   const [userName, setUserName] = useState(() => localStorage.getItem('callmate_user_name') || '');
   const [userGender, setUserGender] = useState(() => localStorage.getItem('callmate_user_gender') || '');
   const [userAgeRange, setUserAgeRange] = useState(() => localStorage.getItem('callmate_user_age_range') || '');
@@ -372,19 +373,41 @@ export default function App() {
 
   const handleIAPPurchase = async (plan: 'monthly' | 'annual') => {
     if (!supabaseUser) { setShowUpgradeModal(false); setView('account'); return; }
+    if (purchasingPlan) return;
+    setPurchasingPlan(plan);
     try {
       const { purchaseProduct, PRODUCT_IDS } = await import('./services/iap');
-      const { supabase } = await import('./services/supabase');
       const productId = PRODUCT_IDS[plan];
       const { transactionId, jwsToken } = await purchaseProduct(productId);
-      const { data, error } = await supabase.functions.invoke('verify-purchase', { body: { transactionId, jwsToken, productId } });
-      if (error) throw error;
-      applyAccessState(data);
+
+      // Fix 3: Optimistically apply tier and close modal immediately — user lands on home
+      // while verify-purchase runs in background (avoids Edge Function cold-start blocking UX).
+      setTier(plan);
+      setSelectedPlan(plan);
+      setShowUpgradeModal(false);
+      if (['notifications', 'reviews', 'setup', 'onboarding', 'explainer'].includes(viewRef.current)) {
+        setView('home');
+      }
+
+      // Verify in background — sync authoritative state from server
+      try {
+        const { supabase } = await import('./services/supabase');
+        const { data, error } = await supabase.functions.invoke('verify-purchase', { body: { transactionId, jwsToken, productId } });
+        if (error) throw error;
+        applyAccessState(data);
+      } catch (verifyError: any) {
+        console.error('Purchase verification failed:', verifyError?.message);
+        await loadAccessState(); // revert to server-authoritative state
+        const detail = verifyError?.context?.message ?? verifyError?.message ?? String(verifyError);
+        alert(`Purchase verification failed: ${detail}`);
+      }
     } catch (error: any) {
       if (error?.message === 'cancelled') return;
       const detail = error?.context?.message ?? error?.message ?? String(error);
       console.error('Purchase failed:', detail, error);
       alert(`Purchase failed: ${detail}`);
+    } finally {
+      setPurchasingPlan(null);
     }
   };
 
@@ -976,10 +999,26 @@ export default function App() {
       console.log('[Auth] onAuthStateChange event=%s user=%s view=%s signingOut=%s authKey=%s', event, session?.user?.email ?? 'none', viewRef.current, isSigningOutRef.current, !!localStorage.getItem(AUTH_INTENT_KEY));
       if (session?.user) {
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
+          const inferredNewUser = session.user.created_at
+            ? Date.now() - new Date(session.user.created_at).getTime() < 30000
+            : false;
+          const optimisticIsNewUser = authIntent === 'signup' || inferredNewUser;
+
+          if (session.user.email) {
+            setUserEmail(session.user.email);
+            localStorage.setItem('callmate_user_email', session.user.email);
+          }
+          setSupabaseUser(session.user);
+          localStorage.removeItem(PENDING_OAUTH_CALLBACK_KEY);
+
+          if (!isSigningOutRef.current && ['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
+            setView(optimisticIsNewUser ? 'setup' : 'home');
+          }
+
           let isReturningUser = true;
           let result: Awaited<ReturnType<typeof hydrateSignedInUser>> | null = null;
           try {
-            const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
             result = await hydrateSignedInUser(session.user, authIntent);
             isReturningUser = result.isReturningUser;
             // AUTH_INTENT_KEY is intentionally NOT removed here.
@@ -996,7 +1035,7 @@ export default function App() {
           // isSigningOutRef guard prevents a stale auth event from immediately
           // redirecting the user back to home after they sign out.
           console.log('[Auth] SIGNED_IN nav check: signingOut=%s view=%s isReturning=%s tier=%s', isSigningOutRef.current, viewRef.current, isReturningUser, result?.access?.tier);
-          if (!isSigningOutRef.current && ['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
+          if (!isSigningOutRef.current && ['splash', 'explainer', 'onboarding', 'reviews', 'account', 'setup'].includes(viewRef.current)) {
             if (result?.access?.tier === 'admin' || isReturningUser) {
               setView('home');
             } else {
@@ -2078,40 +2117,42 @@ export default function App() {
         localStorage.setItem('callmate_user_email', resolvedEmail);
       }
 
-      // Push local data to Supabase on first signup
-      try {
-        if (isNewUser) {
-          await pushLocalDataToSupabase(freshSession.user.id, {
-            scripts: history,
-            reflections,
-            anxietyRatings: callAnxietyRatings,
-            personas,
-            name: userName,
-            gender: userGender,
-            ageRange: userAgeRange,
-            anxietySeverity,
-            anxietyTriggers,
-            lifeImpact,
-            discoverySource: heardAboutUs,
-            callStreak,
-            tier,
-            trialStartDate,
-            darkMode: isDark,
-          });
-          applyAccessState(await startTrial('monthly'));
-        } else {
-          await loadAccessState();
-        }
-      } catch (err) {
-        console.error('onComplete DB operations failed, navigating anyway', err);
-      }
-      // Only navigate if onAuthStateChange hasn't already moved us past the account screen.
-      // onComplete can be slow (pushLocalDataToSupabase + startTrial), and if the
-      // onAuthStateChange SIGNED_IN handler already navigated to 'notifications' or 'home',
-      // this late setView would override the user's current position and cause a loop.
+      localStorage.removeItem(AUTH_INTENT_KEY);
+      localStorage.removeItem(PENDING_OAUTH_CALLBACK_KEY);
+
+      const nextView = isNewUser ? 'setup' : 'home';
       if (viewRef.current === 'account') {
-        setView(isNewUser ? 'setup' : 'home');
+        setView(nextView);
       }
+
+      void (async () => {
+        try {
+          if (isNewUser) {
+            await pushLocalDataToSupabase(freshSession.user.id, {
+              scripts: history,
+              reflections,
+              anxietyRatings: callAnxietyRatings,
+              personas,
+              name: userName,
+              gender: userGender,
+              ageRange: userAgeRange,
+              anxietySeverity,
+              anxietyTriggers,
+              lifeImpact,
+              discoverySource: heardAboutUs,
+              callStreak,
+              tier,
+              trialStartDate,
+              darkMode: isDark,
+            });
+            applyAccessState(await startTrial('monthly'));
+          } else {
+            await loadAccessState();
+          }
+        } catch (err) {
+          console.error('onComplete DB operations failed after navigation', err);
+        }
+      })();
     }}
   />;
 
@@ -2807,17 +2848,19 @@ export default function App() {
                 <div className="space-y-3">
                   {/* Monthly */}
                   <div
-                    onClick={() => {
-                      void (async () => {
-                        await handleIAPPurchase('monthly');
-                        setShowUpgradeModal(false);
-                      })();
-                    }}
+                    onClick={() => { void handleIAPPurchase('monthly'); }}
                     className={cn(
-                      "p-5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] relative",
+                      "p-5 rounded-2xl border transition-all relative",
+                      purchasingPlan ? "cursor-not-allowed" : "cursor-pointer active:scale-[0.99]",
+                      purchasingPlan === 'annual' && "opacity-40",
                       tier === 'monthly' ? (isDark ? "bg-[#274136]/45 border-[#7fa091]" : "bg-[#eef5f1] border-[#8fae9e]") : (isDark ? "bg-[#171f1d] border-[#415049] hover:border-[#66756f]" : "bg-[#fffdf9] border-[#d8cdc0] hover:border-[#b7aa96]")
                     )}
                   >
+                    {purchasingPlan === 'monthly' && (
+                      <div className="absolute inset-0 rounded-2xl flex items-center justify-center z-10 backdrop-blur-[1px]">
+                        <Loader2 className={cn("w-6 h-6 animate-spin", isDark ? "text-[#7fa091]" : "text-[#5d8a7a]")} />
+                      </div>
+                    )}
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
@@ -2838,17 +2881,19 @@ export default function App() {
 
                   {/* Annual */}
                   <div
-                    onClick={() => {
-                      void (async () => {
-                        await handleIAPPurchase('annual');
-                        setShowUpgradeModal(false);
-                      })();
-                    }}
+                    onClick={() => { void handleIAPPurchase('annual'); }}
                     className={cn(
-                      "p-5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] relative",
+                      "p-5 rounded-2xl border transition-all relative",
+                      purchasingPlan ? "cursor-not-allowed" : "cursor-pointer active:scale-[0.99]",
+                      purchasingPlan === 'monthly' && "opacity-40",
                       tier === 'annual' ? (isDark ? "bg-[#314230]/45 border-[#9bb68f]" : "bg-[#f1f5ea] border-[#a9be97]") : (isDark ? "bg-[#171f1d] border-[#415049] hover:border-[#66756f]" : "bg-[#fffdf9] border-[#d8cdc0] hover:border-[#b7aa96]")
                     )}
                   >
+                    {purchasingPlan === 'annual' && (
+                      <div className="absolute inset-0 rounded-2xl flex items-center justify-center z-10 backdrop-blur-[1px]">
+                        <Loader2 className={cn("w-6 h-6 animate-spin", isDark ? "text-[#9bb68f]" : "text-[#587651]")} />
+                      </div>
+                    )}
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
@@ -2882,7 +2927,9 @@ export default function App() {
                   <button onClick={() => openInAppBrowser('https://www.trycallmate.app/privacy.html')} className={cn("text-xs transition-colors underline underline-offset-2", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#66756f] hover:text-[#4d5d56]")}>Privacy Policy</button>
                 </div>
 
-                <button onClick={() => { setShowUpgradeModal(false); if (['notifications', 'reviews', 'setup', 'onboarding', 'explainer'].includes(viewRef.current)) setView('home'); }} className={cn("w-full text-sm font-medium py-1 transition-colors", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#87938d] hover:text-[#66756f]")}>Maybe later</button>
+                {!purchasingPlan && (
+                  <button onClick={() => { setShowUpgradeModal(false); if (['notifications', 'reviews', 'setup', 'onboarding', 'explainer'].includes(viewRef.current)) setView('home'); }} className={cn("w-full text-sm font-medium py-1 transition-colors", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#87938d] hover:text-[#66756f]")}>Maybe later</button>
+                )}
               </div>
             </div>
           </>
@@ -4179,6 +4226,7 @@ function AccountSetup({ isDark, userName, tier, selectedPlan, trialStartDate, on
         setEmailError(`Apple Sign In failed: ${formatAuthError(msg)}`);
       }
     } finally {
+      localStorage.removeItem(AUTH_INTENT_KEY);
       ssoInFlight = false;
       setAppleLoading(false);
     }
@@ -4215,6 +4263,7 @@ function AccountSetup({ isDark, userName, tier, selectedPlan, trialStartDate, on
         setEmailError(`Google Sign In failed: ${formatAuthError(msg)}`);
       }
     } finally {
+      localStorage.removeItem(AUTH_INTENT_KEY);
       ssoInFlight = false;
       setLoading(false);
     }

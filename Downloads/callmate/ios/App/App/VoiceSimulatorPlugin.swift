@@ -3,9 +3,9 @@ import Capacitor
 import AVFoundation
 import Speech
 
-@MainActor
 @objc(VoiceSimulatorPlugin)
-public class VoiceSimulatorPlugin: CAPPlugin, CAPBridgedPlugin, AVSpeechSynthesizerDelegate {
+@MainActor
+public final class VoiceSimulatorPlugin: CAPPlugin, @preconcurrency CAPBridgedPlugin, @preconcurrency AVSpeechSynthesizerDelegate {
     public let identifier = "VoiceSimulatorPlugin"
     public let jsName = "VoiceSimulatorPlugin"
     public let pluginMethods: [CAPPluginMethod] = [

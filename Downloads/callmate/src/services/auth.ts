@@ -7,6 +7,22 @@ async function getAuthRedirectUrl() {
     : window.location.origin;
 }
 
+function parseOAuthCallbackParams(callbackUrl: string) {
+  const params = new URLSearchParams();
+  const [, queryPart = ''] = callbackUrl.split('?');
+  const [queryOnly = '', hashPart = ''] = queryPart.split('#');
+
+  for (const [key, value] of new URLSearchParams(queryOnly)) {
+    params.set(key, value);
+  }
+
+  for (const [key, value] of new URLSearchParams(hashPart)) {
+    params.set(key, value);
+  }
+
+  return params;
+}
+
 export async function signUp(email: string, password: string, name?: string) {
   const emailRedirectTo = await getAuthRedirectUrl();
   return supabase.auth.signUp({
@@ -43,7 +59,7 @@ export async function signInWithApple() {
 }
 
 export async function signInWithGoogle() {
-  console.log('[Google] signInWithGoogle start (native implicit flow)');
+  console.log('[Google] signInWithGoogle start (native PKCE flow)');
   const redirectTo = await getAuthRedirectUrl();
   const { Capacitor } = await import('@capacitor/core');
   if (Capacitor.isNativePlatform()) {
@@ -55,7 +71,8 @@ export async function signInWithGoogle() {
         skipBrowserRedirect: true,
         queryParams: {
           prompt: 'select_account',
-        }
+          access_type: 'offline',
+        },
       },
     });
 
@@ -71,32 +88,31 @@ export async function signInWithGoogle() {
       console.log('[Google] callbackUrl received:', callbackUrl ? callbackUrl.substring(0, 80) : 'null/cancelled');
       if (!callbackUrl) return { data: null, error: new Error('OAuth cancelled') };
 
-      // Parse parameters from both hash and query
-      const fragment = callbackUrl.split('#')[1] || '';
-      const query = callbackUrl.split('?')[1] || '';
-      const params = new URLSearchParams(fragment || query);
-      
+      const params = parseOAuthCallbackParams(callbackUrl);
+      const code = params.get('code');
       const accessToken = params.get('access_token');
       const refreshToken = params.get('refresh_token');
-      const code = params.get('code');
 
       console.log('[Google] parsed: token=%s refresh=%s code=%s', !!accessToken, !!refreshToken, !!code);
-
-      if (accessToken) {
-        console.log('[Google] implicit flow: setting session');
-        return await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken ?? ''
-        });
-      }
 
       if (code) {
         console.log('[Google] PKCE flow: exchanging code');
         return await supabase.auth.exchangeCodeForSession(code);
       }
 
-      console.log('[Google] no code or token found in callback');
-      return { data: null, error: new Error('No code or token in callback') };
+      if (accessToken && refreshToken) {
+        console.log('[Google] token fallback: setting session');
+        return await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+      }
+
+      console.log('[Google] callback missing usable session credentials');
+      return {
+        data: null,
+        error: new Error('Google sign-in did not return a complete session. Please try again.'),
+      };
     } catch (nativeError: any) {
       console.log('[Google] native error:', nativeError?.message);
       throw nativeError;
