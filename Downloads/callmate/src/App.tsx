@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useMemo, useRef } from 'react';
 import {
   Phone,
   ChevronRight,
@@ -27,9 +27,7 @@ import {
   BellRing
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Button, Card, CallTypeGrid, cn } from './components/ui';
-import { DashboardScreen, HistoryScreen, HomeScreen, ScriptScreen, SettingsScreen } from './components/main-screens';
-import { CallSimulator } from './components/call-simulator';
+import { Button, Card, CallTypeGrid, ScriptCardSkeleton, ScriptViewSkeleton, cn } from './components/ui';
 import { Tone, CallScript, SAFE_LINES, PANIC_OPTIONS, PanicOption, COMMON_CALL_TYPES, Persona, Reflection, Tier, CallPerspective, PracticeScenario, PracticeSessionSummary } from './types';
 import { generateCallScript, generatePanicResponse, generateVoicemailScript, generateEmailFallback, generateBranch } from './services/gemini';
 import { signUp, signIn, signInWithApple, signInWithGoogle, signOut, onAuthStateChange, sendPasswordReset } from './services/auth';
@@ -54,6 +52,13 @@ import xIcon from '../icons/x.svg';
 import youtubeIcon from '../icons/youtube.svg';
 import loginBackground from '../backgrounds/login.mp4';
 import appIconPng from '../ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png';
+
+const HomeScreen = lazy(() => import('./components/main-screens').then((module) => ({ default: module.HomeScreen })));
+const HistoryScreen = lazy(() => import('./components/main-screens').then((module) => ({ default: module.HistoryScreen })));
+const DashboardScreen = lazy(() => import('./components/main-screens').then((module) => ({ default: module.DashboardScreen })));
+const ScriptScreen = lazy(() => import('./components/main-screens').then((module) => ({ default: module.ScriptScreen })));
+const SettingsScreen = lazy(() => import('./components/main-screens').then((module) => ({ default: module.SettingsScreen })));
+const CallSimulator = lazy(() => import('./components/call-simulator').then((module) => ({ default: module.CallSimulator })));
 
 const RotatingText = () => {
   const words = ["putting off?", "dreading?", "avoiding?"];
@@ -171,6 +176,28 @@ function readStoredJson<T>(key: string, fallback: T): T {
     localStorage.removeItem(key);
     return fallback;
   }
+}
+
+function DeferredScreenFallback({ isDark, kind = 'generic' }: { isDark: boolean; kind?: 'home' | 'history' | 'script' | 'generic' }) {
+  if (kind === 'home' || kind === 'history') {
+    return (
+      <div className="space-y-4 pb-28">
+        <ScriptCardSkeleton isDark={isDark} />
+        <ScriptCardSkeleton isDark={isDark} />
+        <ScriptCardSkeleton isDark={isDark} />
+      </div>
+    );
+  }
+
+  if (kind === 'script') {
+    return <ScriptViewSkeleton isDark={isDark} />;
+  }
+
+  return (
+    <div className="flex items-center justify-center py-16">
+      <Loader2 className={cn('w-7 h-7 animate-spin', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')} />
+    </div>
+  );
 }
 
 export default function App() {
@@ -2415,140 +2442,149 @@ export default function App() {
                 </motion.div>
               )}
 
-              <HomeScreen
-                isDark={isDark}
-                nextMilestone={history.length > 0 ? nextMilestone : null}
-                currentScript={currentScript}
-                setView={setView}
-                sortedCallTypes={sortedCallTypes}
-                sortMode={sortMode}
-                setSortMode={setSortMode}
-                description={description}
-                setDescription={setDescription}
-                isPremium={isPremium}
-                personas={personas}
-                selectedPersona={selectedPersona}
-                setSelectedPersona={setSelectedPersona}
-                perspective={perspective}
-                setPerspective={setPerspective}
-                tone={tone}
-                setTone={setTone}
-                loading={loading}
-                generateError={generateError}
-                generateAttempt={generateAttempt}
-                handleGenerate={handleGenerate}
-                expandedSafeLineIndex={expandedSafeLineIndex}
-                toggleSafeLine={toggleSafeLine}
-              />
+              <Suspense fallback={<DeferredScreenFallback isDark={isDark} kind="home" />}>
+                <HomeScreen
+                  isDark={isDark}
+                  nextMilestone={history.length > 0 ? nextMilestone : null}
+                  currentScript={currentScript}
+                  setView={setView}
+                  sortedCallTypes={sortedCallTypes}
+                  sortMode={sortMode}
+                  setSortMode={setSortMode}
+                  description={description}
+                  setDescription={setDescription}
+                  isPremium={isPremium}
+                  personas={personas}
+                  selectedPersona={selectedPersona}
+                  setSelectedPersona={setSelectedPersona}
+                  perspective={perspective}
+                  setPerspective={setPerspective}
+                  tone={tone}
+                  setTone={setTone}
+                  loading={loading}
+                  generateError={generateError}
+                  generateAttempt={generateAttempt}
+                  handleGenerate={handleGenerate}
+                  expandedSafeLineIndex={expandedSafeLineIndex}
+                  toggleSafeLine={toggleSafeLine}
+                />
+              </Suspense>
 
             </div>
           )}
 
           {view === 'settings' && (
-            <SettingsScreen
-              key="settings"
-              isDark={isDark}
-              activeTab={activeTab}
-              setView={setView}
-              supabaseUser={supabaseUser}
-              userEmail={userEmail}
-              userName={userName}
-              signOut={handleSignOut}
-              setSupabaseUser={setSupabaseUser}
-              setUserEmail={setUserEmail}
-              isPremium={isPremium}
-              setShowUpgradeModal={setShowUpgradeModal}
-              setTheme={setTheme}
-              personas={personas}
-              setSelectedPersona={setSelectedPersona}
-              setShowPersonaModal={setShowPersonaModal}
-              deletePersona={(personaId) => {
-                const next = personas.filter((persona) => persona.id !== personaId);
-                persistPersonasLocally(next);
-                if (supabaseUser) {
-                  void dbDeletePersona(personaId);
-                }
-              }}
-              tier={tier}
-              historyLength={history.length}
-              clearHistory={clearHistory}
-              onExportJSON={handleExportJSON}
-              onExportCSV={handleExportCSV}
-              onImportFile={handleImportFile}
-              onImportConfirm={(preview, mode) => { void handleImportConfirm(preview, mode); }}
-            />
+            <Suspense fallback={<DeferredScreenFallback isDark={isDark} />}>
+              <SettingsScreen
+                key="settings"
+                isDark={isDark}
+                activeTab={activeTab}
+                setView={setView}
+                supabaseUser={supabaseUser}
+                userEmail={userEmail}
+                userName={userName}
+                signOut={handleSignOut}
+                setSupabaseUser={setSupabaseUser}
+                setUserEmail={setUserEmail}
+                isPremium={isPremium}
+                setShowUpgradeModal={setShowUpgradeModal}
+                setTheme={setTheme}
+                personas={personas}
+                setSelectedPersona={setSelectedPersona}
+                setShowPersonaModal={setShowPersonaModal}
+                deletePersona={(personaId) => {
+                  const next = personas.filter((persona) => persona.id !== personaId);
+                  persistPersonasLocally(next);
+                  if (supabaseUser) {
+                    void dbDeletePersona(personaId);
+                  }
+                }}
+                tier={tier}
+                historyLength={history.length}
+                clearHistory={clearHistory}
+                onExportJSON={handleExportJSON}
+                onExportCSV={handleExportCSV}
+                onImportFile={handleImportFile}
+                onImportConfirm={(preview, mode) => { void handleImportConfirm(preview, mode); }}
+              />
+            </Suspense>
           )}
 
           {view === 'dashboard' && (
-            <DashboardScreen
-              key="dashboard"
-              isDark={isDark}
-              historyLength={history.length}
-              recoveryScore={recoveryScore}
-              callStreak={callStreak}
-              callAnxietyRatings={callAnxietyRatings}
-              practiceSessions={practiceSessions}
-              milestones={MILESTONES}
-              unlockedMilestones={unlockedMilestones}
-              anxietySeverity={anxietySeverity}
-              lifeImpact={lifeImpact}
-            />
+            <Suspense fallback={<DeferredScreenFallback isDark={isDark} />}>
+              <DashboardScreen
+                key="dashboard"
+                isDark={isDark}
+                historyLength={history.length}
+                recoveryScore={recoveryScore}
+                callStreak={callStreak}
+                callAnxietyRatings={callAnxietyRatings}
+                practiceSessions={practiceSessions}
+                milestones={MILESTONES}
+                unlockedMilestones={unlockedMilestones}
+                anxietySeverity={anxietySeverity}
+                lifeImpact={lifeImpact}
+              />
+            </Suspense>
           )}
 
           {view === 'history' && (
-            <HistoryScreen
-              key="history"
-              isDark={isDark}
-              currentScript={currentScript}
-              setView={setView}
-              isPremium={isPremium}
-              isLoading={isHistoryLoading && history.length === 0}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              filteredHistory={filteredHistory}
-              setCurrentScript={setCurrentScript}
-              setPreviousView={setPreviousView}
-              toggleStar={toggleStar}
-              starredScripts={starredScripts}
-            />
+            <Suspense fallback={<DeferredScreenFallback isDark={isDark} kind="history" />}>
+              <HistoryScreen
+                key="history"
+                isDark={isDark}
+                currentScript={currentScript}
+                setView={setView}
+                isPremium={isPremium}
+                isLoading={isHistoryLoading && history.length === 0}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                filteredHistory={filteredHistory}
+                setCurrentScript={setCurrentScript}
+                setPreviousView={setPreviousView}
+                toggleStar={toggleStar}
+                starredScripts={starredScripts}
+              />
+            </Suspense>
           )}
 
           {view === 'script' && currentScript && (
-            <ScriptScreen
-              key="script"
-              isDark={isDark}
-              currentScript={currentScript}
-              isMedicalCall={isMedicalCall}
-              showMedicalPrep={showMedicalPrep}
-              onHideMedicalPrep={() => setShowMedicalPrep(false)}
-              showSpeakerPrompt={showSpeakerPrompt}
-              setShowSpeakerPrompt={setShowSpeakerPrompt}
-              previousView={previousView}
-              setActiveTab={setActiveTab}
-              setView={setView}
-              isPremium={isPremium}
-              handleSimulateCall={handleSimulateCall}
-              isLaunchingSimulator={isLaunchingSimulator}
-              toggleStar={toggleStar}
-              starredScripts={starredScripts}
-              handleShare={handleShare}
-              shareToast={shareToast}
-              showAlterEgo={showAlterEgo}
-              setShowAlterEgo={setShowAlterEgo}
-              handleVoicemail={handleVoicemail}
-              handleEmailFallback={handleEmailFallback}
-              voicemailScript={voicemailScript}
-              emailFallback={emailFallback}
-              isRewriting={isRewriting}
-              setTone={setTone}
-              handleGenerate={handleGenerate}
-              onShowPreCallCheck={() => {
-                setPreCallCheckMode('script');
-                setShowPreCallCheck(true);
-              }}
-              onShowReflectionPrompt={() => { hapticLight(); setShowReflectionPrompt(true); }}
-              onShowPanicPanel={() => { hapticMedium(); setShowPanicPanel(true); setPanicCategory(null); setPanicResponse(null); }}
-              scriptSections={
+            <Suspense fallback={<DeferredScreenFallback isDark={isDark} kind="script" />}>
+              <ScriptScreen
+                key="script"
+                isDark={isDark}
+                currentScript={currentScript}
+                isMedicalCall={isMedicalCall}
+                showMedicalPrep={showMedicalPrep}
+                onHideMedicalPrep={() => setShowMedicalPrep(false)}
+                showSpeakerPrompt={showSpeakerPrompt}
+                setShowSpeakerPrompt={setShowSpeakerPrompt}
+                previousView={previousView}
+                setActiveTab={setActiveTab}
+                setView={setView}
+                isPremium={isPremium}
+                handleSimulateCall={handleSimulateCall}
+                isLaunchingSimulator={isLaunchingSimulator}
+                toggleStar={toggleStar}
+                starredScripts={starredScripts}
+                handleShare={handleShare}
+                shareToast={shareToast}
+                showAlterEgo={showAlterEgo}
+                setShowAlterEgo={setShowAlterEgo}
+                handleVoicemail={handleVoicemail}
+                handleEmailFallback={handleEmailFallback}
+                voicemailScript={voicemailScript}
+                emailFallback={emailFallback}
+                isRewriting={isRewriting}
+                setTone={setTone}
+                handleGenerate={handleGenerate}
+                onShowPreCallCheck={() => {
+                  setPreCallCheckMode('script');
+                  setShowPreCallCheck(true);
+                }}
+                onShowReflectionPrompt={() => { hapticLight(); setShowReflectionPrompt(true); }}
+                onShowPanicPanel={() => { hapticMedium(); setShowPanicPanel(true); setPanicCategory(null); setPanicResponse(null); }}
+                scriptSections={
                 <div className={cn("space-y-4 pb-32 transition-opacity", isRewriting && "opacity-50")}>
                   <ScriptSection title="Opening" step={1} content={currentScript.opening} isExpanded={expandedSections.opening} onToggle={() => setExpandedSections(p => ({...p, opening: !p.opening}))} isDark={isDark} color="blue" />
                   <ScriptSection title="Main Ask" step={2} content={currentScript.mainAsk} isExpanded={expandedSections.mainAsk} onToggle={() => setExpandedSections(p => ({...p, mainAsk: !p.mainAsk}))} isDark={isDark} color="purple" />
@@ -2601,8 +2637,9 @@ export default function App() {
 
                   <ScriptSection title="Close" step={3} content={currentScript.close} isExpanded={expandedSections.close} onToggle={() => setExpandedSections(p => ({...p, close: !p.close}))} isDark={isDark} color="rose" />
                 </div>
-              }
-            />
+                }
+              />
+            </Suspense>
           )}
         </AnimatePresence>
       </main>
@@ -2631,18 +2668,20 @@ export default function App() {
         </div>
       )}
 
-      <CallSimulator
-        isOpen={showCallSimulator}
-        isDark={isDark}
-        scenario={simulatorScenario}
-        onSessionComplete={(session) => {
-          persistPracticeSessions([...practiceSessions, session]);
-        }}
-        onClose={() => {
-          setShowCallSimulator(false);
-          setSimulatorScenario(null);
-        }}
-      />
+      <Suspense fallback={null}>
+        <CallSimulator
+          isOpen={showCallSimulator}
+          isDark={isDark}
+          scenario={simulatorScenario}
+          onSessionComplete={(session) => {
+            persistPracticeSessions([...practiceSessions, session]);
+          }}
+          onClose={() => {
+            setShowCallSimulator(false);
+            setSimulatorScenario(null);
+          }}
+        />
+      </Suspense>
 
       <nav className={cn("fixed bottom-0 left-0 right-0 border-t px-4 py-3 pb-8 z-50 flex items-center justify-around max-w-2xl mx-auto shadow-2xl transition-colors", isDark ? "bg-black border-white/5" : "bg-white border-black/5")}>
         {/* New Call */}
