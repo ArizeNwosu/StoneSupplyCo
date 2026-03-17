@@ -155,6 +155,7 @@ const IMPACT_AREAS = [
 const HAS_SEEN_ONBOARDING_KEY = 'callmate_has_seen_onboarding';
 const AUTH_INTENT_KEY = 'callmate_auth_intent';
 const PENDING_OAUTH_CALLBACK_KEY = 'callmate_pending_oauth_callback';
+const SPLASH_VISIBLE_MS = 3200;
 // Module-level guard: prevents re-entry into Apple/Google SSO even if AccountSetup remounts
 // mid-flow (e.g. due to a SIGNED_OUT event triggering setView('account')).
 let ssoInFlight = false;
@@ -230,6 +231,7 @@ export default function App() {
   const [trialStartDate, setTrialStartDate] = useState<number | null>(null);
   const [trialScriptsUsed, setTrialScriptsUsed] = useState(0);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual' | null>(null);
+  const [isAccessStateReady, setIsAccessStateReady] = useState(false);
   const [purchasingPlan, setPurchasingPlan] = useState<'monthly' | 'annual' | null>(null);
   const [userName, setUserName] = useState(() => localStorage.getItem('callmate_user_name') || '');
   const [userGender, setUserGender] = useState(() => localStorage.getItem('callmate_user_gender') || '');
@@ -259,6 +261,7 @@ export default function App() {
   const [customTriggerInput, setCustomTriggerInput] = useState('');
   const prevMilestoneIdsRef = useRef<Set<string>>(new Set());
   const channelRef = useRef<RealtimeChannel[]>([]);
+  const didBootstrapInitialSessionRef = useRef(false);
 
   const isDark = theme === 'dark';
 
@@ -322,6 +325,9 @@ export default function App() {
   const TRIAL_SCRIPT_LIMIT = 5;
   const TRIAL_DAYS = 3;
   const enforceAccessGate = (candidateTier = tier, candidateTrialStart = trialStartDate) => {
+    if (!isAccessStateReady) {
+      return true;
+    }
     const trialActive = candidateTier === 'trial' && !!candidateTrialStart && Math.floor((Date.now() - candidateTrialStart) / 86400000) < TRIAL_DAYS;
     const hasAccess = candidateTier === 'admin' || candidateTier === 'monthly' || candidateTier === 'annual' || trialActive;
     if (!hasAccess) {
@@ -329,6 +335,8 @@ export default function App() {
       setUpgradeModalForced(true);
       return false;
     }
+    setShowUpgradeModal(false);
+    setUpgradeModalForced(false);
     return true;
   };
 
@@ -337,6 +345,13 @@ export default function App() {
     setTrialStartDate(access.trialStartedAt);
     setTrialScriptsUsed(access.scriptsUsed);
     setSelectedPlan(access.selectedPlan);
+    setIsAccessStateReady(true);
+    const hasActiveTrial = access.tier === 'trial' && !!access.trialStartedAt && Math.floor((Date.now() - access.trialStartedAt) / 86400000) < TRIAL_DAYS;
+    const hasPaidAccess = access.tier === 'admin' || access.tier === 'monthly' || access.tier === 'annual' || hasActiveTrial;
+    if (hasPaidAccess) {
+      setShowUpgradeModal(false);
+      setUpgradeModalForced(false);
+    }
   };
 
   const loadAccessState = async () => {
@@ -350,6 +365,7 @@ export default function App() {
       return await loadAccessState();
     } catch (error) {
       console.error('Failed to load access state', error);
+      setIsAccessStateReady(true);
       return null;
     }
   };
@@ -369,6 +385,14 @@ export default function App() {
       alert('Unable to start your trial right now. Please try again.');
       return null;
     }
+  };
+
+  const verifyPurchaseReceipt = async (payload: { transactionId: string; jwsToken: string; productId: string }) => {
+    const { supabase } = await import('./services/supabase');
+    const { data, error } = await supabase.functions.invoke('verify-purchase', { body: payload });
+    if (error) throw error;
+    applyAccessState(data);
+    return data;
   };
 
   const handleIAPPurchase = async (plan: 'monthly' | 'annual') => {
@@ -391,10 +415,7 @@ export default function App() {
 
       // Verify in background — sync authoritative state from server
       try {
-        const { supabase } = await import('./services/supabase');
-        const { data, error } = await supabase.functions.invoke('verify-purchase', { body: { transactionId, jwsToken, productId } });
-        if (error) throw error;
-        applyAccessState(data);
+        await verifyPurchaseReceipt({ transactionId, jwsToken, productId });
       } catch (verifyError: any) {
         console.error('Purchase verification failed:', verifyError?.message);
         await loadAccessState(); // revert to server-authoritative state
@@ -420,7 +441,17 @@ export default function App() {
 
     try {
       const { restorePurchases } = await import('./services/iap');
-      const restoredProductIds = await restorePurchases();
+      const entitlements = await restorePurchases();
+
+      if (!entitlements.length) {
+        alert('No previous purchases were found for this Apple ID.');
+        return;
+      }
+
+      const verificationResults = await Promise.allSettled(
+        entitlements.map((entitlement) => verifyPurchaseReceipt(entitlement))
+      );
+      const verifiedCount = verificationResults.filter((result) => result.status === 'fulfilled').length;
       const access = await loadAccessState();
 
       if (access.tier === 'admin' || access.tier === 'monthly' || access.tier === 'annual') {
@@ -428,12 +459,16 @@ export default function App() {
         return;
       }
 
-      if (!restoredProductIds.length) {
-        alert('No previous purchases were found for this Apple ID.');
+      if (verifiedCount === 0) {
+        const firstFailure = verificationResults.find((result) => result.status === 'rejected');
+        const reason = firstFailure && 'reason' in firstFailure
+          ? firstFailure.reason?.context?.message ?? firstFailure.reason?.message ?? String(firstFailure.reason)
+          : 'Your previous purchase could not be verified right now.';
+        alert(`Restore failed: ${reason}`);
         return;
       }
 
-      alert('We found a previous purchase, but your account has not updated yet. Please try again in a moment.');
+      alert('We found your previous purchase, but your account has not updated yet. Please try again in a moment.');
     } catch (error: any) {
       const detail = error?.context?.message ?? error?.message ?? String(error);
       console.error('Restore purchases failed:', detail, error);
@@ -554,6 +589,43 @@ export default function App() {
     setCurrentScript(null);
   };
 
+  const startSignedInRealtimeSync = (user: User) => {
+    import('./services/sync').then(({ createSyncSubscriptions }) => {
+      channelRef.current.forEach(ch => ch.unsubscribe());
+      createSyncSubscriptions(supabase, user, { onScriptChange })
+        .then(channels => { channelRef.current = channels; })
+        .catch(err => console.error('Failed to create sync subscriptions', err));
+    }).catch(err => console.error('Failed to import sync module', err));
+  };
+
+  const getInitialSignedInView = (user: User, authIntent: 'signup' | 'login' | null = null) => {
+    const cachedName = localStorage.getItem('callmate_user_name')?.trim();
+    const isReturningUser = !!cachedName || authIntent === 'login' || (Date.now() - new Date(user.created_at).getTime() > 30000);
+    return isReturningUser ? 'home' : 'notifications';
+  };
+
+  const warmSignedInSession = (user: User, authIntent: 'signup' | 'login' | null = null) => {
+    if (user.email) {
+      setUserEmail(user.email);
+      localStorage.setItem('callmate_user_email', user.email);
+    }
+
+    setSupabaseUser(user);
+    setView(getInitialSignedInView(user, authIntent));
+
+    void loadAccessStateSafely().then((access) => {
+      if (access) {
+        enforceAccessGate(access.tier, access.trialStartedAt);
+      }
+    });
+
+    void loadUserDataFromSupabase(user.id).catch(err => {
+      console.error('Failed to warm signed-in user data', err);
+    });
+
+    startSignedInRealtimeSync(user);
+  };
+
   const hydrateSignedInUser = async (user: User, authIntent: 'signup' | 'login' | null = null) => {
     // setSupabaseUser is deferred until after loadAccessStateSafely runs so that
     // the enforceAccessGate useEffect sees the real tier (not the default 'free')
@@ -576,12 +648,7 @@ export default function App() {
     setSupabaseUser(user);
 
     // Fire-and-forget — does not block navigation
-    import('./services/sync').then(({ createSyncSubscriptions }) => {
-      channelRef.current.forEach(ch => ch.unsubscribe());
-      createSyncSubscriptions(supabase, user, { onScriptChange })
-        .then(channels => { channelRef.current = channels; })
-        .catch(err => console.error('Failed to create sync subscriptions', err));
-    }).catch(err => console.error('Failed to import sync module', err));
+    startSignedInRealtimeSync(user);
 
     return {
       profile,
@@ -949,23 +1016,16 @@ export default function App() {
         const { supabase: sb } = await import('./services/supabase');
         const [{ data: { session } }] = await Promise.all([
           sb.auth.getSession(),
-          new Promise<void>(resolve => setTimeout(resolve, 3200)),
+          new Promise<void>(resolve => setTimeout(resolve, SPLASH_VISIBLE_MS)),
         ]);
         if (session?.user) {
           const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
           localStorage.removeItem(AUTH_INTENT_KEY);
           localStorage.removeItem(PENDING_OAUTH_CALLBACK_KEY);
-          const { access, isReturningUser } = await hydrateSignedInUser(session.user, authIntent);
-          
-          if (access?.tier === 'admin' || isReturningUser) {
-            setView('home');
-          } else {
-            setView('notifications');
-          }
-          if (access) {
-            enforceAccessGate(access.tier, access.trialStartedAt);
-          }
+          didBootstrapInitialSessionRef.current = true;
+          warmSignedInSession(session.user, authIntent);
         } else {
+          setIsAccessStateReady(true);
           const hasSeenOnboarding = localStorage.getItem(HAS_SEEN_ONBOARDING_KEY) === 'true';
           if (hasSeenOnboarding) {
             setView('account');
@@ -989,6 +1049,7 @@ export default function App() {
         }
         setSupabaseUser(null);
         setUserEmail('');
+        setIsAccessStateReady(true);
         setView('account');
       }
     };
@@ -998,6 +1059,9 @@ export default function App() {
     const { data: { subscription } } = onAuthStateChange(async (event, session) => {
       if (session?.user) {
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          if (event === 'INITIAL_SESSION' && didBootstrapInitialSessionRef.current) {
+            return;
+          }
           const authIntent = localStorage.getItem(AUTH_INTENT_KEY) as 'signup' | 'login' | null;
           const inferredNewUser = session.user.created_at
             ? Date.now() - new Date(session.user.created_at).getTime() < 30000
@@ -1043,6 +1107,7 @@ export default function App() {
         }
       } else {
         setSupabaseUser(null);
+        setIsAccessStateReady(true);
         if (event === 'SIGNED_OUT') {
           // If AUTH_INTENT_KEY is set, a sign-in is actively in progress.
           // This SIGNED_OUT is fired by supabase.auth.setSession() when it replaces the
@@ -1061,6 +1126,7 @@ export default function App() {
           setTrialStartDate(null);
           setTrialScriptsUsed(0);
           setSelectedPlan(null);
+          setIsAccessStateReady(false);
           setUserEmail('');
           localStorage.removeItem('callmate_user_email');
           localStorage.removeItem(PENDING_OAUTH_CALLBACK_KEY);
@@ -2779,10 +2845,23 @@ export default function App() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {showUpgradeModal && (
+        {showUpgradeModal && isAccessStateReady && (
           <>
-            <div onClick={() => { setShowUpgradeModal(false); if (['notifications', 'reviews', 'setup', 'onboarding', 'explainer'].includes(viewRef.current)) setView('home'); }} className="fixed inset-0 bg-black/80 z-[100]" />
-            <div className={cn("fixed inset-0 z-[110] shadow-2xl overflow-y-auto transition-colors", isDark ? "bg-[#202926]" : "bg-[rgba(255,251,245,0.99)]")}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.28 }}
+              onClick={() => { setShowUpgradeModal(false); if (['notifications', 'reviews', 'setup', 'onboarding', 'explainer'].includes(viewRef.current)) setView('home'); }}
+              className="fixed inset-0 bg-transparent z-[100]"
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 340, damping: 34, mass: 0.9 }}
+              className={cn("fixed inset-0 z-[110] shadow-2xl overflow-y-auto transition-colors", isDark ? "bg-[#202926]" : "bg-[rgba(255,251,245,0.99)]")}
+            >
               <header className={cn("sticky top-0 z-10 border-b px-6 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] flex items-center justify-between transition-colors", isDark ? "bg-[#202926]/95 border-[#33403b]" : "bg-[rgba(243,238,228,0.92)] border-[#d8cdc0]")}>
                 <div>
                   <p className={cn("text-2xl font-semibold tracking-tight", isDark ? "text-[#f2ede3]" : "text-[#22312b]")}>Subscription</p>
@@ -2928,7 +3007,7 @@ export default function App() {
                   <button onClick={() => { setShowUpgradeModal(false); if (['notifications', 'reviews', 'setup', 'onboarding', 'explainer'].includes(viewRef.current)) setView('home'); }} className={cn("w-full text-sm font-medium py-1 transition-colors", isDark ? "text-[#97a59f] hover:text-[#c5d0ca]" : "text-[#87938d] hover:text-[#66756f]")}>Maybe later</button>
                 )}
               </div>
-            </div>
+            </motion.div>
           </>
         )}
 
@@ -3694,7 +3773,7 @@ const OnboardingProfileStep = React.memo(function OnboardingProfileStep({
       input.focus();
       const end = input.value.length;
       input.setSelectionRange(end, end);
-    }, 50);
+    }, 320);
 
     return () => window.clearTimeout(timer);
   }, []);

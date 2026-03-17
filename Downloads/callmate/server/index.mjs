@@ -4,12 +4,43 @@ import OpenAI from 'openai';
 
 const app = express();
 const port = Number(process.env.PORT || 3001);
+app.set('trust proxy', 1);
+
+const defaultAllowedOrigins = [
+  'capacitor://localhost',
+  'http://localhost',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://app.trycallmate.app',
+];
+const allowedOrigins = new Set(
+  String(process.env.ALLOWED_ORIGINS || defaultAllowedOrigins.join(','))
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
+);
+const rateLimitStore = new Map();
 
 app.use(express.json({ limit: '2mb' }));
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  const allowOrigin = !origin || allowedOrigins.size === 0 || allowedOrigins.has(origin);
+
+  if (origin && !allowOrigin) {
+    res.status(403).send('Origin not allowed.');
+    return;
+  }
+
+  if (origin && allowOrigin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Vary', 'Origin');
+  }
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header('X-Frame-Options', 'DENY');
+  res.header('Referrer-Policy', 'no-referrer');
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
   if (req.method === 'OPTIONS') {
     res.sendStatus(204);
     return;
@@ -27,6 +58,34 @@ function requireOpenAI(res) {
 
 function compact(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function getClientKey(req) {
+  const forwardedFor = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return forwardedFor || req.ip || req.socket.remoteAddress || 'unknown';
+}
+
+function rateLimit({ windowMs, max }) {
+  return (req, res, next) => {
+    const now = Date.now();
+    const key = `${req.path}:${getClientKey(req)}`;
+    const entry = rateLimitStore.get(key);
+
+    if (!entry || entry.resetAt <= now) {
+      rateLimitStore.set(key, { count: 1, resetAt: now + windowMs });
+      next();
+      return;
+    }
+
+    if (entry.count >= max) {
+      res.setHeader('Retry-After', Math.ceil((entry.resetAt - now) / 1000));
+      res.status(429).send('Too many requests. Please slow down and try again shortly.');
+      return;
+    }
+
+    entry.count += 1;
+    next();
+  };
 }
 
 function parseJson(content) {
@@ -295,7 +354,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/api/ai/script', async (req, res) => {
+app.post('/api/ai/script', rateLimit({ windowMs: 60_000, max: 20 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
@@ -346,7 +405,7 @@ app.post('/api/ai/script', async (req, res) => {
   }
 });
 
-app.post('/api/ai/panic', async (req, res) => {
+app.post('/api/ai/panic', rateLimit({ windowMs: 60_000, max: 30 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
@@ -363,7 +422,7 @@ app.post('/api/ai/panic', async (req, res) => {
   }
 });
 
-app.post('/api/ai/voicemail', async (req, res) => {
+app.post('/api/ai/voicemail', rateLimit({ windowMs: 60_000, max: 20 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
@@ -380,7 +439,7 @@ app.post('/api/ai/voicemail', async (req, res) => {
   }
 });
 
-app.post('/api/ai/email-fallback', async (req, res) => {
+app.post('/api/ai/email-fallback', rateLimit({ windowMs: 60_000, max: 20 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
@@ -397,7 +456,7 @@ app.post('/api/ai/email-fallback', async (req, res) => {
   }
 });
 
-app.post('/api/ai/branch', async (req, res) => {
+app.post('/api/ai/branch', rateLimit({ windowMs: 60_000, max: 20 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
@@ -425,7 +484,7 @@ app.post('/api/ai/branch', async (req, res) => {
   }
 });
 
-app.post('/api/ai/tts', async (req, res) => {
+app.post('/api/ai/tts', rateLimit({ windowMs: 60_000, max: 25 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
@@ -449,7 +508,7 @@ app.post('/api/ai/tts', async (req, res) => {
   }
 });
 
-app.post('/api/practice-call/next-turn', async (req, res) => {
+app.post('/api/practice-call/next-turn', rateLimit({ windowMs: 60_000, max: 40 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
@@ -527,7 +586,7 @@ app.post('/api/practice-call/next-turn', async (req, res) => {
   }
 });
 
-app.post('/api/practice-call/end', async (req, res) => {
+app.post('/api/practice-call/end', rateLimit({ windowMs: 60_000, max: 60 }), async (req, res) => {
   try {
     const { turns = [], completed = false } = req.body || {};
     res.json(buildFeedback(turns, completed));

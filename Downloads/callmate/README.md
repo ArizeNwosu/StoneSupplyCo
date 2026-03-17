@@ -36,3 +36,11 @@ Recommended Railway settings:
 2. Builder: Dockerfile
 3. Start command: leave blank so Docker uses its own `CMD`
 4. Required env vars: `OPENAI_API_KEY`
+5. Recommended env vars: `ALLOWED_ORIGINS`
+
+Example:
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+ALLOWED_ORIGINS=capacitor://localhost,https://app.trycallmate.app
+```

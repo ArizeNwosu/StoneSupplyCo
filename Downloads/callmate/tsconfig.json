@@ -23,5 +23,17 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "include": [
+    "src",
+    "server",
+    "ios",
+    "vite.config.ts",
+    "capacitor.config.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "supabase/functions"
+  ]
 }
