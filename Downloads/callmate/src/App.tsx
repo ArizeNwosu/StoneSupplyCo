@@ -33,7 +33,7 @@ import { signUp, signIn, signInWithApple, signInWithGoogle, signOut, onAuthState
 import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchAnxietyRatings, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection as dbSaveReflection, savePersona, syncAnxietyRatings, deleteAllScriptsForUser, deletePersona as dbDeletePersona } from './services/db';
 import { fetchAccessState, startTrial } from './services/access';
 import { enqueueFailedSave, drainOfflineQueue } from './services/offlineQueue';
-import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, setStatusBarDark, setStatusBarLight, openInAppBrowser, requestNotificationsAccess, requestVoiceSimulatorPermissions, scheduleLocalNotification } from './services/native';
+import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, setStatusBarDark, setStatusBarLight, openInAppBrowser, openManageSubscriptions, requestNotificationsAccess, requestVoiceSimulatorPermissions, scheduleLocalNotification } from './services/native';
 import type { Session, User, RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './services/supabase';
 import type { ImportPreview } from './services/exportImport';
@@ -270,11 +270,13 @@ export default function App() {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual' | null>(null);
   const [isAccessStateReady, setIsAccessStateReady] = useState(false);
   const [purchasingPlan, setPurchasingPlan] = useState<'monthly' | 'annual' | null>(null);
+  const purchaseVerificationInFlightRef = useRef<Set<string>>(new Set());
   const [userName, setUserName] = useState(() => localStorage.getItem('callmate_user_name') || '');
   const [userGender, setUserGender] = useState(() => localStorage.getItem('callmate_user_gender') || '');
   const [userAgeRange, setUserAgeRange] = useState(() => localStorage.getItem('callmate_user_age_range') || '');
   const [heardAboutUs, setHeardAboutUs] = useState(() => localStorage.getItem('callmate_heard_about_us') || '');
   const [userEmail, setUserEmail] = useState('');
+  const supabaseUserRef = useRef<User | null>(null);
   const [starredScripts, setStarredScripts] = useState<string[]>(() => readStoredJson('callmate_starred', []));
   const [shareToast, setShareToast] = useState(false);
   const [expandedSafeLineIndex, setExpandedSafeLineIndex] = useState<number | null>(null);
@@ -309,6 +311,10 @@ export default function App() {
     localStorage.setItem(PRACTICE_SESSIONS_KEY, JSON.stringify(items));
   };
 
+  useEffect(() => {
+    supabaseUserRef.current = supabaseUser;
+  }, [supabaseUser]);
+
   const resetSignedOutProfileState = () => {
     setUserName('');
     setUserGender('');
@@ -340,6 +346,7 @@ export default function App() {
     localStorage.removeItem('callmate_review_prompted');
     localStorage.removeItem('callmate_speaker_count');
     localStorage.removeItem('callmate_starred');
+    localStorage.removeItem('callmate_trial_selected_plan');
     localStorage.removeItem(PRACTICE_SESSIONS_KEY);
   };
 
@@ -425,6 +432,11 @@ export default function App() {
       setShowUpgradeModal(false);
       setUpgradeModalForced(false);
     }
+    if (access.tier !== 'trial') {
+      localStorage.removeItem('callmate_trial_selected_plan');
+    } else if (access.selectedPlan) {
+      localStorage.setItem('callmate_trial_selected_plan', access.selectedPlan);
+    }
   };
 
   const loadAccessState = async () => {
@@ -468,6 +480,33 @@ export default function App() {
     return data;
   };
 
+  const verifyPurchaseReceiptInBackground = async (
+    payload: { transactionId: string; jwsToken: string; productId: string },
+    options?: { showAlertOnFailure?: boolean; reopenPaywallOnFailure?: boolean },
+  ) => {
+    const key = `${payload.transactionId}:${payload.productId}`;
+    if (purchaseVerificationInFlightRef.current.has(key)) return null;
+    purchaseVerificationInFlightRef.current.add(key);
+
+    try {
+      return await verifyPurchaseReceipt(payload);
+    } catch (verifyError: any) {
+      console.error('Purchase verification failed:', verifyError?.message);
+      const access = await loadAccessStateSafely();
+      if (options?.reopenPaywallOnFailure && (!access || !['admin', 'monthly', 'annual'].includes(access.tier))) {
+        setUpgradeModalForced(true);
+        setShowUpgradeModal(true);
+      }
+      if (options?.showAlertOnFailure) {
+        const detail = verifyError?.context?.message ?? verifyError?.message ?? String(verifyError);
+        alert(`Purchase verification failed: ${detail}`);
+      }
+      return null;
+    } finally {
+      purchaseVerificationInFlightRef.current.delete(key);
+    }
+  };
+
   const handleIAPPurchase = async (plan: 'monthly' | 'annual') => {
     if (!supabaseUser) { setShowUpgradeModal(false); setView('account'); return; }
     if (purchasingPlan) return;
@@ -489,16 +528,10 @@ export default function App() {
       setPurchasingPlan(null);
 
       // Verify in background — do not keep the paywall in a perpetual loading state.
-      void (async () => {
-        try {
-          await verifyPurchaseReceipt({ transactionId, jwsToken, productId });
-        } catch (verifyError: any) {
-          console.error('Purchase verification failed:', verifyError?.message);
-          await loadAccessStateSafely();
-          const detail = verifyError?.context?.message ?? verifyError?.message ?? String(verifyError);
-          alert(`Purchase verification failed: ${detail}`);
-        }
-      })();
+      void verifyPurchaseReceiptInBackground(
+        { transactionId, jwsToken, productId },
+        { showAlertOnFailure: true, reopenPaywallOnFailure: true },
+      );
     } catch (error: any) {
       if (error?.message === 'cancelled') return;
       const detail = error?.context?.message ?? error?.message ?? String(error);
@@ -1327,6 +1360,15 @@ export default function App() {
       CapApp.addListener('appStateChange', async ({ isActive }) => {
         if (!isActive) return;
         await completePendingAuthIfNeeded();
+
+        if (supabaseUserRef.current) {
+          const { getActiveEntitlements } = await import('./services/iap');
+          const entitlements = await getActiveEntitlements();
+          await Promise.allSettled(
+            entitlements.map((entitlement) => verifyPurchaseReceiptInBackground(entitlement))
+          );
+          await loadAccessStateSafely();
+        }
       });
     };
     setupDeepLink();
@@ -1335,6 +1377,23 @@ export default function App() {
   }, []);
 
   // Scroll to top whenever navigating to the main home view
+  useEffect(() => {
+    if (!supabaseUser) return;
+
+    let removeListener = () => {};
+    void (async () => {
+      const { addStoreKitTransactionListener } = await import('./services/iap');
+      removeListener = await addStoreKitTransactionListener((payload) => {
+        if (!supabaseUserRef.current) return;
+        void verifyPurchaseReceiptInBackground(payload);
+      });
+    })();
+
+    return () => {
+      removeListener();
+    };
+  }, [supabaseUser]);
+
   useEffect(() => {
     if (view === 'home') window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, [view]);
@@ -3065,7 +3124,7 @@ export default function App() {
                   <div
                     onClick={() => { void handleIAPPurchase('monthly'); }}
                     className={cn(
-                      "p-5 rounded-2xl border transition-all relative",
+                      "p-5 pt-6 rounded-2xl border transition-all relative",
                       purchasingPlan ? "cursor-not-allowed" : "cursor-pointer active:scale-[0.99]",
                       purchasingPlan === 'annual' && "opacity-40",
                       tier === 'monthly' ? (isDark ? "bg-[#274136]/45 border-[#7fa091]" : "bg-[#eef5f1] border-[#8fae9e]") : (isDark ? "bg-[#171f1d] border-[#415049] hover:border-[#66756f]" : "bg-[#fffdf9] border-[#d8cdc0] hover:border-[#b7aa96]")
@@ -3080,7 +3139,6 @@ export default function App() {
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
                           <h3 className={cn("font-black text-lg", isDark ? "text-white" : "text-black")}>Monthly</h3>
-                          <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest", isDark ? "bg-[#5d8a7a]/20 text-[#b7d0c4]" : "bg-[#dbe8df] text-[#5d8a7a]")}>Popular</span>
                         </div>
                         <p className={cn("text-xs", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>Billed monthly after trial</p>
                       </div>
@@ -3098,12 +3156,20 @@ export default function App() {
                   <div
                     onClick={() => { void handleIAPPurchase('annual'); }}
                     className={cn(
-                      "p-5 rounded-2xl border transition-all relative",
+                      "p-5 pt-6 rounded-2xl border transition-all relative overflow-hidden",
                       purchasingPlan ? "cursor-not-allowed" : "cursor-pointer active:scale-[0.99]",
                       purchasingPlan === 'monthly' && "opacity-40",
-                      tier === 'annual' ? (isDark ? "bg-[#314230]/45 border-[#9bb68f]" : "bg-[#f1f5ea] border-[#a9be97]") : (isDark ? "bg-[#171f1d] border-[#415049] hover:border-[#66756f]" : "bg-[#fffdf9] border-[#d8cdc0] hover:border-[#b7aa96]")
+                      tier === 'annual'
+                        ? (isDark ? "bg-[linear-gradient(180deg,#314230_0%,#24301f_100%)] border-[#b7cf9f] shadow-[0_18px_40px_rgba(155,182,143,0.16)]" : "bg-[linear-gradient(180deg,#f4f8ec_0%,#edf4e8_100%)] border-[#98b47d] shadow-[0_18px_40px_rgba(122,153,96,0.12)]")
+                        : (isDark ? "bg-[linear-gradient(180deg,#233021_0%,#171f1d_100%)] border-[#8eaa79] hover:border-[#b7cf9f] shadow-[0_18px_40px_rgba(155,182,143,0.12)]" : "bg-[linear-gradient(180deg,#fbfdf7_0%,#edf4e8_100%)] border-[#98b47d] hover:border-[#7da163] shadow-[0_18px_40px_rgba(122,153,96,0.1)]")
                     )}
                   >
+                    <div className={cn(
+                      "absolute top-0 right-0 rounded-bl-2xl px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em]",
+                      isDark ? "bg-[#b7cf9f] text-[#24301f]" : "bg-[#6e8f69] text-[#f7fbf4]"
+                    )}>
+                      Most Popular
+                    </div>
                     {purchasingPlan === 'annual' && (
                       <div className="absolute inset-0 rounded-2xl flex items-center justify-center z-10 backdrop-blur-[1px]">
                         <Loader2 className={cn("w-6 h-6 animate-spin", isDark ? "text-[#9bb68f]" : "text-[#587651]")} />
@@ -3113,18 +3179,23 @@ export default function App() {
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
                           <h3 className={cn("font-black text-lg", isDark ? "text-white" : "text-black")}>Annual</h3>
-                          <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest", isDark ? "bg-[#7b9d76]/20 text-[#d3e1cb]" : "bg-[#edf4e8] text-[#6e8f69]")}>Save 35%</span>
+                          <span className={cn("text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase tracking-widest", isDark ? "bg-[#b7cf9f]/20 text-[#e2f0d7]" : "bg-[#dceacc] text-[#587651]")}>Save 35%</span>
                         </div>
-                        <p className={cn("text-xs", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>Best value · Billed yearly after trial</p>
+                        <p className={cn("text-xs font-semibold", isDark ? "text-[#d3e1cb]" : "text-[#587651]")}>Best value · Billed yearly after trial</p>
                       </div>
                       <div className="text-right">
                         <p className={cn("text-2xl font-black tabular-nums", isDark ? "text-white" : "text-black")}>{iapPrices.annual ?? '$69.99'}<span className={cn("text-sm font-normal", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>/yr</span></p>
-                        {!iapPrices.annual && <p className={cn("text-[10px] font-black", isDark ? "text-[#c6ddb7]" : "text-[#6e8f69]")}>≈ $5.83/mo</p>}
+                        {!iapPrices.annual && <p className={cn("text-[10px] font-black", isDark ? "text-[#d3e1cb]" : "text-[#6e8f69]")}>≈ $5.83/mo</p>}
                       </div>
                     </div>
-                    <div className={cn("rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-2", isDark ? "bg-[#314230]/35 text-[#d9e6cf]" : "bg-[#edf4e8] text-[#587651]")}>
-                      <Check className="w-3.5 h-3.5 shrink-0" />
-                      3 days free, then {iapPrices.annual ?? '$69.99'}/year · Cancel anytime
+                    <div className={cn("rounded-xl px-3 py-2 text-xs font-semibold flex items-center justify-between gap-3", isDark ? "bg-[#1a2418] text-[#e2f0d7] border border-[#4f6943]" : "bg-[#dceacc] text-[#48633f] border border-[#a9be97]")}>
+                      <div className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 shrink-0" />
+                        3 days free, then {iapPrices.annual ?? '$69.99'}/year · Cancel anytime
+                      </div>
+                      <span className={cn("shrink-0 rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em]", isDark ? "bg-[#b7cf9f]/20 text-[#e2f0d7]" : "bg-[#dceacc] text-[#587651]")}>
+                        35% Off
+                      </span>
                     </div>
                   </div>
                 </div>

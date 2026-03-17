@@ -5,7 +5,7 @@ import { Tone, SAFE_LINES, Persona, CallScript, Tier, CallPerspective, PracticeS
 import { Button, Card, CallTypeGrid, ScriptCardSkeleton, ScriptViewSkeleton, cn } from './ui';
 import type { User } from '@supabase/supabase-js';
 import { motion } from 'motion/react';
-import { openInAppBrowser } from '../services/native';
+import { openInAppBrowser, openManageSubscriptions } from '../services/native';
 import tiktokIcon from '../../icons/tiktok.svg';
 
 type HomeScreenProps = {
@@ -288,6 +288,7 @@ type SettingsScreenProps = {
   setUserEmail: React.Dispatch<React.SetStateAction<string>>;
   isPremium: boolean;
   setShowUpgradeModal: React.Dispatch<React.SetStateAction<boolean>>;
+  setUpgradeModalForced: React.Dispatch<React.SetStateAction<boolean>>;
   setTheme: React.Dispatch<React.SetStateAction<'dark' | 'light'>>;
   personas: Persona[];
   setSelectedPersona: React.Dispatch<React.SetStateAction<Persona | null>>;
@@ -333,6 +334,7 @@ export function SettingsScreen(props: SettingsScreenProps) {
     setUserEmail,
     isPremium,
     setShowUpgradeModal,
+    setUpgradeModalForced,
     setTheme,
     personas,
     setSelectedPersona,
@@ -462,7 +464,7 @@ export function SettingsScreen(props: SettingsScreenProps) {
               <Button
                 isDark={false}
                 className="w-full bg-[linear-gradient(135deg,#22312b_0%,#31463d_100%)] text-white border-none shadow-[0_18px_36px_rgba(34,49,43,0.18)] hover:brightness-[1.03]"
-                onClick={() => setShowUpgradeModal(true)}
+                onClick={() => { setUpgradeModalForced(true); setShowUpgradeModal(true); }}
               >
                 Start Free Trial
               </Button>
@@ -482,10 +484,10 @@ export function SettingsScreen(props: SettingsScreenProps) {
                 <p className="text-zinc-500 text-sm">Switch between light and dark mode</p>
               </div>
               <div className={cn('flex p-1 rounded-2xl transition-colors', isDark ? 'bg-[#171f1d]' : 'bg-[#ece5da]')}>
-                <button onClick={() => { setTheme('light'); localStorage.setItem('ringtone_theme', 'light'); }} className={cn('p-2 rounded-xl transition-all', !isDark ? 'bg-[#fffdf9] text-[#22312b] shadow-sm' : 'text-[#97a59f]')}>
+                <button onClick={() => { setTheme('light'); localStorage.setItem('callmate_theme', 'light'); }} className={cn('p-2 rounded-xl transition-all', !isDark ? 'bg-[#fffdf9] text-[#22312b] shadow-sm' : 'text-[#97a59f]')}>
                   <Sun className="w-5 h-5" />
                 </button>
-                <button onClick={() => { setTheme('dark'); localStorage.setItem('ringtone_theme', 'dark'); }} className={cn('p-2 rounded-xl transition-all', isDark ? 'bg-[#2d3834] text-white shadow-sm' : 'text-[#6f7d75]')}>
+                <button onClick={() => { setTheme('dark'); localStorage.setItem('callmate_theme', 'dark'); }} className={cn('p-2 rounded-xl transition-all', isDark ? 'bg-[#2d3834] text-white shadow-sm' : 'text-[#6f7d75]')}>
                   <Moon className="w-5 h-5" />
                 </button>
               </div>
@@ -511,7 +513,7 @@ export function SettingsScreen(props: SettingsScreenProps) {
             {!isPremium ? (
               <div className="py-4 text-center">
                 <p className="text-zinc-500 text-sm mb-3">Saved call roles are a premium feature</p>
-                <Button variant="ghost" size="sm" isDark={isDark} onClick={() => setShowUpgradeModal(true)}>Learn More</Button>
+                <Button variant="ghost" size="sm" isDark={isDark} onClick={() => { setUpgradeModalForced(true); setShowUpgradeModal(true); }}>Learn More</Button>
               </div>
             ) : personas.length === 0 ? (
               <p className="text-zinc-500 text-sm text-center py-4">No saved call roles yet.</p>
@@ -547,7 +549,19 @@ export function SettingsScreen(props: SettingsScreenProps) {
                 </p>
               </div>
               {tier !== 'admin' && (
-                <Button variant="outline" size="sm" isDark={isDark} onClick={() => setShowUpgradeModal(true)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  isDark={isDark}
+                  onClick={() => {
+                    if (tier === 'monthly' || tier === 'annual') {
+                      void openManageSubscriptions();
+                      return;
+                    }
+                    setUpgradeModalForced(true);
+                    setShowUpgradeModal(true);
+                  }}
+                >
                   {tier === 'free' ? 'Start Trial' : 'Manage'}
                 </Button>
               )}
@@ -779,6 +793,12 @@ export function DashboardScreen(props: DashboardScreenProps) {
   const convergenceGap = latestConfidence !== null && latestActualConfidence !== null
     ? Math.abs(latestConfidence - latestActualConfidence)
     : null;
+  const [graphAnimated, setGraphAnimated] = React.useState(false);
+  React.useEffect(() => {
+    setGraphAnimated(false);
+    const timer = window.setTimeout(() => setGraphAnimated(true), 120);
+    return () => window.clearTimeout(timer);
+  }, []);
   const trendLabel = practiceSessions.length < 2
     ? 'First practice score logged'
     : latestConfidence !== null && latestConfidence >= 80
@@ -883,9 +903,17 @@ export function DashboardScreen(props: DashboardScreenProps) {
               {[18, 40, 62].map((y) => (
                 <line key={y} x1="0" y1={y} x2="252" y2={y} stroke={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'} strokeWidth="1" />
               ))}
-              {practiceAreaPath && <path d={practiceAreaPath} fill="url(#progressFillGrad)" />}
+              {practiceAreaPath && (
+                <motion.path
+                  d={practiceAreaPath}
+                  fill="url(#progressFillGrad)"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: graphAnimated ? 1 : 0 }}
+                  transition={{ duration: 0.65, delay: 0.55 }}
+                />
+              )}
               {actualPath && (
-                <path
+                <motion.path
                   d={actualPath}
                   fill="none"
                   stroke="url(#progressLineGradMuted)"
@@ -893,16 +921,24 @@ export function DashboardScreen(props: DashboardScreenProps) {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeDasharray="4 4"
+                  pathLength={1}
+                  initial={{ pathLength: 0, opacity: 0.2 }}
+                  animate={{ pathLength: graphAnimated ? 1 : 0, opacity: graphAnimated ? 1 : 0.2 }}
+                  transition={{ duration: 1.8, ease: [0.72, 0.02, 0.98, 0.42], delay: 0.12 }}
                 />
               )}
               {practicePath && (
-                <path
+                <motion.path
                   d={practicePath}
                   fill="none"
                   stroke="url(#progressLineGradActive)"
                   strokeWidth="1.7"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  pathLength={1}
+                  initial={{ pathLength: 0, opacity: 0.2 }}
+                  animate={{ pathLength: graphAnimated ? 1 : 0, opacity: graphAnimated ? 1 : 0.2 }}
+                  transition={{ duration: 2.1, ease: [0.72, 0.02, 0.98, 0.42], delay: 0.32 }}
                 />
               )}
               {actualChartPoints.map((point, index) => (
@@ -1048,18 +1084,18 @@ export function HistoryScreen(props: HistoryScreenProps) {
         )}
       </div>
 
-      {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((k) => (
-            <ScriptCardSkeleton key={k} isDark={isDark} />
-          ))}
-        </div>
-      ) : filteredHistory.length === 0 ? (
+      {filteredHistory.length === 0 ? (
         <div className={cn('py-20 text-center space-y-4 rounded-[2.5rem] border relative z-10 transition-colors', isDark ? 'bg-[#202926]/60 border-[#415049]' : 'bg-[rgba(255,251,245,0.92)] border-[#d8cdc0]')}>
           <div className={cn('w-16 h-16 rounded-full flex items-center justify-center mx-auto transition-colors', isDark ? 'bg-[#171f1d]' : 'bg-[#ece5da]')}>
             <History className="w-8 h-8 text-zinc-500" />
           </div>
           <p className={cn(isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>{searchQuery ? 'No matches found.' : 'No scripts generated yet.'}</p>
+        </div>
+      ) : isLoading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map((k) => (
+            <ScriptCardSkeleton key={k} isDark={isDark} />
+          ))}
         </div>
       ) : (
         filteredHistory.map((s, i) => {

@@ -144,6 +144,16 @@ export async function openInAppBrowser(url: string) {
   await Browser.open({ url, presentationStyle: 'popover' });
 }
 
+export async function openManageSubscriptions() {
+  const subscriptionsUrl = 'https://apps.apple.com/account/subscriptions';
+  if (!isNative) {
+    window.open(subscriptionsUrl, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  const { Browser } = await import('@capacitor/browser');
+  await Browser.open({ url: subscriptionsUrl, presentationStyle: 'fullscreen' });
+}
+
 // ─── Notifications ───────────────────────────────────────────────────────────
 
 interface NotificationSettingsPlugin {

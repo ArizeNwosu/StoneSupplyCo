@@ -29,6 +29,23 @@ const DEFAULT_ACCESS_STATE: AccessState = {
   canPractice: true,
 };
 
+const TRIAL_SELECTED_PLAN_KEY = 'callmate_trial_selected_plan';
+
+function getStoredTrialPlan(): SelectedPlan {
+  if (typeof localStorage === 'undefined') return null;
+  const value = localStorage.getItem(TRIAL_SELECTED_PLAN_KEY);
+  return value === 'monthly' || value === 'annual' ? value : null;
+}
+
+function persistTrialPlan(plan: SelectedPlan) {
+  if (typeof localStorage === 'undefined') return;
+  if (plan === 'monthly' || plan === 'annual') {
+    localStorage.setItem(TRIAL_SELECTED_PLAN_KEY, plan);
+  } else {
+    localStorage.removeItem(TRIAL_SELECTED_PLAN_KEY);
+  }
+}
+
 function buildTrialState(selectedPlan: SelectedPlan, trialStartedAt: number | null, scriptsUsed: number): AccessState {
   if (!trialStartedAt) {
     return {
@@ -126,10 +143,15 @@ export async function fetchAccessState(): Promise<AccessState> {
   }
 
   const storedTier = profile?.tier as AccessTier | undefined;
-  const selectedPlan = storedTier === 'monthly' || storedTier === 'annual' ? storedTier : null;
+  const selectedPlan = storedTier === 'monthly' || storedTier === 'annual'
+    ? storedTier
+    : storedTier === 'trial'
+      ? getStoredTrialPlan()
+      : null;
   const trialStartedAt = profile?.trial_start_date ?? null;
 
   if (storedTier === 'monthly' || storedTier === 'annual') {
+    persistTrialPlan(null);
     return {
       tier: storedTier,
       selectedPlan,
@@ -145,9 +167,11 @@ export async function fetchAccessState(): Promise<AccessState> {
   }
 
   if (storedTier === 'trial') {
+    persistTrialPlan(selectedPlan);
     return buildTrialState(selectedPlan, trialStartedAt, scriptsUsed);
   }
 
+  persistTrialPlan(null);
   return {
     ...DEFAULT_ACCESS_STATE,
     scriptsUsed,
@@ -166,5 +190,6 @@ export async function startTrial(plan: Exclude<SelectedPlan, null>): Promise<Acc
     .upsert({ id: user.id, tier: 'trial', trial_start_date: now, updated_at: new Date().toISOString() });
   if (updateError) throw updateError;
 
+  persistTrialPlan(plan);
   return buildTrialState(plan, now, 0);
 }

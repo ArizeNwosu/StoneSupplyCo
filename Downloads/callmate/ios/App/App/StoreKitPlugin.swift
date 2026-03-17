@@ -16,8 +16,14 @@ public class StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
         "com.trycallmate.app.monthly",
         "com.trycallmate.app.annual",
     ]
+    private var transactionUpdatesTask: Task<Void, Never>?
 
     override public func load() {
+        startTransactionUpdatesListener()
+    }
+
+    deinit {
+        transactionUpdatesTask?.cancel()
     }
 
     @objc func fetchProducts(_ call: CAPPluginCall) {
@@ -101,6 +107,24 @@ public class StoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
             entitlements.append(try serialize(verificationResult: result))
         }
         return entitlements
+    }
+
+    private func startTransactionUpdatesListener() {
+        transactionUpdatesTask?.cancel()
+        transactionUpdatesTask = Task { [weak self] in
+            guard let self else { return }
+            for await result in Transaction.updates {
+                if Task.isCancelled { return }
+                do {
+                    let transaction = try self.checkVerified(result)
+                    await transaction.finish()
+                    let payload = try self.serialize(verificationResult: result)
+                    self.notifyListeners("storekitTransactionUpdated", data: payload)
+                } catch {
+                    NSLog("StoreKitPlugin transaction update handling failed: %@", error.localizedDescription)
+                }
+            }
+        }
     }
 
     private func serialize(

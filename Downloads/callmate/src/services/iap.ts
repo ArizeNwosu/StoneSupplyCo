@@ -1,4 +1,5 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
+import type { PluginListenerHandle } from '@capacitor/core';
 
 export const PRODUCT_IDS = {
   monthly: 'com.trycallmate.app.monthly',
@@ -10,6 +11,10 @@ interface StoreKitPlugin {
   purchase(options: { productId: string }): Promise<{ transactionId: string; productId: string; jwsToken: string }>;
   restorePurchases(): Promise<{ entitlements: Array<{ productId: string; transactionId: string; jwsToken: string }> }>;
   getEntitlements(): Promise<{ entitlements: Array<{ productId: string; transactionId: string; jwsToken: string }> }>;
+  addListener(
+    eventName: 'storekitTransactionUpdated',
+    listenerFunc: (payload: { productId: string; transactionId: string; jwsToken: string }) => void,
+  ): Promise<PluginListenerHandle>;
 }
 
 const StoreKit = registerPlugin<StoreKitPlugin>('StoreKitPlugin');
@@ -53,4 +58,17 @@ export async function getActiveEntitlements() {
   if (!Capacitor.isNativePlatform()) return [];
   const { entitlements } = await withStoreKit((plugin) => plugin.getEntitlements());
   return entitlements;
+}
+
+export async function addStoreKitTransactionListener(
+  listener: (payload: { productId: string; transactionId: string; jwsToken: string }) => void,
+) {
+  if (!Capacitor.isNativePlatform()) {
+    return () => {};
+  }
+
+  const handle = await StoreKit.addListener('storekitTransactionUpdated', listener);
+  return () => {
+    void handle.remove();
+  };
 }
