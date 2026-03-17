@@ -33,7 +33,7 @@ import { signUp, signIn, signInWithApple, signInWithGoogle, signOut, onAuthState
 import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchAnxietyRatings, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection as dbSaveReflection, savePersona, syncAnxietyRatings, deleteAllScriptsForUser, deletePersona as dbDeletePersona } from './services/db';
 import { fetchAccessState, startTrial } from './services/access';
 import { enqueueFailedSave, drainOfflineQueue } from './services/offlineQueue';
-import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, vibrate, setStatusBarDark, setStatusBarLight, openInAppBrowser, requestNotificationsAccess, requestVoiceSimulatorPermissions, scheduleLocalNotification } from './services/native';
+import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, setStatusBarDark, setStatusBarLight, openInAppBrowser, requestNotificationsAccess, requestVoiceSimulatorPermissions, scheduleLocalNotification } from './services/native';
 import type { Session, User, RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './services/supabase';
 import type { ImportPreview } from './services/exportImport';
@@ -111,6 +111,12 @@ const RotatingText = () => {
 type AnxietySeverity = 'mild' | 'moderate' | 'severe' | 'debilitating';
 type AnxietyRating = { id?: string; scriptId: string; rating: number; timestamp: number };
 const PRACTICE_SESSIONS_KEY = 'callmate_practice_sessions';
+const HISTORY_STORAGE_KEY = 'callmate_history';
+const HISTORY_STORAGE_LEGACY_KEY = 'ringtone_history';
+const REFLECTIONS_STORAGE_KEY = 'callmate_reflections';
+const REFLECTIONS_STORAGE_LEGACY_KEY = 'ringtone_reflections';
+const THEME_STORAGE_KEY = 'callmate_theme';
+const THEME_STORAGE_LEGACY_KEY = 'ringtone_theme';
 
 const isCallScript = (value: unknown): value is CallScript => {
   if (!value || typeof value !== 'object') return false;
@@ -170,8 +176,6 @@ const SPLASH_VISIBLE_MS = 3200;
 // Module-level guard: prevents re-entry into Apple/Google SSO even if AccountSetup remounts
 // mid-flow (e.g. due to a SIGNED_OUT event triggering setView('account')).
 let ssoInFlight = false;
-const BREATHE_SOUND_KEY = 'callmate_breathe_sound_enabled';
-const BREATHE_VIBRATION_KEY = 'callmate_breathe_vibration_enabled';
 
 function readStoredJson<T>(key: string, fallback: T): T {
   const raw = localStorage.getItem(key);
@@ -287,6 +291,8 @@ export default function App() {
   const [showCallSimulator, setShowCallSimulator] = useState(false);
   const [simulatorScenario, setSimulatorScenario] = useState<PracticeScenario | null>(null);
   const [isLaunchingSimulator, setIsLaunchingSimulator] = useState(false);
+  const [personaDraftName, setPersonaDraftName] = useState('');
+  const [personaDraftContext, setPersonaDraftContext] = useState('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
   const [iapPrices, setIapPrices] = useState<{ monthly?: string; annual?: string }>({});
@@ -301,6 +307,40 @@ export default function App() {
   const persistPracticeSessions = (items: PracticeSessionSummary[]) => {
     setPracticeSessions(items);
     localStorage.setItem(PRACTICE_SESSIONS_KEY, JSON.stringify(items));
+  };
+
+  const resetSignedOutProfileState = () => {
+    setUserName('');
+    setUserGender('');
+    setUserAgeRange('');
+    setHeardAboutUs('');
+    setAnxietySeverity(null);
+    setAnxietyTriggers([]);
+    setLifeImpact([]);
+    setCallStreak(0);
+    setSelectedPersona(null);
+    setShowOnboardingDiscovery(true);
+    setShowOnboardingThankYou(false);
+    setOnboardingStep(1);
+    setHasBeenReviewPrompted(false);
+    setLastScriptDate(null);
+    setSpeakerPromptCount(0);
+    setShowSpeakerPrompt(true);
+    persistPracticeSessions([]);
+    localStorage.removeItem('callmate_user_name');
+    localStorage.removeItem('callmate_user_gender');
+    localStorage.removeItem('callmate_user_age_range');
+    localStorage.removeItem('callmate_heard_about_us');
+    localStorage.removeItem('callmate_severity');
+    localStorage.removeItem('callmate_triggers');
+    localStorage.removeItem('callmate_impact');
+    localStorage.removeItem('callmate_streak');
+    localStorage.removeItem('callmate_last_call_date');
+    localStorage.removeItem('callmate_last_script_date');
+    localStorage.removeItem('callmate_review_prompted');
+    localStorage.removeItem('callmate_speaker_count');
+    localStorage.removeItem('callmate_starred');
+    localStorage.removeItem(PRACTICE_SESSIONS_KEY);
   };
 
   // Sync native status bar and html class with theme
@@ -441,20 +481,24 @@ export default function App() {
       // while verify-purchase runs in background (avoids Edge Function cold-start blocking UX).
       setTier(plan);
       setSelectedPlan(plan);
+      setIsAccessStateReady(true);
       setShowUpgradeModal(false);
       if (['notifications', 'reviews', 'setup', 'onboarding', 'explainer'].includes(viewRef.current)) {
         setView('home');
       }
+      setPurchasingPlan(null);
 
-      // Verify in background — sync authoritative state from server
-      try {
-        await verifyPurchaseReceipt({ transactionId, jwsToken, productId });
-      } catch (verifyError: any) {
-        console.error('Purchase verification failed:', verifyError?.message);
-        await loadAccessState(); // revert to server-authoritative state
-        const detail = verifyError?.context?.message ?? verifyError?.message ?? String(verifyError);
-        alert(`Purchase verification failed: ${detail}`);
-      }
+      // Verify in background — do not keep the paywall in a perpetual loading state.
+      void (async () => {
+        try {
+          await verifyPurchaseReceipt({ transactionId, jwsToken, productId });
+        } catch (verifyError: any) {
+          console.error('Purchase verification failed:', verifyError?.message);
+          await loadAccessStateSafely();
+          const detail = verifyError?.context?.message ?? verifyError?.message ?? String(verifyError);
+          alert(`Purchase verification failed: ${detail}`);
+        }
+      })();
     } catch (error: any) {
       if (error?.message === 'cancelled') return;
       const detail = error?.context?.message ?? error?.message ?? String(error);
@@ -485,7 +529,7 @@ export default function App() {
         entitlements.map((entitlement) => verifyPurchaseReceipt(entitlement))
       );
       const verifiedCount = verificationResults.filter((result) => result.status === 'fulfilled').length;
-      const access = await loadAccessState();
+      let access = await loadAccessState();
 
       if (access.tier === 'admin' || access.tier === 'monthly' || access.tier === 'annual') {
         setShowUpgradeModal(false);
@@ -501,6 +545,15 @@ export default function App() {
         return;
       }
 
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 600));
+        access = await loadAccessState();
+        if (access.tier === 'admin' || access.tier === 'monthly' || access.tier === 'annual') {
+          setShowUpgradeModal(false);
+          return;
+        }
+      }
+
       alert('We found your previous purchase, but your account has not updated yet. Please try again in a moment.');
     } catch (error: any) {
       const detail = error?.context?.message ?? error?.message ?? String(error);
@@ -513,7 +566,7 @@ export default function App() {
     if (event === 'DELETE' && id) {
       setHistory(prev => {
         const next = prev.filter(s => s.id !== id);
-        localStorage.setItem('ringtone_history', JSON.stringify(next));
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(next));
         return next;
       });
       return;
@@ -523,14 +576,14 @@ export default function App() {
       const existingIndex = prev.findIndex(s => s.id === script.id);
       if (existingIndex === -1) {
         const next = [script, ...prev];
-        localStorage.setItem('ringtone_history', JSON.stringify(next));
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(next));
         return next;
       }
       const existing = prev[existingIndex];
       if (script.updated_at && existing.updated_at && script.updated_at <= existing.updated_at) return prev;
       const next = [...prev];
       next[existingIndex] = script;
-      localStorage.setItem('ringtone_history', JSON.stringify(next));
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(next));
       return next;
     });
   };
@@ -565,9 +618,9 @@ export default function App() {
     const { applyImport } = await import('./services/exportImport');
     const result = applyImport(preview, history, mode);
     setHistory(result.scripts);
-    localStorage.setItem('ringtone_history', JSON.stringify(result.scripts));
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(result.scripts));
     setReflections(result.reflections);
-    localStorage.setItem('ringtone_reflections', JSON.stringify(result.reflections));
+    localStorage.setItem(REFLECTIONS_STORAGE_KEY, JSON.stringify(result.reflections));
     if (supabaseUser) {
       const results = await Promise.allSettled(
         result.scripts.map((script) => saveScript(supabaseUser.id, script))
@@ -581,12 +634,12 @@ export default function App() {
 
   const persistScriptLocally = (scripts: CallScript[]) => {
     setHistory(scripts);
-    localStorage.setItem('ringtone_history', JSON.stringify(scripts));
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(scripts));
   };
 
   const persistReflectionsLocally = (items: Reflection[]) => {
     setReflections(items);
-    localStorage.setItem('ringtone_reflections', JSON.stringify(items));
+    localStorage.setItem(REFLECTIONS_STORAGE_KEY, JSON.stringify(items));
   };
 
   const persistRatingsLocally = (ratings: AnxietyRating[]) => {
@@ -619,6 +672,7 @@ export default function App() {
     persistReflectionsLocally([]);
     persistRatingsLocally([]);
     persistPersonasLocally([]);
+    setStarredScripts([]);
     setCurrentScript(null);
   };
 
@@ -700,6 +754,12 @@ export default function App() {
   }, [tier, trialStartDate]);
 
   useEffect(() => { if (!showUpgradeModal) setUpgradeModalForced(false); }, [showUpgradeModal]);
+
+  useEffect(() => {
+    if (!showPersonaModal) return;
+    setPersonaDraftName(selectedPersona?.name ?? '');
+    setPersonaDraftContext(selectedPersona?.context ?? '');
+  }, [showPersonaModal, selectedPersona]);
 
   useEffect(() => {
     if (view === 'account') {
@@ -794,22 +854,23 @@ export default function App() {
   }, [unlockedMilestones]);
 
   useEffect(() => {
-    const savedHistory = localStorage.getItem('ringtone_history');
+    const savedHistory = localStorage.getItem(HISTORY_STORAGE_KEY) ?? localStorage.getItem(HISTORY_STORAGE_LEGACY_KEY);
     if (savedHistory) {
       try {
         const rawParsedHistory = JSON.parse(savedHistory);
         const parsedHistory = sanitizeHistory(rawParsedHistory);
         setHistory(parsedHistory);
         if (!Array.isArray(rawParsedHistory) || rawParsedHistory.length !== parsedHistory.length) {
-          localStorage.setItem('ringtone_history', JSON.stringify(parsedHistory));
+          localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(parsedHistory));
         }
       } catch {
-        localStorage.removeItem('ringtone_history');
+        localStorage.removeItem(HISTORY_STORAGE_KEY);
+        localStorage.removeItem(HISTORY_STORAGE_LEGACY_KEY);
         setHistory([]);
       }
     }
 
-    const savedTheme = localStorage.getItem('ringtone_theme') as 'dark' | 'light';
+    const savedTheme = (localStorage.getItem(THEME_STORAGE_KEY) ?? localStorage.getItem(THEME_STORAGE_LEGACY_KEY)) as 'dark' | 'light';
     if (savedTheme) setTheme(savedTheme);
 
     const savedSpeakerCount = parseInt(localStorage.getItem('callmate_speaker_count') || '0');
@@ -818,7 +879,7 @@ export default function App() {
     const savedRatings = localStorage.getItem('callmate_anxiety_ratings');
     if (savedRatings) setCallAnxietyRatings(readStoredJson('callmate_anxiety_ratings', []));
 
-    setReflections(readStoredJson('ringtone_reflections', []));
+    setReflections(readStoredJson(REFLECTIONS_STORAGE_KEY, readStoredJson(REFLECTIONS_STORAGE_LEGACY_KEY, [])));
     setPersonas(readStoredJson('callmate_personas', []));
 
     const savedStreak = localStorage.getItem('callmate_streak');
@@ -843,6 +904,19 @@ export default function App() {
 
     const savedLastScript = localStorage.getItem('callmate_last_script_date');
     if (savedLastScript) setLastScriptDate(parseInt(savedLastScript));
+
+    if (localStorage.getItem(HISTORY_STORAGE_LEGACY_KEY) && !localStorage.getItem(HISTORY_STORAGE_KEY)) {
+      localStorage.setItem(HISTORY_STORAGE_KEY, localStorage.getItem(HISTORY_STORAGE_LEGACY_KEY) ?? '[]');
+    }
+    if (localStorage.getItem(REFLECTIONS_STORAGE_LEGACY_KEY) && !localStorage.getItem(REFLECTIONS_STORAGE_KEY)) {
+      localStorage.setItem(REFLECTIONS_STORAGE_KEY, localStorage.getItem(REFLECTIONS_STORAGE_LEGACY_KEY) ?? '[]');
+    }
+    if (localStorage.getItem(THEME_STORAGE_LEGACY_KEY) && !localStorage.getItem(THEME_STORAGE_KEY)) {
+      localStorage.setItem(THEME_STORAGE_KEY, localStorage.getItem(THEME_STORAGE_LEGACY_KEY) ?? 'light');
+    }
+    localStorage.removeItem(HISTORY_STORAGE_LEGACY_KEY);
+    localStorage.removeItem(REFLECTIONS_STORAGE_LEGACY_KEY);
+    localStorage.removeItem(THEME_STORAGE_LEGACY_KEY);
   }, []);
 
   const viewRef = React.useRef(view);
@@ -1109,7 +1183,7 @@ export default function App() {
           localStorage.removeItem(PENDING_OAUTH_CALLBACK_KEY);
 
           if (!isSigningOutRef.current && ['splash', 'explainer', 'onboarding', 'reviews', 'account'].includes(viewRef.current)) {
-            setView(optimisticIsNewUser ? 'setup' : 'home');
+            setView(optimisticIsNewUser ? 'notifications' : 'home');
           }
 
           let isReturningUser = true;
@@ -1155,6 +1229,7 @@ export default function App() {
           channelRef.current.forEach(ch => ch.unsubscribe());
           channelRef.current = [];
           clearLocalUserCollections();
+          resetSignedOutProfileState();
           setTier('free');
           setTrialStartDate(null);
           setTrialScriptsUsed(0);
@@ -1414,11 +1489,13 @@ export default function App() {
     // Check for limits
     if (!isPremium) {
       console.warn('Generate blocked: user is not premium or trial is inactive.', { tier, trialDaysRemaining });
+      setUpgradeModalForced(true);
       setShowUpgradeModal(true);
       return;
     }
     if (tier === 'trial' && trialScriptsUsed >= TRIAL_SCRIPT_LIMIT) {
       console.warn('Generate blocked: trial script limit reached.', { tier, trialScriptsUsed, limit: TRIAL_SCRIPT_LIMIT });
+      setUpgradeModalForced(true);
       setShowUpgradeModal(true);
       return;
     }
@@ -1462,15 +1539,6 @@ export default function App() {
       // Auto-save to history for all tiers
       const newHistory = [script, ...history].slice(0, 100);
       persistScriptLocally(newHistory);
-      if (supabaseUser) {
-        try {
-          await saveScript(supabaseUser.id, script);
-        } catch (saveErr) {
-          console.warn('Script save failed (offline?), queuing for retry.', saveErr);
-          enqueueFailedSave(supabaseUser.id, script);
-        }
-        await loadAccessState();
-      }
 
       // Track last script date for re-engagement
       const now = Date.now();
@@ -1491,6 +1559,17 @@ export default function App() {
       setAddBranchInput('');
       setPreviousView('home');
       setView('script');
+      if (supabaseUser) {
+        void (async () => {
+          try {
+            await saveScript(supabaseUser.id, script);
+          } catch (saveErr) {
+            console.warn('Script save failed (offline?), queuing for retry.', saveErr);
+            enqueueFailedSave(supabaseUser.id, script);
+          }
+          await loadAccessStateSafely();
+        })();
+      }
       if (!overrideTone) {
         setSessionScriptCount(prev => prev + 1);
         const newCount = speakerPromptCount + 1;
@@ -2218,7 +2297,7 @@ export default function App() {
       localStorage.removeItem(AUTH_INTENT_KEY);
       localStorage.removeItem(PENDING_OAUTH_CALLBACK_KEY);
 
-      const nextView = isNewUser ? 'setup' : 'home';
+      const nextView = isNewUser ? 'notifications' : 'home';
       if (viewRef.current === 'account') {
         setView(nextView);
       }
@@ -2243,7 +2322,7 @@ export default function App() {
               trialStartDate,
               darkMode: isDark,
             });
-            applyAccessState(await startTrial('monthly'));
+            applyAccessState(await startTrial(selectedPlan ?? 'monthly'));
           } else {
             await loadAccessState();
           }
@@ -2498,6 +2577,7 @@ export default function App() {
                 setUserEmail={setUserEmail}
                 isPremium={isPremium}
                 setShowUpgradeModal={setShowUpgradeModal}
+                setUpgradeModalForced={setUpgradeModalForced}
                 setTheme={setTheme}
                 personas={personas}
                 setSelectedPersona={setSelectedPersona}
@@ -2850,16 +2930,24 @@ export default function App() {
                 {/* Reviews */}
                 <div className="space-y-3">
                   {[
-                    { name: "Sarah M.", location: "Chicago", quote: "I finally called my doctor after putting it off for 3 years. I literally cried after I hung up.", tag: "Medical / Doctor Call" },
-                    { name: "James T.", location: "Austin", quote: "Negotiated my rent down $150/month. The Firm tone was unreal — my landlord didn't even push back.", tag: "Landlord Call" },
-                    { name: "Priya K.", location: "New York", quote: "I used to let every work call go to voicemail and make up excuses. Not anymore.", tag: "Work Call" },
-                    { name: "Marcus R.", location: "Seattle", quote: "I'm autistic and phone calls are my nightmare. This app is genuinely life-changing. Nothing else comes close.", tag: "Customer Service" },
+                    { name: "Sarah M.", location: "Chicago", quote: "I finally called my doctor after putting it off for 3 years. I literally cried after I hung up.", tag: "Medical / Doctor Call", avatar: reviewAvatar1 },
+                    { name: "Jenna T.", location: "Austin", quote: "Negotiated my rent down $150/month. The Firm tone was unreal — my landlord didn't even push back.", tag: "Landlord Call", avatar: reviewAvatar2 },
+                    { name: "Chase K.", location: "New York", quote: "I used to let every work call go to voicemail and make up excuses. Not anymore.", tag: "Work Call", avatar: reviewAvatar3 },
+                    { name: "Meritas R.", location: "Seattle", quote: "I'm autistic and phone calls are my nightmare. This app is genuinely life-changing. Nothing else comes close.", tag: "Customer Service", avatar: reviewAvatar4 },
                   ].map((r, i) => (
                     <div key={i} className={cn("p-4 rounded-2xl border transition-colors", isDark ? "bg-[#171f1d] border-[#415049]" : "bg-[#fffdf9] border-[#d8cdc0]")}>
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <div>
-                          <p className={cn("text-sm font-bold", isDark ? "text-zinc-100" : "text-zinc-900")}>{r.name}</p>
-                          <p className={cn("text-[10px]", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>{r.location} · {r.tag}</p>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={r.avatar}
+                            alt=""
+                            aria-hidden="true"
+                            className="w-11 h-11 rounded-full object-cover shrink-0 border border-white/20"
+                          />
+                          <div className="min-w-0">
+                            <p className={cn("text-sm font-bold", isDark ? "text-zinc-100" : "text-zinc-900")}>{r.name}</p>
+                            <p className={cn("text-[10px]", isDark ? "text-[#97a59f]" : "text-[#6f7d75]")}>{r.location} · {r.tag}</p>
+                          </div>
                         </div>
                         <div className="flex gap-0.5 shrink-0 mt-0.5">
                           {[...Array(5)].map((_, j) => <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />)}
@@ -2896,7 +2984,7 @@ export default function App() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {showUpgradeModal && isAccessStateReady && (
+        {showUpgradeModal && (isAccessStateReady || upgradeModalForced) && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -3084,18 +3172,18 @@ export default function App() {
                     <input 
                       type="text" 
                       placeholder="e.g. Calm Tenant, Composed Patient, Clear Manager" 
-                      defaultValue={selectedPersona?.name}
+                      value={personaDraftName}
+                      onChange={(e) => setPersonaDraftName(e.target.value)}
                       className={cn("w-full p-4 rounded-2xl border focus:outline-none", isDark ? "bg-black border-zinc-800 text-white" : "bg-zinc-50 border-zinc-200 text-black")}
-                      id="persona-name"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">How This Version of You Speaks</label>
                     <textarea 
                       placeholder="e.g. I am calm, direct, and respectful. I do not over-explain. I ask clearly for what I need and stay grounded if there is pushback." 
-                      defaultValue={selectedPersona?.context}
+                      value={personaDraftContext}
+                      onChange={(e) => setPersonaDraftContext(e.target.value)}
                       className={cn("w-full p-4 rounded-2xl border focus:outline-none h-32 resize-none", isDark ? "bg-black border-zinc-800 text-white" : "bg-zinc-50 border-zinc-200 text-black")}
-                      id="persona-context"
                     />
                     <p className={cn("text-xs leading-relaxed px-1", isDark ? "text-[#97a59f]" : "text-[#66756f]")}>
                       Describe your stance, boundaries, and energy for this kind of call. Tone still controls whether the script sounds professional, assertive, friendly, or firm.
@@ -3103,8 +3191,8 @@ export default function App() {
                   </div>
                 </div>
                 <Button size="xl" className="w-full" onClick={() => {
-                  const name = (document.getElementById('persona-name') as HTMLInputElement).value;
-                  const context = (document.getElementById('persona-context') as HTMLTextAreaElement).value;
+                  const name = personaDraftName.trim();
+                  const context = personaDraftContext.trim();
                   if (!name || !context) return;
                   
                   const next = selectedPersona
@@ -3112,6 +3200,8 @@ export default function App() {
                     : [...personas, { id: crypto.randomUUID(), name, context }];
                   void persistPersonas(next);
                   setShowPersonaModal(false);
+                  setPersonaDraftName('');
+                  setPersonaDraftContext('');
                 }}>
                   Save Call Role
                 </Button>
