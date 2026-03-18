@@ -2334,7 +2334,7 @@ export default function App() {
     onComplete={async (email, isNewUser) => {
       const { supabase: sb } = await import('./services/supabase');
       let freshSession: Session | null = null;
-      for (let attempt = 0; attempt < 8; attempt += 1) {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
         const { data: { session } } = await sb.auth.getSession();
         if (session?.user) {
           freshSession = session;
@@ -2343,7 +2343,8 @@ export default function App() {
         await new Promise(resolve => window.setTimeout(resolve, 250));
       }
       if (!freshSession?.user) {
-        throw new Error('No active auth session found.');
+        console.warn('No active auth session found yet after auth completion; waiting for onAuthStateChange.');
+        return;
       }
 
       setSupabaseUser(freshSession.user);

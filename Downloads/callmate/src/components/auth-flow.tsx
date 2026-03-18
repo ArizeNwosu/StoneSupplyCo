@@ -331,11 +331,11 @@ export function AccountSetup({ isDark, userName, tier, selectedPlan, trialStartD
       }
     } catch (e: any) {
       const msg = e?.message ?? '';
+      localStorage.removeItem(AUTH_INTENT_KEY);
       if (!msg.toLowerCase().includes('cancel')) {
         setEmailError(`Apple Sign In failed: ${formatAuthError(msg)}`);
       }
     } finally {
-      localStorage.removeItem(AUTH_INTENT_KEY);
       ssoInFlight = false;
       setAppleLoading(false);
     }
@@ -371,7 +371,6 @@ export function AccountSetup({ isDark, userName, tier, selectedPlan, trialStartD
         setEmailError(`Google Sign In failed: ${formatAuthError(msg)}`);
       }
     } finally {
-      localStorage.removeItem(AUTH_INTENT_KEY);
       ssoInFlight = false;
       setLoading(false);
     }
@@ -784,6 +783,16 @@ export function OnboardingDemoDashboard({ isDark }: { isDark: boolean }) {
 
       <div className={cn('rounded-2xl border p-4 transition-colors', isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-200')}>
         <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">Call confidence over 6 weeks</p>
+        <div className="flex gap-5 mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-[2px] rounded-full bg-[#1f2937]" />
+            <p className="text-xs font-semibold text-zinc-400">Without support</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-[2px] rounded-full bg-[#7b9d76]" />
+            <p className="text-xs font-semibold text-zinc-400">Callmate</p>
+          </div>
+        </div>
         <div className="relative">
           <svg viewBox="0 0 252 72" className="w-full" style={{ overflow: 'visible' }}>
             <defs>
@@ -812,8 +821,32 @@ export function OnboardingDemoDashboard({ isDark }: { isDark: boolean }) {
             <motion.path d={callmateAreaPath} fill="url(#fillGradCallmate)" initial={{ opacity: 0 }} animate={{ opacity: phase >= 1 ? 1 : 0 }} transition={{ duration: 0.8, delay: 2.1 }} />
             <motion.path d={benchmarkPath} fill="none" stroke="url(#lineGradBenchmark)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={pathLen} initial={{ strokeDashoffset: pathLen }} animate={{ strokeDashoffset: phase >= 1 ? 0 : pathLen }} transition={{ duration: 2.9, ease: graphEase, delay: 0.18 }} />
             <motion.path d={callmatePath} fill="none" stroke="url(#lineGradCallmate)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={pathLen} initial={{ strokeDashoffset: pathLen }} animate={{ strokeDashoffset: phase >= 1 ? 0 : pathLen }} transition={{ duration: 3.1, ease: graphEase, delay: 0.42 }} />
+            <circle cx="0" cy="20" r="3.6" fill={isDark ? '#f4f4f5' : '#ffffff'} stroke={isDark ? '#71717a' : '#3f3f46'} strokeWidth="1.5" />
+            <circle cx="252" cy="70" r="3.8" fill={isDark ? '#161d1b' : '#ffffff'} stroke={isDark ? '#d4d4d8' : '#27272a'} strokeWidth="1.6" />
+            {phase >= 1 && (
+              <motion.circle cx="252" cy="5" r="3.8" fill={isDark ? '#161d1b' : '#ffffff'} stroke="#7b9d76" strokeWidth="1.8" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 3.05, type: 'spring', stiffness: 260 }} />
+            )}
+            {phase >= 1 && (
+              <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.2 }}>
+                <text x="188" y="22" fontSize="10" fill={isDark ? '#c5d0ca' : '#51615b'} fontWeight="700">Callmate</text>
+                <text x="188" y="32" fontSize="10" fill={isDark ? '#8f9b95' : '#8a948f'}>builds lasting</text>
+                <text x="188" y="42" fontSize="10" fill={isDark ? '#8f9b95' : '#8a948f'}>confidence</text>
+              </motion.g>
+            )}
+            {phase >= 1 && (
+              <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}>
+                <text x="18" y="58" fontSize="10" fill={isDark ? '#b5b8c3' : '#6b7280'} fontWeight="700">Without support</text>
+              </motion.g>
+            )}
+            <text x="0" y="83" fontSize="10" fill={isDark ? '#a1a1aa' : '#6b7280'}>Week 1</text>
+            <text x="226" y="83" fontSize="10" fill={isDark ? '#a1a1aa' : '#6b7280'}>Week 6</text>
           </svg>
         </div>
+        {phase >= 1 && (
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.4 }} className="text-center text-[10px] font-semibold leading-relaxed text-zinc-500 mt-5">
+            <span className={cn('font-bold', isDark ? 'text-[#f6f2ea]' : 'text-[#22312b]')}>78%</span> of Callmate members maintain stronger call confidence by week 6.
+          </motion.p>
+        )}
       </div>
 
       <div className={cn('rounded-2xl border p-4 transition-colors', isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-200')}>
