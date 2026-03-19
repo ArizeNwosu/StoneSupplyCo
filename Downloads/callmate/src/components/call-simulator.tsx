@@ -218,6 +218,7 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs = 600): Promise<T |
 }
 
 export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onClose }: CallSimulatorProps) {
+  const CONTACT_TOOLTIP_KEY = 'callmate_contact_tooltip_seen';
   const [stage, setStage] = useState<SimulatorStage>('prep');
   const [callStatus, setCallStatus] = useState('Ready to practice');
   const [callStartedAt, setCallStartedAt] = useState<number | null>(null);
@@ -226,6 +227,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
   const [inputValue, setInputValue] = useState('');
   const [activeSuggestions, setActiveSuggestions] = useState<string[]>([]);
   const [contactName, setContactName] = useState('');
+  const [showContactTooltip, setShowContactTooltip] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [turns, setTurns] = useState<PracticeTurn[]>([]);
   const [feedback, setFeedback] = useState<PracticeFeedback | null>(null);
@@ -246,6 +248,8 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
   const ttsDoneResolverRef = useRef<(() => void) | null>(null);
   const aiTurnTimerRef = useRef<number | null>(null);
   const aiPlaybackTokenRef = useRef(0);
+  const pendingResponseRef = useRef<{ text: string; usedSuggestion: boolean } | null>(null);
+  const autoContinueTimerRef = useRef<number | null>(null);
   const { supported, listen, stop } = useBrowserSpeechRecognition({
     onPartial: (transcript) => setInputValue(transcript),
     onFinal: (transcript) => submitResponseRef.current(transcript, false),
@@ -267,6 +271,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
     setInputValue('');
     setActiveSuggestions([]);
     setContactName(scenario.contactName);
+    setShowContactTooltip(localStorage.getItem(CONTACT_TOOLTIP_KEY) !== 'true');
     setTurns([]);
     setFeedback(null);
     setActivePromptAt(null);
@@ -281,7 +286,12 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
       window.clearTimeout(aiTurnTimerRef.current);
       aiTurnTimerRef.current = null;
     }
+    if (autoContinueTimerRef.current) {
+      window.clearTimeout(autoContinueTimerRef.current);
+      autoContinueTimerRef.current = null;
+    }
     isProcessingResponseRef.current = false;
+    pendingResponseRef.current = null;
     stop();
     cleanupRemoteAudio(remoteAudioRef, remoteAudioUrlRef);
     ringAudioRef.current?.pause();
@@ -324,6 +334,10 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
       if (aiTurnTimerRef.current) {
         window.clearTimeout(aiTurnTimerRef.current);
         aiTurnTimerRef.current = null;
+      }
+      if (autoContinueTimerRef.current) {
+        window.clearTimeout(autoContinueTimerRef.current);
+        autoContinueTimerRef.current = null;
       }
       cleanupRemoteAudio(remoteAudioRef, remoteAudioUrlRef);
       ringAudioRef.current?.pause();
@@ -403,6 +417,10 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
       window.clearTimeout(aiTurnTimerRef.current);
       aiTurnTimerRef.current = null;
     }
+    if (autoContinueTimerRef.current) {
+      window.clearTimeout(autoContinueTimerRef.current);
+      autoContinueTimerRef.current = null;
+    }
     setIsAiSpeaking(false);
   };
 
@@ -466,7 +484,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
     ]);
   };
 
-  const speakAi = async (text: string) => {
+  const speakAi = async (text: string, prefetchedAudioUrl?: string | null) => {
     if (isMuted) return;
 
     cleanupRemoteAudio(remoteAudioRef, remoteAudioUrlRef);
@@ -474,7 +492,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
     setCallStatus('Speaking...');
 
     try {
-      const audioUrl = await generateTTS(text, {
+      const audioUrl = prefetchedAudioUrl ?? await generateTTS(text, {
         voice: 'nova',
         instructions: 'Speak like a real person on a phone call. Keep it warm, concise, and natural.',
       });
@@ -496,6 +514,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
         };
         void audio.play().catch(() => {
           setIsAiSpeaking(false);
+          cleanupRemoteAudio(remoteAudioRef, remoteAudioUrlRef);
           resolve();
         });
       });
@@ -522,13 +541,57 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
     setIsAiSpeaking(false);
   };
 
+  const requestAutoContinuation = async (baseTurns: PracticeTurn[]) => {
+    if (isProcessingResponseRef.current) return;
+    isProcessingResponseRef.current = true;
+    setCallStatus('Checking...');
+
+    try {
+      const result = await processPracticeResponse({
+        scenario: scenarioForCall,
+        currentStepIndex: stepIndex,
+        attemptCount: stepAttempt,
+        conversationHistory: baseTurns,
+        autoContinue: true,
+      });
+
+      if (result.progressed) {
+        setStepIndex(result.nextStepIndex);
+        setStepAttempt(0);
+      } else {
+        setStepAttempt(stepAttempt + 1);
+      }
+
+      if (!result.aiText.trim()) {
+        setCallStatus('Connection issue. Try again.');
+        return;
+      }
+
+      queueAiTurn(
+        result.aiText,
+        result.nextStepIndex,
+        result.suggestions,
+        result.callComplete,
+        baseTurns,
+        result.responseDelayMs,
+        result.autoContinueAfterMs
+      );
+    } catch (error) {
+      console.error('Failed to process automatic hold continuation', error);
+      setCallStatus('Connection issue. Try again.');
+    } finally {
+      isProcessingResponseRef.current = false;
+    }
+  };
+
   const queueAiTurn = (
     text: string,
     nextStepIndex: number,
     nextSuggestions: string[],
     callComplete: boolean,
     baseTurns: PracticeTurn[],
-    responseDelayMs: number
+    responseDelayMs: number,
+    autoContinueAfterMs?: number
   ) => {
     const normalizedText = text.trim();
     if (!normalizedText) {
@@ -537,6 +600,15 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
     }
     const delay = responseDelayMs;
     setCallStatus('Thinking...');
+    const ttsPrefetch = !isMuted
+      ? generateTTS(normalizedText, {
+          voice: 'nova',
+          instructions: 'Speak like a real person on a phone call. Keep it warm, concise, and natural.',
+        }).catch((error) => {
+          console.error('OpenAI TTS prefetch failed, falling back at playback time', error);
+          return null;
+        })
+      : Promise.resolve<string | null>(null);
 
     const playbackToken = aiPlaybackTokenRef.current;
     aiTurnTimerRef.current = window.setTimeout(async () => {
@@ -555,7 +627,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
         aiTurn,
       ]);
       setCallStatus('Speaking...');
-      await speakAi(normalizedText);
+      await speakAi(normalizedText, await ttsPrefetch);
       if (playbackToken !== aiPlaybackTokenRef.current) return;
       setCallStatus(callComplete ? 'Call complete' : 'Ready for your response');
       setActivePromptAt(callComplete ? null : Date.now());
@@ -578,6 +650,14 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
           timestamp: Date.now(),
         });
         window.setTimeout(() => setStage('feedback'), 900);
+      } else if (typeof autoContinueAfterMs === 'number' && autoContinueAfterMs > 0) {
+        setCallStatus('Please hold...');
+        setActivePromptAt(null);
+        setActiveSuggestions([]);
+        autoContinueTimerRef.current = window.setTimeout(() => {
+          autoContinueTimerRef.current = null;
+          void requestAutoContinuation([...baseTurns, aiTurn]);
+        }, autoContinueAfterMs);
       } else {
         await startListening();
       }
@@ -599,7 +679,7 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
     const ringTimer = window.setTimeout(() => {
       setCallStatus('Ringing...');
       playRingAudio();
-    }, 900);
+    }, 250);
     const answerTimer = window.setTimeout(async () => {
       stopRingAudio();
       setStage('call');
@@ -628,14 +708,23 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
       await speakAi(activeIntroLine);
       setActivePromptAt(Date.now());
       await startListening();
-    }, 6900);
+    }, 6250);
 
     connectTimersRef.current = [ringTimer, answerTimer];
+  };
+
+  const dismissContactTooltip = () => {
+    setShowContactTooltip(false);
+    localStorage.setItem(CONTACT_TOOLTIP_KEY, 'true');
   };
 
   const endCall = async (completed: boolean) => {
     connectTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
     connectTimersRef.current = [];
+    if (autoContinueTimerRef.current) {
+      window.clearTimeout(autoContinueTimerRef.current);
+      autoContinueTimerRef.current = null;
+    }
 
     void stopActiveAudioAndRecognition();
     stopRingAudio();
@@ -667,11 +756,13 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
   };
 
   const submitResponse = async (text: string, usedSuggestion: boolean) => {
-    // Prevent concurrent calls — drop if a response is already being processed
-    if (isProcessingResponseRef.current) return;
-
     const transcript = text.trim();
     if (!transcript) return;
+
+    if (isProcessingResponseRef.current) {
+      pendingResponseRef.current = { text: transcript, usedSuggestion };
+      return;
+    }
 
     isProcessingResponseRef.current = true;
 
@@ -719,13 +810,21 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
         result.suggestions,
         result.callComplete,
         nextTurns,
-        result.responseDelayMs
+        result.responseDelayMs,
+        result.autoContinueAfterMs
       );
     } catch (error) {
       console.error('Failed to process simulator response', error);
       setCallStatus('Connection issue. Try again.');
     } finally {
       isProcessingResponseRef.current = false;
+      const pending = pendingResponseRef.current;
+      if (pending) {
+        pendingResponseRef.current = null;
+        window.setTimeout(() => {
+          submitResponseRef.current(pending.text, pending.usedSuggestion);
+        }, 0);
+      }
     }
   };
 
@@ -787,8 +886,8 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
 
           <div className="max-w-2xl mx-auto min-h-[calc(100dvh-5.5rem)] px-6 py-6 pb-10 flex flex-col">
             {stage === 'prep' && (
-              <div className="space-y-5">
-                <Card isDark={isDark} className="p-6 space-y-4">
+              <div className="relative space-y-5">
+                <Card isDark={isDark} className={cn('p-6 space-y-4', showContactTooltip && 'relative z-20')}>
                   <div>
                     <p className={cn('text-[10px] font-black uppercase tracking-[0.22em] mb-1', isDark ? 'text-[#97a59f]' : 'text-[#66756f]')}>
                       Scenario
@@ -800,11 +899,52 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
                       <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-1">Estimated</p>
                       <p>{scenario.estimatedDuration}</p>
                     </div>
-                    <div className={cn('rounded-2xl border p-4', isDark ? 'border-[#415049] bg-[#1d2623]' : 'border-[#d8cdc0] bg-[#f5efe6]')}>
+                    <div className={cn(
+                      'relative rounded-2xl border p-4 transition-all',
+                      isDark ? 'border-[#415049] bg-[#1d2623]' : 'border-[#d8cdc0] bg-[#f5efe6]',
+                      showContactTooltip && (isDark ? 'ring-2 ring-[#b9d5c8] shadow-[0_0_0_999px_rgba(0,0,0,0)]' : 'ring-2 ring-[#5d8a7a] shadow-[0_0_0_999px_rgba(0,0,0,0)]')
+                    )}>
                       <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-1">Contact</p>
+                      {showContactTooltip && (
+                        <div
+                          className={cn(
+                            'absolute left-3 right-3 -top-[5.2rem] z-30 rounded-2xl px-4 py-3 shadow-xl',
+                            isDark ? 'bg-[#314230] text-[#e3efe0]' : 'bg-[#edf6f1] text-[#365347]'
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              'absolute left-8 -bottom-2 h-4 w-4 rotate-45',
+                              isDark ? 'bg-[#314230]' : 'bg-[#edf6f1]'
+                            )}
+                          />
+                          <div className="relative flex items-start gap-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-black uppercase tracking-[0.18em] opacity-70">Quick tip</p>
+                              <p className="mt-1 text-sm font-semibold leading-snug">Tap to edit contact</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={dismissContactTooltip}
+                              className={cn(
+                                'shrink-0 rounded-full p-1 transition-colors',
+                                isDark ? 'hover:bg-white/10' : 'hover:bg-black/5'
+                              )}
+                              aria-label="Dismiss contact tip"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                       <input
                         value={contactName}
-                        onChange={(event) => setContactName(event.target.value)}
+                        onFocus={dismissContactTooltip}
+                        onClick={dismissContactTooltip}
+                        onChange={(event) => {
+                          dismissContactTooltip();
+                          setContactName(event.target.value);
+                        }}
                         placeholder="Business or contact name"
                         className={cn(
                           'w-full bg-transparent text-sm font-medium focus:outline-none',
@@ -836,7 +976,13 @@ export function CallSimulator({ isOpen, isDark, scenario, onSessionComplete, onC
                   </div>
                 </Card>
 
-                <Button size="xl" variant="primary" isDark={isDark} className="w-full" onClick={startCall}>
+                <Button
+                  size="xl"
+                  variant="primary"
+                  isDark={isDark}
+                  className="w-full"
+                  onClick={startCall}
+                >
                   Start Practice Call
                 </Button>
               </div>

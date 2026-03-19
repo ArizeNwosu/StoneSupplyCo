@@ -232,6 +232,22 @@ async function generatePracticeTurn({ scenario, userTranscript, conversationHist
   };
 }
 
+function shouldAutoContinueHold(aiText) {
+  const normalized = compact(aiText).toLowerCase();
+  if (!normalized) return false;
+
+  return [
+    'please hold',
+    'hold on',
+    'one moment',
+    'just a moment',
+    'give me a moment',
+    'let me check',
+    'let me see',
+    'bear with me',
+  ].some((phrase) => normalized.includes(phrase));
+}
+
 const STOP_WORDS = new Set([
   'a', 'an', 'and', 'are', 'about', 'be', 'for', 'from', 'have', 'how', 'i',
   'im', "i'm", 'if', 'in', 'is', 'it', 'me', 'my', 'of', 'on', 'or', 'please',
@@ -495,11 +511,11 @@ app.post('/api/ai/tts', rateLimit({ windowMs: 60_000, max: 25 }), async (req, re
       voice,
       input: compact(text),
       instructions: compact(instructions || 'Speak naturally, like a real phone call.'),
-      response_format: 'wav',
+      response_format: 'mp3',
     });
 
     const buffer = Buffer.from(await speech.arrayBuffer());
-    res.setHeader('Content-Type', 'audio/wav');
+    res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Cache-Control', 'no-store');
     res.send(buffer);
   } catch (error) {
@@ -513,16 +529,19 @@ app.post('/api/practice-call/next-turn', rateLimit({ windowMs: 60_000, max: 40 }
   if (!client) return;
 
   try {
-    const { scenario, currentStepIndex = 0, userTranscript, conversationHistory } = req.body || {};
+    const { scenario, currentStepIndex = 0, userTranscript, conversationHistory, autoContinue = false } = req.body || {};
     const transcript = compact(userTranscript);
-    if (!transcript) {
+    if (!transcript && !autoContinue) {
       res.status(400).send('A user transcript is required before generating an AI response.');
       return;
     }
+    const effectiveTranscript = autoContinue
+      ? '[SYSTEM] Continue the call after the brief hold and update the caller.'
+      : transcript;
 
     let generated = await generatePracticeTurn({
       scenario,
-      userTranscript: transcript,
+      userTranscript: effectiveTranscript,
       conversationHistory,
       attempt: 0,
     });
@@ -531,7 +550,7 @@ app.post('/api/practice-call/next-turn', rateLimit({ windowMs: 60_000, max: 40 }
     if (!finalAiText || looksLikeCallerLine(finalAiText)) {
       finalAiText = await repairPracticeLine({
         scenario,
-        userTranscript: transcript,
+        userTranscript: effectiveTranscript,
         conversationHistory,
         candidate: finalAiText || generated,
       });
@@ -540,7 +559,7 @@ app.post('/api/practice-call/next-turn', rateLimit({ windowMs: 60_000, max: 40 }
     if (!finalAiText || looksLikeCallerLine(finalAiText)) {
       generated = await generatePracticeTurn({
         scenario,
-        userTranscript: transcript,
+        userTranscript: effectiveTranscript,
         conversationHistory,
         attempt: 1,
       });
@@ -550,7 +569,7 @@ app.post('/api/practice-call/next-turn', rateLimit({ windowMs: 60_000, max: 40 }
     if (!finalAiText || looksLikeCallerLine(finalAiText)) {
       finalAiText = await repairPracticeLine({
         scenario,
-        userTranscript: transcript,
+        userTranscript: effectiveTranscript,
         conversationHistory,
         candidate: finalAiText || generated,
       });
@@ -559,7 +578,7 @@ app.post('/api/practice-call/next-turn', rateLimit({ windowMs: 60_000, max: 40 }
     if (!finalAiText || looksLikeCallerLine(finalAiText)) {
       generated = await generatePracticeTurn({
         scenario,
-        userTranscript: transcript,
+        userTranscript: effectiveTranscript,
         conversationHistory,
         attempt: 2,
       });
@@ -571,6 +590,7 @@ app.post('/api/practice-call/next-turn', rateLimit({ windowMs: 60_000, max: 40 }
       res.status(502).send('Failed to generate a valid callee response.');
       return;
     }
+    const autoContinueAfterMs = shouldAutoContinueHold(cleanAiText) ? 5500 : undefined;
 
     res.json({
       aiText: cleanAiText,
@@ -578,7 +598,8 @@ app.post('/api/practice-call/next-turn', rateLimit({ windowMs: 60_000, max: 40 }
       suggestions: generated.suggestions,
       callComplete: Boolean(generated.callComplete) || (Array.isArray(conversationHistory) && conversationHistory.length >= 15),
       progressed: true,
-      responseDelayMs: generated.callComplete ? 850 : (Array.isArray(conversationHistory) && conversationHistory.length <= 1 ? 900 : 1250),
+      responseDelayMs: generated.callComplete ? 40 : 0,
+      autoContinueAfterMs,
     });
   } catch (error) {
     console.error('Failed to process practice turn', error);

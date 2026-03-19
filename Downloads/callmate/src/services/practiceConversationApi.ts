@@ -7,8 +7,9 @@ type TurnRequest = {
   scenario: PracticeScenario;
   currentStepIndex: number;
   attemptCount: number;
-  userTranscript: string;
+  userTranscript?: string;
   conversationHistory: PracticeTurn[];
+  autoContinue?: boolean;
 };
 
 type TurnResponse = {
@@ -18,6 +19,7 @@ type TurnResponse = {
   callComplete: boolean;
   progressed: boolean;
   responseDelayMs: number;
+  autoContinueAfterMs?: number;
 };
 
 type EndSessionRequest = {
@@ -75,6 +77,7 @@ export async function processPracticeResponse(request: TurnRequest): Promise<Tur
       userTranscript: request.userTranscript,
       conversationHistory: request.conversationHistory,
       scenario: request.scenario,
+      autoContinue: request.autoContinue ?? false,
   });
 }
 
