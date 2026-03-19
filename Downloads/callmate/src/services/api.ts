@@ -14,6 +14,16 @@ export function getApiBaseUrl(path = '') {
   return `${base}${normalizedPath}`;
 }
 
+let _authToken: string | null = null;
+
+export function setAuthToken(token: string | null): void {
+  _authToken = token;
+}
+
+export function getAuthHeaders(): Record<string, string> {
+  return _authToken ? { Authorization: `Bearer ${_authToken}` } : {};
+}
+
 export async function apiJson<T>(path: string, init?: RequestInit, timeoutMs = 30_000): Promise<T> {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -23,6 +33,7 @@ export async function apiJson<T>(path: string, init?: RequestInit, timeoutMs = 3
       signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
+        ...getAuthHeaders(),
         ...(init?.headers || {}),
       },
       ...init,
@@ -30,7 +41,11 @@ export async function apiJson<T>(path: string, init?: RequestInit, timeoutMs = 3
 
     if (!response.ok) {
       const message = await response.text();
-      throw new Error(message || `API request failed with status ${response.status}`);
+      const cleaned = message.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (cleaned.includes('Cannot POST /api/live-assist/')) {
+        throw new Error('Live Assist is not deployed on the current API server yet.');
+      }
+      throw new Error(cleaned || `API request failed with status ${response.status}`);
     }
 
     return response.json() as Promise<T>;

@@ -3,6 +3,35 @@ export type Tone = 'Professional' | 'Assertive' | 'Friendly' | 'Firm';
 export type Tier = 'free' | 'trial' | 'monthly' | 'annual' | 'admin';
 
 export type CallPerspective = 'outgoing' | 'incoming';
+export type LiveAssistScenarioType =
+  | 'doctor'
+  | 'dentist'
+  | 'medical'
+  | 'landlord'
+  | 'customer_support'
+  | 'reservation'
+  | 'billing'
+  | 'insurance'
+  | 'bank'
+  | 'school'
+  | 'utilities'
+  | 'general_business';
+export type LiveAssistIntent =
+  | 'neutral'
+  | 'question'
+  | 'pushback'
+  | 'delay'
+  | 'pricing'
+  | 'clarification'
+  | 'transfer'
+  | 'close';
+export type LiveAssistActionType =
+  | 'pushback'
+  | 'question'
+  | 'freeze'
+  | 'shorter'
+  | 'alternate'
+  | 'end';
 
 export interface ScriptSection {
   title: string;
@@ -94,6 +123,117 @@ export interface PracticeSessionSummary {
   completed: boolean;
   timestamp: number;
 }
+
+export interface LiveAssistBrief {
+  openingLine: string;
+  goalReminder: string;
+  likelyObjections: string[];
+  freezeLine: string;
+}
+
+export interface LiveAssistFallbacks {
+  clarify: string;
+  pushback: string;
+  freeze: string;
+}
+
+export interface LiveAssistSession {
+  sessionId: string;
+  scenarioType: LiveAssistScenarioType;
+  contactName: string;
+  goal: string;
+  worries: string[];
+  tone: Tone;
+  transcriptOptIn: boolean;
+  brief: LiveAssistBrief;
+  fallbacks: LiveAssistFallbacks;
+  createdAt?: number;
+}
+
+export interface LiveAssistTurn {
+  speaker: 'user' | 'other';
+  text: string;
+}
+
+export interface LiveAssistState {
+  intentOverride: LiveAssistIntent | null;
+  freezeMode: boolean;
+  shorterRequested: boolean;
+  alternateRequested: boolean;
+  lastSuggestion: string | null;
+}
+
+export interface LiveAssistSuggestion {
+  primary: string;
+  alternate?: string;
+  intent: LiveAssistIntent;
+  confidence: number;
+  freezeRecommended: boolean;
+}
+
+export interface LiveAssistEvent {
+  timestamp: number;
+  transcriptSnippet?: string;
+  detectedIntent?: LiveAssistIntent;
+  suggestion?: string;
+  action?: LiveAssistActionType;
+  confidence?: number;
+}
+
+export interface LiveAssistSummary {
+  summary: string;
+  objections: LiveAssistIntent[];
+  improvements: string[];
+  helpfulnessPrompt: string;
+}
+
+export interface CreateLiveAssistSessionRequest {
+  scenarioType: LiveAssistScenarioType;
+  contactName: string;
+  goal: string;
+  worries: string[];
+  tone: Tone;
+  transcriptOptIn: boolean;
+}
+
+export interface CreateLiveAssistSessionResponse {
+  sessionId: string;
+  brief: LiveAssistBrief;
+  fallbacks: LiveAssistFallbacks;
+}
+
+export interface GetLiveAssistResponseRequest {
+  sessionId: string;
+  latestTranscript: string;
+  recentHistory: LiveAssistTurn[];
+  state: LiveAssistState;
+}
+
+export interface GetLiveAssistResponseResponse extends LiveAssistSuggestion {}
+
+export interface LogLiveAssistActionRequest {
+  sessionId: string;
+  action: LiveAssistActionType;
+  timestamp: number;
+  context?: {
+    latestTranscript?: string;
+    latestSuggestion?: string;
+    detectedIntent?: LiveAssistIntent | null;
+  };
+}
+
+export interface LogLiveAssistActionResponse {
+  ok: boolean;
+}
+
+export interface EndLiveAssistSessionRequest {
+  sessionId: string;
+  completed: boolean;
+  transcriptOptIn: boolean;
+  events: LiveAssistTurn[];
+}
+
+export interface EndLiveAssistSessionResponse extends LiveAssistSummary {}
 
 export interface SafeLine {
   situation: string;

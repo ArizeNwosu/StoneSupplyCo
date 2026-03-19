@@ -1,3 +1,5 @@
+
+
 import Foundation
 import Capacitor
 import AVFoundation
@@ -6,6 +8,11 @@ import Speech
 @objc(VoiceSimulatorPlugin)
 @MainActor
 public final class VoiceSimulatorPlugin: CAPPlugin, @preconcurrency CAPBridgedPlugin, @preconcurrency AVSpeechSynthesizerDelegate {
+    private enum RecognitionMode {
+        case simulator
+        case liveAssist
+    }
+
     public let identifier = "VoiceSimulatorPlugin"
     public let jsName = "VoiceSimulatorPlugin"
     public let pluginMethods: [CAPPluginMethod] = [
@@ -14,6 +21,8 @@ public final class VoiceSimulatorPlugin: CAPPlugin, @preconcurrency CAPBridgedPl
         CAPPluginMethod(name: "deactivateAudioSession", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "startRecognition", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "stopRecognition", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "startLiveAssistRecognition", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "stopLiveAssistRecognition", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "speak", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "stopSpeaking", returnType: CAPPluginReturnPromise),
     ]
@@ -27,6 +36,8 @@ public final class VoiceSimulatorPlugin: CAPPlugin, @preconcurrency CAPBridgedPl
     private var finalizeWorkItem: DispatchWorkItem?
     private var isStoppingRecognition = false
     private let silenceFinalizeDelay: TimeInterval = 1.0
+    private var recognitionMode: RecognitionMode = .simulator
+    private var lastDeliveredFinalTranscript = ""
 
     override public func load() {
         synthesizer.delegate = self
@@ -66,11 +77,19 @@ public final class VoiceSimulatorPlugin: CAPPlugin, @preconcurrency CAPBridgedPl
     }
 
     @objc func startRecognition(_ call: CAPPluginCall) {
+        startRecognition(call, mode: .simulator)
+    }
+
+    @objc func startLiveAssistRecognition(_ call: CAPPluginCall) {
+        startRecognition(call, mode: .liveAssist)
+    }
+
+    private func startRecognition(_ call: CAPPluginCall, mode: RecognitionMode) {
         requestPermissionsInternal { [weak self] granted, message in
             guard let self else { return }
             guard granted else {
                 DispatchQueue.main.async {
-                    self.notifyListeners("speechState", data: [
+                    self.notifyListeners(self.stateEventName(for: mode), data: [
                         "state": "error",
                         "message": message ?? "Speech permission denied",
                     ])
@@ -82,11 +101,11 @@ public final class VoiceSimulatorPlugin: CAPPlugin, @preconcurrency CAPBridgedPl
             DispatchQueue.main.async {
                 do {
                     try self.configureAudioSession(active: true)
-                    try self.startRecognitionInternal()
-                    self.notifyListeners("speechState", data: ["state": "listening"])
+                    try self.startRecognitionInternal(mode: mode)
+                    self.notifyListeners(self.stateEventName(for: mode), data: ["state": "listening"])
                     call.resolve(["started": true])
                 } catch {
-                    self.notifyListeners("speechState", data: [
+                    self.notifyListeners(self.stateEventName(for: mode), data: [
                         "state": "error",
                         "message": error.localizedDescription,
                     ])
@@ -99,6 +118,12 @@ public final class VoiceSimulatorPlugin: CAPPlugin, @preconcurrency CAPBridgedPl
     @objc func stopRecognition(_ call: CAPPluginCall) {
         stopRecognitionInternal()
         notifyListeners("speechState", data: ["state": "stopped"])
+        call.resolve(["transcript": latestTranscript])
+    }
+
+    @objc func stopLiveAssistRecognition(_ call: CAPPluginCall) {
+        stopRecognitionInternal()
+        notifyListeners("liveAssistState", data: ["state": "stopped"])
         call.resolve(["transcript": latestTranscript])
     }
 
@@ -161,10 +186,12 @@ public final class VoiceSimulatorPlugin: CAPPlugin, @preconcurrency CAPBridgedPl
         try session.setActive(active, options: [.notifyOthersOnDeactivation])
     }
 
-    private func startRecognitionInternal() throws {
+    private func startRecognitionInternal(mode: RecognitionMode) throws {
         stopRecognitionInternal()
+        recognitionMode = mode
         latestTranscript = ""
         latestPartialTranscript = ""
+        lastDeliveredFinalTranscript = ""
         isStoppingRecognition = false
         finalizeWorkItem?.cancel()
         finalizeWorkItem = nil
@@ -199,7 +226,7 @@ public final class VoiceSimulatorPlugin: CAPPlugin, @preconcurrency CAPBridgedPl
                 let transcript = result.bestTranscription.formattedString.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !transcript.isEmpty {
                     self.latestPartialTranscript = transcript
-                    self.notifyListeners("speechPartial", data: [
+                    self.notifyListeners(self.partialEventName(for: mode), data: [
                         "transcript": transcript,
                         "isFinal": result.isFinal,
                     ])
@@ -207,7 +234,7 @@ public final class VoiceSimulatorPlugin: CAPPlugin, @preconcurrency CAPBridgedPl
                 }
 
                 if result.isFinal {
-                    self.finalizeRecognitionTranscript(transcript)
+                    self.finalizeRecognitionTranscript(transcript, forceRestart: mode == .liveAssist)
                     return
                 }
             }
@@ -217,7 +244,7 @@ public final class VoiceSimulatorPlugin: CAPPlugin, @preconcurrency CAPBridgedPl
                     return
                 }
                 self.stopRecognitionInternal()
-                self.notifyListeners("speechState", data: [
+                self.notifyListeners(self.stateEventName(for: mode), data: [
                     "state": "error",
                     "message": error.localizedDescription,
                 ])
@@ -231,22 +258,33 @@ public final class VoiceSimulatorPlugin: CAPPlugin, @preconcurrency CAPBridgedPl
             guard let self else { return }
             let transcript = self.latestPartialTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !transcript.isEmpty else { return }
-            self.finalizeRecognitionTranscript(transcript)
+            self.finalizeRecognitionTranscript(transcript, forceRestart: self.recognitionMode == .liveAssist)
         }
         finalizeWorkItem = workItem
         DispatchQueue.main.asyncAfter(deadline: .now() + silenceFinalizeDelay, execute: workItem)
     }
 
-    private func finalizeRecognitionTranscript(_ transcript: String) {
+    private func finalizeRecognitionTranscript(_ transcript: String, forceRestart: Bool = false) {
         let cleaned = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { return }
+        if cleaned == lastDeliveredFinalTranscript {
+            if forceRestart {
+                latestPartialTranscript = ""
+            }
+            return
+        }
         finalizeWorkItem?.cancel()
         finalizeWorkItem = nil
+        lastDeliveredFinalTranscript = cleaned
         latestTranscript = cleaned
-        latestPartialTranscript = cleaned
-        notifyListeners("speechFinal", data: ["transcript": cleaned])
+        latestPartialTranscript = ""
+        notifyListeners(finalEventName(for: recognitionMode), data: ["transcript": cleaned])
+        if recognitionMode == .liveAssist {
+            notifyListeners(stateEventName(for: recognitionMode), data: ["state": "listening"])
+            return
+        }
         stopRecognitionInternal()
-        notifyListeners("speechState", data: ["state": "stopped"])
+        notifyListeners(stateEventName(for: recognitionMode), data: ["state": "stopped"])
     }
 
     private func stopRecognitionInternal() {
@@ -265,6 +303,18 @@ public final class VoiceSimulatorPlugin: CAPPlugin, @preconcurrency CAPBridgedPl
         DispatchQueue.main.async { [weak self] in
             self?.isStoppingRecognition = false
         }
+    }
+
+    private func partialEventName(for mode: RecognitionMode) -> String {
+        mode == .liveAssist ? "liveAssistPartial" : "speechPartial"
+    }
+
+    private func finalEventName(for mode: RecognitionMode) -> String {
+        mode == .liveAssist ? "liveAssistFinal" : "speechFinal"
+    }
+
+    private func stateEventName(for mode: RecognitionMode) -> String {
+        mode == .liveAssist ? "liveAssistState" : "speechState"
     }
 
     public func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {

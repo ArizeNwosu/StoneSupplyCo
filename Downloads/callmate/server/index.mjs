@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import OpenAI from 'openai';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 const app = express();
 const port = Number(process.env.PORT || 3001);
@@ -61,8 +62,10 @@ function compact(value) {
 }
 
 function getClientKey(req) {
-  const forwardedFor = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
-  return forwardedFor || req.ip || req.socket.remoteAddress || 'unknown';
+  // req.ip is populated correctly by Express when trust proxy is set,
+  // so we use it directly rather than reading x-forwarded-for manually
+  // (which would allow header spoofing to bypass per-IP rate limits).
+  return req.ip || req.socket.remoteAddress || 'unknown';
 }
 
 function rateLimit({ windowMs, max }) {
@@ -86,6 +89,95 @@ function rateLimit({ windowMs, max }) {
     entry.count += 1;
     next();
   };
+}
+
+function verifySupabaseJwt(token) {
+  const secret = process.env.SUPABASE_JWT_SECRET;
+  if (!secret) return { ok: true, payload: null }; // auth disabled — dev mode
+
+  const parts = token.split('.');
+  if (parts.length !== 3) return { ok: false };
+
+  const [headerB64, payloadB64, sigB64] = parts;
+  const sigInput = `${headerB64}.${payloadB64}`;
+
+  let expectedSig;
+  try {
+    expectedSig = createHmac('sha256', secret).update(sigInput).digest('base64url');
+  } catch {
+    return { ok: false };
+  }
+
+  const expectedBuf = Buffer.from(expectedSig, 'utf8');
+  const actualBuf = Buffer.from(sigB64, 'utf8');
+  if (expectedBuf.length !== actualBuf.length || !timingSafeEqual(expectedBuf, actualBuf)) {
+    return { ok: false };
+  }
+
+  try {
+    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
+    if (typeof payload.exp === 'number' && payload.exp < Math.floor(Date.now() / 1000)) {
+      return { ok: false };
+    }
+    return { ok: true, payload };
+  } catch {
+    return { ok: false };
+  }
+}
+
+function requireAuth(req, res, next) {
+  const authHeader = req.headers['authorization'] || '';
+  if (!authHeader.startsWith('Bearer ')) {
+    // If JWT secret is not configured, allow through (dev mode)
+    if (!process.env.SUPABASE_JWT_SECRET) { next(); return; }
+    res.status(401).send('Authorization required.');
+    return;
+  }
+  const token = authHeader.slice(7);
+  const result = verifySupabaseJwt(token);
+  if (!result.ok) {
+    res.status(401).send('Invalid or expired token.');
+    return;
+  }
+  req.user = result.payload;
+  next();
+}
+
+const INPUT_LIMITS = {
+  description: 600,
+  tone: 30,
+  perspective: 20,
+  text: 1200,
+  voice: 20,
+  instructions: 250,
+  userTranscript: 600,
+  situation: 500,
+  scenario: 500,
+};
+
+const ALLOWED_VOICES = new Set(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer', 'coral', 'sage', 'ash']);
+
+function validateString(value, max) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== 'string') return undefined;
+  return value.slice(0, max);
+}
+
+function safeTrim(obj, limits) {
+  const out = {};
+  for (const [key, max] of Object.entries(limits)) {
+    if (obj[key] !== undefined) out[key] = validateString(obj[key], max);
+  }
+  return out;
+}
+
+function serverError(res, label, error) {
+  // Log full error server-side; send only a generic message to the client
+  // to avoid leaking internal details (stack traces, API key hints, etc.)
+  console.error(label, error);
+  if (!res.headersSent) {
+    res.status(500).send(`${label}. Please try again.`);
+  }
 }
 
 function parseJson(content) {
@@ -366,16 +458,229 @@ function buildFeedback(turns, completed) {
   };
 }
 
+const LIVE_ASSIST_INTENTS = new Set([
+  'neutral',
+  'question',
+  'pushback',
+  'delay',
+  'pricing',
+  'clarification',
+  'transfer',
+  'close',
+]);
+
+function normalizeLiveAssistIntent(value) {
+  const normalized = compact(value).toLowerCase().replace(/\s+/g, '_');
+  return LIVE_ASSIST_INTENTS.has(normalized) ? normalized : 'neutral';
+}
+
+function buildLiveAssistFallbacks(tone = 'Professional') {
+  const professional = tone === 'Professional' || tone === 'Firm';
+  return {
+    clarify: professional ? 'Can you walk me through that one more time?' : 'Can you say that one more time?',
+    pushback: professional ? 'I understand. What can be done from here?' : 'Okay, what are my options from here?',
+    freeze: professional ? 'I just want to understand my options.' : 'Let me rephrase that for a second.',
+  };
+}
+
+function inferLiveAssistIntent(text, override) {
+  const forced = normalizeLiveAssistIntent(override);
+  if (forced !== 'neutral') return forced;
+
+  const normalized = compact(text).toLowerCase();
+  if (!normalized) return 'neutral';
+  if (/\b(next week|later|not until|fully booked|backed up|we can probably|another time)\b/.test(normalized)) return 'delay';
+  if (/\b(price|cost|fee|charge|payment|how much|quote)\b/.test(normalized)) return 'pricing';
+  if (/\b(what do you mean|can you explain|not sure i understand|clarify|walk me through)\b/.test(normalized)) return 'clarification';
+  if (/\b(hold|one moment|just a moment|transfer|let me check|bear with me)\b/.test(normalized)) return 'transfer';
+  if (/\b(no|can’t|cannot|won’t|policy|not able|unable)\b/.test(normalized)) return 'pushback';
+  if (/\?$/.test(normalized) || /\b(what|when|which|who|how)\b/.test(normalized)) return 'question';
+  if (/\b(thanks|thank you|all set|sounds good|take care|goodbye|bye)\b/.test(normalized)) return 'close';
+  return 'neutral';
+}
+
+function buildLiveAssistSummary(events, transcriptOptIn) {
+  const otherTurns = events.filter((event) => event?.speaker === 'other').map((event) => compact(event.text)).filter(Boolean);
+  const userTurns = events.filter((event) => event?.speaker === 'user').map((event) => compact(event.text)).filter(Boolean);
+  const objections = Array.from(new Set(otherTurns.map((text) => inferLiveAssistIntent(text)).filter((intent) => intent !== 'neutral' && intent !== 'close')));
+
+  return {
+    summary: userTurns.length
+      ? 'You stayed engaged and kept the call moving with direct responses.'
+      : 'You completed the session and stayed with the call.',
+    objections,
+    improvements: [
+      userTurns.length > 1
+        ? 'Ask one direct follow-up as soon as you hear a delay or policy objection.'
+        : 'Use the first suggestion quickly so the call keeps moving.',
+    ],
+    helpfulnessPrompt: transcriptOptIn
+      ? 'Did saving this call review make the feature more useful?'
+      : 'Did this help you continue the call?',
+  };
+}
+
+async function buildLiveAssistBrief({
+  scenarioType,
+  contactName,
+  goal,
+  worries,
+  tone,
+}) {
+  if (!openai) {
+    return {
+      openingLine: `Hi, I’m calling about ${goal.toLowerCase()}.`,
+      goalReminder: compact(goal),
+      likelyObjections: ['They may delay you.', 'They may ask you to clarify the issue.'],
+      freezeLine: buildLiveAssistFallbacks(tone).freeze,
+    };
+  }
+
+  const data = await createJsonCompletion({
+    temperature: 0.8,
+    system: [
+      'You generate a short pre-call brief for a real-time phone call assist feature.',
+      'Keep everything concise, spoken, and realistic.',
+      'Output JSON only.',
+    ].join(' '),
+    user: JSON.stringify({
+      requiredShape: {
+        openingLine: 'string',
+        goalReminder: 'string',
+        likelyObjections: ['string'],
+        freezeLine: 'string',
+      },
+      constraints: [
+        'openingLine must sound like something the caller can actually say aloud.',
+        'goalReminder must be one short sentence fragment.',
+        'likelyObjections should contain 2 short realistic objections.',
+        'freezeLine should be a stabilizing line the caller can say if they freeze.',
+      ],
+      scenarioType,
+      contactName,
+      goal,
+      worries,
+      tone,
+    }),
+  });
+
+  return {
+    openingLine: compact(data.openingLine) || `Hi, I’m calling about ${goal.toLowerCase()}.`,
+    goalReminder: compact(data.goalReminder) || compact(goal),
+    likelyObjections: Array.isArray(data.likelyObjections)
+      ? data.likelyObjections.map((item) => compact(item)).filter(Boolean).slice(0, 3)
+      : ['They may delay you.', 'They may ask for more detail.'],
+    freezeLine: compact(data.freezeLine) || buildLiveAssistFallbacks(tone).freeze,
+  };
+}
+
+async function buildLiveAssistSuggestion({
+  scenarioType,
+  contactName,
+  goal,
+  worries,
+  tone,
+  latestTranscript,
+  recentHistory,
+  state,
+}) {
+  const fallbackLines = buildLiveAssistFallbacks(tone);
+  const intent = inferLiveAssistIntent(latestTranscript, state?.intentOverride);
+
+  if (state?.freezeMode) {
+    return {
+      primary: fallbackLines.freeze,
+      alternate: 'Can you walk me through the next step?',
+      intent,
+      confidence: 0.94,
+      freezeRecommended: false,
+    };
+  }
+
+  if (!openai) {
+    const fallbackByIntent = {
+      delay: 'Can you tell me the earliest day this can happen?',
+      pricing: 'Can you tell me the exact cost from here?',
+      pushback: fallbackLines.pushback,
+      clarification: fallbackLines.clarify,
+      question: 'Can you tell me what that means for me right now?',
+      transfer: 'Okay, can you stay with me while that happens?',
+      close: 'Great, thanks for clarifying that for me.',
+      neutral: 'Can you walk me through the next step?',
+    };
+    const primary = fallbackByIntent[intent] || fallbackByIntent.neutral;
+    return {
+      primary: state?.shorterRequested ? primary.split(' ').slice(0, 8).join(' ') : primary,
+      alternate: 'What are my options from here?',
+      intent,
+      confidence: 0.72,
+      freezeRecommended: false,
+    };
+  }
+
+  const result = await createJsonCompletion({
+    temperature: 0.7,
+    system: [
+      'You are a live phone-call response assistant.',
+      'Generate exactly one short sentence the caller can say next.',
+      'Return spoken language only.',
+      'Keep it under 16 words whenever possible.',
+      'Never return paragraphs, labels, bullets, or explanations.',
+      'Do not roleplay both sides.',
+      'If transcription is unclear, return a safe clarifying response.',
+      'If shorterRequested is true, make it even shorter.',
+      'If alternateRequested is true, provide a different but still natural alternate.',
+      'Output JSON only.',
+    ].join(' '),
+    user: JSON.stringify({
+      requiredShape: {
+        primary: 'string',
+        alternate: 'string',
+        intent: 'string',
+        confidence: 'number',
+        freezeRecommended: 'boolean',
+      },
+      scenarioType,
+      contactName,
+      goal,
+      worries,
+      tone,
+      latestTranscript,
+      recentHistory: Array.isArray(recentHistory) ? recentHistory.slice(-6) : [],
+      state,
+      fallbackLines,
+    }),
+  });
+
+  const primary = compact(result.primary) || fallbackLines.clarify;
+  const alternate = compact(result.alternate);
+  const confidence = Number.isFinite(Number(result.confidence)) ? Math.max(0, Math.min(1, Number(result.confidence))) : 0.72;
+
+  return {
+    primary: state?.shorterRequested ? primary.split(' ').slice(0, 8).join(' ') : primary,
+    alternate: alternate || 'What are my options from here?',
+    intent: inferLiveAssistIntent(latestTranscript, result.intent || intent),
+    confidence,
+    freezeRecommended: Boolean(result.freezeRecommended),
+  };
+}
+
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/api/ai/script', rateLimit({ windowMs: 60_000, max: 20 }), async (req, res) => {
+app.post('/api/ai/script', requireAuth, rateLimit({ windowMs: 60_000, max: 20 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
   try {
-    const { description, tone, perspective, persona, userProfile } = req.body || {};
+    const raw = req.body || {};
+    const description = validateString(raw.description, INPUT_LIMITS.description);
+    const tone = validateString(raw.tone, INPUT_LIMITS.tone);
+    const perspective = validateString(raw.perspective, INPUT_LIMITS.perspective);
+    const persona = raw.persona && typeof raw.persona === 'object' ? raw.persona : undefined;
+    const userProfile = raw.userProfile && typeof raw.userProfile === 'object' ? raw.userProfile : undefined;
+    if (!description?.trim()) { res.status(400).send('Call description is required.'); return; }
     const data = await createJsonCompletion({
       temperature: 1.1,
       system: [
@@ -416,29 +721,30 @@ app.post('/api/ai/script', rateLimit({ windowMs: 60_000, max: 20 }), async (req,
 
     res.json(sanitizeScript(description, tone, data));
   } catch (error) {
-    console.error('Failed to generate script', error);
-    res.status(500).send(error?.message || 'Failed to generate script');
+    serverError(res, 'Failed to generate script', error);
   }
 });
 
-app.post('/api/ai/panic', rateLimit({ windowMs: 60_000, max: 30 }), async (req, res) => {
+app.post('/api/ai/panic', requireAuth, rateLimit({ windowMs: 60_000, max: 30 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
   try {
+    const raw = req.body || {};
+    const situation = validateString(raw.situation, INPUT_LIMITS.situation);
+    const panicPayload = { ...safeTrim(raw, { situation: INPUT_LIMITS.situation }), situation };
     const text = await createTextCompletion({
       system: 'You generate one short in-the-moment phone reply for an anxious caller. Make it sound grounded, useful, and specific.',
-      user: JSON.stringify(req.body || {}),
+      user: JSON.stringify(panicPayload),
       temperature: 0.9,
     });
     res.json({ text });
   } catch (error) {
-    console.error('Failed to generate panic response', error);
-    res.status(500).send(error?.message || 'Failed to generate panic response');
+    serverError(res, 'Failed to generate panic response', error);
   }
 });
 
-app.post('/api/ai/voicemail', rateLimit({ windowMs: 60_000, max: 20 }), async (req, res) => {
+app.post('/api/ai/voicemail', requireAuth, rateLimit({ windowMs: 60_000, max: 20 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
@@ -450,12 +756,11 @@ app.post('/api/ai/voicemail', rateLimit({ windowMs: 60_000, max: 20 }), async (r
     });
     res.json({ text });
   } catch (error) {
-    console.error('Failed to generate voicemail', error);
-    res.status(500).send(error?.message || 'Failed to generate voicemail');
+    serverError(res, 'Failed to generate voicemail', error);
   }
 });
 
-app.post('/api/ai/email-fallback', rateLimit({ windowMs: 60_000, max: 20 }), async (req, res) => {
+app.post('/api/ai/email-fallback', requireAuth, rateLimit({ windowMs: 60_000, max: 20 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
@@ -467,16 +772,19 @@ app.post('/api/ai/email-fallback', rateLimit({ windowMs: 60_000, max: 20 }), asy
     });
     res.json({ text });
   } catch (error) {
-    console.error('Failed to generate email fallback', error);
-    res.status(500).send(error?.message || 'Failed to generate email fallback');
+    serverError(res, 'Failed to generate email fallback', error);
   }
 });
 
-app.post('/api/ai/branch', rateLimit({ windowMs: 60_000, max: 20 }), async (req, res) => {
+app.post('/api/ai/branch', requireAuth, rateLimit({ windowMs: 60_000, max: 20 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
   try {
+    const raw = req.body || {};
+    const description = validateString(raw.description, INPUT_LIMITS.description);
+    const scenario = validateString(raw.scenario, INPUT_LIMITS.scenario);
+    const tone = validateString(raw.tone, INPUT_LIMITS.tone);
     const data = await createJsonCompletion({
       system: 'You write one realistic “if they say...” branch for a phone call script. Output JSON only.',
       user: JSON.stringify({
@@ -486,7 +794,9 @@ app.post('/api/ai/branch', rateLimit({ windowMs: 60_000, max: 20 }), async (req,
           'Response must sound specific to the exact topic, not generic.',
           'Keep it short enough to speak aloud.',
         ],
-        ...req.body,
+        description,
+        scenario,
+        tone,
       }),
       temperature: 1,
     });
@@ -495,21 +805,25 @@ app.post('/api/ai/branch', rateLimit({ windowMs: 60_000, max: 20 }), async (req,
       response: compact(data.response),
     });
   } catch (error) {
-    console.error('Failed to generate branch', error);
-    res.status(500).send(error?.message || 'Failed to generate branch');
+    serverError(res, 'Failed to generate branch', error);
   }
 });
 
-app.post('/api/ai/tts', rateLimit({ windowMs: 60_000, max: 25 }), async (req, res) => {
+app.post('/api/ai/tts', requireAuth, rateLimit({ windowMs: 60_000, max: 25 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
   try {
-    const { text, voice = 'nova', instructions } = req.body || {};
+    const raw = req.body || {};
+    const ttsText = validateString(raw.text, INPUT_LIMITS.text);
+    const rawVoice = validateString(raw.voice, INPUT_LIMITS.voice) || 'nova';
+    const voice = ALLOWED_VOICES.has(rawVoice) ? rawVoice : 'nova';
+    const instructions = validateString(raw.instructions, INPUT_LIMITS.instructions);
+    if (!ttsText?.trim()) { res.status(400).send('Text is required for TTS.'); return; }
     const speech = await client.audio.speech.create({
       model: 'gpt-4o-mini-tts',
       voice,
-      input: compact(text),
+      input: compact(ttsText),
       instructions: compact(instructions || 'Speak naturally, like a real phone call.'),
       response_format: 'mp3',
     });
@@ -519,18 +833,23 @@ app.post('/api/ai/tts', rateLimit({ windowMs: 60_000, max: 25 }), async (req, re
     res.setHeader('Cache-Control', 'no-store');
     res.send(buffer);
   } catch (error) {
-    console.error('Failed to generate TTS', error);
-    res.status(500).send(error?.message || 'Failed to generate TTS');
+    serverError(res, 'Failed to generate TTS', error);
   }
 });
 
-app.post('/api/practice-call/next-turn', rateLimit({ windowMs: 60_000, max: 40 }), async (req, res) => {
+app.post('/api/practice-call/next-turn', requireAuth, rateLimit({ windowMs: 60_000, max: 40 }), async (req, res) => {
   const client = requireOpenAI(res);
   if (!client) return;
 
   try {
-    const { scenario, currentStepIndex = 0, userTranscript, conversationHistory, autoContinue = false } = req.body || {};
-    const transcript = compact(userTranscript);
+    const raw = req.body || {};
+    const scenario = raw.scenario && typeof raw.scenario === 'object' ? raw.scenario : undefined;
+    const currentStepIndex = typeof raw.currentStepIndex === 'number' ? raw.currentStepIndex : 0;
+    const autoContinue = Boolean(raw.autoContinue);
+    const conversationHistory = Array.isArray(raw.conversationHistory)
+      ? raw.conversationHistory.slice(-20) // cap history to prevent token bloat
+      : [];
+    const transcript = compact(validateString(raw.userTranscript, INPUT_LIMITS.userTranscript));
     if (!transcript && !autoContinue) {
       res.status(400).send('A user transcript is required before generating an AI response.');
       return;
@@ -602,18 +921,149 @@ app.post('/api/practice-call/next-turn', rateLimit({ windowMs: 60_000, max: 40 }
       autoContinueAfterMs,
     });
   } catch (error) {
-    console.error('Failed to process practice turn', error);
-    res.status(500).send(error?.message || 'Failed to process practice turn');
+    serverError(res, 'Failed to process practice turn', error);
   }
 });
 
-app.post('/api/practice-call/end', rateLimit({ windowMs: 60_000, max: 60 }), async (req, res) => {
+app.post('/api/practice-call/end', requireAuth, rateLimit({ windowMs: 60_000, max: 60 }), async (req, res) => {
   try {
     const { turns = [], completed = false } = req.body || {};
     res.json(buildFeedback(turns, completed));
   } catch (error) {
-    console.error('Failed to end practice session', error);
-    res.status(500).send(error?.message || 'Failed to build feedback');
+    serverError(res, 'Failed to end practice session', error);
+  }
+});
+
+app.post('/api/live-assist/session', requireAuth, rateLimit({ windowMs: 60_000, max: 20 }), async (req, res) => {
+  try {
+    const raw = req.body || {};
+    const scenarioType = compact(raw.scenarioType) || 'general_business';
+    const contactName = validateString(raw.contactName, 120);
+    const goal = validateString(raw.goal, 240);
+    const tone = validateString(raw.tone, INPUT_LIMITS.tone) || 'Professional';
+    const worries = Array.isArray(raw.worries)
+      ? raw.worries.map((item) => validateString(item, 180)).filter(Boolean).slice(0, 5)
+      : [];
+    const transcriptOptIn = Boolean(raw.transcriptOptIn);
+
+    if (!goal?.trim()) {
+      res.status(400).send('Goal is required.');
+      return;
+    }
+
+    const brief = await buildLiveAssistBrief({
+      scenarioType,
+      contactName: compact(contactName),
+      goal,
+      worries,
+      tone,
+    });
+
+    res.json({
+      sessionId: crypto.randomUUID(),
+      brief,
+      fallbacks: buildLiveAssistFallbacks(tone),
+      transcriptOptIn,
+    });
+  } catch (error) {
+    serverError(res, 'Failed to create live assist session', error);
+  }
+});
+
+app.post('/api/live-assist/respond', requireAuth, rateLimit({ windowMs: 60_000, max: 60 }), async (req, res) => {
+  try {
+    const raw = req.body || {};
+    const sessionId = validateString(raw.sessionId, 120);
+    const latestTranscript = validateString(raw.latestTranscript, INPUT_LIMITS.text);
+    const state = raw.state && typeof raw.state === 'object' ? raw.state : {};
+    const recentHistory = Array.isArray(raw.recentHistory)
+      ? raw.recentHistory
+          .map((turn) => ({
+            speaker: turn?.speaker === 'user' ? 'user' : 'other',
+            text: validateString(turn?.text, INPUT_LIMITS.text) || '',
+          }))
+          .filter((turn) => turn.text)
+          .slice(-10)
+      : [];
+
+    if (!sessionId?.trim()) {
+      res.status(400).send('sessionId is required.');
+      return;
+    }
+
+    if (!latestTranscript?.trim()) {
+      res.status(400).send('latestTranscript is required.');
+      return;
+    }
+
+    const suggestion = await buildLiveAssistSuggestion({
+      scenarioType: compact(raw.scenarioType) || 'general_business',
+      contactName: compact(raw.contactName),
+      goal: compact(raw.goal),
+      worries: Array.isArray(raw.worries) ? raw.worries.map((item) => compact(item)).filter(Boolean).slice(0, 5) : [],
+      tone: validateString(raw.tone, INPUT_LIMITS.tone) || 'Professional',
+      latestTranscript,
+      recentHistory,
+      state: {
+        intentOverride: normalizeLiveAssistIntent(state.intentOverride),
+        freezeMode: Boolean(state.freezeMode),
+        shorterRequested: Boolean(state.shorterRequested),
+        alternateRequested: Boolean(state.alternateRequested),
+        lastSuggestion: compact(state.lastSuggestion),
+      },
+    });
+
+    res.json(suggestion);
+  } catch (error) {
+    serverError(res, 'Failed to generate live assist response', error);
+  }
+});
+
+app.post('/api/live-assist/action', requireAuth, rateLimit({ windowMs: 60_000, max: 120 }), async (req, res) => {
+  try {
+    const raw = req.body || {};
+    const sessionId = validateString(raw.sessionId, 120);
+    const action = compact(raw.action);
+    const timestamp = Number(raw.timestamp);
+
+    if (!sessionId?.trim() || !action) {
+      res.status(400).send('sessionId and action are required.');
+      return;
+    }
+
+    res.json({
+      ok: true,
+      sessionId,
+      action,
+      timestamp: Number.isFinite(timestamp) ? timestamp : Date.now(),
+    });
+  } catch (error) {
+    serverError(res, 'Failed to log live assist action', error);
+  }
+});
+
+app.post('/api/live-assist/end', requireAuth, rateLimit({ windowMs: 60_000, max: 40 }), async (req, res) => {
+  try {
+    const raw = req.body || {};
+    const sessionId = validateString(raw.sessionId, 120);
+    const transcriptOptIn = Boolean(raw.transcriptOptIn);
+    const events = Array.isArray(raw.events)
+      ? raw.events
+          .map((event) => ({
+            speaker: event?.speaker === 'user' ? 'user' : 'other',
+            text: validateString(event?.text, INPUT_LIMITS.text) || '',
+          }))
+          .filter((event) => event.text)
+      : [];
+
+    if (!sessionId?.trim()) {
+      res.status(400).send('sessionId is required.');
+      return;
+    }
+
+    res.json(buildLiveAssistSummary(events, transcriptOptIn));
+  } catch (error) {
+    serverError(res, 'Failed to end live assist session', error);
   }
 });
 

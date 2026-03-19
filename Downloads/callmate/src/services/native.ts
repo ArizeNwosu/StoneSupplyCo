@@ -199,6 +199,8 @@ interface VoiceSimulatorPlugin {
   deactivateAudioSession(): Promise<void>;
   startRecognition(): Promise<{ started: boolean }>;
   stopRecognition(): Promise<{ transcript?: string }>;
+  startLiveAssistRecognition(): Promise<{ started: boolean }>;
+  stopLiveAssistRecognition(): Promise<{ transcript?: string }>;
   speak(options: { text: string; rate?: number; pitch?: number }): Promise<void>;
   stopSpeaking(): Promise<void>;
   addListener(
@@ -211,6 +213,18 @@ interface VoiceSimulatorPlugin {
   ): Promise<PluginListenerHandle>;
   addListener(
     eventName: 'speechState',
+    listenerFunc: (payload: { state: VoiceSpeechState; message?: string }) => void,
+  ): Promise<PluginListenerHandle>;
+  addListener(
+    eventName: 'liveAssistPartial',
+    listenerFunc: (payload: { transcript: string; isFinal?: boolean }) => void,
+  ): Promise<PluginListenerHandle>;
+  addListener(
+    eventName: 'liveAssistFinal',
+    listenerFunc: (payload: { transcript: string }) => void,
+  ): Promise<PluginListenerHandle>;
+  addListener(
+    eventName: 'liveAssistState',
     listenerFunc: (payload: { state: VoiceSpeechState; message?: string }) => void,
   ): Promise<PluginListenerHandle>;
   addListener(
@@ -261,6 +275,16 @@ export async function stopNativeSpeechRecognition() {
   return VoiceSimulator.stopRecognition();
 }
 
+export async function startNativeLiveAssistRecognition() {
+  if (!isVoiceSimulatorNativeAvailable) return { started: false };
+  return VoiceSimulator.startLiveAssistRecognition();
+}
+
+export async function stopNativeLiveAssistRecognition() {
+  if (!isVoiceSimulatorNativeAvailable) return { transcript: '' };
+  return VoiceSimulator.stopLiveAssistRecognition();
+}
+
 export async function speakNativeText(text: string, options?: { rate?: number; pitch?: number }) {
   if (!isVoiceSimulatorNativeAvailable || !text.trim()) return;
   await VoiceSimulator.speak({
@@ -279,6 +303,9 @@ export async function addVoiceSimulatorListeners(listeners: {
   onSpeechPartial?: (payload: { transcript: string; isFinal?: boolean }) => void;
   onSpeechFinal?: (payload: { transcript: string }) => void;
   onSpeechState?: (payload: { state: VoiceSpeechState; message?: string }) => void;
+  onLiveAssistPartial?: (payload: { transcript: string; isFinal?: boolean }) => void;
+  onLiveAssistFinal?: (payload: { transcript: string }) => void;
+  onLiveAssistState?: (payload: { state: VoiceSpeechState; message?: string }) => void;
   onTtsState?: (payload: { state: VoiceTtsState }) => void;
 }) {
   if (!isVoiceSimulatorNativeAvailable) {
@@ -289,6 +316,9 @@ export async function addVoiceSimulatorListeners(listeners: {
     listeners.onSpeechPartial ? VoiceSimulator.addListener('speechPartial', listeners.onSpeechPartial) : null,
     listeners.onSpeechFinal ? VoiceSimulator.addListener('speechFinal', listeners.onSpeechFinal) : null,
     listeners.onSpeechState ? VoiceSimulator.addListener('speechState', listeners.onSpeechState) : null,
+    listeners.onLiveAssistPartial ? VoiceSimulator.addListener('liveAssistPartial', listeners.onLiveAssistPartial) : null,
+    listeners.onLiveAssistFinal ? VoiceSimulator.addListener('liveAssistFinal', listeners.onLiveAssistFinal) : null,
+    listeners.onLiveAssistState ? VoiceSimulator.addListener('liveAssistState', listeners.onLiveAssistState) : null,
     listeners.onTtsState ? VoiceSimulator.addListener('ttsState', listeners.onTtsState) : null,
   ]);
 

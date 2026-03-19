@@ -27,17 +27,19 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button, Card, CallTypeGrid, ScriptCardSkeleton, ScriptViewSkeleton, cn } from './components/ui';
-import { Tone, CallScript, SAFE_LINES, PANIC_OPTIONS, PanicOption, COMMON_CALL_TYPES, Persona, Reflection, Tier, CallPerspective, PracticeScenario, PracticeSessionSummary } from './types';
+import { Tone, CallScript, SAFE_LINES, PANIC_OPTIONS, PanicOption, COMMON_CALL_TYPES, Persona, Reflection, Tier, CallPerspective, PracticeScenario, PracticeSessionSummary, CreateLiveAssistSessionRequest, LiveAssistActionType, LiveAssistSession, LiveAssistState, LiveAssistSuggestion, LiveAssistSummary, LiveAssistTurn } from './types';
 import { generateCallScript, generatePanicResponse, generateVoicemailScript, generateEmailFallback, generateBranch } from './services/gemini';
+import { setAuthToken } from './services/api';
 import { signUp, signIn, signInWithApple, signInWithGoogle, signOut, onAuthStateChange, sendPasswordReset } from './services/auth';
 import { pushLocalDataToSupabase, fetchScripts, fetchReflections, fetchAnxietyRatings, fetchPersonas, fetchProfile, upsertProfile, saveScript, saveReflection as dbSaveReflection, savePersona, syncAnxietyRatings, deleteAllScriptsForUser, deletePersona as dbDeletePersona } from './services/db';
 import { fetchAccessState, startTrial } from './services/access';
-import { enqueueFailedSave, drainOfflineQueue } from './services/offlineQueue';
-import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, setStatusBarDark, setStatusBarLight, openInAppBrowser, openManageSubscriptions, requestNotificationsAccess, requestVoiceSimulatorPermissions, scheduleLocalNotification } from './services/native';
+import { enqueueFailedSave, drainOfflineQueue, clearOfflineQueue } from './services/offlineQueue';
+import { addVoiceSimulatorListeners, hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError, isVoiceSimulatorNativeAvailable, prepareVoiceSimulatorAudioSession, requestNotificationsAccess, requestVoiceSimulatorPermissions, scheduleLocalNotification, setStatusBarDark, setStatusBarLight, startNativeLiveAssistRecognition, stopNativeLiveAssistRecognition, openInAppBrowser, openManageSubscriptions } from './services/native';
 import type { Session, User, RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './services/supabase';
 import type { ImportPreview } from './services/exportImport';
 import { buildPracticeScenario } from './services/practiceSimulator';
+import { createLiveAssistSession, endLiveAssistSession, getLiveAssistResponse, logLiveAssistAction } from './services/liveAssistApi';
 import appStoreIcon from '../icons/app-store.svg';
 import reviewAvatar1 from '../avatar/1.png';
 import reviewAvatar2 from '../avatar/2.png';
@@ -57,6 +59,10 @@ const DashboardScreen = lazy(() => import('./components/main-screens').then((mod
 const ScriptScreen = lazy(() => import('./components/main-screens').then((module) => ({ default: module.ScriptScreen })));
 const SettingsScreen = lazy(() => import('./components/main-screens').then((module) => ({ default: module.SettingsScreen })));
 const CallSimulator = lazy(() => import('./components/call-simulator').then((module) => ({ default: module.CallSimulator })));
+const LiveAssistSetupScreen = lazy(() => import('./components/live-assist').then((module) => ({ default: module.LiveAssistSetupScreen })));
+const LiveAssistBriefScreen = lazy(() => import('./components/live-assist').then((module) => ({ default: module.LiveAssistBriefScreen })));
+const LiveAssistCallScreen = lazy(() => import('./components/live-assist').then((module) => ({ default: module.LiveAssistCallScreen })));
+const LiveAssistSummaryScreen = lazy(() => import('./components/live-assist').then((module) => ({ default: module.LiveAssistSummaryScreen })));
 const AccountSetup = lazy(() => import('./components/auth-flow').then((module) => ({ default: module.AccountSetup })));
 const SetupAnimation = lazy(() => import('./components/auth-flow').then((module) => ({ default: module.SetupAnimation })));
 const OnboardingNotificationsStep = lazy(() => import('./components/auth-flow').then((module) => ({ default: module.OnboardingNotificationsStep })));
@@ -210,9 +216,26 @@ function DeferredScreenFallback({ isDark, kind = 'generic' }: { isDark: boolean;
   );
 }
 
+const DEFAULT_LIVE_ASSIST_DRAFT: CreateLiveAssistSessionRequest = {
+  scenarioType: 'general_business',
+  contactName: '',
+  goal: '',
+  worries: [],
+  tone: 'Professional',
+  transcriptOptIn: false,
+};
+
+const DEFAULT_LIVE_ASSIST_STATE: LiveAssistState = {
+  intentOverride: null,
+  freezeMode: false,
+  shorterRequested: false,
+  alternateRequested: false,
+  lastSuggestion: null,
+};
+
 export default function App() {
   const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
-  const [view, setView] = useState<'splash' | 'explainer' | 'reset' | 'onboarding' | 'reviews' | 'account' | 'setup' | 'notifications' | 'home' | 'history' | 'dashboard' | 'script' | 'settings'>('splash');
+  const [view, setView] = useState<'splash' | 'explainer' | 'reset' | 'onboarding' | 'reviews' | 'account' | 'setup' | 'notifications' | 'home' | 'history' | 'dashboard' | 'script' | 'settings' | 'liveAssistSetup' | 'liveAssistBrief' | 'liveAssistCall' | 'liveAssistSummary'>('splash');
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [description, setDescription] = useState('');
   const [perspective, setPerspective] = useState<CallPerspective>('outgoing');
@@ -300,6 +323,23 @@ export default function App() {
   const [iapPrices, setIapPrices] = useState<{ monthly?: string; annual?: string }>({});
   const [milestoneToast, setMilestoneToast] = useState<{ icon: string; title: string } | null>(null);
   const [customTriggerInput, setCustomTriggerInput] = useState('');
+  const [liveAssistDraft, setLiveAssistDraft] = useState<CreateLiveAssistSessionRequest>(DEFAULT_LIVE_ASSIST_DRAFT);
+  const [liveAssistSession, setLiveAssistSession] = useState<LiveAssistSession | null>(null);
+  const [liveAssistState, setLiveAssistState] = useState<LiveAssistState>(DEFAULT_LIVE_ASSIST_STATE);
+  const [liveAssistTurns, setLiveAssistTurns] = useState<LiveAssistTurn[]>([]);
+  const [liveAssistSuggestion, setLiveAssistSuggestion] = useState<LiveAssistSuggestion | null>(null);
+  const [liveAssistSummary, setLiveAssistSummary] = useState<LiveAssistSummary | null>(null);
+  const [liveAssistLatestTranscript, setLiveAssistLatestTranscript] = useState('');
+  const [liveAssistLoading, setLiveAssistLoading] = useState(false);
+  const [liveAssistThinking, setLiveAssistThinking] = useState(false);
+  const [liveAssistError, setLiveAssistError] = useState<string | null>(null);
+  const [liveAssistStartedAt, setLiveAssistStartedAt] = useState<number | null>(null);
+  const [liveAssistElapsedMs, setLiveAssistElapsedMs] = useState(0);
+  const liveAssistLatestTranscriptRef = useRef('');
+  const liveAssistSessionRef = useRef<LiveAssistSession | null>(null);
+  const liveAssistStateRef = useRef<LiveAssistState>(DEFAULT_LIVE_ASSIST_STATE);
+  const liveAssistTurnsRef = useRef<LiveAssistTurn[]>([]);
+  const liveAssistThinkingRef = useRef(false);
   const prevMilestoneIdsRef = useRef<Set<string>>(new Set());
   const channelRef = useRef<RealtimeChannel[]>([]);
   const didBootstrapInitialSessionRef = useRef(false);
@@ -314,6 +354,26 @@ export default function App() {
   useEffect(() => {
     supabaseUserRef.current = supabaseUser;
   }, [supabaseUser]);
+
+  useEffect(() => {
+    liveAssistSessionRef.current = liveAssistSession;
+  }, [liveAssistSession]);
+
+  useEffect(() => {
+    liveAssistStateRef.current = liveAssistState;
+  }, [liveAssistState]);
+
+  useEffect(() => {
+    liveAssistTurnsRef.current = liveAssistTurns;
+  }, [liveAssistTurns]);
+
+  useEffect(() => {
+    liveAssistThinkingRef.current = liveAssistThinking;
+  }, [liveAssistThinking]);
+
+  useEffect(() => {
+    liveAssistLatestTranscriptRef.current = liveAssistLatestTranscript;
+  }, [liveAssistLatestTranscript]);
 
   const resetSignedOutProfileState = () => {
     setUserName('');
@@ -348,7 +408,48 @@ export default function App() {
     localStorage.removeItem('callmate_starred');
     localStorage.removeItem('callmate_trial_selected_plan');
     localStorage.removeItem(PRACTICE_SESSIONS_KEY);
+    resetLiveAssistFlow();
   };
+
+  const resetLiveAssistFlow = React.useCallback(() => {
+    setLiveAssistDraft(DEFAULT_LIVE_ASSIST_DRAFT);
+    setLiveAssistSession(null);
+    setLiveAssistState(DEFAULT_LIVE_ASSIST_STATE);
+    setLiveAssistTurns([]);
+    setLiveAssistSuggestion(null);
+    setLiveAssistSummary(null);
+    setLiveAssistLatestTranscript('');
+    setLiveAssistLoading(false);
+    setLiveAssistThinking(false);
+    setLiveAssistError(null);
+    setLiveAssistStartedAt(null);
+    setLiveAssistElapsedMs(0);
+  }, []);
+
+  const openLiveAssist = React.useCallback(() => {
+    const trialActive = tier === 'trial' && !!trialStartDate && Math.floor((Date.now() - trialStartDate) / 86400000) < TRIAL_DAYS;
+    const hasAccess = tier === 'admin' || tier === 'monthly' || tier === 'annual' || trialActive;
+    if (!hasAccess) {
+      setUpgradeModalForced(true);
+      setShowUpgradeModal(true);
+      return;
+    }
+    resetLiveAssistFlow();
+    setLiveAssistDraft((prev) => ({ ...DEFAULT_LIVE_ASSIST_DRAFT, tone, transcriptOptIn: prev.transcriptOptIn }));
+    setView('liveAssistSetup');
+  }, [resetLiveAssistFlow, tier, tone, trialStartDate]);
+
+  useEffect(() => {
+    if (view !== 'liveAssistCall' || !liveAssistStartedAt) {
+      setLiveAssistElapsedMs(0);
+      return;
+    }
+    setLiveAssistElapsedMs(Date.now() - liveAssistStartedAt);
+    const timer = window.setInterval(() => {
+      setLiveAssistElapsedMs(Date.now() - liveAssistStartedAt);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [view, liveAssistStartedAt]);
 
   // Sync native status bar and html class with theme
   useEffect(() => {
@@ -493,6 +594,11 @@ export default function App() {
     } catch (verifyError: any) {
       console.error('Purchase verification failed:', verifyError?.message);
       const access = await loadAccessStateSafely();
+      if (!access) {
+        // Access state also failed — revoke the optimistic grant so the user is not
+        // indefinitely granted a tier that was never confirmed by the server.
+        setTier('free');
+      }
       if (options?.reopenPaywallOnFailure && (!access || !['admin', 'monthly', 'annual'].includes(access.tier))) {
         setUpgradeModalForced(true);
         setShowUpgradeModal(true);
@@ -1197,6 +1303,7 @@ export default function App() {
 
     // Listen for future auth state changes (login / logout)
     const { data: { subscription } } = onAuthStateChange(async (event, session) => {
+      setAuthToken(session?.access_token ?? null);
       if (session?.user) {
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
           if (event === 'INITIAL_SESSION' && didBootstrapInitialSessionRef.current) {
@@ -1262,6 +1369,7 @@ export default function App() {
           channelRef.current.forEach(ch => ch.unsubscribe());
           channelRef.current = [];
           clearLocalUserCollections();
+          clearOfflineQueue();
           resetSignedOutProfileState();
           setTier('free');
           setTrialStartDate(null);
@@ -1651,6 +1759,228 @@ export default function App() {
       setGenerateAttempt(0);
     }
   };
+
+  const handleLiveAssistSetupChange = React.useCallback((patch: Partial<CreateLiveAssistSessionRequest>) => {
+    setLiveAssistDraft((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const handleCreateLiveAssistSession = React.useCallback(async () => {
+    if (!isPremium) {
+      setUpgradeModalForced(true);
+      setShowUpgradeModal(true);
+      return;
+    }
+
+    const payload: CreateLiveAssistSessionRequest = {
+      ...liveAssistDraft,
+      contactName: liveAssistDraft.contactName.trim(),
+      goal: liveAssistDraft.goal.trim(),
+      worries: liveAssistDraft.worries.map((item) => item.trim()).filter(Boolean).slice(0, 3),
+    };
+
+    if (!payload.contactName || !payload.goal) return;
+
+    setLiveAssistLoading(true);
+    setLiveAssistError(null);
+    try {
+      const response = await createLiveAssistSession(payload);
+      setLiveAssistSession({
+        sessionId: response.sessionId,
+        scenarioType: payload.scenarioType,
+        contactName: payload.contactName,
+        goal: payload.goal,
+        worries: payload.worries,
+        tone: payload.tone,
+        transcriptOptIn: payload.transcriptOptIn,
+        brief: response.brief,
+        fallbacks: response.fallbacks,
+        createdAt: Date.now(),
+      });
+      setLiveAssistState(DEFAULT_LIVE_ASSIST_STATE);
+      setLiveAssistSuggestion(null);
+      setLiveAssistTurns([]);
+      setLiveAssistSummary(null);
+      setLiveAssistLatestTranscript('');
+      setView('liveAssistBrief');
+    } catch (error) {
+      setLiveAssistError(error instanceof Error ? error.message : 'Unable to start Live Assist right now.');
+    } finally {
+      setLiveAssistLoading(false);
+    }
+  }, [isPremium, liveAssistDraft]);
+
+  const handleStartLiveAssistCall = React.useCallback(() => {
+    if (!liveAssistSession) return;
+    setLiveAssistState(DEFAULT_LIVE_ASSIST_STATE);
+    setLiveAssistSuggestion(null);
+    setLiveAssistTurns([]);
+    setLiveAssistLatestTranscript('');
+    setLiveAssistError(null);
+    setLiveAssistStartedAt(Date.now());
+    setView('liveAssistCall');
+  }, [liveAssistSession]);
+
+  const requestLiveAssistSuggestion = React.useCallback(async (transcriptOverride?: string, stateOverride?: LiveAssistState) => {
+    const session = liveAssistSessionRef.current;
+    if (!session) return;
+    const latestTranscript = (transcriptOverride ?? liveAssistLatestTranscriptRef.current).trim();
+    if (!latestTranscript) return;
+
+    setLiveAssistThinking(true);
+    setLiveAssistError(null);
+    try {
+      const nextSuggestion = await getLiveAssistResponse({
+        sessionId: session.sessionId,
+        latestTranscript,
+        recentHistory: liveAssistTurnsRef.current.slice(-6),
+        state: stateOverride ?? liveAssistStateRef.current,
+      });
+      setLiveAssistTurns((prev) => [...prev, { speaker: 'other', text: latestTranscript }]);
+      setLiveAssistSuggestion(nextSuggestion);
+      setLiveAssistState({
+        intentOverride: null,
+        freezeMode: false,
+        shorterRequested: false,
+        alternateRequested: false,
+        lastSuggestion: nextSuggestion.primary,
+      });
+      setLiveAssistLatestTranscript('');
+    } catch (error) {
+      setLiveAssistError(error instanceof Error ? error.message : 'Unable to get the next line right now.');
+    } finally {
+      setLiveAssistThinking(false);
+    }
+  }, []);
+
+  const handleRequestLiveAssistSuggestion = React.useCallback(async () => {
+    await requestLiveAssistSuggestion();
+  }, [requestLiveAssistSuggestion]);
+
+  const handleLiveAssistAction = React.useCallback(async (action: LiveAssistActionType) => {
+    if (!liveAssistSession) return;
+
+    const nextState: LiveAssistState = {
+      ...liveAssistState,
+      intentOverride: action === 'pushback' ? 'pushback' : action === 'question' ? 'question' : liveAssistState.intentOverride,
+      freezeMode: action === 'freeze' ? true : liveAssistState.freezeMode,
+      shorterRequested: action === 'shorter',
+      alternateRequested: action === 'alternate',
+    };
+    setLiveAssistState(nextState);
+
+    if (action === 'freeze') {
+      setLiveAssistSuggestion((prev) => ({
+        primary: liveAssistSession.fallbacks.freeze,
+        alternate: prev?.alternate,
+        intent: prev?.intent || 'clarification',
+        confidence: prev?.confidence ?? 1,
+        freezeRecommended: true,
+      }));
+      return;
+    }
+
+    try {
+      await logLiveAssistAction({
+        sessionId: liveAssistSession.sessionId,
+        action,
+        timestamp: Date.now(),
+        context: {
+          latestTranscript: liveAssistLatestTranscript || liveAssistTurns[liveAssistTurns.length - 1]?.text,
+          latestSuggestion: liveAssistSuggestion?.primary || liveAssistState.lastSuggestion || undefined,
+          detectedIntent: liveAssistSuggestion?.intent || null,
+        },
+      });
+    } catch {
+      // Non-blocking.
+    }
+
+    if (!liveAssistSuggestion && action !== 'shorter' && action !== 'alternate') return;
+
+    if (action === 'shorter' || action === 'alternate' || action === 'pushback' || action === 'question') {
+      setLiveAssistThinking(true);
+      setLiveAssistError(null);
+      try {
+        const latestTranscript = liveAssistTurnsRef.current.filter((turn) => turn.speaker === 'other').slice(-1)[0]?.text || liveAssistLatestTranscriptRef.current.trim();
+        if (!latestTranscript) return;
+        await requestLiveAssistSuggestion(latestTranscript, nextState);
+      } catch (error) {
+        setLiveAssistError(error instanceof Error ? error.message : 'Unable to refresh the suggestion right now.');
+      }
+    }
+  }, [liveAssistSession, liveAssistState, liveAssistSuggestion, requestLiveAssistSuggestion]);
+
+  const handleFinishLiveAssist = React.useCallback(async () => {
+    if (!liveAssistSession) {
+      resetLiveAssistFlow();
+      setView('home');
+      return;
+    }
+
+    setLiveAssistThinking(true);
+    setLiveAssistError(null);
+    try {
+      const summary = await endLiveAssistSession({
+        sessionId: liveAssistSession.sessionId,
+        completed: true,
+        transcriptOptIn: liveAssistSession.transcriptOptIn,
+        events: liveAssistTurns,
+      });
+      setLiveAssistSummary(summary);
+      setView('liveAssistSummary');
+    } catch (error) {
+      setLiveAssistError(error instanceof Error ? error.message : 'Unable to finish the session right now.');
+    } finally {
+      setLiveAssistThinking(false);
+    }
+  }, [liveAssistSession, liveAssistTurns, resetLiveAssistFlow]);
+
+  useEffect(() => {
+    if (view !== 'liveAssistCall' || !isVoiceSimulatorNativeAvailable) return;
+
+    let removeListeners: (() => void) | undefined;
+    let disposed = false;
+
+    const startNativeLoop = async () => {
+      try {
+        await prepareVoiceSimulatorAudioSession();
+        await requestVoiceSimulatorPermissions();
+        removeListeners = await addVoiceSimulatorListeners({
+          onLiveAssistPartial: ({ transcript }) => {
+            if (!disposed) {
+              setLiveAssistLatestTranscript(transcript);
+            }
+          },
+          onLiveAssistFinal: ({ transcript }) => {
+            if (disposed) return;
+            setLiveAssistLatestTranscript(transcript);
+            if (liveAssistThinkingRef.current) return;
+            void requestLiveAssistSuggestion(transcript);
+          },
+          onLiveAssistState: ({ state, message }) => {
+            if (disposed) return;
+            if (state === 'error') {
+              setLiveAssistError(message || 'Live Assist listening failed.');
+            }
+          },
+        });
+        if (!disposed) {
+          await startNativeLiveAssistRecognition();
+        }
+      } catch (error) {
+        if (!disposed) {
+          setLiveAssistError(error instanceof Error ? error.message : 'Unable to start live listening right now.');
+        }
+      }
+    };
+
+    void startNativeLoop();
+
+    return () => {
+      disposed = true;
+      if (removeListeners) removeListeners();
+      void stopNativeLiveAssistRecognition().catch(() => {});
+    };
+  }, [requestLiveAssistSuggestion, view]);
 
   const handleSimulateCall = async () => {
     if (!currentScript) return;
@@ -2540,6 +2870,14 @@ export default function App() {
         <p className={cn("text-2xl font-semibold tracking-tight", isDark ? "text-[#f2ede3]" : "text-[#22312b]")}>
           {view === 'script'
             ? 'Call Script'
+            : view === 'liveAssistSetup'
+              ? 'Live Assist'
+              : view === 'liveAssistBrief'
+                ? 'Call Brief'
+                : view === 'liveAssistCall'
+                  ? 'Live Assist'
+                  : view === 'liveAssistSummary'
+                    ? 'Call Review'
             : view === 'dashboard'
               ? 'Your Progress'
               : view === 'history'
@@ -2616,10 +2954,72 @@ export default function App() {
                   handleGenerate={handleGenerate}
                   expandedSafeLineIndex={expandedSafeLineIndex}
                   toggleSafeLine={toggleSafeLine}
+                  onOpenLiveAssist={openLiveAssist}
                 />
               </Suspense>
 
             </div>
+          )}
+
+          {view === 'liveAssistSetup' && (
+            <Suspense fallback={<DeferredScreenFallback isDark={isDark} />}>
+              <LiveAssistSetupScreen
+                isDark={isDark}
+                draft={liveAssistDraft}
+                onChange={handleLiveAssistSetupChange}
+                onBack={() => setView('home')}
+                onStart={handleCreateLiveAssistSession}
+                loading={liveAssistLoading}
+                error={liveAssistError}
+              />
+            </Suspense>
+          )}
+
+          {view === 'liveAssistBrief' && liveAssistSession && (
+            <Suspense fallback={<DeferredScreenFallback isDark={isDark} />}>
+              <LiveAssistBriefScreen
+                isDark={isDark}
+                session={liveAssistSession}
+                onBack={() => setView('liveAssistSetup')}
+                onStart={handleStartLiveAssistCall}
+              />
+            </Suspense>
+          )}
+
+          {view === 'liveAssistCall' && liveAssistSession && (
+            <Suspense fallback={<DeferredScreenFallback isDark={isDark} />}>
+              <LiveAssistCallScreen
+                isDark={isDark}
+                session={liveAssistSession}
+                turns={liveAssistTurns}
+                suggestion={liveAssistSuggestion}
+                state={{
+                  latestTranscript: liveAssistLatestTranscript,
+                  activeIntent: liveAssistSuggestion?.intent || liveAssistState.intentOverride,
+                  freezeMode: liveAssistState.freezeMode,
+                }}
+                elapsedMs={liveAssistElapsedMs}
+                thinking={liveAssistThinking}
+                error={liveAssistError}
+                onTranscriptChange={setLiveAssistLatestTranscript}
+                onGetSuggestion={handleRequestLiveAssistSuggestion}
+                onAction={handleLiveAssistAction}
+                onFinish={handleFinishLiveAssist}
+              />
+            </Suspense>
+          )}
+
+          {view === 'liveAssistSummary' && liveAssistSummary && (
+            <Suspense fallback={<DeferredScreenFallback isDark={isDark} />}>
+              <LiveAssistSummaryScreen
+                isDark={isDark}
+                summary={liveAssistSummary}
+                onDone={() => {
+                  resetLiveAssistFlow();
+                  setView('home');
+                }}
+              />
+            </Suspense>
           )}
 
           {view === 'settings' && (
@@ -2835,6 +3235,7 @@ export default function App() {
         />
       </Suspense>
 
+      {!['liveAssistSetup', 'liveAssistBrief', 'liveAssistCall', 'liveAssistSummary'].includes(view) && (
       <nav className={cn("fixed bottom-0 left-0 right-0 border-t px-4 py-3 pb-8 z-50 flex items-center justify-around max-w-2xl mx-auto shadow-2xl transition-colors", isDark ? "bg-black border-white/5" : "bg-white border-black/5")}>
         {/* New Call */}
         <button onClick={() => { setCurrentScript(null); setActiveTab('home'); setView('home'); }}
@@ -2864,6 +3265,7 @@ export default function App() {
           <span className="text-[10px] font-black uppercase tracking-[0.2em]">Journal</span>
         </button>
       </nav>
+      )}
 
       <AnimatePresence>
         {showPanicPanel && (

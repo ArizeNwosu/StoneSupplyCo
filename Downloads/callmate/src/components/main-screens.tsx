@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { AlertCircle, ArrowLeft, Check, ChevronDown, ChevronRight, ChevronUp, Copy, Download, History, Loader2, Moon, Phone, Search, Settings, Share2, Star, Sun, Trash2, Upload, X, Instagram, ShieldAlert, LifeBuoy, Flag } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Check, ChevronDown, ChevronRight, ChevronUp, Copy, Download, History, Loader2, Moon, Phone, Search, Settings, Share2, Sparkles, Star, Sun, Trash2, Upload, X, Instagram, ShieldAlert, LifeBuoy, Flag } from 'lucide-react';
 import type { ImportPreview } from '../services/exportImport';
 import { Tone, SAFE_LINES, Persona, CallScript, Tier, CallPerspective, PracticeSessionSummary } from '../types';
 import { Button, Card, CallTypeGrid, ScriptCardSkeleton, ScriptViewSkeleton, cn } from './ui';
@@ -12,7 +12,7 @@ type HomeScreenProps = {
   isDark: boolean;
   nextMilestone: { title: string; icon: string; needed: number } | null;
   currentScript: CallScript | null;
-  setView: (view: 'script') => void;
+  setView: (view: 'script' | 'liveAssistSetup') => void;
   sortedCallTypes: string[];
   sortMode: 'Random' | 'A-Z';
   setSortMode: React.Dispatch<React.SetStateAction<'Random' | 'A-Z'>>;
@@ -32,6 +32,7 @@ type HomeScreenProps = {
   handleGenerate: () => void;
   expandedSafeLineIndex: number | null;
   toggleSafeLine: (index: number) => void;
+  onOpenLiveAssist: () => void;
 };
 
 function CopyButton({ text, isDark }: { text: string; isDark: boolean }) {
@@ -77,6 +78,7 @@ export function HomeScreen(props: HomeScreenProps) {
     handleGenerate,
     expandedSafeLineIndex,
     toggleSafeLine,
+    onOpenLiveAssist,
   } = props;
 
   const handleGeneratePress = () => {
@@ -111,6 +113,37 @@ export function HomeScreen(props: HomeScreenProps) {
           <ChevronRight className={cn('w-4 h-4 shrink-0', isDark ? 'text-[#b9d5c8]' : 'text-[#5d8a7a]')} />
         </div>
       )}
+
+      <button
+        type="button"
+        onClick={onOpenLiveAssist}
+        className={cn(
+          'w-full rounded-[1.9rem] border p-5 text-left transition-all',
+          isDark
+            ? 'border-[#527a6c] bg-[linear-gradient(135deg,#20342b_0%,#171f1d_100%)] hover:border-[#8fae9e]'
+            : 'border-[#bfd2c8] bg-[linear-gradient(135deg,#eef5f1_0%,#fffaf2_100%)] hover:border-[#8fae9e]',
+        )}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.22em]', isDark ? 'bg-[#274136] text-[#d9e8e0]' : 'bg-white/80 text-[#5d8a7a]')}>
+                <Sparkles className="h-3 w-3" />
+                Premium
+              </span>
+            </div>
+            <div>
+              <p className={cn('text-lg font-semibold tracking-tight', isDark ? 'text-[#f6f2ea]' : 'text-[#22312b]')}>
+                Live Response Assist
+              </p>
+              <p className={cn('mt-1 text-sm leading-relaxed', isDark ? 'text-[#b7c3bd]' : 'text-[#66756f]')}>
+                Keep the call on speaker and get one calm line you can say next.
+              </p>
+            </div>
+          </div>
+          <ChevronRight className={cn('mt-1 h-5 w-5 shrink-0', isDark ? 'text-[#b9d5c8]' : 'text-[#5d8a7a]')} />
+        </div>
+      </button>
 
       <section>
         <div className="flex items-center justify-between mb-4">

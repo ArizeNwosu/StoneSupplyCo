@@ -11,4 +11,8 @@ export const API_ENDPOINTS = {
   tts: '/api/ai/tts',
   practiceNextTurn: '/api/practice-call/next-turn',
   practiceEnd: '/api/practice-call/end',
+  liveAssistSession: '/api/live-assist/session',
+  liveAssistRespond: '/api/live-assist/respond',
+  liveAssistAction: '/api/live-assist/action',
+  liveAssistEnd: '/api/live-assist/end',
 } as const;
