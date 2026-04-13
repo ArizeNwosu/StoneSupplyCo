@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Lead } from '../types';
-import { X, Building2, MapPin, Users, Briefcase, Calendar, DollarSign, Target, Award, Megaphone, Link as LinkIcon, CheckSquare, Square, Plus, Check } from 'lucide-react';
+import { X, Building2, MapPin, Users, Briefcase, Calendar, DollarSign, Target, Award, Megaphone, Link as LinkIcon, CheckSquare, Square, Plus, Check, Trash2 } from 'lucide-react';
 import EmailGenerator from './EmailGenerator';
 import { useLeads } from '../context/LeadContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -11,7 +11,7 @@ interface LeadCardProps {
 }
 
 export default function LeadCard({ lead: initialLead, onClose }: LeadCardProps) {
-  const { leads, updateLeadStatus, addTask, toggleTask, updateLeadNotes, updateLeadDealValue, updateLeadSnoozeDate } = useLeads();
+  const { leads, updateLeadStatus, addTask, toggleTask, updateLeadNotes, updateLeadDealValue, updateLeadSnoozeDate, deleteLeads } = useLeads();
   const [newTaskDesc, setNewTaskDesc] = useState('');
   const [newTaskDate, setNewTaskDate] = useState('');
 
@@ -190,7 +190,20 @@ export default function LeadCard({ lead: initialLead, onClose }: LeadCardProps) 
                       <Target className="w-4 h-4 mr-1"/> {lead.trigger_detail}
                     </p>
                   </div>
-                  <div className="ml-3 flex h-7 items-center">
+                  <div className="ml-3 flex h-7 items-center space-x-2">
+                    <button
+                      type="button"
+                      className="rounded-md bg-white text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      title="Delete lead"
+                      onClick={() => {
+                        if (window.confirm(`Delete ${lead.company_name}?`)) {
+                          deleteLeads([lead.id]);
+                          onClose();
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-5 w-5" aria-hidden="true" />
+                    </button>
                     <button
                       type="button"
                       className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
