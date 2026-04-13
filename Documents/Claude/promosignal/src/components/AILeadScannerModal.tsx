@@ -101,12 +101,10 @@ export default function AILeadScannerModal({ onClose }: AILeadScannerModalProps)
   const unadded = results.filter((_, i) => !addedIds.has(i)).length;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
-      <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={onClose} />
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-gray-500 bg-opacity-75" aria-hidden="true" onClick={onClose} />
 
-        <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg">
           {/* Header */}
           <div className="px-6 pt-6 pb-4 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center">
@@ -301,7 +299,6 @@ export default function AILeadScannerModal({ onClose }: AILeadScannerModalProps)
             </>
           )}
         </div>
-      </div>
     </div>
   );
 }
