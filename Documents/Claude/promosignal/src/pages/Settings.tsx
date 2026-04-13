@@ -3,7 +3,17 @@ import { useLeads } from '../context/LeadContext';
 import { Save, Sparkles, Clock, CheckCircle2, User } from 'lucide-react';
 import { Vertical } from '../types';
 
+type ScanVertical = Vertical | 'all';
+
 const VERTICALS: { value: Vertical; label: string }[] = [
+  { value: 'awards', label: 'Awards' },
+  { value: 'events', label: 'Events' },
+  { value: 'hiring', label: 'Hiring' },
+  { value: 'leases', label: 'Leases' },
+];
+
+const SCAN_VERTICALS: { value: ScanVertical; label: string }[] = [
+  { value: 'all', label: 'All' },
   { value: 'awards', label: 'Awards' },
   { value: 'events', label: 'Events' },
   { value: 'hiring', label: 'Hiring' },
@@ -36,6 +46,18 @@ export default function Settings() {
     const current = localSettings.specializations || [];
     const updated = current.includes(v) ? current.filter(s => s !== v) : [...current, v];
     setLocalSettings(s => ({ ...s, specializations: updated }));
+  };
+
+  const toggleScanVertical = (v: ScanVertical) => {
+    if (v === 'all') {
+      setLocalSettings(s => ({ ...s, autoScanVerticals: [] }));
+      return;
+    }
+    const current = localSettings.autoScanVerticals || [];
+    const updated = current.includes(v as Vertical)
+      ? current.filter(x => x !== v)
+      : [...current, v as Vertical];
+    setLocalSettings(s => ({ ...s, autoScanVerticals: updated }));
   };
 
   return (
@@ -147,34 +169,50 @@ export default function Settings() {
               {localSettings.autoScanEnabled && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Scan Frequency</label>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <select
-                        className="pl-9 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        value={localSettings.autoScanFrequencyHours}
-                        onChange={e => setLocalSettings(s => ({ ...s, autoScanFrequencyHours: Number(e.target.value) }))}
-                      >
-                        <option value={1}>Every Hour</option>
-                        <option value={6}>Every 6 Hours</option>
-                        <option value={12}>Every 12 Hours</option>
-                        <option value={24}>Daily</option>
-                        <option value={168}>Weekly</option>
-                      </select>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Scan Schedule</label>
+                    <div className="flex items-center px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700">
+                      <Clock className="h-4 w-4 text-gray-400 mr-2 shrink-0" />
+                      Daily at 5:00 AM EST
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Search Prompt</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Signal Verticals</label>
+                    <p className="text-xs text-gray-500 mb-2">Select which lead types to scan for automatically.</p>
+                    <div className="flex space-x-2">
+                      {SCAN_VERTICALS.map(v => {
+                        const isAll = v.value === 'all';
+                        const active = isAll
+                          ? (localSettings.autoScanVerticals || []).length === 0
+                          : (localSettings.autoScanVerticals || []).includes(v.value as Vertical);
+                        return (
+                          <button
+                            key={v.value}
+                            type="button"
+                            onClick={() => toggleScanVertical(v.value)}
+                            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                              active
+                                ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                                : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                            }`}
+                          >
+                            {v.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Custom Context <span className="font-normal text-gray-400">(optional)</span></label>
                     <textarea
-                      rows={3}
+                      rows={2}
                       className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       value={localSettings.autoScanPrompt}
                       onChange={e => setLocalSettings(s => ({ ...s, autoScanPrompt: e.target.value }))}
-                      placeholder="e.g., Tech companies in California that recently announced series A funding"
+                      placeholder="e.g., Focus on SaaS companies in the Southeast under 500 employees"
                     />
                   </div>
                   {settings.lastScanTime && (
-                    <p className="text-xs text-gray-500">Last scan: {new Date(settings.lastScanTime).toLocaleString()}</p>
+                    <p className="text-xs text-gray-400">Last scan: {new Date(settings.lastScanTime).toLocaleString()}</p>
                   )}
                 </>
               )}

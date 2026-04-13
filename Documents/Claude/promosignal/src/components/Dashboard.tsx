@@ -4,7 +4,7 @@ import { Lead, Vertical } from '../types';
 import LeadCard from './LeadCard';
 import AddLeadModal from './AddLeadModal';
 import AILeadScannerModal from './AILeadScannerModal';
-import { Filter, Search, ChevronDown, Activity, Clock, Building2, Users, ArrowUpDown, Link as LinkIcon, Trash2, Tag, CheckSquare, Plus, Database, Sparkles, Download } from 'lucide-react';
+import { Filter, Search, ChevronDown, Activity, Clock, Building2, Users, ArrowUpDown, Trash2, Tag, CheckSquare, Plus, Database, Sparkles, Download } from 'lucide-react';
 
 export default function Dashboard() {
   const { leads, deleteLeads, updateLeadsStatus, assignLeadsTerritory, loadSampleData } = useLeads();
@@ -484,12 +484,6 @@ export default function Dashboard() {
                           <Clock className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
                           {new Date(lead.date_discovered).toLocaleDateString()}
                         </span>
-                        {lead.sources && lead.sources.length > 0 && (
-                          <span className="flex items-center text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full text-xs font-medium border border-blue-100">
-                            <LinkIcon className="flex-shrink-0 mr-1 h-3 w-3" />
-                            {lead.sources[0].name}
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>

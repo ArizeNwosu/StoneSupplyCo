@@ -57,6 +57,7 @@ export interface UserSettings {
   autoScanFrequencyHours: number;
   lastScanTime: number | null;
   autoScanPrompt: string;
+  autoScanVerticals: Vertical[];
   displayName: string;
   companyName: string;
   territory: string;
@@ -95,13 +96,38 @@ const defaultSettings: UserSettings = {
   autoScanEnabled: false,
   autoScanFrequencyHours: 24,
   lastScanTime: null,
-  autoScanPrompt: 'Tech companies in California that recently announced series A funding',
+  autoScanPrompt: '',
+  autoScanVerticals: [],
   displayName: '',
   companyName: '',
   territory: '',
   specializations: [],
   emailSignature: '',
 };
+
+const VERTICAL_PROMPTS: Record<Vertical, string> = {
+  awards: 'companies planning annual awards ceremonies, employee recognition programs, or industry award events',
+  events: 'companies sponsoring or exhibiting at upcoming trade shows, conferences, or user summits',
+  hiring: 'companies with rapid hiring growth — 50+ open positions or recently announced major headcount expansion',
+  leases: 'companies that recently signed new office leases, announced expansions, or are moving to new locations',
+};
+
+function buildAutoScanPrompt(verticals: Vertical[], customContext: string): string {
+  const allVerticals: Vertical[] = ['awards', 'events', 'hiring', 'leases'];
+  const targets = verticals.length > 0 ? verticals : allVerticals;
+  const desc = targets.map(v => VERTICAL_PROMPTS[v]).join('; ');
+  const base = `Find companies that are: ${desc}.`;
+  return customContext.trim() ? `${base} Additional focus: ${customContext.trim()}` : base;
+}
+
+function getEasternHour(): number {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    hour12: false,
+  });
+  return parseInt(formatter.format(new Date()), 10);
+}
 
 export function LeadProvider({ children }: { children: ReactNode }) {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -176,16 +202,22 @@ export function LeadProvider({ children }: { children: ReactNode }) {
     if (!isAuthReady || !userId || !settings.autoScanEnabled || isScanningRef.current) return;
 
     const checkAndRunScan = async () => {
+      const easternHour = getEasternHour();
       const now = Date.now();
       const lastScan = settings.lastScanTime || 0;
       const hoursSinceLastScan = (now - lastScan) / (1000 * 60 * 60);
 
-      if (hoursSinceLastScan >= settings.autoScanFrequencyHours) {
+      // Run if it's 5am or later EST and hasn't scanned in the last 20 hours
+      if (easternHour >= 5 && hoursSinceLastScan >= 20) {
         isScanningRef.current = true;
         try {
           console.log("Running scheduled AI Lead Scan...");
-          const newLeads = await scanForLeads(settings.autoScanPrompt);
-          
+          const prompt = buildAutoScanPrompt(
+            settings.autoScanVerticals || [],
+            settings.autoScanPrompt || ''
+          );
+          const newLeads = await scanForLeads(prompt);
+
           if (newLeads.length > 0) {
             const batch = writeBatch(db);
             newLeads.forEach(leadData => {
