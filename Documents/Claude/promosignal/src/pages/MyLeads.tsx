@@ -11,24 +11,22 @@ export default function MyLeads() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'urgency_score' | 'date_discovered'>('urgency_score');
 
-  const activeLeads = useMemo(() => leads.filter(l => l.status !== 'new'), [leads]);
-
   const filteredLeads = useMemo(() => {
-    return activeLeads
+    return leads
       .filter(l => verticalFilter === 'all' || l.vertical === verticalFilter)
       .filter(l => statusFilter === 'all' || l.status === statusFilter)
       .sort((a, b) => sortBy === 'urgency_score'
         ? b.urgency_score - a.urgency_score
         : new Date(b.date_discovered).getTime() - new Date(a.date_discovered).getTime());
-  }, [activeLeads, verticalFilter, statusFilter, sortBy]);
+  }, [leads, verticalFilter, statusFilter, sortBy]);
 
   const stats = useMemo(() => {
-    const contacted = activeLeads.filter(l => l.status === 'contacted').length;
-    const purchased = activeLeads.filter(l => l.status === 'purchased');
+    const contacted = leads.filter(l => l.status === 'contacted').length;
+    const purchased = leads.filter(l => l.status === 'purchased');
     const totalDealValue = purchased.reduce((sum, l) => sum + (l.deal_value || 0), 0);
-    const snoozed = activeLeads.filter(l => l.status === 'snoozed').length;
-    return { total: activeLeads.length, contacted, purchased: purchased.length, totalDealValue, snoozed };
-  }, [activeLeads]);
+    const snoozed = leads.filter(l => l.status === 'snoozed').length;
+    return { total: leads.length, contacted, purchased: purchased.length, totalDealValue, snoozed };
+  }, [leads]);
 
   const getScoreColor = (score: number) => {
     if (score >= 75) return 'text-red-600 bg-red-50 ring-red-500/10';
@@ -46,14 +44,14 @@ export default function MyLeads() {
     <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#f5f5f5]">
       <header className="bg-white border-b border-gray-200 px-8 py-5 shrink-0">
         <h1 className="text-2xl font-semibold text-gray-900">My Leads</h1>
-        <p className="text-sm text-gray-500 mt-1">Leads you are actively working on.</p>
+        <p className="text-sm text-gray-500 mt-1">All leads in your pipeline.</p>
       </header>
       <div className="flex-1 overflow-auto p-8">
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Total Active', value: stats.total, color: 'text-gray-900' },
+            { label: 'Total Leads', value: stats.total, color: 'text-gray-900' },
             { label: 'Contacted', value: stats.contacted, color: 'text-blue-600' },
             { label: 'Purchased', value: stats.totalDealValue > 0 ? `${stats.purchased} · $${stats.totalDealValue.toLocaleString()}` : stats.purchased, color: 'text-green-600' },
             { label: 'Snoozed', value: stats.snoozed, color: 'text-gray-500' },
@@ -74,6 +72,7 @@ export default function MyLeads() {
           </div>
           <select className="text-sm border-gray-300 rounded-md shadow-sm bg-white focus:ring-indigo-500 focus:border-indigo-500" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
             <option value="all">All Statuses</option>
+            <option value="new">New</option>
             <option value="contacted">Contacted</option>
             <option value="active">Active</option>
             <option value="purchased">Purchased</option>
@@ -112,7 +111,7 @@ export default function MyLeads() {
             ))}
             {filteredLeads.length === 0 && (
               <li className="px-6 py-12 text-center text-gray-500">
-                {activeLeads.length === 0 ? 'No active leads yet. Start contacting leads from the Dashboard!' : 'No leads match your current filters.'}
+                {leads.length === 0 ? 'No leads yet. Use AI Lead Finder on the Feed to get started.' : 'No leads match your current filters.'}
               </li>
             )}
           </ul>
