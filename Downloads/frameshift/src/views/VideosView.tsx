@@ -64,7 +64,7 @@ export default function VideosView({ onNavigate }: VideosViewProps) {
       const response = await fetch('/api/analyze-video', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoName: file.name, videoUrl: serverUrl })
+        body: JSON.stringify({ videoId: serverVideoId })
       });
 
       if (!response.ok) throw new Error(`Server returned ${response.status}`);
@@ -74,16 +74,8 @@ export default function VideosView({ onNavigate }: VideosViewProps) {
       const generatedClips = await Promise.all(data.analysis.clips.map(async (clip: any, index: number) => {
         const clipId = `c_${Date.now()}_${index}`;
         
-        // Fetch real thumbnail for the clip
-        let clipThumb = '';
-        try {
-            const thumbRes = await fetch(`/api/clip-thumbnail?videoId=${serverVideoId}&time=${clip.startTime}&clipId=${clipId}`);
-            const thumbData = await thumbRes.json();
-            clipThumb = thumbData.url;
-        } catch (e) {
-            console.error('Clip thumb failed:', e);
-            clipThumb = videoThumbnail; // Fallback to main video thumb
-        }
+        // New endpoint returns thumbnailPath directly from the analysis step
+        const clipThumb = clip.thumbnailPath || videoThumbnail;
 
         return {
             id: clipId,
