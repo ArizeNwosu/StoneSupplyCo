@@ -3,6 +3,7 @@ import { Button } from '../components/ui/Button';
 import { Layers, Plus, Zap, ArrowRight, Play, Edit2, Check, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Variant } from '../types';
+import { findBestClipForSlot } from '../utils/clipMatching';
 
 interface TemplatesViewProps {
   onNavigate?: (view: string) => void;
@@ -28,11 +29,14 @@ export default function TemplatesView({ onNavigate }: TemplatesViewProps) {
     for (let i = 0; i < 12; i++) {
       const template = state.templates[i % state.templates.length];
       const selectedClips: string[] = [];
-      
-      // Select random clips for the template structure
-      for (let j = 0; j < template.structure.length; j++) {
-        const randomIndex = Math.floor(Math.random() * state.clips.length);
-        selectedClips.push(state.clips[randomIndex].id);
+
+      const usedClipIds = new Set<string>();
+      for (const slot of template.structure) {
+        const clip = findBestClipForSlot(slot, state.clips, usedClipIds);
+        if (clip) {
+          selectedClips.push(clip.id);
+          usedClipIds.add(clip.id);
+        }
       }
 
       // Schedule: Mon/Wed/Fri logic roughly
@@ -117,14 +121,17 @@ export default function TemplatesView({ onNavigate }: TemplatesViewProps) {
     setGeneratingFor(templateId);
 
     const template = state.templates.find(t => t.id === templateId);
-    const numClips = template?.structure.length || Math.min(3, state.clips.length);
     const selectedClips: string[] = [];
     const fullClipDetails: any[] = [];
 
-    for (let i = 0; i < numClips; i++) {
-      const clip = state.clips[i % state.clips.length];
-      selectedClips.push(clip.id);
-      fullClipDetails.push(clip);
+    const usedClipIds = new Set<string>();
+    for (const slot of (template?.structure ?? [])) {
+      const clip = findBestClipForSlot(slot, state.clips, usedClipIds);
+      if (clip) {
+        selectedClips.push(clip.id);
+        fullClipDetails.push(clip);
+        usedClipIds.add(clip.id);
+      }
     }
 
     const variantId = `var_${Date.now()}`;
