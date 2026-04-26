@@ -1,16 +1,6 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
-import { Video, Clip, Template, Variant } from '../types';
+import { Video, Clip, Template, Variant, Download } from '../types';
 import { mockTemplates } from '../mockData';
-
-// Temporary until Task 3 adds this to types.ts
-interface Download {
-  id: string;
-  variantId: string;
-  fileName: string;
-  filePath: string;
-  fileSize: number;
-  downloadedAt: string;
-}
 
 interface AppState {
   videos: Video[];
