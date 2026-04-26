@@ -13,6 +13,7 @@ import {
   saveVariant, getAllVariants,
   saveDownload, getAllDownloads
 } from './server-db.js';
+import { getExpiredFilePaths } from './src/utils/expiration.js';
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use((req, res, next) => {
 });
 
 initDB();
+runFileExpiration();
 
 // Multer setup
 const storage = multer.diskStorage({
@@ -87,6 +89,25 @@ const getVideoDuration = (videoPath: string): Promise<number> => {
     });
   });
 };
+
+function runFileExpiration(): void {
+  const TTL_DAYS = 7;
+  const dirsToClean = [uploadsDir, exportsDir];
+
+  for (const dir of dirsToClean) {
+    if (!fs.existsSync(dir)) continue;
+    const entries = fs.readdirSync(dir).map(name => ({
+      name,
+      mtimeMs: fs.statSync(path.join(dir, name)).mtimeMs,
+    }));
+    const expired = getExpiredFilePaths(entries, TTL_DAYS, Date.now());
+    for (const name of expired) {
+      const filePath = path.join(dir, name);
+      fs.unlinkSync(filePath);
+      console.log(`Expired and deleted: ${filePath}`);
+    }
+  }
+}
 
 app.get('/api/videos',    (_req, res) => res.json(getAllVideos()));
 app.get('/api/clips',     (_req, res) => res.json(getAllClips()));
