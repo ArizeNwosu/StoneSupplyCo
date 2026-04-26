@@ -7,6 +7,12 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import ffmpeg from 'fluent-ffmpeg';
 import multer from 'multer';
+import {
+  initDB, saveVideo, updateVideoStatus, getAllVideos,
+  saveClips, getAllClips, getAllTemplates,
+  saveVariant, getAllVariants,
+  saveDownload, getAllDownloads
+} from './server-db.js';
 
 dotenv.config();
 
@@ -33,6 +39,8 @@ app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   next();
 });
+
+initDB();
 
 // Multer setup
 const storage = multer.diskStorage({
@@ -80,6 +88,12 @@ const getVideoDuration = (videoPath: string): Promise<number> => {
   });
 };
 
+app.get('/api/videos',    (_req, res) => res.json(getAllVideos()));
+app.get('/api/clips',     (_req, res) => res.json(getAllClips()));
+app.get('/api/templates', (_req, res) => res.json(getAllTemplates()));
+app.get('/api/variants',  (_req, res) => res.json(getAllVariants()));
+app.get('/api/downloads', (_req, res) => res.json(getAllDownloads()));
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
@@ -90,7 +104,17 @@ app.post('/api/upload', upload.single('video'), async (req, res) => {
   const videoId = `v_${Date.now()}`;
   const videoPath = req.file.path;
   videoFilePathMap[videoId] = videoPath;
-  
+  saveVideo({
+    id: videoId,
+    title: req.file.originalname,
+    duration: 0,
+    sceneCount: 0,
+    thumbnail: '',
+    uploadDate: new Date().toISOString(),
+    status: 'processing',
+    progress: 0,
+  });
+
   try {
     const thumbnail = await extractThumbnail(videoPath, 1, `thumb_${videoId}`);
     res.json({ 
@@ -194,7 +218,22 @@ app.post('/api/analyze-video', async (req, res) => {
     const validClips = clips.filter(Boolean);
     console.log(`Analysis complete: ${validClips.length} clips classified`);
 
-    res.json({ videoId, analysis: { clips: validClips } });
+    // Assign stable IDs and persist to DB
+    const clipsToSave = validClips.map((c: any, i: number) => ({
+      id: `c_${Date.now()}_${i}`,
+      videoId,
+      type: c.type,
+      duration: c.duration,
+      thumbnail: c.thumbnailPath || '',
+      visualQuality: c.visualQuality,
+      tags: c.tags,
+      startTime: c.startTime,
+      endTime: c.endTime,
+    }));
+    saveClips(clipsToSave);
+    updateVideoStatus(videoId, 'ready', undefined, undefined, clipsToSave[0]?.thumbnail);
+
+    res.json({ videoId, analysis: { clips: clipsToSave } });
   } catch (error: any) {
     console.error('Analysis error:', error.message);
     res.status(500).json({ error: 'Failed to analyze video', detail: error.message });
@@ -215,7 +254,7 @@ app.get('/api/clip-thumbnail', async (req, res) => {
 });
 
 app.post('/api/generate-video', async (req, res) => {
-  const { variantId, clips, sourceVideoId } = req.body;
+  const { variantId, clips, sourceVideoId, templateId } = req.body;
   const outputFileName = `mix_${variantId}.mp4`;
   const outputPath = path.join(exportsDir, outputFileName);
   const sourcePath = videoFilePathMap[sourceVideoId];
@@ -248,6 +287,15 @@ app.post('/api/generate-video', async (req, res) => {
     })
     .on('end', () => {
       console.log('FFmpeg Finished!');
+      saveVariant({
+        id: variantId,
+        templateId: templateId || 'unknown',
+        clips: (clips as any[]).map((c: any) => c.id || c),
+        status: 'review',
+        thumbnail: '',
+        createdAt: new Date().toISOString(),
+        compositionUrl: `/exports/${outputFileName}`,
+      });
       res.json({ success: true, videoUrl: `/exports/${outputFileName}` });
     })
     .save(outputPath);
