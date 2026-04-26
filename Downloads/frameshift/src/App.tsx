@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { useState } from 'react';
-import { LayoutDashboard, Video, Scissors, Layers, Settings, Calendar as CalendarIcon, Download, LogOut, ChevronRight, Play, Search } from 'lucide-react';
+import { LayoutDashboard, Video, Scissors, Layers, Settings, Calendar as CalendarIcon, Download, LogOut, Play, Search } from 'lucide-react';
 import { cn } from './lib/utils';
 import { Button } from './components/ui/Button';
 import { useAppContext } from './context/AppContext';
