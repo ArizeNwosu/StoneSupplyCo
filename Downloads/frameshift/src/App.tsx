@@ -14,8 +14,9 @@ import VideosView from './views/VideosView';
 import ClipsView from './views/ClipsView';
 import TemplatesView from './views/TemplatesView';
 import CalendarView from './views/CalendarView';
+import DownloadsView from './views/DownloadsView';
 
-export type ViewState = 'dashboard' | 'videos' | 'clips' | 'templates' | 'calendar';
+export type ViewState = 'dashboard' | 'videos' | 'clips' | 'templates' | 'calendar' | 'downloads';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewState>('dashboard');
@@ -31,6 +32,7 @@ export default function App() {
     { name: 'Extracted Clips', value: 'clips', icon: Scissors },
     { name: 'Templates', value: 'templates', icon: Layers },
     { name: 'Content Calendar', value: 'calendar', icon: CalendarIcon },
+    { name: 'Downloads', value: 'downloads', icon: Download },
   ] as const;
 
   const renderView = () => {
@@ -40,6 +42,7 @@ export default function App() {
       case 'clips': return <ClipsView />;
       case 'templates': return <TemplatesView onNavigate={(v) => setCurrentView(v as ViewState)} />;
       case 'calendar': return <CalendarView />;
+      case 'downloads': return <DownloadsView />;
       default: return <DashboardView onNavigate={(v) => setCurrentView(v as ViewState)} />;
     }
   };
