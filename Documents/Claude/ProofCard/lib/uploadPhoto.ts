@@ -4,7 +4,7 @@ import { generateSlug } from './utils'
 
 export async function uploadPhoto(file: File, cardSlug: string, side: 'before' | 'after'): Promise<string> {
   const supabase = getSupabaseClient()
-  const ext = file.name.split('.').pop() ?? 'jpg'
+  const ext = file.name.includes('.') ? file.name.split('.').pop()! : 'jpg'
   const storagePath = `${cardSlug}/${side}-${generateSlug()}.${ext}`
 
   const { error } = await supabase.storage
