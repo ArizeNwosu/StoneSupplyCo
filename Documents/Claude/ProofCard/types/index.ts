@@ -18,10 +18,14 @@ export interface CardData {
   startDate: string   // ISO date string "YYYY-MM-DD"
   method: string      // e.g. "GLP-1 ASSISTED"
   habits: string[]    // e.g. ["CONSISTENCY", "PROTEIN", "WALKING", "HYDRATION"]
-  beforePhotoUrl: string   // signed Supabase URL or blob URL (preview)
-  afterPhotoUrl: string
+  beforePhotoUrl?: string  // signed Supabase URL or blob URL (preview); optional before upload
+  afterPhotoUrl?: string
   weightEntries: WeightEntry[]
   watermarked: boolean
+}
+
+export function isSavedCard(card: CardData): card is CardData & { id: string; slug: string } {
+  return card.id !== undefined && card.slug !== undefined
 }
 
 // State that the multi-step builder holds before saving
