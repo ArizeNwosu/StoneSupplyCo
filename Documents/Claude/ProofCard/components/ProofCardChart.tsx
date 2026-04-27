@@ -50,7 +50,7 @@ export function ProofCardChart({ entries, unit, width, height }: Props) {
   )
 
   // X-axis: evenly spaced day labels
-  const totalDays = calcDays(entries[0].date, entries[entries.length - 1].date)
+  const totalDays = Math.max(1, calcDays(entries[0].date, entries[entries.length - 1].date))
   const xTicks = [0, 0.2, 0.4, 0.6, 0.8, 1.0].map(t => ({
     label: `DAY ${Math.round(t * totalDays) || 1}`,
     x: PAD_LEFT + t * chartW,
@@ -93,7 +93,7 @@ export function ProofCardChart({ entries, unit, width, height }: Props) {
       {yTicks.map((tick, i) => {
         const y = (i / (yTicks.length - 1)) * chartH
         return (
-          <g key={String(tick)}>
+          <g key={i}>
             <line x1={PAD_LEFT} y1={y} x2={width} y2={y} stroke="#eef1ee" strokeWidth={1.5} />
             <text x={PAD_LEFT - 8} y={y + 5} textAnchor="end" fontSize={15} fill="#a0b0a8">
               {tick}
@@ -113,8 +113,8 @@ export function ProofCardChart({ entries, unit, width, height }: Props) {
       <path d={linePath} fill="none" stroke="#23624d" strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
 
       {/* Annotations */}
-      {annotated.map((e, i) => (
-        <g key={i}>
+      {annotated.map((e) => (
+        <g key={e.date}>
           <circle cx={e.x} cy={e.y} r={9} fill="white" stroke="#23624d" strokeWidth={4} />
           <line x1={e.x} y1={e.y - 10} x2={e.x} y2={e.y - 40} stroke="#23624d" strokeDasharray="5 4" strokeWidth={1.5} />
           <rect
@@ -128,7 +128,7 @@ export function ProofCardChart({ entries, unit, width, height }: Props) {
             strokeWidth={1}
           />
           <text x={e.x} y={e.y - 58} textAnchor="middle" fontSize={15} fontWeight={700} fill="#23624d">
-            {e.note}
+            {(e.note ?? '').length > 14 ? (e.note ?? '').slice(0, 14) + '…' : e.note}
           </text>
         </g>
       ))}
