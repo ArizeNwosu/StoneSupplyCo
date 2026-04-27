@@ -74,69 +74,75 @@ export function ProofCard({ card, width = 1080, height = 1350 }: Props) {
           }}>AFTER</div>
         </div>
 
-        {/* Medallion badge */}
+        {/* Medallion centering wrapper — Satori-safe (no transform) */}
         <div style={{
           position: 'absolute' as const,
-          left: '50%',
           bottom: 48,
-          transform: 'translateX(-50%)',
+          left: 0,
+          right: 0,
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          justifyContent: 'center',
           zIndex: 5,
-          filter: 'drop-shadow(0 14px 32px rgba(0,0,0,0.20))',
+          pointerEvents: 'none' as const,
         }}>
-          {/* Pill tab */}
           <div style={{
-            width: 82, height: 62,
-            background: 'white',
-            border: '9px solid #e8ede9',
-            borderBottom: '9px solid white',
-            borderRadius: 999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: -16,
-            zIndex: 2,
-            position: 'relative' as const,
-          }}>
-            <div style={{
-              width: 34, height: 34,
-              background: '#23624d',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginTop: 8,
-            }}>
-              <svg width="16" height="20" viewBox="0 0 16 20" fill="none">
-                <line x1="8" y1="1" x2="8" y2="14" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
-                <polyline points="2,9 8,16 14,9" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-          </div>
-          {/* Circle */}
-          <div style={{
-            width: 220, height: 220,
-            background: 'white',
-            border: '9px solid #e8ede9',
-            borderRadius: '50%',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            color: '#23624d',
-            zIndex: 1,
-            position: 'relative' as const,
+            filter: 'drop-shadow(0 14px 32px rgba(0,0,0,0.20))',
           }}>
-            <div style={{ fontSize: 72, fontWeight: 900, lineHeight: 0.85, letterSpacing: -2, marginTop: 10 }}>
-              -{totalLoss}
+            {/* Pill tab */}
+            <div style={{
+              width: 82, height: 62,
+              background: 'white',
+              border: '9px solid #e8ede9',
+              borderBottom: '9px solid white',
+              borderRadius: 999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: -16,
+              zIndex: 2,
+              position: 'relative' as const,
+            }}>
+              <div style={{
+                width: 34, height: 34,
+                background: '#23624d',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: 8,
+              }}>
+                <svg width="16" height="20" viewBox="0 0 16 20" fill="none">
+                  <line x1="8" y1="1" x2="8" y2="14" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
+                  <polyline points="2,9 8,16 14,9" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
             </div>
-            <div style={{ fontSize: 36, fontWeight: 900, letterSpacing: '0.02em', lineHeight: 1.1 }}>
-              {card.unit.toUpperCase()}
-            </div>
-            <div style={{ fontFamily: 'Georgia, serif', fontSize: 23, fontStyle: 'italic', color: '#4a6b5e', marginTop: 4 }}>
-              in {days} days
+            {/* Circle */}
+            <div style={{
+              width: 220, height: 220,
+              background: 'white',
+              border: '9px solid #e8ede9',
+              borderRadius: '50%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#23624d',
+              zIndex: 1,
+              position: 'relative' as const,
+            }}>
+              <div style={{ fontSize: 72, fontWeight: 900, lineHeight: 0.85, letterSpacing: -2, marginTop: 10 }}>
+                -{totalLoss}
+              </div>
+              <div style={{ fontSize: 36, fontWeight: 900, letterSpacing: '0.02em', lineHeight: 1.1 }}>
+                {card.unit.toUpperCase()}
+              </div>
+              <div style={{ fontFamily: 'Georgia, serif', fontSize: 23, fontStyle: 'italic', color: '#4a6b5e', marginTop: 4 }}>
+                in {days} days
+              </div>
             </div>
           </div>
         </div>
@@ -229,8 +235,13 @@ export function ProofCard({ card, width = 1080, height = 1350 }: Props) {
               <div style={{ fontSize: 15, fontWeight: 800, color: '#8aa098', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>
                 AVG. LOSS
               </div>
-              <div style={{ fontSize: 30, fontWeight: 900, color: '#13201d', lineHeight: 1.1 }}>
-                {avgLoss} <span style={{ fontSize: 15, color: '#8aa098', fontWeight: 600 }}>{card.unit.toUpperCase()} / WEEK</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <div style={{ fontSize: 30, fontWeight: 900, color: '#13201d', lineHeight: 1.1 }}>
+                  {avgLoss}
+                </div>
+                <div style={{ fontSize: 15, color: '#8aa098', fontWeight: 600 }}>
+                  {card.unit.toUpperCase()} / WEEK
+                </div>
               </div>
             </div>
           </div>
@@ -241,7 +252,7 @@ export function ProofCard({ card, width = 1080, height = 1350 }: Props) {
             <ProofCardChart
               entries={card.weightEntries}
               unit={card.unit}
-              width={1080 - pad * 2 - 18 * 2}
+              width={width - pad * 2 - 18 * 2}
               height={graphH}
             />
           </div>
