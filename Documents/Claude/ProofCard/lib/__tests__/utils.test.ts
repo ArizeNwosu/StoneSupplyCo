@@ -26,6 +26,14 @@ describe('calcTotalLoss', () => {
   it('returns difference between start and current weight', () => {
     expect(calcTotalLoss(198, 170)).toBe(28)
   })
+
+  it('rounds floating point inputs correctly', () => {
+    expect(calcTotalLoss(198.5, 170.2)).toBe(28.3)
+  })
+
+  it('returns 0 when weights are equal', () => {
+    expect(calcTotalLoss(170, 170)).toBe(0)
+  })
 })
 
 describe('calcAvgLoss', () => {

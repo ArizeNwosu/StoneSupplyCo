@@ -6,8 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function generateSlug(): string {
-  return Math.random().toString(36).slice(2, 6) +
-         Math.random().toString(36).slice(2, 6)
+  return crypto.randomUUID().replace(/-/g, '').slice(0, 8)
 }
 
 export function calcDays(startDate: string, endDate: string): number {
@@ -22,5 +21,5 @@ export function calcTotalLoss(startWeight: number, currentWeight: number): numbe
 
 export function calcAvgLoss(totalLoss: number, days: number): number {
   if (days === 0) return 0
-  return Math.round((totalLoss / days * 7) * 10) / 10
+  return Math.round(((totalLoss / days) * 7) * 10) / 10
 }
