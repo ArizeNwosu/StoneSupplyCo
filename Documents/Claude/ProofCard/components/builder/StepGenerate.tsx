@@ -27,6 +27,7 @@ export function StepGenerate({ state, onBack }: Props) {
       }
 
       const supabase = getSupabaseClient()
+      const { data: { user } } = await supabase.auth.getUser()
       const cardSlug = generateSlug()
 
       // Upload photos
@@ -49,7 +50,8 @@ export function StepGenerate({ state, onBack }: Props) {
           habits: state.habits,
           before_photo_url: beforePath,
           after_photo_url: afterPath,
-          watermarked: true,
+          user_id: user?.id ?? null,
+          watermarked: !user,
         })
         .select()
         .single()
