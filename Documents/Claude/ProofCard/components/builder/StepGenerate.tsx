@@ -16,6 +16,7 @@ export function StepGenerate({ state, onBack }: Props) {
   const [status, setStatus] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
   const [slug, setSlug] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
+  const [cardWatermarked, setCardWatermarked] = useState(true)
 
   async function handleGenerate() {
     setStatus('saving')
@@ -71,6 +72,7 @@ export function StepGenerate({ state, onBack }: Props) {
         if (entriesErr) throw new Error(entriesErr.message)
       }
 
+      setCardWatermarked(!user)
       setSlug(cardSlug)
       setStatus('done')
     } catch (err) {
@@ -97,7 +99,7 @@ export function StepGenerate({ state, onBack }: Props) {
           className="block w-full"
         >
           <Button className="w-full bg-[#23624d] hover:bg-[#1a4a3a] text-white font-bold py-3">
-            ↓ Download PNG (with watermark)
+            ↓ Download PNG{cardWatermarked ? ' (with watermark)' : ''}
           </Button>
         </a>
 
@@ -118,13 +120,17 @@ export function StepGenerate({ state, onBack }: Props) {
           </div>
         </div>
 
-        <div className="p-4 bg-[#eef6f0] rounded-xl text-center">
-          <p className="text-sm text-[#23624d] font-semibold">Want a clean download without the watermark?</p>
-          <p className="text-xs text-[#4a8a6a] mt-1">Create a free account to unlock clean exports and save your cards.</p>
-          <Button className="mt-3 bg-[#23624d] hover:bg-[#1a4a3a] text-white text-sm">
-            Create Free Account
-          </Button>
-        </div>
+        {cardWatermarked && (
+          <div className="p-4 bg-[#eef6f0] rounded-xl text-center">
+            <p className="text-sm text-[#23624d] font-semibold">Want a clean download without the watermark?</p>
+            <p className="text-xs text-[#4a8a6a] mt-1">Create a free account to unlock clean exports and save your cards.</p>
+            <a href="/auth/login">
+              <Button className="mt-3 bg-[#23624d] hover:bg-[#1a4a3a] text-white text-sm">
+                Create Free Account
+              </Button>
+            </a>
+          </div>
+        )}
       </div>
     )
   }
