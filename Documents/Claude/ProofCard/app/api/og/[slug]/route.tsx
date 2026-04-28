@@ -68,7 +68,7 @@ export async function GET(
 
   const fonts = await getFonts()
 
-  const imageResponse = new ImageResponse(
+  return new ImageResponse(
     <ProofCard card={cardData} width={1080} height={1350} />,
     {
       width: 1080,
@@ -76,11 +76,4 @@ export async function GET(
       fonts,
     }
   )
-
-  return new Response(imageResponse.body, {
-    headers: {
-      'Content-Type': 'image/png',
-      'Content-Disposition': `attachment; filename="proofcard-${slug}.png"`,
-    },
-  })
 }

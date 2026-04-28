@@ -43,7 +43,7 @@ export function StepMethod({ state, update, onNext, onBack }: Props) {
         <Input
           value={state.method}
           onChange={e => update({ method: e.target.value.toUpperCase() })}
-          placeholder="GLP-1 ASSISTED"
+          placeholder="ZEPBOUND, MOUNJARO, WEGOVY, etc."
           className="mt-1"
         />
       </div>

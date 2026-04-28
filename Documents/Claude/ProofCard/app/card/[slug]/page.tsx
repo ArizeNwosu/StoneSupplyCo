@@ -1,7 +1,7 @@
 // app/card/[slug]/page.tsx
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { ProofCard } from '@/components/ProofCard'
-import { CopyLinkButton } from './CopyLinkButton'
+import { ActionBar } from './ActionBar'
 import type { CardData, WeightEntry } from '@/types'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -78,24 +78,16 @@ export default async function CardPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-[#eef1f0] flex flex-col items-center justify-start py-12 px-4">
-      <div style={{ width: 540, height: 675 }}>
-        {/* Scale card to 540px wide (half of 1080) for web display */}
+    <div className="min-h-screen bg-[#eef1f0] flex flex-col items-center py-12 px-4">
+      {/* Card preview — exactly half size */}
+      <div style={{ width: 540, height: 675, flexShrink: 0 }}>
         <div style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: 1080, height: 1350 }}>
           <ProofCard card={cardData} />
         </div>
       </div>
 
-      <div className="mt-6 flex gap-4">
-        <a
-          href={`/api/og/${slug}`}
-          download={`proofcard-${slug}.png`}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#23624d] text-white rounded-xl font-semibold text-sm hover:bg-[#1a4a3a] transition-colors"
-        >
-          ↓ Download PNG
-        </a>
-        <CopyLinkButton />
-      </div>
+      {/* Action bar — clearly separate from card */}
+      <ActionBar slug={slug} />
     </div>
   )
 }

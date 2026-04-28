@@ -1,6 +1,6 @@
 // components/builder/StepPhotos.tsx
 'use client'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import type { BuilderState } from '@/types'
 import { Button } from '@/components/ui/button'
 
@@ -20,6 +20,14 @@ function PhotoUploader({
   onFile: (file: File) => void
 }) {
   const ref = useRef<HTMLInputElement>(null)
+  const [dragging, setDragging] = useState(false)
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file && file.type.startsWith('image/')) onFile(file)
+  }
 
   return (
     <div className="space-y-2">
@@ -27,13 +35,20 @@ function PhotoUploader({
       <button
         type="button"
         onClick={() => ref.current?.click()}
-        className="w-full h-48 rounded-2xl border-2 border-dashed border-gray-200 hover:border-[#23624d] transition-colors flex flex-col items-center justify-center overflow-hidden bg-gray-50"
+        onDragOver={e => { e.preventDefault(); setDragging(true) }}
+        onDragEnter={e => { e.preventDefault(); setDragging(true) }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+        className={`w-full h-48 rounded-2xl border-2 border-dashed transition-colors flex flex-col items-center justify-center overflow-hidden bg-gray-50
+          ${dragging ? 'border-[#23624d] bg-[#eef6f0]' : 'border-gray-200 hover:border-[#23624d]'}`}
       >
         {preview ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={preview} alt={label} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-gray-400 text-sm">Click to upload</span>
+          <div className="flex flex-col items-center gap-1 pointer-events-none">
+            <span className="text-gray-400 text-sm">{dragging ? 'Drop to upload' : 'Click or drag to upload'}</span>
+          </div>
         )}
       </button>
       <input
