@@ -72,7 +72,7 @@ export function StepProgress({ state, update, onNext, onBack }: Props) {
       {state.weightEntries.length > 0 && (
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {state.weightEntries.map((entry, i) => (
-            <div key={i} className="flex items-center justify-between px-4 py-2 bg-white rounded-lg border border-gray-100 text-sm">
+            <div key={`${entry.date}-${entry.weight}`} className="flex items-center justify-between px-4 py-2 bg-white rounded-lg border border-gray-100 text-sm">
               <div>
                 <span className="font-semibold">{entry.date}</span>
                 <span className="text-gray-500 ml-3">{entry.weight} {state.unit}</span>

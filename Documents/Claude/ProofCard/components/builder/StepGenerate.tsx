@@ -20,6 +20,12 @@ export function StepGenerate({ state, onBack }: Props) {
   async function handleGenerate() {
     setStatus('saving')
     try {
+      if (!state.beforePhotoFile || !state.afterPhotoFile) {
+        setErrorMsg('Photos are missing. Please go back to step 1.')
+        setStatus('error')
+        return
+      }
+
       const supabase = getSupabaseClient()
       const cardSlug = generateSlug()
 
@@ -71,7 +77,8 @@ export function StepGenerate({ state, onBack }: Props) {
     }
   }
 
-  const shareUrl = slug ? `${process.env.NEXT_PUBLIC_APP_URL}/card/${slug}` : ''
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')
+  const shareUrl = slug ? `${base}/card/${slug}` : ''
   const downloadUrl = slug ? `/api/og/${slug}` : ''
 
   if (status === 'done' && slug) {
