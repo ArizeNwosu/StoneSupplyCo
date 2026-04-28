@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
-  const supabase = getSupabaseClient()
 
   async function handleMagicLink() {
+    const supabase = getSupabaseClient()
     await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback` },
@@ -18,6 +18,7 @@ export default function LoginPage() {
   }
 
   async function handleGoogle() {
+    const supabase = getSupabaseClient()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback` },
