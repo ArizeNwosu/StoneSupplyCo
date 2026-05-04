@@ -13,6 +13,7 @@ const db = require('./database');
 const { authenticate } = require('./auth/middleware');
 const authRouter = require('./auth/routes');
 const metaOAuthRouter = require('./auth/meta-oauth');
+const { startScheduler } = require('./services/scheduler');
 
 // ── App setup ─────────────────────────────────────────────────────────────
 
@@ -848,6 +849,9 @@ if (require.main === module) {
     });
   }
   schedulePoll();
+
+  // Multi-tenant scheduler (Postgres accounts)
+  startScheduler(parseInt(process.env.MT_POLL_INTERVAL || '60'));
 
   // Process auto-post queue every 30s
   processQueue();
