@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS account_credentials (
   platform_account_id  TEXT NOT NULL,
   username             TEXT,
   expires_at           TIMESTAMPTZ,
-  connected_at         TIMESTAMPTZ DEFAULT now()
+  connected_at         TIMESTAMPTZ DEFAULT now(),
+  CONSTRAINT uq_creds_account_platform UNIQUE (account_id, platform)
 );
 
 -- Content (populated in Plan 3 migration) ------------------------------------
