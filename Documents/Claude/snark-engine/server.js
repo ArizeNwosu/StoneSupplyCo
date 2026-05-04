@@ -21,6 +21,8 @@ app.use(express.json());
 
 // Auth endpoints — no JWT required
 app.use('/api/auth', authRouter);
+const metaOAuthRouter = require('./auth/meta-oauth');
+app.use('/api/auth/meta', metaOAuthRouter);
 
 // All other API endpoints require a valid JWT
 app.use('/api', authenticate);
@@ -789,14 +791,19 @@ app.get('*', (req, res) => {
   });
 });
 
-// ── Start ─────────────────────────────────────────────────────────────────
+// ── Export app (for testing) ──────────────────────────────────────────────
 
-const PORT = process.env.PORT || 3001;
+module.exports = app;
 
-app.listen(PORT, async () => {
-  const mode = db.getSetting.get('mode')?.value || 'manual';
+// ── Start (only when run directly, not when required by tests) ────────────
 
-  console.log(`
+if (require.main === module) {
+  const PORT = process.env.PORT || 3001;
+
+  app.listen(PORT, async () => {
+    const mode = db.getSetting.get('mode')?.value || 'manual';
+
+    console.log(`
 ╔══════════════════════════════════════════════════╗
 ║          🐍  Snark Engine  —  @splitflask        ║
 ╠══════════════════════════════════════════════════╣
@@ -806,42 +813,43 @@ app.listen(PORT, async () => {
 ╚══════════════════════════════════════════════════╝
   `);
 
-  // Validate Instagram token and capture own username
-  try {
-    const account = await ig.validateToken();
-    ownUsername = account.username || null;
-    console.log(`[Auth] Instagram OK — @${ownUsername || account.name}`);
-  } catch (err) {
-    console.warn(`[Auth] Instagram token check failed: ${err.message}`);
-  }
-
-  // Validate Facebook page access if configured
-  if (fb) {
+    // Validate Instagram token and capture own username
     try {
-      const page = await fb.validatePage();
-      ownPageName = page.name || null;
-      console.log(`[Auth] Facebook OK — "${ownPageName}" (${page.id})`);
+      const account = await ig.validateToken();
+      ownUsername = account.username || null;
+      console.log(`[Auth] Instagram OK — @${ownUsername || account.name}`);
     } catch (err) {
-      console.warn(`[Auth] Facebook page check failed: ${err.message}`);
-      console.warn('[Auth] Set FACEBOOK_PAGE_ID (and optionally FACEBOOK_ACCESS_TOKEN) in .env to enable');
+      console.warn(`[Auth] Instagram token check failed: ${err.message}`);
     }
-  } else {
-    console.log('[Auth] Facebook not configured — set FACEBOOK_PAGE_ID in .env to enable');
-  }
-});
 
-// Dynamic polling — reads interval from settings each cycle
-function schedulePoll() {
-  const secs = parseInt(db.getSetting.get('polling_interval')?.value || '60');
-  Promise.all([
-    pollComments(),
-    pollFacebookComments(),
-  ]).finally(() => {
-    setTimeout(schedulePoll, secs * 1000);
+    // Validate Facebook page access if configured
+    if (fb) {
+      try {
+        const page = await fb.validatePage();
+        ownPageName = page.name || null;
+        console.log(`[Auth] Facebook OK — "${ownPageName}" (${page.id})`);
+      } catch (err) {
+        console.warn(`[Auth] Facebook page check failed: ${err.message}`);
+        console.warn('[Auth] Set FACEBOOK_PAGE_ID (and optionally FACEBOOK_ACCESS_TOKEN) in .env to enable');
+      }
+    } else {
+      console.log('[Auth] Facebook not configured — set FACEBOOK_PAGE_ID in .env to enable');
+    }
   });
-}
-schedulePoll();
 
-// Process auto-post queue every 30s
-processQueue();
-setInterval(processQueue, 30 * 1000);
+  // Dynamic polling — reads interval from settings each cycle
+  function schedulePoll() {
+    const secs = parseInt(db.getSetting.get('polling_interval')?.value || '60');
+    Promise.all([
+      pollComments(),
+      pollFacebookComments(),
+    ]).finally(() => {
+      setTimeout(schedulePoll, secs * 1000);
+    });
+  }
+  schedulePoll();
+
+  // Process auto-post queue every 30s
+  processQueue();
+  setInterval(processQueue, 30 * 1000);
+}
