@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { query } = require('../db/pg');
 const { encrypt } = require('../lib/crypto');
 const { authenticate } = require('./middleware');
+const { extractVoice } = require('../jobs/voice-extraction');
 
 const router = express.Router();
 
@@ -86,7 +87,6 @@ router.get('/callback/instagram', async (req, res) => {
       [account_id, platform, encrypt(longToken), platformAccountId, username, expiresAt]
     );
 
-    const { extractVoice } = require('../jobs/voice-extraction');
     extractVoice(account_id, longToken, platformAccountId, username).catch(err =>
       console.error('[voice-extraction] background error:', err.message)
     );
@@ -99,20 +99,30 @@ router.get('/callback/instagram', async (req, res) => {
 });
 
 router.get('/status', authenticate, async (req, res) => {
-  const result = await query(
-    `SELECT platform, username, platform_account_id, expires_at, connected_at
-     FROM account_credentials WHERE account_id = $1`,
-    [req.account.account_id]
-  );
-  res.json({ credentials: result.rows });
+  try {
+    const result = await query(
+      `SELECT platform, username, platform_account_id, expires_at, connected_at
+       FROM account_credentials WHERE account_id = $1`,
+      [req.account.account_id]
+    );
+    res.json({ credentials: result.rows });
+  } catch (err) {
+    console.error('[meta-oauth/status]', err.message);
+    res.status(500).json({ error: 'Failed to fetch credentials' });
+  }
 });
 
 router.delete('/:platform', authenticate, async (req, res) => {
-  await query(
-    'DELETE FROM account_credentials WHERE account_id = $1 AND platform = $2',
-    [req.account.account_id, req.params.platform]
-  );
-  res.json({ ok: true });
+  try {
+    await query(
+      'DELETE FROM account_credentials WHERE account_id = $1 AND platform = $2',
+      [req.account.account_id, req.params.platform]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[meta-oauth/disconnect]', err.message);
+    res.status(500).json({ error: 'Failed to disconnect' });
+  }
 });
 
 module.exports = router;

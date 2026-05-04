@@ -12,6 +12,7 @@ const db = require('./database');
 
 const { authenticate } = require('./auth/middleware');
 const authRouter = require('./auth/routes');
+const metaOAuthRouter = require('./auth/meta-oauth');
 
 // ── App setup ─────────────────────────────────────────────────────────────
 
@@ -21,7 +22,6 @@ app.use(express.json());
 
 // Auth endpoints — no JWT required
 app.use('/api/auth', authRouter);
-const metaOAuthRouter = require('./auth/meta-oauth');
 app.use('/api/auth/meta', metaOAuthRouter);
 
 // All other API endpoints require a valid JWT
