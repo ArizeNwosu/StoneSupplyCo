@@ -138,3 +138,32 @@ test('does not throw when no pairs found', async () => {
   );
   await expect(extractVoice(res.rows[0].id, 'TOKEN', 'IG', 'creator', mockIg)).resolves.toBeUndefined();
 });
+
+test('caps voice examples at MAX_PAIRS (12)', async () => {
+  // 15 comments, each with a creator reply — should only insert 12
+  const manyComments = Array.from({ length: 15 }, (_, i) => ({
+    id: `cap_c${i}`,
+    text: `Fan comment ${i}`,
+    username: `fan${i}`,
+    replies: {
+      data: [{ id: `cap_r${i}`, text: `Creator reply ${i}`, username: 'testcreator' }],
+    },
+  }));
+
+  const mockIg = {
+    getRecentMedia: jest.fn().mockResolvedValue([{ id: 'cappost', timestamp: new Date().toISOString() }]),
+    getCommentsForMedia: jest.fn().mockResolvedValue(manyComments),
+  };
+
+  const res = await query(
+    `INSERT INTO accounts (email, password_hash) VALUES ('voice_cap@test.com', 'hash') RETURNING id`
+  );
+  const acctId = res.rows[0].id;
+  await extractVoice(acctId, 'TOKEN', 'IG', 'testcreator', mockIg);
+
+  const rows = await query(
+    'SELECT * FROM voice_examples WHERE account_id = $1',
+    [acctId]
+  );
+  expect(rows.rows).toHaveLength(12);
+});

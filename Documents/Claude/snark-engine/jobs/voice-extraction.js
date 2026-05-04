@@ -14,11 +14,13 @@ async function extractVoice(accountId, accessToken, platformAccountId, ownUserna
       if (pairs.length >= MAX_PAIRS) break;
       const comments = await ig.getCommentsForMedia(post.id);
       for (const comment of comments) {
+        if (pairs.length >= MAX_PAIRS) break;
         if (comment.username === ownUsername) continue;
         if (!comment.replies?.data) continue;
         for (const reply of comment.replies.data) {
           if (reply.username === ownUsername) {
             pairs.push({ comment: comment.text, reply: reply.text });
+            if (pairs.length >= MAX_PAIRS) break;
           }
         }
       }
