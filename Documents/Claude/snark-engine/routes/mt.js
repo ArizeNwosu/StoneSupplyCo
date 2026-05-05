@@ -23,6 +23,7 @@ router.get('/status', async (req, res) => {
         [req.account.account_id]
       ),
     ]);
+    if (!acctRes.rows[0]) return res.status(404).json({ error: 'Account not found' });
     res.json({
       account: acctRes.rows[0],
       credential: credRes.rows[0] || null,
