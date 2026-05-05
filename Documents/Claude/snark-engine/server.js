@@ -13,6 +13,7 @@ const db = require('./database');
 const { authenticate } = require('./auth/middleware');
 const authRouter = require('./auth/routes');
 const metaOAuthRouter = require('./auth/meta-oauth');
+const mtRouter = require('./routes/mt');
 const { startScheduler } = require('./services/scheduler');
 
 // ── App setup ─────────────────────────────────────────────────────────────
@@ -27,6 +28,7 @@ app.use('/api/auth/meta', metaOAuthRouter);
 
 // All other API endpoints require a valid JWT
 app.use('/api', authenticate);
+app.use('/api/mt', mtRouter);
 
 // Serve built React dashboard
 app.use(express.static(path.join(__dirname, 'dashboard', 'dist')));
