@@ -43,7 +43,12 @@ export function DrugCompare({ days }: { days: number }) {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-outline-variant)" vertical={false} />
               <XAxis dataKey="name" stroke="var(--color-on-surface-variant)" fontSize={11} tickLine={false} axisLine={false} />
               <YAxis stroke="var(--color-on-surface-variant)" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-outline)', borderRadius: '0.5rem' }} itemStyle={{ color: 'var(--color-on-surface)' }} labelStyle={{ color: 'var(--color-on-surface-variant)' }} />
+              <Tooltip
+                cursor={false}
+                contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-outline)', borderRadius: '0.5rem' }}
+                itemStyle={{ color: 'var(--color-on-surface)' }}
+                labelStyle={{ color: 'var(--color-on-surface-variant)' }}
+              />
               <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
               <Bar dataKey="Positive"    stackId="s" fill="var(--color-primary)"           radius={[0,0,0,0]} />
               <Bar dataKey="Neutral-Low" stackId="s" fill="var(--color-on-surface-variant)" opacity={0.4} />

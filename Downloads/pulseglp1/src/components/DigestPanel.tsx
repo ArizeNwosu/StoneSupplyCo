@@ -45,11 +45,12 @@ export function DigestPanel({ open, onClose }: { open: boolean; onClose: () => v
   return (
     <div className="fixed inset-0 z-[90]" onClick={onClose}>
       <div
-        className="absolute top-16 right-4 w-full max-w-md bg-surface-container rounded-lg analytical-border shadow-2xl overflow-y-auto max-h-[80vh]"
+        className="absolute top-16 right-4 w-full max-w-md rounded-lg analytical-border shadow-2xl overflow-y-auto max-h-[80vh]"
+        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-outline-variant)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant sticky top-0 bg-surface-container">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant sticky top-0" style={{ backgroundColor: 'var(--color-surface)' }}>
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4 text-primary" />
             <span className="text-label-caps text-on-surface">WEEKLY INTELLIGENCE DIGEST</span>

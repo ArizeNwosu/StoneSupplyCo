@@ -440,93 +440,194 @@ app.get("/api/report", (req, res) => {
     if (!cache) return res.status(503).json({ error: "No analysis available yet. Load the dashboard first." });
 
     const { topInsights = [], emergingTopics = [], evidenceFeed = [], timestamp, dbStats } = cache;
-    const doc = new PDFDocument({ margin: 50, size: 'A4' });
+
+    // Pull live drug stats for the chart section
+    const REPORT_DRUGS = INTEL_DRUGS;
+    const drugStats = REPORT_DRUGS.map(drug => {
+      const r = db.prepare(`SELECT COUNT(*) as total, SUM(CASE WHEN sentiment='Positive' THEN 1 ELSE 0 END) as pos, SUM(CASE WHEN sentiment='Risk-Alert' THEN 1 ELSE 0 END) as risk, SUM(CASE WHEN sentiment='Analytical' THEN 1 ELSE 0 END) as analytical FROM evidence WHERE drug=? AND post_ts >= ?`).get(drug, Date.now() - 30 * 86400_000) as any;
+      return { drug, total: r.total || 0, pos: r.pos || 0, risk: r.risk || 0, analytical: r.analytical || 0, posPct: r.total > 0 ? Math.round((r.pos / r.total) * 100) : 0, riskPct: r.total > 0 ? Math.round((r.risk / r.total) * 100) : 0 };
+    }).filter(d => d.total > 0).sort((a, b) => b.total - a.total);
+
+    const doc = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true });
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="PulseGLP1-Report-${new Date().toISOString().slice(0,10)}.pdf"`);
     doc.pipe(res);
 
-    const PRIMARY = '#0891b2';
-    const MUTED   = '#64748b';
-    const DARK    = '#0f172a';
+    const W      = doc.page.width;
+    const MARGIN = 50;
+    const INNER  = W - MARGIN * 2;
+    const PRIMARY  = '#0891b2';
+    const SUCCESS  = '#16a34a';
+    const ERROR    = '#dc2626';
+    const AMBER    = '#d97706';
+    const MUTED    = '#64748b';
+    const DARK     = '#0f172a';
+    const DIVIDER  = '#e2e8f0';
+    const BG_LIGHT = '#f8fafc';
 
-    // ── Header ──────────────────────────────────────────────────────────────
-    doc.rect(0, 0, doc.page.width, 80).fill(DARK);
-    doc.fill('white').fontSize(22).font('Helvetica-Bold').text('PULSEGLP1', 50, 25);
-    doc.fill(PRIMARY).fontSize(10).font('Helvetica').text('GLP-1 Market Intelligence Report', 50, 52);
-    doc.fill(MUTED).fontSize(8).text(`Generated ${new Date(timestamp).toLocaleString()}  |  DB: ${dbStats?.total ?? '–'} items`, 50, 64);
-    doc.moveDown(3);
-
+    // ── Helper: section header ───────────────────────────────────────────────
     const sectionTitle = (title: string) => {
-      doc.moveDown(0.5);
-      doc.fill(DARK).fontSize(13).font('Helvetica-Bold').text(title);
-      doc.moveTo(50, doc.y + 4).lineTo(doc.page.width - 50, doc.y + 4).stroke(PRIMARY);
+      if (doc.y > doc.page.height - 140) doc.addPage();
       doc.moveDown(0.8);
+      doc.rect(MARGIN, doc.y, INNER, 22).fill('#f1f5f9');
+      doc.fill(DARK).fontSize(10).font('Helvetica-Bold').text(title, MARGIN + 8, doc.y - 17);
+      doc.moveDown(0.6);
     };
 
-    const badge = (label: string, x: number, y: number) => {
-      const color = label === 'CRITICAL' ? '#ef4444' : label === 'EMERGING' ? PRIMARY : '#f97316';
-      doc.fill(color).fontSize(7).font('Helvetica-Bold').text(label, x, y);
+    // ── Helper: draw mini horizontal bar ────────────────────────────────────
+    const miniBar = (x: number, y: number, pct: number, width: number, color: string) => {
+      doc.rect(x, y, width, 6).fill('#e2e8f0');
+      if (pct > 0) doc.rect(x, y, width * (pct / 100), 6).fill(color);
     };
 
-    // ── Top Insights ────────────────────────────────────────────────────────
-    sectionTitle('TOP INSIGHTS THIS WEEK');
-    for (const ins of topInsights.slice(0, 3)) {
-      const y0 = doc.y;
-      doc.fill(DARK).fontSize(11).font('Helvetica-Bold').text(ins.title || '', { continued: false });
-      badge(ins.status || '', 400, y0);
-      doc.fill(MUTED).fontSize(9).font('Helvetica').text(ins.description || '', { indent: 10 });
-      doc.fill(PRIMARY).fontSize(8).text(`Momentum: ${ins.momentum || ''}`, { indent: 10 });
-      doc.fill(DARK).fontSize(8).text(`→ Action: ${ins.action || ''}`, { indent: 10 });
-      doc.moveDown(0.8);
-    }
+    // ── Helper: row divider ──────────────────────────────────────────────────
+    const rowDivider = () => { doc.moveTo(MARGIN, doc.y).lineTo(W - MARGIN, doc.y).lineWidth(0.3).stroke(DIVIDER); };
 
-    // ── Emerging Sub-Topics ─────────────────────────────────────────────────
-    sectionTitle('EMERGING SUB-TOPICS');
-    const colW = [200, 60, 70, 80, 80];
-    const headers = ['TOPIC', 'VOLUME', 'SENTIMENT', 'MOMENTUM', 'DOMAIN'];
-    let tx = 50;
+    // ── COVER ────────────────────────────────────────────────────────────────
+    doc.rect(0, 0, W, 120).fill(DARK);
+    doc.fill('white').fontSize(26).font('Helvetica-Bold').text('PULSEGLP1', MARGIN, 30);
+    doc.fill(PRIMARY).fontSize(11).font('Helvetica').text('GLP-1 Market Intelligence Report', MARGIN, 62);
+    doc.fill('#94a3b8').fontSize(8).text(
+      `Generated ${new Date(timestamp).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })}   ·   Database: ${(dbStats?.total ?? 0).toLocaleString()} items collected`,
+      MARGIN, 80
+    );
+    // Accent bar under header
+    doc.rect(0, 120, W, 3).fill(PRIMARY);
+    doc.y = 145;
+
+    // ── SECTION 1: Key Stats ─────────────────────────────────────────────────
+    sectionTitle('KEY METRICS — LAST 30 DAYS');
+    const statBoxW = Math.floor(INNER / 3);
+    const totalPosts = drugStats.reduce((s, d) => s + d.total, 0);
+    const avgPosPct  = drugStats.length ? Math.round(drugStats.reduce((s, d) => s + d.posPct, 0) / drugStats.length) : 0;
+    const avgRiskPct = drugStats.length ? Math.round(drugStats.reduce((s, d) => s + d.riskPct, 0) / drugStats.length) : 0;
+    const statBoxes = [
+      { label: 'POSTS & COMMENTS', value: totalPosts.toLocaleString(), color: PRIMARY },
+      { label: 'AVG POSITIVE SENTIMENT', value: `${avgPosPct}%`, color: SUCCESS },
+      { label: 'AVG RISK-ALERT RATE', value: `${avgRiskPct}%`, color: ERROR },
+    ];
+    const boxY = doc.y;
+    statBoxes.forEach((b, i) => {
+      const bx = MARGIN + i * statBoxW;
+      doc.rect(bx, boxY, statBoxW - 6, 52).fill(BG_LIGHT).stroke(DIVIDER);
+      doc.fill(MUTED).fontSize(7).font('Helvetica-Bold').text(b.label, bx + 8, boxY + 8, { width: statBoxW - 20 });
+      doc.fill(b.color).fontSize(20).font('Helvetica-Bold').text(b.value, bx + 8, boxY + 22);
+    });
+    doc.y = boxY + 64;
+
+    // ── SECTION 2: Drug Comparison ───────────────────────────────────────────
+    sectionTitle('DRUG SENTIMENT BENCHMARK — LAST 30 DAYS');
+    const colW2 = [110, 60, 130, 70, 130, 60];
+    const heads2 = ['DRUG', 'TOTAL', 'POSITIVE %', '', 'RISK-ALERT %', ''];
+    let tx = MARGIN;
     doc.fill(MUTED).fontSize(7).font('Helvetica-Bold');
-    headers.forEach((h, i) => { doc.text(h, tx, doc.y, { width: colW[i], lineBreak: false }); tx += colW[i]; });
-    doc.moveDown(0.5);
-    doc.moveTo(50, doc.y).lineTo(doc.page.width - 50, doc.y).stroke('#e2e8f0');
+    heads2.forEach((h, i) => { doc.text(h, tx, doc.y, { width: colW2[i], lineBreak: false }); tx += colW2[i]; });
+    doc.moveDown(0.4);
+    rowDivider();
     doc.moveDown(0.3);
 
-    for (const t of emergingTopics.slice(0, 5)) {
-      tx = 50;
-      const rowY = doc.y;
-      const cells = [t.topic || '', t.volume || '', `${t.sentimentScore}/100`, t.momStr || '', t.topicDomain?.split(' ')[0] || ''];
+    for (const d of drugStats) {
+      if (doc.y > doc.page.height - 80) doc.addPage();
+      const ry = doc.y;
+      tx = MARGIN;
+      // Drug name
+      doc.fill(DARK).fontSize(9).font('Helvetica-Bold').text(d.drug, tx, ry, { width: colW2[0], lineBreak: false }); tx += colW2[0];
+      // Total
+      doc.fill(MUTED).fontSize(8).font('Helvetica').text(d.total.toLocaleString(), tx, ry, { width: colW2[1], lineBreak: false }); tx += colW2[1];
+      // Positive bar
+      miniBar(tx, ry + 2, d.posPct, colW2[2] - 8, SUCCESS);
+      tx += colW2[2];
+      // Positive %
+      doc.fill(SUCCESS).fontSize(8).font('Helvetica-Bold').text(`${d.posPct}%`, tx, ry, { width: colW2[3], lineBreak: false }); tx += colW2[3];
+      // Risk bar
+      miniBar(tx, ry + 2, d.riskPct, colW2[4] - 8, ERROR);
+      tx += colW2[4];
+      // Risk %
+      doc.fill(ERROR).fontSize(8).font('Helvetica-Bold').text(`${d.riskPct}%`, tx, ry, { width: colW2[5], lineBreak: false });
+      doc.moveDown(0.65);
+      rowDivider();
+      doc.moveDown(0.2);
+    }
+
+    // ── SECTION 3: Top Insights ──────────────────────────────────────────────
+    sectionTitle('AI-GENERATED TOP INSIGHTS');
+    for (const ins of topInsights.slice(0, 5)) {
+      if (doc.y > doc.page.height - 100) doc.addPage();
+      const statusColor = ins.status === 'CRITICAL' ? ERROR : ins.status === 'EMERGING' ? PRIMARY : AMBER;
+      const insY = doc.y;
+      // Status badge (left accent bar)
+      doc.rect(MARGIN, insY, 3, 50).fill(statusColor);
+      doc.fill(statusColor).fontSize(7).font('Helvetica-Bold').text(ins.status || '', MARGIN + 10, insY);
+      doc.fill(DARK).fontSize(10).font('Helvetica-Bold').text(ins.title || '', MARGIN + 10, insY + 10, { width: INNER - 70 });
+      doc.fill(MUTED).fontSize(8).font('Helvetica').text(ins.description || '', MARGIN + 10, doc.y + 2, { width: INNER - 20 });
+      if (ins.action) doc.fill(PRIMARY).fontSize(8).text(`→ ${ins.action}`, MARGIN + 10, doc.y + 2, { width: INNER - 20 });
+      doc.moveDown(0.8);
+      rowDivider();
+      doc.moveDown(0.3);
+    }
+
+    // ── SECTION 4: Emerging Topics ───────────────────────────────────────────
+    sectionTitle('EMERGING SUB-TOPICS');
+    const colW3 = [190, 55, 75, 90, 90];
+    const heads3 = ['TOPIC', 'VOLUME', 'SENTIMENT', 'MOMENTUM', 'DOMAIN'];
+    tx = MARGIN;
+    doc.fill(MUTED).fontSize(7).font('Helvetica-Bold');
+    heads3.forEach((h, i) => { doc.text(h, tx, doc.y, { width: colW3[i], lineBreak: false }); tx += colW3[i]; });
+    doc.moveDown(0.4);
+    rowDivider();
+    doc.moveDown(0.3);
+
+    for (const t of emergingTopics.slice(0, 8)) {
+      if (doc.y > doc.page.height - 60) doc.addPage();
+      const rowY2 = doc.y;
+      tx = MARGIN;
+      const momColor = (t.momStr || '').includes('↑') ? SUCCESS : (t.momStr || '').includes('↓') ? ERROR : MUTED;
+      const cells3 = [t.topic || '', String(t.volume || ''), `${t.sentimentScore ?? '–'}/100`, t.momStr || '–', (t.topicDomain || '').split(' ').slice(0, 2).join(' ')];
       doc.fill(DARK).fontSize(8).font('Helvetica');
-      cells.forEach((c, i) => { doc.text(c, tx, rowY, { width: colW[i], lineBreak: false }); tx += colW[i]; });
+      cells3.forEach((c, i) => {
+        const col = i === 3 ? momColor : DARK;
+        doc.fill(col).text(c, tx, rowY2, { width: colW3[i], lineBreak: false });
+        tx += colW3[i];
+      });
+      doc.moveDown(0.5);
+      rowDivider();
+      doc.moveDown(0.2);
+    }
+
+    // ── SECTION 5: High-Signal Verbatims ────────────────────────────────────
+    sectionTitle('HIGH-SIGNAL PATIENT VERBATIMS');
+    const topPosts = evidenceFeed.filter((e: any) => (e.coverage || 0) >= 60).slice(0, 10);
+    for (const post of topPosts) {
+      if (doc.y > doc.page.height - 110) doc.addPage();
+      const postY = doc.y;
+      doc.rect(MARGIN, postY, INNER, 1).fill(DIVIDER);
+      doc.fill(PRIMARY).fontSize(7).font('Helvetica-Bold')
+        .text(`${post.drug || ''}  ·  ${post.source || ''}  ·  ${post.sentimentLabel || ''}  ·  Stage: ${post.stage || '–'}`, MARGIN, postY + 6);
+      const excerpt = (post.text || '').substring(0, 300) + ((post.text?.length || 0) > 300 ? '…' : '');
+      doc.fill(DARK).fontSize(8.5).font('Helvetica').text(`"${excerpt}"`, MARGIN, doc.y + 3, { width: INNER - 10 });
+      if (post.url) doc.fill(MUTED).fontSize(6.5).text(post.url, MARGIN, doc.y + 2, { width: INNER, ellipsis: true });
+      doc.moveDown(0.7);
+    }
+    if (topPosts.length === 0) {
+      doc.fill(MUTED).fontSize(8).font('Helvetica').text('No high-signal verbatims available. Load the dashboard and wait for analysis to complete.', MARGIN);
       doc.moveDown(0.5);
     }
 
-    // ── Recent High-Signal Verbatims ────────────────────────────────────────
-    sectionTitle('HIGH-SIGNAL PATIENT VERBATIMS');
-    const topPosts = evidenceFeed
-      .filter((e: any) => (e.coverage || 0) >= 60)
-      .slice(0, 8);
-    for (const post of topPosts) {
-      if (doc.y > doc.page.height - 120) doc.addPage();
-      const excerpt = (post.text || '').substring(0, 280) + ((post.text?.length || 0) > 280 ? '…' : '');
-      doc.fill(PRIMARY).fontSize(7).font('Helvetica-Bold').text(`${post.drug}  ·  ${post.source}  ·  ${post.sentimentLabel || ''}  ·  ${post.stage || ''}`);
-      doc.fill(DARK).fontSize(8.5).font('Helvetica').text(`"${excerpt}"`, { indent: 10 });
-      doc.fill(MUTED).fontSize(7).text(post.url || '', { indent: 10 });
-      doc.moveDown(0.6);
-    }
+    // ── SECTION 6: Data Coverage ─────────────────────────────────────────────
+    sectionTitle('DATA COVERAGE');
+    doc.fill(DARK).fontSize(9).font('Helvetica')
+      .text(`Total items: ${(dbStats?.total ?? 0).toLocaleString()}   ·   Posts: ${(dbStats?.posts ?? 0).toLocaleString()}   ·   Comments: ${(dbStats?.comments ?? 0).toLocaleString()}`)
+      .text(`Subreddits monitored: r/Ozempic, r/Mounjaro, r/WegovyWeightLoss, r/Zepbound, r/Semaglutide`);
 
-    // ── DB Coverage ─────────────────────────────────────────────────────────
-    if (dbStats) {
-      sectionTitle('DATA COVERAGE');
-      doc.fill(DARK).fontSize(9).font('Helvetica')
-        .text(`Total items in database: ${dbStats.total}`)
-        .text(`Posts: ${dbStats.posts}    Comments: ${dbStats.comments}`)
-        .text(`Subreddits: r/Ozempic, r/Mounjaro, r/WegovyWeightLoss, r/Zepbound, r/Semaglutide`);
+    // ── Page numbers ─────────────────────────────────────────────────────────
+    const pages = doc.bufferedPageRange();
+    for (let i = pages.start; i < pages.start + pages.count; i++) {
+      doc.switchToPage(i);
+      doc.fill(MUTED).fontSize(7).font('Helvetica')
+        .text(`PulseGLP1 — Confidential. For internal use only.   |   Page ${i + 1} of ${pages.count}`,
+          MARGIN, doc.page.height - 30, { align: 'center', width: INNER });
     }
-
-    // ── Footer ───────────────────────────────────────────────────────────────
-    doc.moveDown(1);
-    doc.fill(MUTED).fontSize(7).text('PulseGLP1 — Confidential. For internal use only.', { align: 'center' });
 
     doc.end();
   } catch (err: any) {
@@ -744,16 +845,38 @@ app.get("/api/intel/switches", (req, res) => {
         const rows = db.prepare(`
           SELECT id, drug, text, url, post_ts, sentiment FROM evidence
           WHERE post_ts >= ? AND LOWER(text) LIKE ? AND LOWER(text) LIKE ? AND (${kwClause})
-          LIMIT 20
+          LIMIT 40
         `).all(...params) as any[];
         if (rows.length === 0) continue;
+
+        // Directional filter: only count posts where this is the FROM→TO direction.
+        // A post with "Ozempic to Mounjaro" counts as Ozempic→Mounjaro, NOT Mounjaro→Ozempic.
+        const fromLower = from.toLowerCase();
+        const toLower   = to.toLowerCase();
+        const directional = rows.filter(row => {
+          const t = row.text.toLowerCase();
+          // Explicit "from [from]" or "off [from]" patterns strongly indicate direction
+          const explicitFrom = t.includes(`from ${fromLower}`) || t.includes(`off ${fromLower}`) ||
+                               t.includes(`stopped ${fromLower}`) || t.includes(`was on ${fromLower}`) ||
+                               t.includes(`left ${fromLower}`);
+          const explicitTo   = t.includes(`to ${toLower}`) || t.includes(`started ${toLower}`) ||
+                               t.includes(`switched to ${toLower}`) || t.includes(`now on ${toLower}`);
+          if (explicitFrom || explicitTo) return true;
+          // Fallback: from-drug appears before to-drug in the text (position heuristic)
+          const fromIdx = t.indexOf(fromLower);
+          const toIdx   = t.indexOf(toLower);
+          return fromIdx !== -1 && toIdx !== -1 && fromIdx < toIdx;
+        });
+
+        if (directional.length === 0) continue;
+
         const verbatims: string[] = [];
-        for (const row of rows.slice(0, 3)) {
+        for (const row of directional.slice(0, 3)) {
           const sentences = row.text.split(/[.!?]+/).map((s: string) => s.trim()).filter(Boolean);
           const hit = sentences.find((s: string) => SWITCH_KW.some(k => s.toLowerCase().includes(k)));
           if (hit && hit.length > 20) verbatims.push(hit.substring(0, 200));
         }
-        flows.push({ from, to, count: rows.length, verbatims });
+        flows.push({ from, to, count: directional.length, verbatims });
       }
     }
 
@@ -861,47 +984,57 @@ app.get("/api/intel/hcp", (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
-// #11 Trend Forecasting
+// #11 Trend Forecasting — adaptive granularity based on window size
 app.get("/api/intel/trends", (req, res) => {
   try {
-    const weeks = parseInt(req.query.weeks as string) || 12;
-    const cutoff = Date.now() - weeks * 7 * 86400_000;
+    const days = parseInt(req.query.days as string) || 30;
+    const cutoff = days > 0 ? Date.now() - days * 86400_000 : Date.now() - 365 * 86400_000;
+    const effectiveDays = days > 0 ? days : 365;
+
+    // Adaptive bucket: daily for ≤7d, every 3 days for ≤30d, weekly for longer
+    const bucketMs = effectiveDays <= 7  ? 86400_000 :
+                     effectiveDays <= 30 ? 3 * 86400_000 :
+                     7 * 86400_000;
+
     const rows = db.prepare(`SELECT tags, post_ts, drug FROM evidence WHERE post_ts >= ? AND tags IS NOT NULL AND tags != '[]'`).all(cutoff) as any[];
 
-    const tagWeeks: Record<string, Record<string, number>> = {};
-    const drugWeeks: Record<string, Record<string, number>> = {};
+    const tagBuckets: Record<string, Record<string, number>> = {};
+    const drugBuckets: Record<string, Record<string, number>> = {};
+    const allBucketSet = new Set<string>();
+
     for (const row of rows) {
-      const d = new Date(row.post_ts);
-      const weekStart = new Date(d); weekStart.setDate(d.getDate() - d.getDay());
-      const weekKey = weekStart.toISOString().substring(0, 10);
+      const bucketStart = Math.floor(row.post_ts / bucketMs) * bucketMs;
+      const bucketKey = new Date(bucketStart).toISOString().substring(0, 10);
+      allBucketSet.add(bucketKey);
       let tags: string[] = []; try { tags = JSON.parse(row.tags || '[]'); } catch { continue; }
-      for (const tag of tags) { if (!tagWeeks[tag]) tagWeeks[tag] = {}; tagWeeks[tag][weekKey] = (tagWeeks[tag][weekKey] || 0) + 1; }
-      if (row.drug) { if (!drugWeeks[row.drug]) drugWeeks[row.drug] = {}; drugWeeks[row.drug][weekKey] = (drugWeeks[row.drug][weekKey] || 0) + 1; }
+      for (const tag of tags) { if (!tagBuckets[tag]) tagBuckets[tag] = {}; tagBuckets[tag][bucketKey] = (tagBuckets[tag][bucketKey] || 0) + 1; }
+      if (row.drug) { if (!drugBuckets[row.drug]) drugBuckets[row.drug] = {}; drugBuckets[row.drug][bucketKey] = (drugBuckets[row.drug][bucketKey] || 0) + 1; }
     }
 
-    const allWeeks: string[] = [];
-    const cursor = new Date(cutoff); cursor.setDate(cursor.getDate() - cursor.getDay());
-    while (cursor <= new Date()) { allWeeks.push(cursor.toISOString().substring(0, 10)); cursor.setDate(cursor.getDate() + 7); }
+    // Fill all bucket keys between cutoff and now
+    const allBuckets: string[] = [];
+    let cur = Math.floor(cutoff / bucketMs) * bucketMs;
+    while (cur <= Date.now()) { allBuckets.push(new Date(cur).toISOString().substring(0, 10)); cur += bucketMs; }
+    if (allBuckets.length === 0 && allBucketSet.size > 0) allBuckets.push(...[...allBucketSet].sort());
 
     const trendedTopics: any[] = [];
-    for (const [tag, weekMap] of Object.entries(tagWeeks)) {
-      const series = allWeeks.map(w => weekMap[w] || 0);
+    for (const [tag, bucketMap] of Object.entries(tagBuckets)) {
+      const series = allBuckets.map(b => bucketMap[b] || 0);
       const total = series.reduce((s, v) => s + v, 0);
-      if (total < 10) continue;
+      if (total < 3) continue; // minimum 3 mentions to surface
       const growthRates: number[] = [];
       for (let i = 1; i < series.length; i++) { const prev = series[i - 1] || 1; growthRates.push((series[i] - prev) / prev); }
-      const last3 = growthRates.slice(-3);
-      const isAccelerating = last3.length === 3 && last3.every(r => r > 0);
-      const last4 = series.slice(-4);
-      const slope = last4.length > 1 ? (last4[last4.length - 1] - last4[0]) / (last4.length - 1) : 0;
-      const currentWeekCount = series[series.length - 1] || 0;
+      const last2 = growthRates.slice(-2); // 2+ consecutive up-periods = accelerating
+      const isAccelerating = last2.length >= 2 && last2.every(r => r > 0);
+      const currentCount = series[series.length - 1] || 0;
       const avgGrowthPct = growthRates.length > 0 ? Math.round((growthRates.reduce((s, r) => s + r, 0) / growthRates.length) * 100) : 0;
-      trendedTopics.push({ tag, total, series: allWeeks.map((w, i) => ({ week: w, count: series[i] })), isAccelerating, avgGrowthPct, currentWeekCount, slope: Math.round(slope * 10) / 10, projectedPeakWeeks: slope > 0 ? Math.ceil(currentWeekCount / slope) : null });
+      const slope = series.length > 1 ? (series[series.length - 1] - series[0]) / (series.length - 1) : 0;
+      trendedTopics.push({ tag, total, series: allBuckets.map((b, i) => ({ week: b, count: series[i] })), isAccelerating, avgGrowthPct, currentWeekCount: currentCount, projectedPeakWeeks: slope > 0 ? Math.ceil(currentCount / slope) : null });
     }
     trendedTopics.sort((a, b) => { if (a.isAccelerating && !b.isAccelerating) return -1; if (b.isAccelerating && !a.isAccelerating) return 1; return b.total - a.total; });
 
-    const drugTrends = Object.entries(drugWeeks).map(([drug, weekMap]) => ({ drug, series: allWeeks.map(w => ({ week: w, count: weekMap[w] || 0 })) }));
-    res.json({ topics: trendedTopics.slice(0, 20), drugTrends, weeks: allWeeks });
+    const drugTrends = Object.entries(drugBuckets).map(([drug, bucketMap]) => ({ drug, series: allBuckets.map(b => ({ week: b, count: bucketMap[b] || 0 })) }));
+    res.json({ topics: trendedTopics.slice(0, 20), drugTrends, weeks: allBuckets, bucketDays: bucketMs / 86400_000 });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
