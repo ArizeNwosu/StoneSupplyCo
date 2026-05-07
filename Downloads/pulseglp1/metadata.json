@@ -1,0 +1,6 @@
+{
+  "name": "PulseGLP1",
+  "description": "A lightweight intelligence engine that monitors public GLP-1 discussions and converts them into actionable business insights.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
