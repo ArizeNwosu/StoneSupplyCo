@@ -296,7 +296,18 @@
 
     function setImage(imageUrl, imageSrcset, imageAlt) {
       if (!mainMedia || !imageUrl) return;
-      mainMedia.innerHTML = `<img src="${imageUrl}" ${imageSrcset ? `srcset="${imageSrcset}"` : ''} alt="${(imageAlt || '').replace(/"/g, '&quot;')}" class="w-full h-full object-cover transition-transform duration-300 ease-out" id="main-product-image" width="900" height="1125" loading="eager" fetchpriority="high">`;
+      const img = document.createElement('img');
+      img.src = imageUrl;
+      if (imageSrcset) img.srcset = imageSrcset;
+      img.alt = imageAlt || '';
+      img.className = 'w-full h-full object-cover transition-transform duration-300 ease-out';
+      img.id = 'main-product-image';
+      img.width = 900;
+      img.height = 1125;
+      img.loading = 'eager';
+      img.fetchPriority = 'high';
+      mainMedia.innerHTML = '';
+      mainMedia.appendChild(img);
     }
 
     function setAtcAvailability(available) {
@@ -492,6 +503,9 @@
 
       const packQty = getPackQty();
       const variantCounts = {};
+      // Single label reference used for all status writes in this function
+      const label = atcButton?.querySelector('span');
+      const originalLabel = label?.textContent;
 
       for (const row of rows) {
         const activeBtn = row.querySelector('[aria-pressed="true"]');
@@ -507,16 +521,16 @@
         }
 
         if (!vid) {
-          const label = atcButton?.querySelector('span');
-          const original = label?.textContent;
           if (label) {
             label.textContent = `Color "${optionValue}" not available`;
-            setTimeout(() => { if (label) label.textContent = original; }, 4000);
+            setTimeout(() => { if (label) label.textContent = originalLabel; }, 4000);
           }
           console.error(`[Splitflask] Could not resolve variant for color "${optionValue}"`);
           return false;
         }
 
+        // Each row is one slot; multiplying by packQty scales across ordered packs.
+        // e.g. packQty=2, same color in both rows → variantCounts[vid] = 4 (correct)
         variantCounts[vid] = (variantCounts[vid] || 0) + packQty;
       }
 
@@ -524,9 +538,6 @@
         id: parseInt(id, 10) || id,
         quantity,
       }));
-
-      const label = atcButton?.querySelector('span');
-      const originalLabel = label?.textContent;
       if (atcButton) {
         atcButton.disabled = true;
         atcButton.classList.add('opacity-60', 'cursor-not-allowed');
