@@ -1,0 +1,372 @@
+{% assign free_shipping_threshold = 5000 %}
+{% assign mystery_gift_product = blank %}
+{% assign hydration_guide_product = blank %}
+{% if section.settings.enable_mystery_gift and section.settings.mystery_gift_product != blank %}
+  {% assign mystery_gift_product = all_products[section.settings.mystery_gift_product] %}
+{% endif %}
+{% if section.settings.enable_hydration_guide and section.settings.hydration_guide_product != blank %}
+  {% assign hydration_guide_product = all_products[section.settings.hydration_guide_product] %}
+{% endif %}
+{% assign qualifies_for_free_shipping = false %}
+{% if cart.items_subtotal_price >= free_shipping_threshold %}
+  {% assign qualifies_for_free_shipping = true %}
+{% endif %}
+{% assign remaining_for_free_shipping = free_shipping_threshold | minus: cart.items_subtotal_price %}
+{% if remaining_for_free_shipping < 0 %}
+  {% assign remaining_for_free_shipping = 0 %}
+{% endif %}
+{% assign shipping_progress = cart.items_subtotal_price | times: 100 | divided_by: free_shipping_threshold %}
+{% if shipping_progress > 100 %}
+  {% assign shipping_progress = 100 %}
+{% endif %}
+<section
+  class="pt-24 pb-32 max-w-5xl mx-auto px-6"
+  data-cart-freebies
+  data-free-mystery-gift-enabled="{% if mystery_gift_product %}true{% else %}false{% endif %}"
+  data-free-mystery-gift-variant-id="{% if mystery_gift_product %}{{ mystery_gift_product.selected_or_first_available_variant.id }}{% endif %}"
+  data-free-hydration-guide-enabled="{% if hydration_guide_product %}true{% else %}false{% endif %}"
+  data-free-hydration-guide-variant-id="{% if hydration_guide_product %}{{ hydration_guide_product.selected_or_first_available_variant.id }}{% endif %}"
+>
+  <!-- Hero Headline -->
+  <div class="mb-12">
+    <h1 class="text-4xl md:text-5xl font-headline font-extrabold tracking-tight text-on-surface mb-2">{{ section.settings.heading }}</h1>
+    <p class="text-on-surface-variant text-lg max-w-md font-body">{{ section.settings.subheading }}</p>
+  </div>
+
+  {% if cart.item_count > 0 %}
+    <div class="mb-8 rounded-2xl border border-primary/15 bg-white px-5 py-5 shadow-sm">
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-primary font-label mb-1">Shipping Progress</p>
+          <p class="text-sm md:text-base font-semibold text-on-surface" id="free-shipping-message">
+            {% if qualifies_for_free_shipping %}
+              You unlocked free shipping.
+            {% else %}
+              Add {{ remaining_for_free_shipping | money }} more to unlock free shipping.
+            {% endif %}
+          </p>
+        </div>
+        <div class="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary">
+          {% render 'icon', name: 'heart', class: 'w-4 h-4' %}
+          <span><span id="free-shipping-percent">{{ shipping_progress }}</span>% to free shipping</span>
+        </div>
+      </div>
+      <div class="mt-4 relative h-2.5 rounded-full bg-surface-container-high overflow-hidden">
+        <div id="free-shipping-progress" data-progress-target="{{ shipping_progress }}" class="h-full rounded-full bg-primary transition-all duration-700 ease-out" style="width: 0%;"></div>
+        <div id="free-shipping-progress-icon" class="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-white shadow-sm border border-primary/10 flex items-center justify-center transition-all duration-700 ease-out">
+          {% render 'icon', name: 'heart', class: 'w-3.5 h-3.5 text-primary' %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Cart Items Column -->
+    <div class="lg:col-span-2 space-y-6">
+      {% if cart.item_count == 0 %}
+        <div class="bg-surface-container-lowest rounded-xl p-12 text-center">
+          {% render 'icon', name: 'shopping_cart', class: 'w-16 h-16 text-outline mx-auto mb-4' %}
+          <p class="text-on-surface-variant font-body text-lg mb-6">Your cart is empty.</p>
+          <a href="/collections/all" class="inline-block bg-primary text-on-primary px-8 py-4 rounded-full font-bold hover:brightness-110 transition-all font-headline">Shop Now</a>
+        </div>
+      {% else %}
+        {% for item in cart.items %}
+          <div class="bg-surface-container-lowest rounded-xl overflow-hidden grid grid-cols-1 sm:grid-cols-[10rem_minmax(0,1fr)] md:grid-cols-[12rem_minmax(0,1fr)] gap-5 md:gap-6 p-5 md:p-6 border border-surface-container-high/60 items-start cart-item-row" id="cart-item-{{ item.key | replace: ':', '-' }}" data-line="{{ forloop.index }}" data-key="{{ item.key }}">
+            <div class="w-full aspect-square rounded-lg overflow-hidden bg-surface-container-low self-start">
+              <a href="{{ item.url }}">
+                <img
+                  src="{{ item.image | image_url: width: 300 }}"
+                  alt="{{ item.title }}"
+                  class="w-full h-full object-cover"
+                  width="300"
+                  height="300"
+                  loading="lazy"
+                >
+              </a>
+            </div>
+            <div class="min-w-0 flex flex-col justify-between self-start">
+              <div>
+                <div class="flex justify-between items-start mb-2">
+                  <h3 class="text-lg md:text-xl font-headline font-bold text-on-surface pr-4">{{ item.product.title }}</h3>
+                  <span class="text-base md:text-lg font-bold text-on-surface cart-line-price shrink-0" data-line="{{ forloop.index }}">{{ item.final_line_price | money }}</span>
+                </div>
+                {% if item.variant.title != 'Default Title' %}
+                  <p class="text-sm text-on-surface-variant font-body mb-2">{{ item.variant.title }}</p>
+                {% endif %}
+                {% if item.product.metafields.custom.cart_tagline != blank %}
+                  <p class="text-xs mt-1 font-bold uppercase tracking-widest text-primary font-label">{{ item.product.metafields.custom.cart_tagline }}</p>
+                {% endif %}
+                <div class="mt-4 flex flex-wrap items-center gap-2 md:gap-3">
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-surface-container-high px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M3 7h11v8H3z"></path>
+                      <path d="M14 10h3l3 3v2h-6z"></path>
+                      <circle cx="7.5" cy="17.5" r="1.5"></circle>
+                      <circle cx="17.5" cy="17.5" r="1.5"></circle>
+                    </svg>
+                    {% if qualifies_for_free_shipping %}Free shipping{% else %}Ships fast{% endif %}
+                  </span>
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-surface-container-high px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+                      <path d="M16 3v4M8 3v4M3 10h18"></path>
+                    </svg>
+                    30-day returns
+                  </span>
+                </div>
+              </div>
+              <div class="mt-5 border-t border-outline-variant/10 pt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="inline-flex w-fit items-center bg-surface-container-high rounded-full px-4 py-1.5 border border-outline-variant/10">
+                  <button
+                    class="p-1 hover:text-primary transition-colors cart-qty-btn"
+                    data-line="{{ forloop.index }}"
+                    data-delta="-1"
+                    data-qty="{{ item.quantity | minus: 1 }}"
+                    aria-label="Decrease quantity"
+                  >
+                    <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M5 12h14"></path>
+                    </svg>
+                  </button>
+                  <span class="px-4 min-w-[2.5rem] text-center font-bold text-sm text-on-surface cart-qty-display" data-line="{{ forloop.index }}">{{ item.quantity }}</span>
+                  <button
+                    class="p-1 hover:text-primary transition-colors cart-qty-btn"
+                    data-line="{{ forloop.index }}"
+                    data-delta="1"
+                    data-qty="{{ item.quantity | plus: 1 }}"
+                    aria-label="Increase quantity"
+                  >
+                    <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 5v14M5 12h14"></path>
+                    </svg>
+                  </button>
+                </div>
+                <button
+                  class="w-fit text-on-surface-variant hover:text-error transition-colors text-sm font-semibold inline-flex items-center gap-1.5 font-body cart-remove-btn"
+                  data-line="{{ forloop.index }}"
+                >
+                  <svg viewBox="0 0 24 24" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 7h16"></path>
+                    <path d="M10 11v6M14 11v6"></path>
+                    <path d="M6 7l1 12h10l1-12"></path>
+                    <path d="M9 7V4h6v3"></path>
+                  </svg>
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+
+        <!-- Upsell Block -->
+        {% assign upsell = blank %}
+        {% if section.settings.upsell_product != blank %}
+          {% assign upsell = all_products[section.settings.upsell_product] %}
+        {% endif %}
+        {% if section.settings.upsell_heading != blank %}
+          <div class="bg-primary-container/10 border border-primary-container/20 rounded-xl p-8 relative overflow-hidden">
+            <div class="relative z-10">
+              <span class="text-primary font-bold text-xs uppercase tracking-widest block mb-2">{{ section.settings.upsell_eyebrow }}</span>
+              <h2 class="text-2xl font-headline font-bold text-on-primary-container mb-4">{{ section.settings.upsell_heading }}</h2>
+              <p class="text-on-surface text-lg mb-6 leading-relaxed font-body">{{ section.settings.upsell_body }}</p>
+              <div class="flex flex-col md:flex-row gap-4 items-center">
+                {% if upsell %}
+                  <form action="/cart/add" method="post">
+                    <input type="hidden" name="id" value="{{ upsell.selected_or_first_available_variant.id }}">
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit" class="bg-primary text-on-primary px-8 py-4 rounded-full font-bold text-lg hover:brightness-110 transition-all active:scale-95 shadow-lg shadow-primary/20 w-full md:w-auto font-headline">
+                      {{ section.settings.upsell_button_label }}
+                    </button>
+                  </form>
+                {% else %}
+                  <a href="{{ routes.all_products_collection_url }}" class="bg-primary text-on-primary px-8 py-4 rounded-full font-bold text-lg hover:brightness-110 transition-all active:scale-95 shadow-lg shadow-primary/20 w-full md:w-auto text-center font-headline">
+                    {{ section.settings.upsell_button_label }}
+                  </a>
+                {% endif %}
+                {% if section.settings.upsell_note != blank %}
+                  <div class="text-on-surface-variant text-sm italic font-body">{{ section.settings.upsell_note }}</div>
+                {% endif %}
+              </div>
+              {% if section.settings.upsell_tag_1 != blank or section.settings.upsell_tag_2 != blank %}
+                <div class="mt-6 pt-6 border-t border-primary-container/10 flex flex-wrap gap-4">
+                  {% if section.settings.upsell_tag_1 != blank %}
+                    <div class="flex items-center gap-2 text-xs font-bold text-primary">
+                      {% render 'icon', name: 'home', class: 'w-4 h-4' %}
+                      {{ section.settings.upsell_tag_1 }}
+                    </div>
+                  {% endif %}
+                  {% if section.settings.upsell_tag_2 != blank %}
+                    <div class="flex items-center gap-2 text-xs font-bold text-primary">
+                      {% render 'icon', name: 'directions_run', class: 'w-4 h-4' %}
+                      {{ section.settings.upsell_tag_2 }}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+            <div class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-primary-container/20 rounded-full blur-3xl pointer-events-none"></div>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- Checkout Summary Column -->
+    <div class="lg:col-span-1">
+      <div class="sticky top-28 space-y-6">
+        <div class="bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+          <h2 class="text-xl font-headline font-extrabold text-on-surface mb-6">{{ section.settings.summary_heading }}</h2>
+          <div class="mb-6 rounded-2xl bg-primary/8 px-4 py-4 border border-primary/12">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-primary font-label mb-1">Checkout Ready</p>
+                <p class="text-sm font-semibold text-on-surface">
+                  {% if qualifies_for_free_shipping %}
+                    Your order qualifies for free shipping.
+                  {% else %}
+                    Shipping will be calculated at checkout.
+                  {% endif %}
+                </p>
+              </div>
+              <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-primary/15 shrink-0">
+                {% render 'icon', name: 'check_circle', class: 'w-4 h-4 text-primary' %}
+              </span>
+            </div>
+          </div>
+          <div class="space-y-4 mb-8">
+            <div class="flex justify-between text-on-surface-variant font-body">
+              <span>Subtotal</span>
+              <span id="cart-subtotal">{{ cart.items_subtotal_price | money }}</span>
+            </div>
+            <div class="flex justify-between text-on-surface-variant font-body">
+              <span>Shipping</span>
+              <span class="text-secondary font-bold" id="cart-shipping-status">
+                {% if qualifies_for_free_shipping %}
+                  Free
+                {% else %}
+                  Calculated at checkout
+                {% endif %}
+              </span>
+            </div>
+            {% if section.settings.summary_note != blank %}
+              <p class="text-[10px] text-on-surface-variant italic mb-2 opacity-80 uppercase tracking-wider font-bold font-label">{{ section.settings.summary_note }}</p>
+            {% endif %}
+            <div class="border-t border-surface-container-high pt-4 flex justify-between items-end">
+              <span class="text-lg font-bold font-headline">Total</span>
+              <div class="text-right">
+                <span class="block text-2xl font-black text-on-surface" id="cart-total">{{ cart.total_price | money }}</span>
+                <span class="text-xs text-on-surface-variant font-body">Inclusive of all taxes</span>
+              </div>
+            </div>
+          </div>
+          {% if section.settings.checkout_note != blank %}
+            <p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-4 font-label">{{ section.settings.checkout_note }}</p>
+          {% endif %}
+          <a href="/checkout" class="block w-full bg-on-surface text-surface px-8 py-5 rounded-full font-bold text-lg hover:opacity-90 transition-all active:scale-95 mb-4 text-center font-headline">
+            Checkout
+          </a>
+          <div class="text-center">
+            <p class="text-xs text-on-surface-variant font-medium tracking-wide font-body">Fast checkout • Secure payment • Order summary updates instantly</p>
+          </div>
+        </div>
+
+        <!-- Trust Signals -->
+        <div class="bg-surface-container-low rounded-xl p-6">
+          <div class="grid grid-cols-2 gap-4">
+            {% for block in section.blocks %}
+              {% if block.type == 'trust_signal' %}
+                <div class="flex flex-col items-center text-center p-2" {{ block.shopify_attributes }}>
+                  {% render 'icon-media',
+                    image: block.settings.icon_image,
+                    icon: block.settings.icon,
+                    alt: block.settings.label,
+                    image_class: 'w-6 h-6 mb-2 mx-auto object-contain',
+                    icon_class: 'w-6 h-6 text-secondary mb-2 mx-auto'
+                  %}
+                  <span class="text-[10px] font-bold uppercase tracking-tighter leading-tight text-on-surface font-label">{{ block.settings.label }}</span>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Cart — Main",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Page heading", "default": "Good call." },
+    { "type": "text", "id": "subheading", "label": "Page subheading", "default": "You're about to stop carrying two drinks everywhere." },
+    { "type": "header", "content": "Summary panel" },
+    { "type": "text", "id": "summary_heading", "label": "Summary heading", "default": "You're one step away" },
+    { "type": "text", "id": "summary_note", "label": "Note below shipping", "default": "Takes one use to get right. Worth it after that." },
+    { "type": "text", "id": "checkout_note", "label": "Note above checkout button", "default": "Built for real-life use, not extreme insulation." },
+    { "type": "header", "content": "Upsell block" },
+    { "type": "product", "id": "upsell_product", "label": "Upsell product" },
+    { "type": "text", "id": "upsell_eyebrow", "label": "Upsell eyebrow", "default": "Limited Offer" },
+    { "type": "text", "id": "upsell_heading", "label": "Upsell heading", "default": "Before you check out..." },
+    { "type": "textarea", "id": "upsell_body", "label": "Upsell body", "default": "Most people come back for a second one. Save yourself the second order. Save 20% now." },
+    { "type": "text", "id": "upsell_button_label", "label": "Upsell button label", "default": "Add another for $39.95" },
+    { "type": "text", "id": "upsell_note", "label": "Upsell note", "default": "Or grab one before someone else takes yours" },
+    { "type": "text", "id": "upsell_tag_1", "label": "Upsell tag 1", "default": "Keep one at home" },
+    { "type": "text", "id": "upsell_tag_2", "label": "Upsell tag 2", "default": "One on the go" },
+    { "type": "header", "content": "Mobile sticky bar" },
+    { "type": "text", "id": "mobile_tagline", "label": "Mobile tagline", "default": "Built for real-life use" },
+    { "type": "text", "id": "mobile_button_label", "label": "Mobile button label", "default": "Stop carrying two drinks" },
+    { "type": "header", "content": "Free cart items" },
+    { "type": "checkbox", "id": "enable_mystery_gift", "label": "Add free mystery gift automatically", "default": false },
+    { "type": "product", "id": "mystery_gift_product", "label": "Mystery gift product" },
+    { "type": "checkbox", "id": "enable_hydration_guide", "label": "Add free hydration guide automatically", "default": false },
+    { "type": "product", "id": "hydration_guide_product", "label": "Hydration guide product" }
+  ],
+  "blocks": [
+    {
+      "type": "trust_signal",
+      "name": "Trust signal",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "default": "verified",
+          "options": [
+            { "value": "verified", "label": "Verified badge" },
+            { "value": "thumb-up", "label": "Thumb up" },
+            { "value": "heart", "label": "Heart" },
+            { "value": "local_shipping", "label": "Truck" },
+            { "value": "calendar_today", "label": "Calendar" },
+            { "value": "check_circle", "label": "Check circle" },
+            { "value": "lock", "label": "Lock" },
+            { "value": "shopping_cart", "label": "Shopping cart" },
+            { "value": "shopping_bag", "label": "Shopping bag" },
+            { "value": "home", "label": "Home" },
+            { "value": "directions_run", "label": "Run" },
+            { "value": "water_drop", "label": "Droplet" },
+            { "value": "back_hand", "label": "Hand" },
+            { "value": "science", "label": "Flask" },
+            { "value": "star", "label": "Star" },
+            { "value": "gift", "label": "Gift" },
+            { "value": "shield", "label": "Shield" }
+          ]
+        },
+        { "type": "image_picker", "id": "icon_image", "label": "Custom icon image" },
+        { "type": "text", "id": "label", "label": "Label text" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Cart — Main",
+      "blocks": [
+        { "type": "trust_signal", "settings": { "icon": "verified", "label": "30-day satisfaction guarantee" } },
+        { "type": "trust_signal", "settings": { "icon": "water_drop", "label": "Dishwasher safe" } },
+        { "type": "trust_signal", "settings": { "icon": "back_hand", "label": "Fits most cup holders" } },
+        { "type": "trust_signal", "settings": { "icon": "lock", "label": "Secure lid when aligned correctly" } }
+      ]
+    }
+  ]
+}
+{% endschema %}
