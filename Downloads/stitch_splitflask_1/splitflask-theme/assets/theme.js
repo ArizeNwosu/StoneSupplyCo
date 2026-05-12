@@ -1432,23 +1432,22 @@
       if (!configuredFreebies.length) return cart;
 
       const items = Array.isArray(cart?.items) ? cart.items : [];
-      const indexedItems = items.map((item, index) => ({ item, line: index + 1 }));
-      const autoFreebieItems = indexedItems.filter(({ item }) => getAutoFreebieMatch(item, configuredFreebies));
-      const paidItems = indexedItems.filter(({ item }) => !getAutoFreebieMatch(item, configuredFreebies));
+      const autoFreebieItems = items.filter((item) => getAutoFreebieMatch(item, configuredFreebies));
+      const paidItems = items.filter((item) => !getAutoFreebieMatch(item, configuredFreebies));
 
       if (!paidItems.length) {
-        for (const { line } of autoFreebieItems) {
+        for (const item of autoFreebieItems) {
           await fetch('/cart/change.js', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ line, quantity: 0 }),
+            body: JSON.stringify({ key: item.key, quantity: 0 }),
           });
         }
         return autoFreebieItems.length ? fetchCartState() : cart;
       }
 
       const itemsToAdd = configuredFreebies.filter((freebie) => {
-        return !autoFreebieItems.some(({ item }) => Number(item.variant_id) === Number(freebie.variantId));
+        return !autoFreebieItems.some((item) => Number(item.variant_id) === Number(freebie.variantId));
       });
 
       if (itemsToAdd.length) {
@@ -1466,12 +1465,12 @@
         return fetchCartState();
       }
 
-      for (const { item, line } of autoFreebieItems) {
+      for (const item of autoFreebieItems) {
         if (Number(item.quantity) !== 1) {
           await fetch('/cart/change.js', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ line, quantity: 1 }),
+            body: JSON.stringify({ key: item.key, quantity: 1 }),
           });
           return fetchCartState();
         }
@@ -1560,6 +1559,10 @@
           isApplyingCartFreebies = false;
         }
         updateCartTotals(finalCart);
+        if (finalCart.item_count === 0) {
+          window.location.reload();
+          return;
+        }
       } catch (err) {
         console.error('[Splitflask] Cart remove failed:', err);
         isApplyingCartFreebies = false;
