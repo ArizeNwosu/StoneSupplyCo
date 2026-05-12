@@ -166,317 +166,111 @@
 
   /* ─── PDP Bundle Picker ─── */
   function initBundlePicker() {
-    const cards = $$('.bundle-card');
-    const qtyInput = $('#product-quantity');
-    const qtySummary = $('#bundle-quantity-summary');
-    const unitSummary = $('#bundle-unit-summary');
-    const swatchButtons = $$('.color-swatch-btn');
-    const variantInput = $('#selected-variant-id');
-    const variantDataEl = $('#pdp-variant-data');
-    const swatchLabel = $('#selected-color-label');
-    const mainMedia = $('#pdp-main-media');
-    const atcButton = $('#product-form button[type="submit"]');
-    const root = $('#product-form');
-    const stickyPriceEl = $('[data-mobile-sticky-price]');
-    const swatchGroup = $('#pdp-swatch-group')
-      || $('#selected-color-label')?.closest('.mb-5')
-      || swatchButtons[0]?.closest('.mb-5')
-      || swatchButtons[0]?.parentElement?.closest('div');
-    const quantityControl = $('#pdp-quantity-control')
-      || qtyInput?.closest('.inline-flex')
-      || qtyInput?.parentElement;
-    let quantityNote = $('#pdp-bundle-quantity-note');
-    let hiddenQuantityBuilder = null;
+    const cards = Array.from(document.querySelectorAll('.bundle-card'));
+    const qtyInput = document.querySelector('#product-quantity');
+    const variantInput = document.querySelector('#selected-variant-id');
+    const variantDataEl = document.querySelector('#pdp-variant-data');
+    const mainMedia = document.querySelector('#pdp-main-media');
+    const atcButton = document.querySelector('#product-form button[type="submit"]');
+    const root = document.querySelector('#product-form');
+    const stickyPriceEl = document.querySelector('[data-mobile-sticky-price]');
+    const swatchGroup = document.querySelector('#pdp-swatch-group');
+    const swatchLabel = document.querySelector('#selected-color-label');
+    const qtyNote = document.querySelector('#pdp-bundle-quantity-note');
+    const globalSwatchBtns = Array.from(document.querySelectorAll('.color-swatch-btn'));
 
-    if (!cards.length && !qtyInput && !swatchButtons.length) return;
-    if (root) {
-      document.documentElement.style.overflowX = 'hidden';
-      document.body.style.overflowX = 'hidden';
-    }
+    if (!cards.length) return;
 
-    let variantData = null;
+    // ── Variant data ──────────────────────────────────────────────────────────
+    let allVariants = [];
+    let colorPos = 0;
+    let bundlePos = 0;
     try {
-      variantData = variantDataEl ? JSON.parse(variantDataEl.textContent) : null;
+      const parsed = variantDataEl ? JSON.parse(variantDataEl.textContent) : null;
+      if (parsed?.variants?.length) allVariants = parsed.variants;
+      colorPos = parseInt(variantDataEl?.dataset.swatchOptionPosition || '0', 10) || 0;
+      bundlePos = parseInt(variantDataEl?.dataset.bundleOptionPosition || '0', 10) || 0;
     } catch (err) {
-      console.error('Variant data parse failed:', err);
-    }
-    const bundleOptionPosition = parseInt(variantDataEl?.dataset.bundleOptionPosition || '0', 10) || 0;
-    const swatchOptionPosition = parseInt(variantDataEl?.dataset.swatchOptionPosition || '0', 10) || 0;
-    const bundleProductDataCache = new WeakMap();
-
-    function getVariantOptionValue(variant, position) {
-      if (!variant || !position) return '';
-      return String(variant[`option${position}`] || '').trim();
+      console.error('[Splitflask] Variant data parse failed:', err);
     }
 
-    function normalizeBundleValue(value) {
-      return String(value || '').trim().toLowerCase();
-    }
-
-    function bundleValueMatches(value, targets) {
-      const normalized = normalizeBundleValue(value);
-      if (!normalized || !targets.length) return false;
-      return targets.some((target) => {
-        return normalized === target || normalized.includes(target) || target.includes(normalized);
-      });
-    }
-
-    function getSelectedCard() {
-      return $('.bundle-card.selected') || cards.find((card) => {
-        const radio = card.querySelector('input[type="radio"]');
-        return radio && radio.checked;
-      }) || cards[0] || null;
-    }
-
-    function getSelectedSwatch() {
-      return swatchButtons.find((button) => button.getAttribute('aria-pressed') === 'true') || swatchButtons[0] || null;
-    }
-
-    function getSelectedBundleCount() {
-      return Math.max(1, parseInt(getSelectedCard()?.dataset.bundleCount || '1', 10) || 1);
-    }
-
-    function getSelectedBundleVariantId(card) {
-      const targetCard = card || getSelectedCard();
-      if (!targetCard) return '';
-      const radio = targetCard.querySelector('input[name="bundle_selection"]');
-      return (radio?.value || targetCard.dataset.variantId || '').trim();
-    }
-
-    function getBundleProductData(card) {
-      if (!card) return null;
-      if (bundleProductDataCache.has(card)) return bundleProductDataCache.get(card);
-
-      let productData = null;
-      const dataEl = card.querySelector('[data-bundle-product-data]');
-      if (dataEl?.textContent?.trim()) {
-        try {
-          const parsed = JSON.parse(dataEl.textContent);
-          if (parsed?.variants?.length) productData = parsed;
-        } catch (err) {
-          console.error('[Splitflask] Bundle product data parse failed:', err);
-        }
-      }
-
-      bundleProductDataCache.set(card, productData);
-      return productData;
-    }
-
-    function getDirectBundleVariantId(card) {
-      const targetCard = card || getSelectedCard();
-      const configuredId = getSelectedBundleVariantId(targetCard);
-      if (!configuredId) return '';
-
-      const bundleProduct = getBundleProductData(targetCard);
-      if (bundleProduct?.id && String(bundleProduct.id) === String(configuredId)) return '';
-      if (bundleProduct?.variants?.some((variant) => String(variant.id) === String(configuredId))) return configuredId;
-
-      // A product handle means the saved ID is a legacy product ID, not something
-      // safe to POST to /cart/add.js directly.
-      if (targetCard?.dataset.productHandle) return '';
-      return configuredId;
-    }
-
-    function getBundleProductVariant(card) {
-      const targetCard = card || getSelectedCard();
-      const bundleProduct = getBundleProductData(targetCard);
-      if (!bundleProduct?.variants?.length) return null;
-
-      const configuredId = getSelectedBundleVariantId(targetCard);
-      const configuredVariant = configuredId
-        ? bundleProduct.variants.find((variant) => String(variant.id) === String(configuredId))
-        : null;
-      const selection = getPrimaryBundleSelection(targetCard) || getSwatchMeta(getSelectedSwatch());
-      const targets = [selection?.optionValue, selection?.colorLabel]
-        .map(normalizeBundleValue)
-        .filter(Boolean);
-      const matches = targets.length
-        ? bundleProduct.variants.filter((variant) => {
-          return [variant.option1, variant.option2, variant.option3, variant.title].some((value) => {
-            return bundleValueMatches(value, targets);
-          });
-        })
-        : [];
-      const matchedVariant = matches.find((variant) => variant.available) || matches[0];
-      const fallbackVariant = bundleProduct.variants.find((variant) => variant.available) || bundleProduct.variants[0] || null;
-      const variant = matchedVariant || configuredVariant || fallbackVariant;
-
-      if (!variant) return null;
-      return {
-        ...variant,
-        productId: bundleProduct.id,
-        productHandle: bundleProduct.handle,
-        productTitle: bundleProduct.title,
+    // ── Color swatch definitions ──────────────────────────────────────────────
+    // Built from variant JSON + DOM swatch button metadata.
+    // One entry per unique color option value. Independent of whether the DOM
+    // swatch group is visible — so bundle rows always render correctly.
+    function buildColorSwatches() {
+      if (!colorPos || !allVariants.length) return [];
+      const colorFallbacks = {
+        black: '#1f2937', white: '#f5f5f4', orange: '#d66a1f', blue: '#2563eb',
+        green: '#16a34a', red: '#dc2626', pink: '#ec4899', purple: '#9333ea',
+        grey: '#6b7280', gray: '#6b7280', cream: '#e5d5b0', sand: '#e5d5b0',
       };
-    }
+      const seen = new Set();
+      return allVariants.reduce((acc, variant) => {
+        const optionValue = String(variant[`option${colorPos}`] || '').trim();
+        if (!optionValue || seen.has(optionValue)) return acc;
+        seen.add(optionValue);
 
-    function getBundleAddQuantity(card, bundleVariant, packQuantity, bundleCount) {
-      const normalizedPackQuantity = Math.max(1, packQuantity || 1);
-      const normalizedBundleCount = Math.max(1, bundleCount || 1);
-      const displayedPriceCents = parseMoneyString(card?.dataset.price);
-      const variantPriceCents = Number(bundleVariant?.priceCents || 0);
-
-      if (normalizedBundleCount > 1 && displayedPriceCents > 0 && variantPriceCents > 0) {
-        const inferredUnits = Math.max(1, Math.round(displayedPriceCents / variantPriceCents));
-        const inferredTotal = inferredUnits * variantPriceCents;
-        if (inferredUnits > 1 && Math.abs(inferredTotal - displayedPriceCents) <= 2) {
-          return inferredUnits * normalizedPackQuantity;
-        }
-      }
-
-      return normalizedPackQuantity;
-    }
-
-    function getBundleTiers() {
-      return cards
-        .map((card) => ({
-          variantId: card.dataset.variantId || '',
-          bundleCount: Math.max(1, parseInt(card.dataset.bundleCount || '1', 10) || 1),
-          priceCents: parseMoneyString(card.dataset.price),
-        }))
-        .filter((tier) => tier.variantId && tier.bundleCount > 0 && tier.priceCents >= 0)
-        .sort((a, b) => {
-          if (b.bundleCount !== a.bundleCount) return b.bundleCount - a.bundleCount;
-          return a.priceCents - b.priceCents;
+        const domBtn = globalSwatchBtns.find((btn) => {
+          return (btn.dataset.optionValue || '').trim().toLowerCase() === optionValue.toLowerCase();
         });
-    }
 
-    function buildBundleTierItems(totalUnits) {
-      const tiers = getBundleTiers();
-      if (!tiers.length) return [];
-
-      let remaining = Math.max(1, totalUnits);
-      const items = [];
-
-      tiers.forEach((tier) => {
-        if (remaining < tier.bundleCount) return;
-        const quantity = Math.floor(remaining / tier.bundleCount);
-        if (!quantity) return;
-        items.push({ id: tier.variantId, quantity });
-        remaining -= quantity * tier.bundleCount;
-      });
-
-      if (remaining > 0) {
-        const singleTier = tiers.find((tier) => tier.bundleCount === 1);
-        if (singleTier) {
-          const existing = items.find((item) => String(item.id) === String(singleTier.variantId));
-          if (existing) existing.quantity += remaining;
-          else items.push({ id: singleTier.variantId, quantity: remaining });
-          remaining = 0;
+        const dot = domBtn?.querySelector('span');
+        let color = '#d66a1f';
+        if (dot?.style?.background) {
+          color = dot.style.background;
+        } else {
+          const lower = optionValue.toLowerCase();
+          const match = Object.keys(colorFallbacks).find((k) => lower.includes(k));
+          if (match) color = colorFallbacks[match];
         }
-      }
 
-      return items;
+        acc.push({
+          optionValue,
+          label: domBtn?.dataset.colorLabel || optionValue,
+          variantId: domBtn?.dataset.variantId || '',
+          color,
+          imageUrl: domBtn?.dataset.imageUrl || '',
+          imageSrcset: domBtn?.dataset.imageSrcset || '',
+          imageAlt: domBtn?.dataset.imageAlt || '',
+        });
+        return acc;
+      }, []);
     }
 
-    function getBundleTierTotalCents(totalUnits) {
-      const tiers = getBundleTiers();
-      if (!tiers.length) return 0;
-      const items = buildBundleTierItems(totalUnits);
-      return items.reduce((sum, item) => {
-        const tier = tiers.find((entry) => String(entry.variantId) === String(item.id));
-        if (!tier) return sum;
-        return sum + (tier.priceCents * item.quantity);
-      }, 0);
+    const colorSwatches = buildColorSwatches();
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function getSelectedCard() {
+      return cards.find((c) => c.classList.contains('selected')) || cards[0] || null;
     }
 
-    function hasVisibleBundleCards() {
-      return cards.some((card) => !!(card.offsetParent || card.getClientRects().length));
+    function getBundleCount(card) {
+      return Math.max(1, parseInt((card || getSelectedCard())?.dataset.bundleCount || '1', 10) || 1);
+    }
+
+    function getPackQty() {
+      return Math.max(1, parseInt(qtyInput?.value || '1', 10) || 1);
     }
 
     function getSingleUnitCard() {
-      return cards.find((card) => {
-        return Math.max(1, parseInt(card.dataset.bundleCount || '1', 10) || 1) === 1;
-      }) || null;
+      return cards.find((c) => getBundleCount(c) === 1) || null;
     }
 
-    function isBundleBuilderActive() {
-      // Active whenever a multi-unit card is selected — regardless of whether a
-      // dedicated bundle product variant ID is configured.  addBundleItemsToCart()
-      // falls back to adding N × resolved color variant when no valid variant ID exists.
-      return getSelectedBundleCount() > 1 && !!getSelectedCard();
+    function getActiveColorValue() {
+      const active = globalSwatchBtns.find((b) => b.getAttribute('aria-pressed') === 'true');
+      return (active?.dataset.optionValue || '').trim() || (colorSwatches[0]?.optionValue || '');
     }
 
-    function isHiddenQuantityBuilderActive() {
-      if (hasVisibleBundleCards()) return false;
-      if (!qtyInput || !swatchButtons.length) return false;
-      const quantity = Math.max(1, parseInt(qtyInput.value || '1', 10) || 1);
-      return quantity > 1
-        && !!hiddenQuantityBuilder
-        && !!$('[data-hidden-quantity-builder-row]', hiddenQuantityBuilder);
-    }
-
-    function getSwatchMeta(button) {
-      if (!button) return null;
-      const colorDot = button.querySelector('span');
-      return {
-        variantId: button.dataset.variantId || '',
-        optionValue: button.dataset.optionValue || '',
-        colorLabel: button.dataset.colorLabel || '',
-        imageUrl: button.dataset.imageUrl || '',
-        imageSrcset: button.dataset.imageSrcset || '',
-        imageAlt: button.dataset.imageAlt || '',
-        swatchColor: colorDot?.style?.background || '#d66a1f',
-      };
-    }
-
-    function getBundleRowSelections() {
-      const selectedCard = getSelectedCard();
-      const configRoot = selectedCard ? $('.bundle-card-config', selectedCard) : null;
-      if (!configRoot) return [];
-      return $$('.bundle-item-color-row', configRoot).map((row) => {
-        // Prefer explicitly active button; fall back to first available button in the row.
-        const activeButton = $('[data-bundle-item-swatch][aria-pressed="true"]', row)
-          || $('[data-bundle-item-swatch]', row);
-        const selection = getSwatchMeta(activeButton);
-        if (!selection) return null;
-        selection.variantSource = row.dataset.variantSource || 'selected';
-        return selection;
-      }).filter(Boolean);
-    }
-
-    function getHiddenQuantitySelections() {
-      if (!hiddenQuantityBuilder) return [];
-      return $$('[data-hidden-quantity-builder-row]', hiddenQuantityBuilder).map((row) => {
-        const activeButton = $('[data-hidden-quantity-swatch][aria-pressed="true"]', row);
-        const selection = getSwatchMeta(activeButton);
-        if (!selection) return null;
-        selection.variantSource = 'single';
-        return selection;
-      }).filter(Boolean);
-    }
-
-    function updateBundleSelectionSummary() {
-      const selectedCard = getSelectedCard();
-      const summaryEl = selectedCard ? $('.bundle-selection-summary', selectedCard) : null;
-      if (!summaryEl) return;
-      const selections = getBundleRowSelections().map((selection) => selection.colorLabel).filter(Boolean);
-      if (!selections.length || getSelectedBundleCount() <= 1) {
-        summaryEl.classList.add('hidden');
-        summaryEl.textContent = '';
-        return;
-      }
-      summaryEl.textContent = `${selections.length} selected: ${selections.join(', ')}`;
-      summaryEl.classList.remove('hidden');
-    }
-
-    function getPrimaryBundleSelection(card) {
-      const targetCard = card || getSelectedCard();
-      const firstRowSelection = targetCard
-        ? getSwatchMeta($('[data-bundle-item-swatch][aria-pressed="true"]', targetCard))
-        : null;
-      return firstRowSelection || getSwatchMeta(getSelectedSwatch());
-    }
-
-    function setImage(imageUrl, imageSrcset, imageAlt) {
-      if (!mainMedia || !imageUrl) return;
-      mainMedia.classList.remove('has-video');
-      mainMedia.innerHTML = `<img src="${imageUrl}" ${imageSrcset ? `srcset="${imageSrcset}"` : ''} alt="${(imageAlt || '').replace(/"/g, '&quot;')}" class="w-full h-full object-cover transition-transform duration-300 ease-out" id="main-product-image" width="900" height="1125" loading="eager" fetchpriority="high">`;
+    function parseMoneyString(value) {
+      const normalized = String(value || '').replace(/[^0-9.]/g, '');
+      const amount = parseFloat(normalized);
+      return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
     }
 
     function setPrice(price, comparePrice) {
-      const priceEl = $('#bundle-price');
-      const comparePriceEl = $('#bundle-compare-price');
+      const priceEl = document.querySelector('#bundle-price');
+      const comparePriceEl = document.querySelector('#bundle-compare-price');
       if (priceEl && price) priceEl.textContent = price;
       if (comparePriceEl) {
         if (comparePrice) {
@@ -489,159 +283,68 @@
     }
 
     function setStickyPrice(totalCents) {
-      if (!stickyPriceEl) return;
-      stickyPriceEl.textContent = formatMoney(totalCents);
+      if (stickyPriceEl) stickyPriceEl.textContent = formatMoney(totalCents);
     }
 
-    function parseMoneyString(value) {
-      const normalized = String(value || '').replace(/[^0-9.]/g, '');
-      const amount = parseFloat(normalized);
-      return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
+    function updatePrice(card) {
+      const priceCents = parseMoneyString((card || getSelectedCard())?.dataset.price);
+      if (!priceCents) return;
+      const total = priceCents * getPackQty();
+      setPrice(formatMoney(total), null);
+      setStickyPrice(total);
+    }
+
+    function setImage(imageUrl, imageSrcset, imageAlt) {
+      if (!mainMedia || !imageUrl) return;
+      mainMedia.innerHTML = `<img src="${imageUrl}" ${imageSrcset ? `srcset="${imageSrcset}"` : ''} alt="${(imageAlt || '').replace(/"/g, '&quot;')}" class="w-full h-full object-cover transition-transform duration-300 ease-out" id="main-product-image" width="900" height="1125" loading="eager" fetchpriority="high">`;
     }
 
     function setAtcAvailability(available) {
       if (!atcButton) return;
-      atcButton.disabled = available === false;
-      atcButton.classList.toggle('opacity-60', available === false);
-      atcButton.classList.toggle('cursor-not-allowed', available === false);
+      atcButton.disabled = !available;
+      atcButton.classList.toggle('opacity-60', !available);
+      atcButton.classList.toggle('cursor-not-allowed', !available);
     }
 
-    function findMatchingVariant(bundleCard, swatchButton) {
-      if (!variantData || !variantData.variants || !variantData.variants.length) return null;
+    // ── Variant resolver ──────────────────────────────────────────────────────
+    // Finds the single-unit variant matching a given color option value.
+    // Narrows by bundle option if the product has one (bundlePos > 0).
+    function findSingleUnitVariant(colorValue) {
+      if (!colorPos || !allVariants.length || !colorValue) return null;
+      const normalizedColor = colorValue.trim().toLowerCase();
+      const singleCard = getSingleUnitCard();
+      const singleBundleValue = (singleCard?.dataset.optionValue || '').trim();
 
-      const bundleValue = bundleCard?.dataset.optionValue?.trim();
-      const swatchValue = swatchButton?.dataset.optionValue?.trim();
-      const bundleDirectId = bundleCard?.dataset.variantId;
-      const swatchDirectId = swatchButton?.dataset.variantId;
-      const bundleDirectVariant = bundleDirectId
-        ? variantData.variants.find((variant) => String(variant.id) === String(bundleDirectId))
-        : null;
-      const swatchDirectVariant = swatchDirectId
-        ? variantData.variants.find((variant) => String(variant.id) === String(swatchDirectId))
-        : null;
-      const resolvedBundleValue = bundleValue || getVariantOptionValue(bundleDirectVariant, bundleOptionPosition);
-      const resolvedSwatchValue = swatchValue || getVariantOptionValue(swatchDirectVariant, swatchOptionPosition);
-
-      if (bundleOptionPosition || swatchOptionPosition) {
-        const exactMatches = variantData.variants.filter((variant) => {
-          const matchesBundle = !resolvedBundleValue || !bundleOptionPosition || getVariantOptionValue(variant, bundleOptionPosition) === resolvedBundleValue;
-          const matchesSwatch = !resolvedSwatchValue || !swatchOptionPosition || getVariantOptionValue(variant, swatchOptionPosition) === resolvedSwatchValue;
-          return matchesBundle && matchesSwatch;
-        });
-
-        if (exactMatches.length) {
-          return exactMatches.find((variant) => variant.available) || exactMatches[0];
-        }
-      }
-
-      const matches = variantData.variants.filter((variant) => {
-        const options = [variant.option1, variant.option2, variant.option3].filter(Boolean);
-        const matchesBundle = !bundleValue || options.includes(bundleValue);
-        const matchesSwatch = !swatchValue || options.includes(swatchValue);
-        return matchesBundle && matchesSwatch;
+      let matches = allVariants.filter((v) => {
+        return String(v[`option${colorPos}`] || '').trim().toLowerCase() === normalizedColor;
       });
 
-      if (matches.length) {
-        return matches.find((variant) => variant.available) || matches[0];
+      if (bundlePos > 0 && singleBundleValue) {
+        const narrowed = matches.filter((v) => {
+          return String(v[`option${bundlePos}`] || '').trim().toLowerCase() === singleBundleValue.toLowerCase();
+        });
+        if (narrowed.length) matches = narrowed;
       }
 
-      if (swatchDirectId) {
-        return variantData.variants.find((variant) => String(variant.id) === String(swatchDirectId)) || null;
-      }
-
-      if (bundleDirectId) {
-        return variantData.variants.find((variant) => String(variant.id) === String(bundleDirectId)) || null;
-      }
-
-      return variantData.variants.find((variant) => variant.available) || variantData.variants[0] || null;
+      return matches.find((v) => v.available) || matches[0] || null;
     }
 
-    function syncResolvedVariant() {
-      const selectedCard = getSelectedCard();
-      const bundleCount = Math.max(1, parseInt(selectedCard?.dataset.bundleCount || '1', 10) || 1);
+    // ── Per-item color row renderer ───────────────────────────────────────────
+    // Renders N color picker rows inside .bundle-card-config for the given card.
+    // Row 1 defaults to the currently selected global color.
+    // Rows 2..N default to the first swatch in colorSwatches.
+    function renderRows(card) {
+      const configRoot = card.querySelector('.bundle-card-config');
+      if (!configRoot) return;
 
-      if (bundleCount > 1) {
-        const bundleProductVariant = getBundleProductVariant(selectedCard);
-        if (bundleProductVariant) {
-          if (variantInput) {
-            variantInput.value = bundleProductVariant.id;
-          }
-          setAtcAvailability(bundleProductVariant.available);
-          return;
-        }
-
-        if (selectedCard?.dataset.productHandle) {
-          setAtcAvailability(false);
-          console.error(
-            `[Splitflask] Bundle product "${selectedCard.dataset.productHandle}" was not rendered. ` +
-            'Check that it is active and published to the Online Store sales channel.'
-          );
-          return;
-        }
-      }
-
-      const directBundleVariantId = bundleCount > 1 ? getDirectBundleVariantId(selectedCard) : '';
-      if (directBundleVariantId) {
-        if (variantInput) {
-          variantInput.value = directBundleVariantId;
-        }
-        setAtcAvailability(true);
-        return;
-      }
-      const selectedSwatch = getSelectedSwatch();
-      const matchedVariant = findMatchingVariant(selectedCard, selectedSwatch);
-
-      if (!matchedVariant) return;
-
-      if (variantInput) {
-        variantInput.value = matchedVariant.id;
-      }
-      setAtcAvailability(matchedVariant.available);
-
-      if (selectedSwatch && swatchLabel) {
-        swatchLabel.textContent = selectedSwatch.dataset.colorLabel || '';
-      }
-
-      const liveMainImage = mainMedia ? mainMedia.querySelector('#main-product-image') : null;
-      const shouldSyncMainImage = !liveMainImage || liveMainImage.dataset.manualThumbnail !== 'true';
-
-      if (shouldSyncMainImage && matchedVariant.imageUrl) {
-        setImage(matchedVariant.imageUrl, matchedVariant.imageSrcset, matchedVariant.imageAlt);
-      } else if (shouldSyncMainImage && selectedSwatch?.dataset.imageUrl) {
-        setImage(selectedSwatch.dataset.imageUrl, selectedSwatch.dataset.imageSrcset, selectedSwatch.dataset.imageAlt);
-      }
-    }
-
-    function setSwatchActive(button) {
-      swatchButtons.forEach((swatch) => swatch.setAttribute('aria-pressed', 'false'));
-      if (button) button.setAttribute('aria-pressed', 'true');
-    }
-
-    function getActiveVariant() {
-      const selectedCard = getSelectedCard();
-      const selectedSwatch = getSelectedSwatch();
-      return findMatchingVariant(selectedCard, selectedSwatch);
-    }
-
-    function renderInlineBundleBuilder(card) {
-      const configRoot = $('.bundle-card-config', card);
-      if (!configRoot) return null;
-
-      const bundleCount = Math.max(1, parseInt(card.dataset.bundleCount || '1', 10) || 1);
-      const packQuantity = Math.max(1, parseInt(qtyInput?.value || '1', 10) || 1);
-      const totalUnits = Math.max(bundleCount, bundleCount * packQuantity);
-      const previousSelections = card.classList.contains('selected') ? getBundleRowSelections() : [];
-      const activeSwatch = getSwatchMeta(getSelectedSwatch());
-      const bundleProduct = getBundleProductData(card);
-      const usesBundleProduct = !!bundleProduct?.variants?.length;
-      const rowCount = bundleCount;
-
-      if (bundleCount <= 1 || !swatchButtons.length) {
+      const bundleCount = getBundleCount(card);
+      if (bundleCount <= 1 || !colorSwatches.length) {
         configRoot.classList.add('hidden');
         configRoot.innerHTML = '';
-        return configRoot;
+        return;
       }
 
+      const activeSwatch = getActiveColorValue();
       configRoot.classList.remove('hidden');
       configRoot.innerHTML = `
         <div class="space-y-3">
@@ -650,696 +353,282 @@
               <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Choose colors</p>
               <p class="mt-1 text-[12px] sm:text-sm text-on-surface-variant leading-5">Pick one color for each Splitflask in your ${card.dataset.bundleTitle || 'bundle'}.</p>
             </div>
-            <button
-              type="button"
-              class="bundle-apply-color-all shrink-0 inline-flex items-center justify-center rounded-full border border-outline/20 bg-primary/5 px-3 py-2 text-[11px] sm:text-sm font-semibold text-primary transition-colors hover:bg-primary/10">
-              Make all same
-            </button>
+            <button type="button" class="bundle-apply-all shrink-0 inline-flex items-center justify-center rounded-full border border-outline/20 bg-primary/5 px-3 py-2 text-[11px] sm:text-sm font-semibold text-primary transition-colors hover:bg-primary/10">Make all same</button>
           </div>
-          <p class="bundle-selection-summary hidden rounded-full bg-primary/5 px-3 py-2 text-[11px] sm:text-sm font-semibold text-on-surface"></p>
           <div class="bundle-color-rows space-y-3"></div>
         </div>
       `;
 
-      const rowsRoot = $('.bundle-color-rows', configRoot);
-      const applyAllButton = $('.bundle-apply-color-all', configRoot);
+      const rowsRoot = configRoot.querySelector('.bundle-color-rows');
+      const applyAllBtn = configRoot.querySelector('.bundle-apply-all');
 
-      for (let index = 0; index < rowCount; index += 1) {
-        if (!usesBundleProduct && index === bundleCount && totalUnits > bundleCount) {
-          const extraHeader = document.createElement('div');
-          extraHeader.className = 'rounded-[1rem] border border-dashed border-outline-variant/20 bg-primary/[0.04] px-4 py-3';
-          extraHeader.innerHTML = `
-            <p class="text-xs font-bold uppercase tracking-widest text-primary">Additional Splitflasks</p>
-            <p class="mt-1 text-[12px] sm:text-sm text-on-surface-variant leading-5">Choose colors for the ${totalUnits - bundleCount} extra unit${totalUnits - bundleCount === 1 ? '' : 's'} beyond your ${card.dataset.bundleTitle || 'bundle'}.</p>
-          `;
-          rowsRoot.appendChild(extraHeader);
-        }
-
+      for (let i = 0; i < bundleCount; i += 1) {
         const row = document.createElement('div');
-        row.className = 'bundle-item-color-row rounded-[1rem] border border-outline-variant/15 bg-surface-container-lowest p-3';
-        row.dataset.itemIndex = String(index);
-        row.dataset.variantSource = index < bundleCount ? 'selected' : 'single';
+        row.className = 'bundle-item-row rounded-[1rem] border border-outline-variant/15 bg-surface-container-lowest p-3';
+        row.dataset.itemIndex = String(i);
 
         const header = document.createElement('div');
         header.className = 'flex items-center justify-between gap-3 mb-2';
-        header.innerHTML = `<span class="text-[12px] sm:text-sm font-bold text-on-surface">${index < bundleCount ? `Splitflask ${index + 1}` : `Additional unit ${index - bundleCount + 1}`}</span><span class="text-[11px] sm:text-xs uppercase tracking-widest text-on-surface-variant">Select color</span>`;
+        header.innerHTML = `<span class="text-[12px] sm:text-sm font-bold text-on-surface">Splitflask ${i + 1}</span><span class="text-[11px] sm:text-xs uppercase tracking-widest text-on-surface-variant">Select color</span>`;
         row.appendChild(header);
 
-        const swatchRail = document.createElement('div');
-        swatchRail.className = 'flex flex-wrap gap-2';
-        const presetSelection = previousSelections[index] || activeSwatch;
-        let rowActivated = false;
+        const rail = document.createElement('div');
+        rail.className = 'flex flex-wrap gap-2';
 
-        swatchButtons.forEach((sourceButton) => {
-          const meta = getSwatchMeta(sourceButton);
-          const button = document.createElement('button');
+        colorSwatches.forEach((swatch, swatchIndex) => {
+          const isActive = i === 0
+            ? swatch.optionValue.toLowerCase() === activeSwatch.toLowerCase()
+            : swatchIndex === 0;
 
-          // Determine if this swatch should be the active one for this row.
-          // Only ever activate ONE button per row — the first match wins.
-          let isActive = false;
-          if (!rowActivated && presetSelection) {
-            if (presetSelection.variantId && meta.variantId) {
-              isActive = String(presetSelection.variantId) === String(meta.variantId);
-            } else if (presetSelection.optionValue && meta.optionValue) {
-              isActive = presetSelection.optionValue === meta.optionValue;
-            } else {
-              // Neither has a meaningful ID — default to first swatch in row.
-              isActive = true;
-            }
-          }
-          if (isActive) rowActivated = true;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] sm:text-sm font-semibold text-on-surface bg-white transition-all hover:border-primary/60 min-h-[40px] ${isActive ? 'border-primary' : 'border-outline/20'}`;
+          btn.dataset.optionValue = swatch.optionValue;
+          btn.dataset.variantId = swatch.variantId;
+          btn.dataset.imageUrl = swatch.imageUrl;
+          btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          btn.innerHTML = `<span class="w-5 h-5 rounded-full border border-outline/20 shadow-sm shrink-0" style="background:${swatch.color};"></span><span>${swatch.label}</span>`;
 
-          button.type = 'button';
-          button.className = 'inline-flex items-center gap-2 rounded-full border border-outline/20 bg-white px-3 py-2 text-[11px] sm:text-sm font-semibold text-on-surface transition-all hover:border-primary/60 min-h-[40px]';
-          button.dataset.bundleItemSwatch = 'true';
-          button.dataset.variantId = meta.variantId;
-          button.dataset.optionValue = meta.optionValue;
-          button.dataset.colorLabel = meta.colorLabel;
-          button.dataset.imageUrl = meta.imageUrl;
-          button.dataset.imageSrcset = meta.imageSrcset;
-          button.dataset.imageAlt = meta.imageAlt;
-          button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-          button.innerHTML = `<span class="w-5 h-5 rounded-full border border-outline/20 shadow-sm shrink-0" style="background: ${meta.swatchColor};"></span><span>${meta.colorLabel}</span>`;
-          if (isActive) button.classList.add('border-primary');
-
-          button.addEventListener('click', () => {
-            $$('[data-bundle-item-swatch]', row).forEach((swatch) => {
-              swatch.setAttribute('aria-pressed', 'false');
-              swatch.classList.remove('border-primary');
+          btn.addEventListener('click', () => {
+            Array.from(rail.querySelectorAll('button')).forEach((b) => {
+              b.setAttribute('aria-pressed', 'false');
+              b.classList.remove('border-primary');
+              b.classList.add('border-outline/20');
             });
-            button.setAttribute('aria-pressed', 'true');
-            button.classList.add('border-primary');
-            updateBundleSelectionSummary();
-            syncResolvedVariant();
-            updateDisplayedBundlePrice(card);
-            if (meta.imageUrl) {
-              setImage(meta.imageUrl, meta.imageSrcset, meta.imageAlt || meta.colorLabel);
-            }
+            btn.setAttribute('aria-pressed', 'true');
+            btn.classList.add('border-primary');
+            btn.classList.remove('border-outline/20');
+            if (swatch.imageUrl) setImage(swatch.imageUrl, swatch.imageSrcset, swatch.imageAlt || swatch.label);
           });
 
-          swatchRail.appendChild(button);
+          rail.appendChild(btn);
         });
 
-        row.appendChild(swatchRail);
+        row.appendChild(rail);
         rowsRoot.appendChild(row);
       }
 
-      if (applyAllButton) {
-        applyAllButton.addEventListener('click', () => {
-          const activeMeta = getPrimaryBundleSelection(card);
-          if (!activeMeta) return;
-          $$('.bundle-item-color-row', configRoot).forEach((row) => {
-            const matchingButton = $$('[data-bundle-item-swatch]', row).find((button) => {
-              return String(button.dataset.variantId || '') === String(activeMeta.variantId || '')
-                || button.dataset.optionValue === activeMeta.optionValue;
-            });
-            if (!matchingButton) return;
-            $$('[data-bundle-item-swatch]', row).forEach((button) => {
-              button.setAttribute('aria-pressed', 'false');
-              button.classList.remove('border-primary');
-            });
-            matchingButton.setAttribute('aria-pressed', 'true');
-            matchingButton.classList.add('border-primary');
+      applyAllBtn?.addEventListener('click', () => {
+        const row0 = rowsRoot.querySelector('.bundle-item-row');
+        const activeBtn0 = row0?.querySelector('[aria-pressed="true"]');
+        if (!activeBtn0) return;
+        const targetValue = activeBtn0.dataset.optionValue;
+
+        Array.from(rowsRoot.querySelectorAll('.bundle-item-row')).forEach((r) => {
+          Array.from(r.querySelectorAll('button')).forEach((b) => {
+            const isMatch = b.dataset.optionValue === targetValue;
+            b.setAttribute('aria-pressed', isMatch ? 'true' : 'false');
+            b.classList.toggle('border-primary', isMatch);
+            b.classList.toggle('border-outline/20', !isMatch);
           });
-          applyAllButton.textContent = 'Applied';
-          window.setTimeout(() => {
-            applyAllButton.textContent = 'Make all same';
-          }, 1200);
-          updateBundleSelectionSummary();
         });
-      }
 
-      return configRoot;
+        applyAllBtn.textContent = 'Applied!';
+        setTimeout(() => { applyAllBtn.textContent = 'Make all same'; }, 1200);
+      });
     }
 
-    function renderHiddenQuantityBuilder() {
-      if (hasVisibleBundleCards() || !qtyInput || !swatchButtons.length) {
-        if (hiddenQuantityBuilder) hiddenQuantityBuilder.remove();
-        hiddenQuantityBuilder = null;
-        return;
-      }
+    // ── Card activation ───────────────────────────────────────────────────────
+    function activateCard(card) {
+      if (!card) return;
 
-      const quantity = Math.max(1, parseInt(qtyInput.value || '1', 10) || 1);
-      if (quantity <= 1) {
-        if (hiddenQuantityBuilder) hiddenQuantityBuilder.remove();
-        hiddenQuantityBuilder = null;
-        return;
-      }
+      cards.forEach((c) => {
+        c.classList.remove('selected', 'border-primary', 'shadow-primary/20');
+        c.setAttribute('aria-selected', 'false');
+      });
+      card.classList.add('selected', 'border-primary', 'shadow-primary/20');
+      card.setAttribute('aria-selected', 'true');
 
-      if (!hiddenQuantityBuilder) {
-        hiddenQuantityBuilder = document.createElement('div');
-        hiddenQuantityBuilder.className = 'mb-5 md:mb-6';
-        hiddenQuantityBuilder.id = 'pdp-hidden-quantity-builder';
-        const anchor = swatchGroup || quantityControl?.parentElement || qtyInput?.closest('#pdp-quantity-section');
-        if (anchor && anchor.parentNode) {
-          anchor.parentNode.insertBefore(hiddenQuantityBuilder, anchor.nextSibling);
-        } else if (root) {
-          root.insertBefore(hiddenQuantityBuilder, root.querySelector('button[type="submit"]'));
-        }
-      }
+      const radio = card.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
 
-      const previousSelections = getHiddenQuantitySelections();
-      const activeSwatch = getSwatchMeta(getSelectedSwatch());
+      const bundleCount = getBundleCount(card);
 
-      hiddenQuantityBuilder.innerHTML = `
-        <div class="space-y-3 rounded-[1.1rem] border border-outline-variant/15 bg-surface-container-lowest p-4 sm:p-5">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Choose colors for each cup</p>
-              <p class="mt-1 text-[12px] sm:text-sm text-on-surface-variant leading-5">Quantity is ${quantity}. Pick a color for each Splitflask below.</p>
-            </div>
-            <button
-              type="button"
-              class="hidden-quantity-apply-all shrink-0 inline-flex items-center justify-center rounded-full border border-outline/20 bg-primary/5 px-3 py-2 text-[11px] sm:text-sm font-semibold text-primary transition-colors hover:bg-primary/10">
-              Make all same
-            </button>
-          </div>
-          <p class="hidden-quantity-summary hidden rounded-full bg-primary/5 px-3 py-2 text-[11px] sm:text-sm font-semibold text-on-surface"></p>
-          <div class="hidden-quantity-rows space-y-3"></div>
-        </div>
-      `;
+      if (swatchGroup) swatchGroup.classList.toggle('hidden', bundleCount > 1);
 
-      const rowsRoot = $('.hidden-quantity-rows', hiddenQuantityBuilder);
-      const summaryEl = $('.hidden-quantity-summary', hiddenQuantityBuilder);
-      const applyAllButton = $('.hidden-quantity-apply-all', hiddenQuantityBuilder);
-
-      function updateHiddenQuantitySummary() {
-        if (!summaryEl) return;
-        const selections = getHiddenQuantitySelections().map((selection) => selection.colorLabel).filter(Boolean);
-        if (!selections.length) {
-          summaryEl.classList.add('hidden');
-          summaryEl.textContent = '';
-          return;
-        }
-        summaryEl.textContent = `${selections.length} selected: ${selections.join(', ')}`;
-        summaryEl.classList.remove('hidden');
-      }
-
-      for (let index = 0; index < quantity; index += 1) {
-        const row = document.createElement('div');
-        row.className = 'rounded-[1rem] border border-outline-variant/15 bg-white p-3';
-        row.dataset.hiddenQuantityBuilderRow = 'true';
-        row.dataset.itemIndex = String(index);
-
-        const header = document.createElement('div');
-        header.className = 'flex items-center justify-between gap-3 mb-2';
-        header.innerHTML = `<span class="text-[12px] sm:text-sm font-bold text-on-surface">Splitflask ${index + 1}</span><span class="text-[11px] sm:text-xs uppercase tracking-widest text-on-surface-variant">Select color</span>`;
-        row.appendChild(header);
-
-        const swatchRail = document.createElement('div');
-        swatchRail.className = 'flex flex-wrap gap-2';
-        const presetSelection = previousSelections[index] || activeSwatch;
-
-        swatchButtons.forEach((sourceButton) => {
-          const meta = getSwatchMeta(sourceButton);
-          const button = document.createElement('button');
-          const isActive = !!presetSelection && (
-            (presetSelection.variantId && meta.variantId && String(presetSelection.variantId) === String(meta.variantId)) ||
-            (!presetSelection.variantId && presetSelection.optionValue === meta.optionValue)
-          );
-
-          button.type = 'button';
-          button.className = 'inline-flex items-center gap-2 rounded-full border border-outline/20 bg-white px-3 py-2 text-[11px] sm:text-sm font-semibold text-on-surface transition-all hover:border-primary/60 min-h-[40px]';
-          button.dataset.hiddenQuantitySwatch = 'true';
-          button.dataset.variantId = meta.variantId;
-          button.dataset.optionValue = meta.optionValue;
-          button.dataset.colorLabel = meta.colorLabel;
-          button.dataset.imageUrl = meta.imageUrl;
-          button.dataset.imageSrcset = meta.imageSrcset;
-          button.dataset.imageAlt = meta.imageAlt;
-          button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-          button.innerHTML = `<span class="w-5 h-5 rounded-full border border-outline/20 shadow-sm shrink-0" style="background: ${meta.swatchColor};"></span><span>${meta.colorLabel}</span>`;
-          if (isActive) button.classList.add('border-primary');
-
-          button.addEventListener('click', () => {
-            $$('[data-hidden-quantity-swatch]', row).forEach((swatch) => {
-              swatch.setAttribute('aria-pressed', 'false');
-              swatch.classList.remove('border-primary');
-            });
-            button.setAttribute('aria-pressed', 'true');
-            button.classList.add('border-primary');
-            updateHiddenQuantitySummary();
-            if (meta.imageUrl) {
-              setImage(meta.imageUrl, meta.imageSrcset, meta.imageAlt || meta.colorLabel);
-            }
-          });
-
-          swatchRail.appendChild(button);
-        });
-
-        row.appendChild(swatchRail);
-        rowsRoot.appendChild(row);
-      }
-
-      if (applyAllButton) {
-        applyAllButton.addEventListener('click', () => {
-          const activeMeta = getSwatchMeta(getSelectedSwatch());
-          if (!activeMeta) return;
-          $$('[data-hidden-quantity-builder-row]', hiddenQuantityBuilder).forEach((row) => {
-            const matchingButton = $$('[data-hidden-quantity-swatch]', row).find((button) => {
-              return String(button.dataset.variantId || '') === String(activeMeta.variantId || '')
-                || button.dataset.optionValue === activeMeta.optionValue;
-            });
-            if (!matchingButton) return;
-            $$('[data-hidden-quantity-swatch]', row).forEach((button) => {
-              button.setAttribute('aria-pressed', 'false');
-              button.classList.remove('border-primary');
-            });
-            matchingButton.setAttribute('aria-pressed', 'true');
-            matchingButton.classList.add('border-primary');
-          });
-          applyAllButton.textContent = 'Applied';
-          window.setTimeout(() => {
-            applyAllButton.textContent = 'Make all same';
-          }, 1200);
-          updateHiddenQuantitySummary();
-        });
-      }
-
-      updateHiddenQuantitySummary();
-    }
-
-    function ensureQuantityNote() {
-      if (quantityNote || !quantityControl) return;
-      quantityNote = document.createElement('p');
-      quantityNote.id = 'pdp-bundle-quantity-note';
-      quantityNote.className = 'hidden text-[12px] sm:text-sm font-semibold text-on-surface-variant leading-5';
-      quantityControl.parentNode?.appendChild(quantityNote);
-    }
-
-    function setBundleQuantityMode(bundleCount) {
-      if (!qtyInput) return;
-      ensureQuantityNote();
-      if (bundleCount > 1) {
-        if (swatchGroup) swatchGroup.classList.add('hidden');
-        qtyInput.min = '1';
-        qtyInput.readOnly = false;
-        qtyInput.removeAttribute('aria-readonly');
-        if (quantityControl) quantityControl.classList.remove('opacity-60');
-        $$('.product-qty-btn').forEach((button) => {
-          button.disabled = false;
-          button.classList.remove('opacity-50', 'cursor-not-allowed');
-        });
-        if (quantityNote) {
-          quantityNote.textContent = `Quantity is the number of bundle packs. Increase it if you want more than one ${bundleCount}-pack.`;
-          quantityNote.classList.remove('hidden');
-        }
-      } else {
-        if (swatchGroup) swatchGroup.classList.remove('hidden');
-        qtyInput.min = '1';
-        qtyInput.readOnly = false;
-        qtyInput.removeAttribute('aria-readonly');
-        if (quantityControl) quantityControl.classList.remove('opacity-60');
-        $$('.product-qty-btn').forEach((button) => {
-          button.disabled = false;
-          button.classList.remove('opacity-50', 'cursor-not-allowed');
-        });
-        if (quantityNote) quantityNote.classList.add('hidden');
-      }
-    }
-
-    function renderBundleColorBuilder() {
-      cards.forEach((card) => {
-        const configRoot = $('.bundle-card-config', card);
+      cards.forEach((c) => {
+        const configRoot = c.querySelector('.bundle-card-config');
         if (!configRoot) return;
-        if (card === getSelectedCard()) {
-          renderInlineBundleBuilder(card);
+        if (c === card && bundleCount > 1) {
+          renderRows(card);
         } else {
           configRoot.classList.add('hidden');
           configRoot.innerHTML = '';
         }
       });
-      updateBundleSelectionSummary();
-    }
 
-    async function addBundleItemsToCart() {
-      const selectedCard = getSelectedCard();
-      const bundleCount = Math.max(1, parseInt(selectedCard?.dataset.bundleCount || '1', 10) || 1);
-      const packQuantity = Math.max(1, parseInt(qtyInput?.value || '1', 10) || 1);
+      if (qtyInput) qtyInput.value = '1';
 
-      // Resolve per-item color selections from the bundle color pickers.
-      // Each row maps to one flask in the bundle. We group by variant ID so
-      // two Orange picks become Orange×2 rather than two separate lines.
-      const bundleRowSelections = getBundleRowSelections();
-      const variantCounts = {};
-
-      // When resolving individual flask variants we must match the single-unit
-      // card's bundle option so we don't accidentally pick a 2-pack or 3-pack
-      // variant when the product has a bundle-size option axis.
-      const singleUnitCard = getSingleUnitCard();
-
-      bundleRowSelections.slice(0, bundleCount).forEach((sel) => {
-        // Use an explicit variantId if set; otherwise resolve from the product's
-        // variant list by matching the swatch's option value (e.g. "Orange").
-        let vid = String(sel.variantId || '');
-        if (!vid) {
-          const colorValue = sel.optionValue || sel.colorLabel || '';
-          // Try exact match against single-unit card first (filters out multi-pack variants).
-          const resolved = findMatchingVariant(singleUnitCard, {
-            dataset: { variantId: '', optionValue: colorValue },
-          }) || findMatchingVariant(null, {
-            dataset: { variantId: '', optionValue: colorValue },
-          });
-          vid = String(resolved?.id || '');
+      if (qtyNote) {
+        if (bundleCount > 1) {
+          qtyNote.textContent = `Quantity is the number of ${bundleCount}-packs. Increase it to order multiple bundles.`;
+          qtyNote.classList.remove('hidden');
+        } else {
+          qtyNote.classList.add('hidden');
         }
-        if (vid) variantCounts[vid] = (variantCounts[vid] || 0) + packQuantity;
-      });
-
-      let finalItems = Object.entries(variantCounts).map(([id, qty]) => ({
-        id: parseInt(id, 10) || id,
-        quantity: qty,
-      }));
-
-      // Fallback: nothing resolved from per-item pickers — use the globally
-      // selected swatch and add bundleCount × packQuantity of that one variant.
-      if (!finalItems.length) {
-        const resolvedVariant = findMatchingVariant(selectedCard, getSelectedSwatch());
-        const resolvedId = resolvedVariant?.id
-          || parseInt(variantInput?.value, 10)
-          || variantInput?.value
-          || '';
-        if (!resolvedId) {
-          console.error('[Splitflask] No variant resolved — cannot add to cart');
-          return false;
-        }
-        finalItems = [{ id: resolvedId, quantity: bundleCount * packQuantity }];
       }
 
-      console.log('[Splitflask] Bundle add request:', JSON.stringify({ items: finalItems }));
-      let addedSuccessfully = false;
+      if (bundleCount === 1) {
+        const resolved = findSingleUnitVariant(getActiveColorValue());
+        if (variantInput && resolved) variantInput.value = resolved.id;
+        setAtcAvailability(resolved?.available !== false);
+      } else {
+        setAtcAvailability(true);
+      }
 
-      const originalButtonText = atcButton?.querySelector('span')?.textContent;
+      updatePrice(card);
+    }
+
+    // ── Add to cart ───────────────────────────────────────────────────────────
+    // Collects one color selection per row, resolves to single-unit variant IDs,
+    // groups by variant (so two Orange picks → Orange×2), multiplies by packQty,
+    // then POSTs to /cart/add.js. Redirects to /cart on success.
+    async function addToCart() {
+      const card = getSelectedCard();
+      const configRoot = card?.querySelector('.bundle-card-config');
+      const rows = configRoot ? Array.from(configRoot.querySelectorAll('.bundle-item-row')) : [];
+
+      if (!rows.length) return false;
+
+      const packQty = getPackQty();
+      const variantCounts = {};
+
+      for (const row of rows) {
+        const activeBtn = row.querySelector('[aria-pressed="true"]');
+        const optionValue = activeBtn?.dataset.optionValue || '';
+        const directVid = activeBtn?.dataset.variantId || '';
+
+        let vid;
+        if (directVid) {
+          vid = directVid;
+        } else {
+          const resolved = findSingleUnitVariant(optionValue);
+          vid = resolved ? String(resolved.id) : '';
+        }
+
+        if (!vid) {
+          const label = atcButton?.querySelector('span');
+          const original = label?.textContent;
+          if (label) {
+            label.textContent = `Color "${optionValue}" not available`;
+            setTimeout(() => { if (label) label.textContent = original; }, 4000);
+          }
+          console.error(`[Splitflask] Could not resolve variant for color "${optionValue}"`);
+          return false;
+        }
+
+        variantCounts[vid] = (variantCounts[vid] || 0) + packQty;
+      }
+
+      const items = Object.entries(variantCounts).map(([id, quantity]) => ({
+        id: parseInt(id, 10) || id,
+        quantity,
+      }));
+
+      const label = atcButton?.querySelector('span');
+      const originalLabel = label?.textContent;
       if (atcButton) {
         atcButton.disabled = true;
         atcButton.classList.add('opacity-60', 'cursor-not-allowed');
-        const label = atcButton.querySelector('span');
         if (label) label.textContent = 'Adding...';
       }
 
       try {
-        const response = await fetch('/cart/add.js', {
+        const res = await fetch('/cart/add.js', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          body: JSON.stringify({ items: finalItems }),
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ items }),
         });
-        if (!response.ok) {
-          const errorText = await response.text();
-          // Log the raw Shopify response separately so it's readable in DevTools
-          console.error('[Splitflask] Bundle add 422 — Shopify response body:', errorText);
+
+        if (!res.ok) {
+          const errorText = await res.text();
           let shopifyMessage = errorText;
           try {
             const parsed = JSON.parse(errorText);
             shopifyMessage = parsed.description || parsed.message || errorText;
           } catch (_) {}
-          if (atcButton) {
-            const label = atcButton.querySelector('span');
-            if (label) {
-              label.textContent = shopifyMessage || 'Add failed — see console';
-              window.setTimeout(() => { label.textContent = originalButtonText || 'Add to Cart'; }, 4000);
-            }
+          if (label) {
+            label.textContent = shopifyMessage || 'Add failed — see console';
+            setTimeout(() => { if (label && originalLabel) label.textContent = originalLabel; }, 4000);
           }
-          throw new Error(`Bundle add failed (${response.status}): ${errorText}`);
+          console.error('[Splitflask] Bundle add failed:', errorText);
+          return false;
         }
-        const cart = await fetch('/cart.js', {
+
+        const cartRes = await fetch('/cart.js', {
           headers: { Accept: 'application/json' },
           credentials: 'same-origin',
           cache: 'no-store',
-        }).then((res) => res.json());
+        });
+        const cart = await cartRes.json();
         updateHeaderCartBadge(cart.item_count);
-        addedSuccessfully = true;
         window.location.href = '/cart';
         return true;
-      } catch (error) {
-        console.error('[Splitflask] Bundle add failed:', error.message || error);
+      } catch (err) {
+        console.error('[Splitflask] Bundle add failed:', err);
         return false;
       } finally {
         if (atcButton) {
           atcButton.disabled = false;
           atcButton.classList.remove('opacity-60', 'cursor-not-allowed');
-          const label = atcButton.querySelector('span');
-          if (label && originalButtonText && addedSuccessfully) {
-            window.setTimeout(() => {
-              label.textContent = originalButtonText;
-            }, 1800);
-          }
         }
       }
     }
 
-    async function addHiddenQuantityItemsToCart() {
-      const rowSelections = getHiddenQuantitySelections();
-      if (!rowSelections.length) return false;
-      let addedSuccessfully = false;
-
-      const groupedSelections = rowSelections.reduce((acc, selection) => {
-        const resolvedVariant = findMatchingVariant(null, {
-          dataset: {
-            variantId: selection.variantId || '',
-            optionValue: selection.optionValue || '',
-          },
-        });
-        const key = String(resolvedVariant?.id || selection.variantId || selection.optionValue);
-        if (!key) return acc;
-        if (!acc[key]) {
-          acc[key] = { id: resolvedVariant?.id || selection.variantId, quantity: 0 };
-        }
-        acc[key].quantity += 1;
-        return acc;
-      }, {});
-
-      const items = Object.values(groupedSelections).filter((item) => item.id && item.quantity > 0);
-      if (!items.length) return false;
-
-      const originalButtonText = atcButton?.querySelector('span')?.textContent;
-      if (atcButton) {
-        atcButton.disabled = true;
-        atcButton.classList.add('opacity-60', 'cursor-not-allowed');
-        const label = atcButton.querySelector('span');
-        if (label) label.textContent = 'Adding...';
-      }
-
-      try {
-        const response = await fetch('/cart/add.js', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          body: JSON.stringify({ items }),
-        });
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Hidden quantity add failed (${response.status}): ${errorText}`);
-        }
-        const cart = await fetch('/cart.js', {
-          headers: { Accept: 'application/json' },
-          credentials: 'same-origin',
-          cache: 'no-store',
-        }).then((res) => res.json());
-        updateHeaderCartBadge(cart.item_count);
-        addedSuccessfully = true;
-        window.location.href = '/cart';
-        return true;
-      } catch (error) {
-        console.error('Hidden quantity add failed:', error);
-        return false;
-      } finally {
-        if (atcButton) {
-          atcButton.disabled = false;
-          atcButton.classList.remove('opacity-60', 'cursor-not-allowed');
-          const label = atcButton.querySelector('span');
-          if (label && originalButtonText) {
-            if (addedSuccessfully) {
-              window.setTimeout(() => {
-                label.textContent = originalButtonText;
-              }, 1800);
-            } else {
-              label.textContent = originalButtonText;
-            }
-          }
-        }
-      }
-    }
-
-    function updateDisplayedBundlePrice(card) {
-      const selectedCard = card || getSelectedCard();
-      const selectedPriceCents = parseMoneyString(selectedCard?.dataset.price);
-      const selectedVariant = getActiveVariant();
-      const quantity = Math.max(1, parseInt(qtyInput?.value || '1', 10) || 1);
-
-      if (selectedPriceCents > 0) {
-        setPrice(formatMoney(selectedPriceCents * quantity), null);
-        setStickyPrice(selectedPriceCents * quantity);
-        return;
-      }
-
-      if (selectedVariant?.priceCents) {
-        const totalCents = Number(selectedVariant.priceCents) * Math.max(1, quantity);
-        setPrice(formatMoney(totalCents), selectedVariant.comparePrice || null);
-        setStickyPrice(totalCents);
-      }
-    }
-
-    function updateBundleSummaries() {
-      const selectedCard = getSelectedCard();
-      const quantity = Math.max(1, parseInt(qtyInput?.value || '1', 10) || 1);
-
-      if (qtyInput) {
-        qtyInput.value = String(quantity);
-      }
-
-      if (qtySummary) {
-        qtySummary.textContent = String(quantity);
-      }
-      if (unitSummary) {
-        const bundleCount = Math.max(1, parseInt(selectedCard?.dataset.bundleCount || '1', 10) || 1);
-        unitSummary.textContent = `${quantity} ${bundleCount}-pack${quantity === 1 ? '' : 's'} total`;
-      }
-    }
-
-    function activateBundleCard(card) {
-      if (!card) return;
-      const radio = card.querySelector('input[type="radio"]');
-      if (radio) radio.checked = true;
-
-      cards.forEach((candidate) => {
-        candidate.classList.remove('selected', 'border-primary', 'shadow-primary/20');
-        candidate.setAttribute('aria-selected', 'false');
-      });
-      card.classList.add('selected', 'border-primary', 'shadow-primary/20');
-      card.setAttribute('aria-selected', 'true');
-
-      const bundleCount = Math.max(1, parseInt(card.dataset.bundleCount || '1', 10) || 1);
-      if (qtyInput) {
-        qtyInput.value = '1';
-      }
-      setBundleQuantityMode(bundleCount);
-      updateBundleSummaries();
-      renderBundleColorBuilder();
-      syncResolvedVariant();
-      updateDisplayedBundlePrice(card);
-    }
+    // ── Event wiring ──────────────────────────────────────────────────────────
 
     cards.forEach((card) => {
-      card.addEventListener('click', () => {
-        activateBundleCard(card);
-      });
-
+      card.addEventListener('click', () => activateCard(card));
       const radio = card.querySelector('input[type="radio"]');
-      if (radio) {
-        radio.addEventListener('change', () => {
-          if (radio.checked) activateBundleCard(card);
-        });
-      }
+      if (radio) radio.addEventListener('change', () => { if (radio.checked) activateCard(card); });
     });
 
-    swatchButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        setSwatchActive(button);
-        syncResolvedVariant();
-        renderBundleColorBuilder();
-        renderHiddenQuantityBuilder();
-        updateDisplayedBundlePrice(getSelectedCard());
+    globalSwatchBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        globalSwatchBtns.forEach((b) => b.setAttribute('aria-pressed', 'false'));
+        btn.setAttribute('aria-pressed', 'true');
+        if (swatchLabel) swatchLabel.textContent = btn.dataset.colorLabel || '';
+        if (btn.dataset.imageUrl) setImage(btn.dataset.imageUrl, btn.dataset.imageSrcset, btn.dataset.imageAlt);
+
+        if (getBundleCount(getSelectedCard()) === 1) {
+          const resolved = findSingleUnitVariant(btn.dataset.optionValue || '');
+          if (variantInput && resolved) variantInput.value = resolved.id;
+          setAtcAvailability(resolved?.available !== false);
+        }
+
+        updatePrice(getSelectedCard());
+      });
+    });
+
+    Array.from(document.querySelectorAll('.product-qty-btn')).forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (!qtyInput) return;
+        const delta = parseInt(btn.dataset.delta || '0', 10) || 0;
+        qtyInput.value = String(Math.max(1, (parseInt(qtyInput.value || '1', 10) || 1) + delta));
+        updatePrice(getSelectedCard());
       });
     });
 
     if (qtyInput) {
       qtyInput.addEventListener('input', () => {
-        const minimumQty = 1;
-        const bundleCount = Math.max(1, parseInt(getSelectedCard()?.dataset.bundleCount || '1', 10) || 1);
-        const normalized = Math.max(minimumQty, parseInt(qtyInput.value || String(minimumQty), 10) || minimumQty);
-        qtyInput.value = String(normalized);
-        setBundleQuantityMode(bundleCount);
-        updateBundleSummaries();
-        renderBundleColorBuilder();
-        renderHiddenQuantityBuilder();
-        updateDisplayedBundlePrice(getSelectedCard());
+        qtyInput.value = String(Math.max(1, parseInt(qtyInput.value || '1', 10) || 1));
+        updatePrice(getSelectedCard());
       });
-    }
-
-    $$('.product-qty-btn').forEach((button) => {
-      button.addEventListener('click', () => {
-        if (!qtyInput) return;
-        const delta = parseInt(button.dataset.delta || '0', 10) || 0;
-        const minimumQty = 1;
-        const bundleCount = Math.max(1, parseInt(getSelectedCard()?.dataset.bundleCount || '1', 10) || 1);
-        const nextValue = Math.max(minimumQty, (parseInt(qtyInput.value || String(minimumQty), 10) || minimumQty) + delta);
-        qtyInput.value = String(nextValue);
-        setBundleQuantityMode(bundleCount);
-        updateBundleSummaries();
-        renderBundleColorBuilder();
-        renderHiddenQuantityBuilder();
-        updateDisplayedBundlePrice(getSelectedCard());
-      });
-    });
-
-    if (swatchButtons.length && variantData?.variants?.length && variantInput) {
-      const currentVariant = variantData.variants.find((variant) => String(variant.id) === String(variantInput.value));
-      if (currentVariant) {
-        const matchingSwatch = swatchButtons.find((button) => {
-          const directId = button.dataset.variantId;
-          const optionValue = button.dataset.optionValue?.trim();
-          if (directId) return String(directId) === String(currentVariant.id);
-          return [currentVariant.option1, currentVariant.option2, currentVariant.option3].includes(optionValue);
-        });
-        if (matchingSwatch) setSwatchActive(matchingSwatch);
-      }
-    }
-
-    // Diagnostic: warn if any bundle card's variant ID is not in this product's variants.
-    // Product IDs are expected when a bundle product handle is configured.
-    if (variantData?.variants?.length) {
-      cards.forEach((card) => {
-        const vid = card.dataset.variantId;
-        const bundleCount = Math.max(1, parseInt(card.dataset.bundleCount || '1', 10) || 1);
-        if (!vid || bundleCount <= 1) return;
-        const bundleProduct = getBundleProductData(card);
-        if (bundleProduct?.id && String(bundleProduct.id) === String(vid)) return;
-        if (card.dataset.productHandle && !bundleProduct) {
-          console.error(
-            `[Splitflask] Bundle product "${card.dataset.productHandle}" was not rendered. ` +
-            'Check that it is active and published to the Online Store sales channel.'
-          );
-          return;
-        }
-        const found = variantData.variants.some((v) => String(v.id) === String(vid));
-        if (!found) {
-          console.warn(
-            `[Splitflask] Bundle "${card.dataset.bundleTitle || bundleCount + '-pack'}" variant ${vid}` +
-            ' is not in this product\'s variant list. If this is a Shopify Bundles product, set its product handle too.'
-          );
-        }
-      });
-    }
-
-    const selectedCard = getSelectedCard();
-    if (selectedCard) {
-      activateBundleCard(selectedCard);
-    } else {
-      setBundleQuantityMode(getSelectedBundleCount());
-      updateBundleSummaries();
-      syncResolvedVariant();
-      renderBundleColorBuilder();
-      renderHiddenQuantityBuilder();
-      updateDisplayedBundlePrice(null);
     }
 
     if (root) {
-      root.addEventListener('submit', async (event) => {
-        if (isBundleBuilderActive()) {
-          event.preventDefault();
-          await addBundleItemsToCart();
-          return;
-        }
-        if (isHiddenQuantityBuilderActive()) {
-          event.preventDefault();
-          await addHiddenQuantityItemsToCart();
+      root.addEventListener('submit', async (e) => {
+        if (getBundleCount(getSelectedCard()) >= 2) {
+          e.preventDefault();
+          await addToCart();
         }
       });
     }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    const checkedRadio = root?.querySelector('input[name="bundle_selection"]:checked');
+    const defaultCard = checkedRadio?.closest('.bundle-card') || cards[0] || null;
+    if (defaultCard) activateCard(defaultCard);
   }
 
   function initPdpHeroCountdown() {
