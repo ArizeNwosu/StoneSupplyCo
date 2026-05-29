@@ -660,7 +660,7 @@ export default function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [sponsorBranding, setSponsorBranding] = useState<SponsorBranding>(() => loadSponsorBranding());
   const [brandingError, setBrandingError] = useState('');
-  const [showStopFlash, setShowStopFlash] = useState(false);
+  const [stopFlashSeq, setStopFlashSeq] = useState<number | null>(null);
   const [personalBest, setPersonalBest] = useState<number | null>(() => loadPersonalBest());
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(() => loadLeaderboard());
 
@@ -1669,7 +1669,7 @@ export default function App() {
                 type="button"
                 onPointerDown={(event) => {
                   event.preventDefault();
-                  setShowStopFlash(true);
+                  setStopFlashSeq((n) => (n ?? 0) + 1);
                   stopGame();
                 }}
                 disabled={stage !== 'PLAYING'}
@@ -1677,10 +1677,11 @@ export default function App() {
                 aria-label="Stop timer"
               >
                 <span className="arcade-button__label">STOP</span>
-                {showStopFlash && (
+                {stopFlashSeq !== null && (
                   <span
+                    key={stopFlashSeq}
                     className="stop-flash"
-                    onAnimationEnd={() => setShowStopFlash(false)}
+                    onAnimationEnd={() => setStopFlashSeq(null)}
                   />
                 )}
               </button>
