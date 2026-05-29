@@ -118,7 +118,7 @@ function pushLeaderboard(entry: LeaderboardEntry): LeaderboardEntry[] {
     localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(next));
     return next;
   } catch {
-    return [entry];
+    return loadLeaderboard();
   }
 }
 
@@ -1688,7 +1688,7 @@ export default function App() {
                   <ol className="grid gap-2">
                     {leaderboard.slice(0, 5).map((entry, i) => (
                       <li
-                        key={entry.createdAt}
+                        key={`${entry.createdAt}-${i}`}
                         className="flex items-center justify-between gap-3 font-mono text-sm"
                       >
                         <span className="text-white/40">#{i + 1}</span>
