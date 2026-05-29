@@ -8,6 +8,7 @@ import {
   RefreshCw,
   Send,
   Settings,
+  Share2,
   Trophy,
   Video,
 } from 'lucide-react';
@@ -1246,6 +1247,35 @@ export default function App() {
     setStage(nextRequiredField ? 'PERMISSION' : 'READY');
   };
 
+  const handleShareClip = useCallback(async () => {
+    if (!clipBlob || !result) return;
+
+    const filename = `stop-at-2-${result.displayTime.toFixed(2)}.mp4`;
+    const file = new File([clipBlob], filename, { type: clipBlob.type || 'video/mp4' });
+
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: `I stopped at ${result.displayTime.toFixed(2)} — can you hit 2.00?`,
+          text: `${result.headline} 🎯 Try Stop At 2.00 at stopat2.com`,
+        });
+      } catch {
+        // User cancelled or share failed — silently ignore
+      }
+    } else if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Stop At 2.00',
+          text: `I stopped at ${result.displayTime.toFixed(2)}. Can you hit exactly 2.00?`,
+          url: 'https://stopat2.com',
+        });
+      } catch {
+        // cancelled
+      }
+    }
+  }, [clipBlob, result]);
+
   const handleAdminSecretTap = () => {
     adminTapRef.current.count += 1;
     if (adminTapRef.current.timer !== null) {
@@ -1646,13 +1676,24 @@ export default function App() {
                   Playback starts muted so browsers allow autoplay. Use the video controls to unmute.
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="submit"
-                    className="inline-flex h-14 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white font-display text-xl uppercase text-black"
-                  >
-                    <Send size={19} />
-                    Save Entry
-                  </button>
+                  {clipBlob && (navigator.canShare || navigator.share) ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleShareClip()}
+                      className="inline-flex h-14 cursor-pointer items-center justify-center gap-2 rounded-lg border-b-4 border-red-950 bg-red-600 font-display text-xl uppercase text-white shadow-[0_8px_24px_rgba(227,24,55,0.3)] transition active:translate-y-1 active:border-b-0"
+                    >
+                      <Share2 size={19} />
+                      Share Clip
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      className="inline-flex h-14 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white font-display text-xl uppercase text-black"
+                    >
+                      <Send size={19} />
+                      Save Entry
+                    </button>
+                  )}
                   {clipUrl && (
                     <a
                       href={clipUrl}
