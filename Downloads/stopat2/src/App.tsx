@@ -66,6 +66,30 @@ const DEFAULT_SPONSOR_BRANDING: SponsorBranding = {
   sponsorLogoUrl: '/splitflask-logo.png',
 };
 
+const PERSONAL_BEST_KEY = 'stop-at-two-personal-best';
+
+function loadPersonalBest(): number | null {
+  try {
+    const stored = localStorage.getItem(PERSONAL_BEST_KEY);
+    if (!stored) return null;
+    const val = parseFloat(stored);
+    return isNaN(val) ? null : val;
+  } catch {
+    return null;
+  }
+}
+
+function savePersonalBest(difference: number): number {
+  try {
+    const current = loadPersonalBest();
+    const next = current === null ? difference : Math.min(current, difference);
+    localStorage.setItem(PERSONAL_BEST_KEY, String(next));
+    return next;
+  } catch {
+    return difference;
+  }
+}
+
 function isPngLogoUrl(value: string) {
   const trimmed = value.trim().toLowerCase();
   if (!trimmed) return false;
@@ -603,6 +627,7 @@ export default function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [sponsorBranding, setSponsorBranding] = useState<SponsorBranding>(() => loadSponsorBranding());
   const [brandingError, setBrandingError] = useState('');
+  const [personalBest, setPersonalBest] = useState<number | null>(() => loadPersonalBest());
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const playbackVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -811,6 +836,10 @@ export default function App() {
       setClipUrl(nextUrl);
     }
 
+    if (resultRef.current) {
+      const nextBest = savePersonalBest(resultRef.current.difference);
+      setPersonalBest(nextBest);
+    }
     setPlaysCompleted((current) => current + 1);
     setStage('SUBMIT');
     setIsComposing(false);
@@ -1418,6 +1447,12 @@ export default function App() {
                   <p className="mt-1 text-xs uppercase tracking-wide text-white/48">Target</p>
                 </div>
               </div>
+              {personalBest !== null && (
+                <p className="mt-4 font-mono text-xs uppercase tracking-[0.18em] text-white/50">
+                  Your best: <span className="text-red-300">{personalBest.toFixed(2)}s off</span>
+                  {personalBest === 0 && <span className="ml-2 text-white"> Perfect!</span>}
+                </p>
+              )}
             </section>
           )}
 
@@ -1485,6 +1520,11 @@ export default function App() {
               <p className="mb-4 rounded-full border border-red-500/50 bg-red-950/60 px-4 py-2 font-mono text-xs uppercase tracking-[0.18em] text-red-100">
                 3-second countdown starts when you hit START
               </p>
+              {personalBest !== null && (
+                <p className="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-white/40">
+                  PB: <span className="text-red-300">{personalBest.toFixed(2)}s off target</span>
+                </p>
+              )}
               <button
                 type="button"
                 onClick={startChallenge}
@@ -1531,6 +1571,11 @@ export default function App() {
                 <div>
                   <p className="font-display text-6xl leading-none text-white">{result.headline}</p>
                   <p className="mt-1 font-mono text-3xl font-black tabular-nums text-red-300">{result.displayTime.toFixed(2)}</p>
+                  {personalBest !== null && result.difference <= personalBest && (
+                    <span className="mt-1 inline-block rounded-full bg-red-600 px-3 py-1 font-mono text-xs uppercase tracking-[0.18em] text-white">
+                      New personal best!
+                    </span>
+                  )}
                 </div>
                 <span className="rounded-full border border-red-500/40 bg-red-950/70 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-red-100">
                   {result.qualifyReason}
