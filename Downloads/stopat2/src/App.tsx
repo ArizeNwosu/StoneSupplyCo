@@ -1630,7 +1630,7 @@ export default function App() {
                     />
                   </label>
                 )}
-                {activeLeadField === 'email' && (
+                {(activeLeadField === 'email' || (activeLeadField === null && !consent && !stream)) && (
                   <label className="flex cursor-pointer items-start gap-4 rounded-lg border border-white/10 bg-black/40 p-4">
                     <input
                       type="checkbox"
