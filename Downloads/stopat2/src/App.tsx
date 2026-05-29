@@ -123,6 +123,26 @@ function pushLeaderboard(entry: LeaderboardEntry): LeaderboardEntry[] {
   }
 }
 
+const PLAY_COUNT_KEY = 'stop-at-two-play-count';
+
+function loadPlayCount(): number {
+  try {
+    return parseInt(localStorage.getItem(PLAY_COUNT_KEY) || '0', 10) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function incrementPlayCount(): number {
+  try {
+    const next = loadPlayCount() + 1;
+    localStorage.setItem(PLAY_COUNT_KEY, String(next));
+    return next;
+  } catch {
+    return 1;
+  }
+}
+
 function isPngLogoUrl(value: string) {
   const trimmed = value.trim().toLowerCase();
   if (!trimmed) return false;
@@ -663,6 +683,7 @@ export default function App() {
   const [stopFlashSeq, setStopFlashSeq] = useState<number | null>(null);
   const [personalBest, setPersonalBest] = useState<number | null>(() => loadPersonalBest());
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(() => loadLeaderboard());
+  const [playCount, setPlayCount] = useState(() => loadPlayCount());
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const playbackVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -887,6 +908,9 @@ export default function App() {
       const nextBoard = pushLeaderboard(entry);
       setLeaderboard(nextBoard);
     }
+
+    const nextCount = incrementPlayCount();
+    setPlayCount(nextCount);
 
     setPlaysCompleted((current) => current + 1);
     setStage('SUBMIT');
@@ -1550,22 +1574,28 @@ export default function App() {
               </button>
               <div className="mt-8 grid grid-cols-3 gap-3">
                 <div className="rounded-lg border border-white/10 bg-white/[0.05] p-4">
-                  <p className="font-display text-3xl">3 SEC</p>
-                  <p className="mt-1 text-xs uppercase tracking-wide text-white/48">Pre-roll</p>
-                </div>
-                <div className="rounded-lg border border-white/10 bg-white/[0.05] p-4">
                   <p className="font-display text-3xl">5.00</p>
                   <p className="mt-1 text-xs uppercase tracking-wide text-white/48">Start</p>
                 </div>
-                <div className="rounded-lg border border-white/10 bg-white/[0.05] p-4">
-                  <p className="font-display text-3xl">2.00</p>
+                <div className="rounded-lg border border-red-500/20 bg-red-950/30 p-4">
+                  <p className="font-display text-3xl text-red-300">2.00</p>
                   <p className="mt-1 text-xs uppercase tracking-wide text-white/48">Target</p>
                 </div>
+                {personalBest !== null ? (
+                  <div className="rounded-lg border border-white/10 bg-white/[0.05] p-4">
+                    <p className="font-display text-3xl text-red-300">{personalBest.toFixed(2)}</p>
+                    <p className="mt-1 text-xs uppercase tracking-wide text-white/48">Your Best Δ</p>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-white/10 bg-white/[0.05] p-4">
+                    <p className="font-display text-3xl">3 SEC</p>
+                    <p className="mt-1 text-xs uppercase tracking-wide text-white/48">Pre-roll</p>
+                  </div>
+                )}
               </div>
-              {personalBest !== null && (
-                <p className="mt-4 font-mono text-xs uppercase tracking-[0.18em] text-white/50">
-                  Your best: <span className="text-red-300">{personalBest.toFixed(2)}s off</span>
-                  {personalBest === 0 && <span className="ml-2 text-white"> Perfect!</span>}
+              {playCount > 0 && (
+                <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-white/30">
+                  {playCount} {playCount === 1 ? 'attempt' : 'attempts'} on this device
                 </p>
               )}
             </section>
