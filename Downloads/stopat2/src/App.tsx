@@ -90,6 +90,38 @@ function savePersonalBest(difference: number): number {
   }
 }
 
+type LeaderboardEntry = {
+  displayTime: number;
+  difference: number;
+  headline: string;
+  createdAt: string;
+};
+
+const LEADERBOARD_KEY = 'stop-at-two-leaderboard';
+
+function loadLeaderboard(): LeaderboardEntry[] {
+  try {
+    const stored = localStorage.getItem(LEADERBOARD_KEY);
+    if (!stored) return [];
+    return JSON.parse(stored) as LeaderboardEntry[];
+  } catch {
+    return [];
+  }
+}
+
+function pushLeaderboard(entry: LeaderboardEntry): LeaderboardEntry[] {
+  try {
+    const current = loadLeaderboard();
+    const next = [entry, ...current]
+      .sort((a, b) => a.difference - b.difference)
+      .slice(0, 10);
+    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(next));
+    return next;
+  } catch {
+    return [entry];
+  }
+}
+
 function isPngLogoUrl(value: string) {
   const trimmed = value.trim().toLowerCase();
   if (!trimmed) return false;
@@ -628,6 +660,7 @@ export default function App() {
   const [sponsorBranding, setSponsorBranding] = useState<SponsorBranding>(() => loadSponsorBranding());
   const [brandingError, setBrandingError] = useState('');
   const [personalBest, setPersonalBest] = useState<number | null>(() => loadPersonalBest());
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(() => loadLeaderboard());
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const playbackVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -840,6 +873,18 @@ export default function App() {
       const nextBest = savePersonalBest(resultRef.current.difference);
       setPersonalBest(nextBest);
     }
+
+    if (resultRef.current) {
+      const entry: LeaderboardEntry = {
+        displayTime: resultRef.current.displayTime,
+        difference: resultRef.current.difference,
+        headline: resultRef.current.headline,
+        createdAt: new Date().toISOString(),
+      };
+      const nextBoard = pushLeaderboard(entry);
+      setLeaderboard(nextBoard);
+    }
+
     setPlaysCompleted((current) => current + 1);
     setStage('SUBMIT');
     setIsComposing(false);
@@ -1626,20 +1671,36 @@ export default function App() {
                   {leadStatus}
                 </p>
               )}
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={resetRound}
-                  className="inline-flex h-14 cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/[0.06] font-display text-xl uppercase text-white"
-                >
-                  <RefreshCw size={18} />
-                  Again
-                </button>
-                <div className="flex h-14 items-center justify-center gap-2 rounded-lg border border-white/10 bg-black/40 font-mono text-xs uppercase tracking-[0.14em] text-white/60">
-                  <Trophy size={17} />
-                  Leaderboard-ready
+              <button
+                type="button"
+                onClick={resetRound}
+                className="mt-5 inline-flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/[0.06] font-display text-xl uppercase text-white"
+              >
+                <RefreshCw size={18} />
+                Again
+              </button>
+              {leaderboard.length > 1 && (
+                <div className="mt-5 rounded-lg border border-white/10 bg-black/40 p-4">
+                  <p className="mb-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-white/50">
+                    <Trophy size={13} />
+                    Top scores this device
+                  </p>
+                  <ol className="grid gap-2">
+                    {leaderboard.slice(0, 5).map((entry, i) => (
+                      <li
+                        key={entry.createdAt}
+                        className="flex items-center justify-between gap-3 font-mono text-sm"
+                      >
+                        <span className="text-white/40">#{i + 1}</span>
+                        <span className="flex-1 truncate text-white/70">{entry.headline}</span>
+                        <span className={entry.difference === 0 ? 'text-red-400' : 'text-white'}>
+                          {entry.displayTime.toFixed(2)}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
                 </div>
-              </div>
+              )}
             </section>
           )}
         </div>
