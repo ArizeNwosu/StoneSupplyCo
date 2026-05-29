@@ -634,6 +634,7 @@ export default function App() {
   const audioSamplesRef = useRef<Uint8Array | null>(null);
   const peakVolumeRef = useRef(0);
   const sessionPeakVolumeRef = useRef(0);
+  const adminTapRef = useRef<{ count: number; timer: number | null }>({ count: 0, timer: null });
 
   useEffect(() => {
     stageRef.current = stage;
@@ -1171,6 +1172,21 @@ export default function App() {
     setStage(nextRequiredField ? 'PERMISSION' : 'READY');
   };
 
+  const handleAdminSecretTap = () => {
+    adminTapRef.current.count += 1;
+    if (adminTapRef.current.timer !== null) {
+      window.clearTimeout(adminTapRef.current.timer);
+    }
+    adminTapRef.current.timer = window.setTimeout(() => {
+      adminTapRef.current.count = 0;
+      adminTapRef.current.timer = null;
+    }, 800);
+    if (adminTapRef.current.count >= 3) {
+      adminTapRef.current.count = 0;
+      setIsAdminOpen((open) => !open);
+    }
+  };
+
   return (
     <main className="min-h-dvh overflow-hidden bg-black text-white">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(227,24,55,0.28),transparent_28%),linear-gradient(180deg,#130204_0%,#000_58%)]" />
@@ -1198,11 +1214,11 @@ export default function App() {
           </div>
           <button
             type="button"
-            onClick={() => setIsAdminOpen((open) => !open)}
-            className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-white/[0.06] px-3 font-mono text-[10px] uppercase tracking-[0.16em] text-white/70 hover:border-red-400/50 hover:text-white"
+            onClick={handleAdminSecretTap}
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-white/20 hover:text-white/40 transition-colors"
+            aria-label="Settings"
           >
-            <Settings size={16} />
-            Admin
+            <Settings size={14} />
           </button>
         </div>
       </header>
