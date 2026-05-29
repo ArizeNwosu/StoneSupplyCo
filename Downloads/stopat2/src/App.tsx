@@ -694,6 +694,7 @@ export default function App() {
   const peakVolumeRef = useRef(0);
   const sessionPeakVolumeRef = useRef(0);
   const adminTapRef = useRef<{ count: number; timer: number | null }>({ count: 0, timer: null });
+  const lastTensionTickRef = useRef(0);
 
   useEffect(() => {
     stageRef.current = stage;
@@ -959,6 +960,33 @@ export default function App() {
     oscillator.stop(now + (kind === 'impact' ? 0.3 : 0.14));
   }, []);
 
+  const playTensionTick = useCallback((timeLeft: number) => {
+    if (timeLeft > 3.0 || timeLeft < 1.8) return;
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const audioContext = audioContextRef.current || new AudioContextClass();
+    audioContextRef.current = audioContext;
+    if (audioContext.state === 'suspended') void audioContext.resume();
+
+    const proximity = Math.max(0, Math.min(1, 1 - Math.abs(timeLeft - TARGET_TIME) / 1.0));
+    const freq = 600 + proximity * 900;
+    const volume = 0.04 + proximity * 0.10;
+
+    const now = audioContext.currentTime;
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, now);
+    gain.gain.setValueAtTime(volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.start(now);
+    osc.stop(now + 0.07);
+  }, []);
+
   const sampleVolume = useCallback(() => {
     const analyser = analyserRef.current;
     const samples = audioSamplesRef.current;
@@ -1031,9 +1059,19 @@ export default function App() {
         return;
       }
 
+      // Tension ticks: frequency increases near 2.00
+      if (nextTime <= 3.0 && nextTime >= 1.8) {
+        const proximity = Math.max(0, Math.min(1, 1 - Math.abs(nextTime - TARGET_TIME) / 1.0));
+        const tickInterval = 0.38 - proximity * 0.26;
+        if (now - lastTensionTickRef.current > tickInterval * 1000) {
+          lastTensionTickRef.current = now;
+          playTensionTick(nextTime);
+        }
+      }
+
       timerRef.current = requestAnimationFrame(runTimer);
     },
-    [stopGame],
+    [playTensionTick, stopGame],
   );
 
   const startChallenge = useCallback(() => {
@@ -1058,6 +1096,7 @@ export default function App() {
     setTimeLeft(START_TIME);
     timeLeftRef.current = START_TIME;
     sessionPeakVolumeRef.current = 0;
+    lastTensionTickRef.current = 0;
     driftRateRef.current = 1 + (Math.random() * 0.024 - 0.012);
     startClipRecorder();
     setStage('COUNTDOWN');
