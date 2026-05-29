@@ -139,7 +139,7 @@ function incrementPlayCount(): number {
     localStorage.setItem(PLAY_COUNT_KEY, String(next));
     return next;
   } catch {
-    return 1;
+    return loadPlayCount() + 1;
   }
 }
 
@@ -1583,7 +1583,10 @@ export default function App() {
                 </div>
                 {personalBest !== null ? (
                   <div className="rounded-lg border border-white/10 bg-white/[0.05] p-4">
-                    <p className="font-display text-3xl text-red-300">{personalBest.toFixed(2)}</p>
+                    <p className="font-display text-3xl text-red-300">
+                      {personalBest.toFixed(2)}
+                      {personalBest === 0 && <span className="ml-1 text-lg">🏆</span>}
+                    </p>
                     <p className="mt-1 text-xs uppercase tracking-wide text-white/48">Your Best Δ</p>
                   </div>
                 ) : (
