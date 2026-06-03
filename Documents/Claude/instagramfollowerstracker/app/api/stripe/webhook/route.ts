@@ -6,10 +6,13 @@ import type Stripe from 'stripe';
 export const runtime = 'nodejs';
 
 async function setPlan(userId: string, plan: 'PRO' | 'AGENCY', subId: string) {
-  await prisma.user.update({
+  const result = await prisma.user.updateMany({
     where: { id: userId },
     data: { plan, stripeSubId: subId },
   });
+  if (result.count === 0) {
+    console.warn('[webhook] setPlan: no user found for userId', userId);
+  }
 }
 
 async function clearPlan(customerId: string) {
@@ -48,9 +51,16 @@ export async function POST(req: NextRequest) {
         const subId = typeof session.subscription === 'string'
           ? session.subscription
           : session.subscription?.id;
-        if (userId && plan && subId) {
-          await setPlan(userId, plan, subId);
+        if (!userId || !plan || !subId) {
+          console.error('[webhook] checkout.session.completed missing metadata', {
+            sessionId: session.id,
+            userId,
+            plan,
+            subId,
+          });
+          break;
         }
+        await setPlan(userId, plan, subId);
         break;
       }
       case 'customer.subscription.deleted': {
@@ -63,8 +73,16 @@ export async function POST(req: NextRequest) {
         const sub = event.data.object as Stripe.Subscription;
         const userId = sub.metadata?.userId;
         const plan = sub.metadata?.plan as 'PRO' | 'AGENCY' | undefined;
-        if (userId && plan && sub.status === 'active') {
-          await setPlan(userId, plan, sub.id);
+        if (userId && plan) {
+          if (sub.status === 'active') {
+            await setPlan(userId, plan, sub.id);
+          } else {
+            console.warn('[webhook] subscription.updated non-active status ignored', {
+              userId,
+              status: sub.status,
+              subId: sub.id,
+            });
+          }
         }
         break;
       }
