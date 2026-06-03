@@ -14,6 +14,7 @@ import { PatternAlerts } from '@/components/tracker/PatternAlerts';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { UpgradeModal } from '@/components/tracker/UpgradeModal';
+import { UnfollowDetector } from '@/components/tracker/UnfollowDetector';
 
 interface Account {
   id: string;
@@ -61,6 +62,7 @@ export default function DashboardPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userPlan, setUserPlan] = useState<'FREE' | 'PRO' | 'AGENCY'>('FREE');
 
   const fetchAccounts = useCallback(async () => {
     const res = await fetch('/api/accounts');
@@ -82,9 +84,18 @@ export default function DashboardPage() {
     }
   }, []);
 
+  const fetchPlan = useCallback(async () => {
+    const res = await fetch('/api/me');
+    if (res.ok) {
+      const data = (await res.json()) as { plan: 'FREE' | 'PRO' | 'AGENCY' };
+      setUserPlan(data.plan);
+    }
+  }, []);
+
   useEffect(() => {
     fetchAccounts();
-  }, [fetchAccounts]);
+    fetchPlan();
+  }, [fetchAccounts, fetchPlan]);
 
   useEffect(() => {
     if (selectedId) fetchSnapshots(selectedId);
@@ -210,6 +221,7 @@ export default function DashboardPage() {
                 lastChecked={selected.lastChecked}
               />
             )}
+            <UnfollowDetector userPlan={userPlan} />
           </div>
         ) : null}
       </main>
