@@ -14,7 +14,8 @@ export const metadata: Metadata = {
 
 const plans = [
   {
-    name: 'Free',
+    name: 'Free' as const,
+    planKey: null as null,
     price: 0,
     priceLabel: '$0',
     period: 'forever',
@@ -31,7 +32,8 @@ const plans = [
     highlight: false,
   },
   {
-    name: 'Pro',
+    name: 'Pro' as const,
+    planKey: 'PRO' as const,
     price: PLAN_PRICES.PRO.monthly,
     priceLabel: `$${PLAN_PRICES.PRO.monthly}`,
     period: 'per month',
@@ -51,7 +53,8 @@ const plans = [
     highlight: true,
   },
   {
-    name: 'Agency',
+    name: 'Agency' as const,
+    planKey: 'AGENCY' as const,
     price: PLAN_PRICES.AGENCY.monthly,
     priceLabel: `$${PLAN_PRICES.AGENCY.monthly}`,
     period: 'per month',
@@ -119,7 +122,7 @@ export default function PricingPage() {
                 )}
               </div>
 
-              {plan.name === 'Free' ? (
+              {plan.planKey === null ? (
                 <Link
                   href={plan.href}
                   className={`block w-full text-center rounded-xl font-semibold py-3 text-sm transition mb-8 ${
@@ -132,7 +135,7 @@ export default function PricingPage() {
                 </Link>
               ) : (
                 <CheckoutButton
-                  plan={plan.name === 'Pro' ? 'PRO' : 'AGENCY'}
+                  plan={plan.planKey}
                   interval="monthly"
                   className={`block w-full text-center rounded-xl font-semibold py-3 text-sm transition mb-8 ${
                     plan.highlight
