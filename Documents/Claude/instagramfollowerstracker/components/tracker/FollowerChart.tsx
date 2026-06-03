@@ -57,7 +57,8 @@ export function FollowerChart({ snapshots, handle }: FollowerChartProps) {
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: (ctx) => ` ${formatCount(ctx.parsed.y)} followers`,
+                label: (ctx) =>
+                  ` ${formatCount(ctx.parsed.y ?? 0)} followers`,
               },
             },
           },
