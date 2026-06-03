@@ -15,10 +15,22 @@ export async function getWaybackSnapshots(
   const url = `https://instagram.com/${handle}/`;
   const cdxUrl = `http://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&fl=timestamp,statuscode&filter=statuscode:200&limit=${limit}&from=20200101`;
 
-  const res = await fetch(cdxUrl, { next: { revalidate: 86400 } });
-  const rows: string[][] = (await res.json()) as string[][];
+  let rows: string[][];
+  try {
+    const res = await fetch(cdxUrl, { signal: AbortSignal.timeout(30_000) });
+    if (!res.ok) {
+      console.warn(`[wayback] CDX API returned ${res.status} for @${handle}`);
+      return [];
+    }
+    const body = (await res.json()) as unknown;
+    if (!Array.isArray(body) || body.length === 0) return [];
+    rows = body as string[][];
+  } catch (err) {
+    console.warn(`[wayback] CDX fetch failed for @${handle}:`, err);
+    return [];
+  }
 
-  // First row is header
+  // First row is the header — skip it
   const snapshots: WaybackSnapshot[] = [];
   for (const [timestamp] of rows.slice(1)) {
     if (!timestamp) continue;

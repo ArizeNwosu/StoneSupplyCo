@@ -14,12 +14,20 @@ model User {
   plan             Plan             @default(FREE)
   stripeCustomerId String?
   stripeSubId      String?
+  metaUserId       String?          // Meta EYI OAuth user ID (Phase 2)
+  eyiConnected     Boolean          @default(false)
+  eyiConnectedAt   DateTime?
+  apiKeyHash       String?
+  apiKeyPrefix     String?          // e.g. "ift_a3f9" — shown in UI, never the full key
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   trackedAccounts  TrackedAccount[]
   alerts           Alert[]
+  dataExports      DataExport[]
+  exportJobs       ExportJob[]
   accounts         Account[]
   sessions         Session[]
+  reportLinks      ReportLink[]
 }
 
 enum Plan {
@@ -29,17 +37,24 @@ enum Plan {
 }
 
 model TrackedAccount {
-  id          String      @id @default(cuid())
-  userId      String
-  handle      String
-  displayName String?
-  avatarUrl   String?
-  isPublic    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  lastChecked DateTime?
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  snapshots   Snapshot[]
-  alerts      Alert[]
+  id              String      @id @default(cuid())
+  userId          String
+  handle          String
+  displayName     String?
+  avatarUrl       String?
+  isPublic        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  lastChecked     DateTime?
+  snapshotCount   Int         @default(0)
+  milestone1Sent  Boolean     @default(false)
+  milestone3Sent  Boolean     @default(false)
+  milestone7Sent  Boolean     @default(false)
+  milestone30Sent   Boolean     @default(false)
+  authenticityScore Int?                        // 0–100, null until computed from ≥5 snapshots
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  snapshots       Snapshot[]
+  alerts          Alert[]
+  reportLinks     ReportLink[]
 
   @@unique([userId, handle])
   @@index([handle])
@@ -81,7 +96,79 @@ model PublicSnapshot {
   takenAt         DateTime      @default(now())
   publicAccount   PublicAccount @relation(fields: [publicAccountId], references: [id], onDelete: Cascade)
 
+  @@unique([publicAccountId, takenAt])
   @@index([publicAccountId, takenAt])
+}
+
+// Pro tier: user-uploaded Instagram data exports for unfollow detection
+model DataExport {
+  id             String           @id @default(cuid())
+  userId         String
+  uploadedAt     DateTime         @default(now())
+  source         ExportSource     @default(MANUAL_UPLOAD)
+  followerCount  Int?
+  followingCount Int?
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  followers      ExportFollower[]
+  following      ExportFollowing[]
+}
+
+enum ExportSource {
+  MANUAL_UPLOAD
+  EYI_AUTO
+}
+
+model ExportFollower {
+  id           String     @id @default(cuid())
+  dataExportId String
+  handle       String
+  displayName  String?
+  followedAt   DateTime?
+  dataExport   DataExport @relation(fields: [dataExportId], references: [id], onDelete: Cascade)
+
+  @@index([dataExportId])
+  @@index([handle])
+}
+
+model ExportFollowing {
+  id           String     @id @default(cuid())
+  dataExportId String
+  handle       String
+  displayName  String?
+  followedAt   DateTime?
+  dataExport   DataExport @relation(fields: [dataExportId], references: [id], onDelete: Cascade)
+
+  @@index([dataExportId])
+  @@index([handle])
+}
+
+model ExportJob {
+  id          String          @id @default(cuid())
+  userId      String
+  type        ExportJobType
+  status      ExportJobStatus @default(PENDING)
+  downloadUrl String?
+  expiresAt   DateTime?
+  createdAt   DateTime        @default(now())
+  completedAt DateTime?
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+}
+
+enum ExportJobType {
+  FOLLOWERS_CSV
+  FOLLOWING_CSV
+  UNFOLLOW_DIFF_CSV
+  SCHEDULED_MONTHLY
+}
+
+enum ExportJobStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+  EXPIRED
 }
 
 model Alert {
@@ -97,9 +184,11 @@ model Alert {
 }
 
 enum AlertType {
+  SNAPSHOT_MILESTONE
   GAIN_THRESHOLD
   LOSS_THRESHOLD
   DAILY_SUMMARY
+  WEEKLY_SUMMARY
 }
 
 // NextAuth required models
@@ -135,4 +224,20 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model ReportLink {
+  id               String         @id @default(cuid())
+  token            String         @unique @default(cuid())
+  trackedAccountId String
+  userId           String
+  label            String?
+  expiresAt        DateTime?
+  viewCount        Int            @default(0)
+  createdAt        DateTime       @default(now())
+  trackedAccount   TrackedAccount @relation(fields: [trackedAccountId], references: [id], onDelete: Cascade)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
 }
