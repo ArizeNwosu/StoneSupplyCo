@@ -3,6 +3,9 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { PLAN_LIMITS, PLAN_PRICES } from '@/lib/limits';
 import { Badge } from '@/components/ui/Badge';
+import { ReportLinksList } from '@/components/tracker/ReportLinksList';
+import { ApiKeyManager } from '@/components/tracker/ApiKeyManager';
+import { ManageSubscriptionButton } from '@/components/settings/ManageSubscriptionButton';
 
 export const metadata: Metadata = {
   title: 'Settings',
@@ -43,9 +46,7 @@ export default async function SettingsPage() {
             <p>
               History:{' '}
               <span className="font-medium text-gray-900">
-                {limits.historyDays >= 9999
-                  ? 'All time'
-                  : `${limits.historyDays} days`}
+                {limits.historyDays === null ? 'All time' : `${limits.historyDays} days`}
               </span>
             </p>
             <p>
@@ -63,7 +64,40 @@ export default async function SettingsPage() {
               Upgrade to Pro — ${PLAN_PRICES.PRO.monthly}/mo →
             </a>
           )}
+          {user.plan !== 'FREE' && (
+            <div className="mt-4">
+              <ManageSubscriptionButton />
+            </div>
+          )}
         </div>
+
+        {/* Report Links — Agency only */}
+        {user.plan === 'AGENCY' && (
+          <div className="bg-white rounded-xl border border-gray-100 p-6">
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">
+              Report Links
+            </h2>
+            <p className="text-xs text-gray-400 mb-4">
+              Shareable links give clients read-only access to follower growth
+              reports. Links stay active until revoked.
+            </p>
+            <ReportLinksList />
+          </div>
+        )}
+
+        {/* API Access — Agency only */}
+        {user.plan === 'AGENCY' && (
+          <div className="bg-white rounded-xl border border-gray-100 p-6">
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">
+              API Access
+            </h2>
+            <p className="text-xs text-gray-400 mb-4">
+              Programmatic access to your tracked accounts and snapshot data.
+              Keys are hashed — copy the full key when generated.
+            </p>
+            <ApiKeyManager />
+          </div>
+        )}
 
         {/* Account info */}
         <div className="bg-white rounded-xl border border-gray-100 p-6">
