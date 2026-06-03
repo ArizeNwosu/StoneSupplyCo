@@ -20,10 +20,20 @@ export async function POST() {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://instagramfollowerstracker.com';
 
-  const portalSession = await stripe.billingPortal.sessions.create({
-    customer: user.stripeCustomerId,
-    return_url: `${appUrl}/dashboard/settings`,
-  });
+  let portalSession: Awaited<ReturnType<typeof stripe.billingPortal.sessions.create>>;
+  try {
+    portalSession = await stripe.billingPortal.sessions.create({
+      customer: user.stripeCustomerId,
+      return_url: `${appUrl}/dashboard/settings`,
+    });
+  } catch (err) {
+    console.error('[portal] Stripe error:', err);
+    return NextResponse.json({ error: 'Failed to create portal session' }, { status: 500 });
+  }
+
+  if (!portalSession.url) {
+    return NextResponse.json({ error: 'No portal URL returned' }, { status: 500 });
+  }
 
   return NextResponse.json({ url: portalSession.url });
 }
