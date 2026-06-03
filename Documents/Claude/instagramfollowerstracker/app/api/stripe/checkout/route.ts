@@ -26,10 +26,17 @@ export async function POST(req: NextRequest) {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, email: true, stripeCustomerId: true },
+    select: { id: true, email: true, stripeCustomerId: true, plan: true },
   });
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  }
+
+  if (user.plan !== 'FREE') {
+    return NextResponse.json(
+      { error: 'Already subscribed', redirect: '/dashboard/settings' },
+      { status: 409 }
+    );
   }
 
   // Get or create Stripe customer
@@ -65,6 +72,11 @@ export async function POST(req: NextRequest) {
       metadata: { userId: user.id, plan },
     },
   });
+
+  if (!checkoutSession.url) {
+    console.error('[checkout] Stripe returned null URL for session', checkoutSession.id);
+    return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
+  }
 
   return NextResponse.json({ url: checkoutSession.url });
 }
