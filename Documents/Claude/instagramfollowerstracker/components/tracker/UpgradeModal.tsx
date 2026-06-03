@@ -13,6 +13,11 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const handleClose = () => {
+    setError(null);
+    onClose();
+  };
+
   const handleUpgrade = async () => {
     setLoading(true);
     setError(null);
@@ -40,7 +45,7 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Upgrade to Pro">
+    <Modal open={open} onClose={handleClose} title="Upgrade to Pro">
       <div className="space-y-4">
         <p className="text-sm text-gray-600">
           You&apos;ve reached the 1-account limit on the Free plan. Upgrade to
@@ -66,7 +71,7 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
         </button>
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleClose}
           className="w-full text-sm text-gray-400 hover:text-gray-600 transition"
         >
           Maybe later
