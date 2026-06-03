@@ -24,18 +24,16 @@ export const PLAN_LIMITS = {
 
 export const CHART_UNLOCK_THRESHOLD = 7; // snapshots needed before chart renders
 
+// Display prices only — safe to import in client components.
+// Stripe price IDs are server-side only: see lib/stripe-prices.ts
 export const PLAN_PRICES = {
   PRO: {
     monthly: 19,
     annual: 15,
-    stripePriceIdMonthly: process.env.STRIPE_PRICE_PRO_MONTHLY ?? 'price_pro_monthly',
-    stripePriceIdAnnual: process.env.STRIPE_PRICE_PRO_ANNUAL ?? 'price_pro_annual',
   },
   AGENCY: {
     monthly: 149,
     annual: 119,
-    stripePriceIdMonthly: process.env.STRIPE_PRICE_AGENCY_MONTHLY ?? 'price_agency_monthly',
-    stripePriceIdAnnual: process.env.STRIPE_PRICE_AGENCY_ANNUAL ?? 'price_agency_annual',
   },
 } as const;
 

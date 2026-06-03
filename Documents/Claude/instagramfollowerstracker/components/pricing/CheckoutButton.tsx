@@ -27,9 +27,12 @@ export function CheckoutButton({ plan, interval, className, children }: Checkout
         window.location.href = '/auth/signin';
         return;
       }
-      const data = (await res.json()) as { url?: string; error?: string };
+      const data = (await res.json()) as { url?: string; error?: string; redirect?: string };
       if (data.url) {
         window.location.href = data.url;
+      } else if (res.status === 409 && data.redirect) {
+        // Already subscribed — send to billing settings to manage/upgrade
+        window.location.href = data.redirect;
       } else {
         setLoading(false);
         setError(data.error ?? 'Something went wrong. Please try again.');

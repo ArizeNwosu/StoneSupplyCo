@@ -11,6 +11,10 @@ export function ManageSubscriptionButton() {
     setError(null);
     try {
       const res = await fetch('/api/stripe/portal', { method: 'POST' });
+      if (res.status === 401) {
+        window.location.href = '/auth/signin';
+        return;
+      }
       const data = (await res.json()) as { url?: string; error?: string };
       if (data.url) {
         // loading stays true — page is navigating away

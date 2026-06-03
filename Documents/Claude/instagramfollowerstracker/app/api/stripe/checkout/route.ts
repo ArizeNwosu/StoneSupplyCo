@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import { PLAN_PRICES } from '@/lib/limits';
+import { STRIPE_PRICE_IDS } from '@/lib/stripe-prices';
 
 const CheckoutSchema = z.object({
   plan: z.enum(['PRO', 'AGENCY']),
@@ -53,11 +53,10 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const prices = PLAN_PRICES[plan];
   const priceId =
     interval === 'annual'
-      ? prices.stripePriceIdAnnual
-      : prices.stripePriceIdMonthly;
+      ? STRIPE_PRICE_IDS[plan].annual
+      : STRIPE_PRICE_IDS[plan].monthly;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://instagramfollowerstracker.com';
 

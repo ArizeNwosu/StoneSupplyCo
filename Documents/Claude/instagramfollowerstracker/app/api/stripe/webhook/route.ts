@@ -16,10 +16,13 @@ async function setPlan(userId: string, plan: 'PRO' | 'AGENCY', subId: string) {
 }
 
 async function clearPlan(customerId: string) {
-  await prisma.user.updateMany({
+  const result = await prisma.user.updateMany({
     where: { stripeCustomerId: customerId },
     data: { plan: 'FREE', stripeSubId: null },
   });
+  if (result.count === 0) {
+    console.warn('[webhook] clearPlan: no user found for customerId', customerId);
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -71,18 +74,25 @@ export async function POST(req: NextRequest) {
       }
       case 'customer.subscription.updated': {
         const sub = event.data.object as Stripe.Subscription;
-        const userId = sub.metadata?.userId;
-        const plan = sub.metadata?.plan as 'PRO' | 'AGENCY' | undefined;
-        if (userId && plan) {
-          if (sub.status === 'active') {
+        const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+        if (sub.status === 'active') {
+          const userId = sub.metadata?.userId;
+          const plan = sub.metadata?.plan as 'PRO' | 'AGENCY' | undefined;
+          if (userId && plan) {
             await setPlan(userId, plan, sub.id);
           } else {
-            console.warn('[webhook] subscription.updated non-active status ignored', {
-              userId,
-              status: sub.status,
+            console.warn('[webhook] subscription.updated active but missing metadata', {
               subId: sub.id,
             });
           }
+        } else if (sub.status === 'past_due' || sub.status === 'unpaid') {
+          // Payment failed — downgrade to FREE until payment resolves
+          await clearPlan(customerId);
+        } else {
+          console.warn('[webhook] subscription.updated unhandled status', {
+            status: sub.status,
+            subId: sub.id,
+          });
         }
         break;
       }
