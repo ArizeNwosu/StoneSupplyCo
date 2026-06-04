@@ -96,7 +96,14 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchAccounts();
     fetchPlan();
-  }, [fetchAccounts, fetchPlan]);
+
+    const pending = sessionStorage.getItem('pending_handle');
+    if (pending) {
+      sessionStorage.removeItem('pending_handle');
+      handleAdd(pending).catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (selectedId) fetchSnapshots(selectedId);
