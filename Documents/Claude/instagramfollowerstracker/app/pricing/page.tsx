@@ -28,7 +28,7 @@ const plans = [
       'Public account pages',
     ],
     cta: 'Start Tracking Free',
-    href: '/dashboard',
+    href: '/auth/signup',
     highlight: false,
   },
   {
