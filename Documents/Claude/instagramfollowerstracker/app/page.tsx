@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { HandleSearch } from '@/components/home/HandleSearch';
 import { prisma } from '@/lib/prisma';
 
 export const metadata: Metadata = {
@@ -123,15 +123,7 @@ export default async function HomePage() {
           instagram follow tracker history, spot unfollowers, and understand
           what drives growth.
         </p>
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold px-8 py-4 text-lg hover:opacity-90 transition shadow-lg shadow-purple-200"
-        >
-          Start Tracking Free
-        </Link>
-        <p className="mt-3 text-sm text-gray-400">
-          Free forever · No credit card · 3 accounts included
-        </p>
+        <HandleSearch />
       </section>
 
       {/* Features */}
