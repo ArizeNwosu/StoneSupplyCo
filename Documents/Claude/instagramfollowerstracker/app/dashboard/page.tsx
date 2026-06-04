@@ -101,6 +101,19 @@ export default function DashboardPage() {
     if (selectedId) fetchSnapshots(selectedId);
   }, [selectedId, fetchSnapshots]);
 
+  // Poll while waiting for first snapshot (every 5s) or while building chart (every 60s)
+  useEffect(() => {
+    const selected = accounts.find((a) => a.id === selectedId);
+    if (!selected || selected.chartReady) return;
+
+    const interval = selected.snapshotCount === 0 ? 5000 : 60_000;
+    const timer = setInterval(() => {
+      fetchAccounts();
+      if (selectedId) fetchSnapshots(selectedId);
+    }, interval);
+    return () => clearInterval(timer);
+  }, [selectedId, accounts, fetchAccounts, fetchSnapshots]);
+
   const handleAdd = async (handle: string): Promise<{ error?: string }> => {
     const res = await fetch('/api/accounts', {
       method: 'POST',
@@ -182,15 +195,20 @@ export default function DashboardPage() {
                 {selected.displayName && (
                   <p className="text-sm text-gray-500">{selected.displayName}</p>
                 )}
-                {snapshotData.authenticityScore && (
-                  <div className="mt-2">
+                <div className="mt-2">
+                  {snapshotData.authenticityScore ? (
                     <AuthenticityBadge
                       score={snapshotData.authenticityScore.score}
                       label={snapshotData.authenticityScore.label}
                       signals={snapshotData.authenticityScore.signals}
                     />
-                  </div>
-                )}
+                  ) : snapshotData.snapshotCount >= 1 ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-gray-200 bg-gray-50 text-xs font-medium text-gray-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-300 animate-pulse" />
+                      Analyzing · {snapshotData.snapshotCount}/5 snapshots
+                    </span>
+                  ) : null}
+                </div>
               </div>
               <ShareReportButton accountId={selected.id} />
             </div>
