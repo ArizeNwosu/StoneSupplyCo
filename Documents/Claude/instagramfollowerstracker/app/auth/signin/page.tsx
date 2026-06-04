@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Logo } from '@/components/layout/Logo';
 
 export default function SignInPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -19,19 +21,22 @@ export default function SignInPage() {
     setError(null);
     setLoading(true);
 
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
 
-    if (result?.error) {
-      setError('Incorrect email or password.');
+      if (result?.error) {
+        setError('Incorrect email or password.');
+        return;
+      }
+
+      router.push('/dashboard');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    window.location.href = '/dashboard';
   };
 
   const handleMagicLink = async () => {
@@ -41,9 +46,18 @@ export default function SignInPage() {
     }
     setMagicLinkLoading(true);
     setError(null);
-    await signIn('resend', { email, redirect: false });
-    setMagicLinkSent(true);
-    setMagicLinkLoading(false);
+    try {
+      const result = await signIn('resend', { email, redirect: false });
+      if (result?.error) {
+        setError('Could not send sign-in link. Please try again.');
+        return;
+      }
+      setMagicLinkSent(true);
+    } catch {
+      setError('Could not send sign-in link. Please try again.');
+    } finally {
+      setMagicLinkLoading(false);
+    }
   };
 
   if (magicLinkSent) {
