@@ -25,9 +25,9 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // Fall back to any user's tracked snapshots for this handle
+  // Fall back to any user's tracked snapshots for this handle (public accounts only)
   const tracked = await prisma.trackedAccount.findFirst({
-    where: { handle },
+    where: { handle, isPublic: true },
     include: {
       snapshots: { orderBy: { takenAt: 'desc' }, take: 1, select: { followerCount: true } },
     },

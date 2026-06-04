@@ -31,9 +31,19 @@ export async function POST(req: NextRequest) {
 
   const hashedPassword = await bcrypt.hash(password, 12);
 
-  await prisma.user.create({
-    data: { email: normalizedEmail, password: hashedPassword },
-  });
+  try {
+    await prisma.user.create({
+      data: { email: normalizedEmail, password: hashedPassword },
+    });
+  } catch (err: unknown) {
+    if ((err as { code?: string }).code === 'P2002') {
+      return NextResponse.json(
+        { error: 'An account with this email already exists. Sign in instead.' },
+        { status: 409 }
+      );
+    }
+    throw err;
+  }
 
   return NextResponse.json({ ok: true });
 }

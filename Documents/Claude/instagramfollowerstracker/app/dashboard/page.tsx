@@ -70,9 +70,7 @@ export default function DashboardPage() {
     if (res.ok) {
       const data = (await res.json()) as Account[];
       setAccounts(data);
-      if (data.length > 0 && !selectedId) {
-        setSelectedId(data[0]?.id ?? null);
-      }
+      setSelectedId((prev) => (data.length > 0 && !prev ? (data[0]?.id ?? null) : prev));
     }
     setLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
