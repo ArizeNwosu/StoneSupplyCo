@@ -26,6 +26,7 @@ interface Account {
   snapshotCount: number;
   chartReady: boolean;
   lastChecked: string | null;
+  authenticityScore: number | null;
 }
 
 interface SnapshotPoint {
@@ -175,6 +176,7 @@ export default function DashboardPage() {
                 selected={account.id === selectedId}
                 onClick={() => setSelectedId(account.id)}
                 onDelete={handleDelete}
+                authenticityScore={account.authenticityScore}
               />
             ))}
           </div>

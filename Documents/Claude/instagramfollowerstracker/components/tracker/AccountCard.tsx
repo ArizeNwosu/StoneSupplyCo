@@ -10,9 +10,22 @@ interface AccountCardProps {
   avatarUrl?: string | null;
   latestCount: number | null;
   change24h: number | null;
+  authenticityScore: number | null;
   selected: boolean;
   onClick: () => void;
   onDelete: (id: string) => void;
+}
+
+function scoreColor(score: number): string {
+  if (score >= 80) return 'bg-green-400';
+  if (score >= 50) return 'bg-amber-400';
+  return 'bg-red-400';
+}
+
+function scoreTitle(score: number): string {
+  if (score >= 80) return `Authentic · ${score}/100`;
+  if (score >= 50) return `Suspicious · ${score}/100`;
+  return `Likely fake · ${score}/100`;
 }
 
 export function AccountCard({
@@ -22,6 +35,7 @@ export function AccountCard({
   avatarUrl,
   latestCount,
   change24h,
+  authenticityScore,
   selected,
   onClick,
   onDelete,
@@ -55,7 +69,15 @@ export function AccountCard({
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">@{handle}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-medium text-gray-900 truncate">@{handle}</p>
+          {authenticityScore !== null && (
+            <span
+              title={scoreTitle(authenticityScore)}
+              className={`shrink-0 w-2 h-2 rounded-full ${scoreColor(authenticityScore)}`}
+            />
+          )}
+        </div>
         {displayName && (
           <p className="text-xs text-gray-500 truncate">{displayName}</p>
         )}

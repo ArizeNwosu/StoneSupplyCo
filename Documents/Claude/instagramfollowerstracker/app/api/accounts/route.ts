@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import { PLAN_LIMITS } from '@/lib/limits';
+import { PLAN_LIMITS, CHART_UNLOCK_THRESHOLD } from '@/lib/limits';
 import { parseHandle, isValidHandle } from '@/lib/handles';
 
 const AddAccountSchema = z.object({
@@ -33,6 +33,7 @@ export async function GET() {
       latest && previous
         ? latest.followerCount - previous.followerCount
         : null;
+    const chartReady = account.snapshotCount >= CHART_UNLOCK_THRESHOLD;
     return {
       id: account.id,
       handle: account.handle,
@@ -41,6 +42,9 @@ export async function GET() {
       latestCount,
       change24h,
       lastChecked: account.lastChecked,
+      snapshotCount: account.snapshotCount,
+      chartReady,
+      authenticityScore: account.authenticityScore,
     };
   });
 
@@ -98,5 +102,42 @@ export async function POST(req: NextRequest) {
     data: { userId: user.id, handle },
   });
 
-  return NextResponse.json(account, { status: 200 });
+  // Take first snapshot immediately, non-blocking
+  // Import dynamically to keep scraper server-only
+  import('@/lib/scraper')
+    .then(({ fetchInstagramProfile }) => fetchInstagramProfile(handle))
+    .then(async (profile) => {
+      if (profile.followerCount === null) return;
+      await prisma.snapshot.create({
+        data: {
+          trackedAccountId: account.id,
+          followerCount: profile.followerCount,
+          followingCount: profile.followingCount ?? undefined,
+          postCount: profile.postCount ?? undefined,
+        },
+      });
+      await prisma.trackedAccount.update({
+        where: { id: account.id },
+        data: {
+          snapshotCount: 1,
+          lastChecked: new Date(),
+          displayName: profile.displayName ?? undefined,
+          avatarUrl: profile.avatarUrl ?? undefined,
+          isPublic: !profile.isPrivate,
+        },
+      });
+    })
+    .catch((err) =>
+      console.error(`[accounts] First snapshot failed for @${handle}:`, err)
+    );
+
+  return NextResponse.json(
+    {
+      id: account.id,
+      handle: account.handle,
+      snapshotCount: 0,
+      chartReady: false,
+    },
+    { status: 200 }
+  );
 }

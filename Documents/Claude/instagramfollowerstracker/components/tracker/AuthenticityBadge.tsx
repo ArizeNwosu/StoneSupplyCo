@@ -1,0 +1,59 @@
+interface AuthenticityBadgeProps {
+  score: number;
+  label: 'authentic' | 'suspicious' | 'likely_fake';
+  signals: string[];
+}
+
+export function AuthenticityBadge({ score, label, signals }: AuthenticityBadgeProps) {
+  const config = {
+    authentic: {
+      bg: 'bg-green-50',
+      text: 'text-green-700',
+      border: 'border-green-200',
+      dot: 'bg-green-500',
+      display: 'Authentic',
+    },
+    suspicious: {
+      bg: 'bg-amber-50',
+      text: 'text-amber-700',
+      border: 'border-amber-200',
+      dot: 'bg-amber-400',
+      display: 'Suspicious',
+    },
+    likely_fake: {
+      bg: 'bg-red-50',
+      text: 'text-red-700',
+      border: 'border-red-200',
+      dot: 'bg-red-500',
+      display: 'Likely fake',
+    },
+  }[label];
+
+  return (
+    <div className="group relative inline-block">
+      <div
+        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium cursor-help ${config.bg} ${config.text} ${config.border}`}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+        {config.display} · {score}/100
+      </div>
+      {/* Tooltip on hover */}
+      <div className="absolute top-full left-0 mt-2 hidden group-hover:block z-50 w-64">
+        <div className="bg-gray-900 text-white text-xs rounded-xl p-3 shadow-xl">
+          <p className="font-semibold mb-1.5">Authenticity signals</p>
+          <ul className="space-y-1">
+            {signals.map((s, i) => (
+              <li key={i} className="text-gray-300 flex items-start gap-1.5">
+                <span className="mt-0.5 shrink-0">·</span>
+                {s}
+              </li>
+            ))}
+          </ul>
+          <p className="text-gray-500 mt-2 text-[10px]">
+            Based on daily growth pattern analysis
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

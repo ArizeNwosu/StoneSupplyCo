@@ -20,7 +20,7 @@ const faqItems = [
   {
     question: 'How do I track Instagram follower growth for free?',
     answer:
-      'Sign up for a free account, add any public Instagram handle, and our system automatically snapshots follower counts daily so you can see growth trends over time. Free accounts get 3 tracked accounts and 30 days of history.',
+      'Sign up for a free account, add any public Instagram handle, and our system automatically snapshots follower counts daily so you can see growth trends over time. Free accounts can track 1 account with unlimited history.',
   },
   {
     question: 'Can I track who unfollowed me on Instagram?',
@@ -30,12 +30,12 @@ const faqItems = [
   {
     question: 'What is the best free follower tracker for Instagram?',
     answer:
-      'This tool. Free users get 3 tracked accounts with 30 days of follower count history. No credit card required, no app download needed.',
+      'This tool. Free users get 1 tracked account with unlimited follower count history. No credit card required, no app download needed.',
   },
   {
     question: 'How do I see my Instagram follower count history?',
     answer:
-      'Add your account to the instagram follower tracker. We snapshot follower counts daily and display them as an interactive growth chart. Pro plans unlock up to 1 year of full follower count history.',
+      'Add your account to the instagram follower tracker. We snapshot follower counts daily and display them as an interactive growth chart. All plans include unlimited follower count history.',
   },
   {
     question: 'Is there a website that tracks Instagram followers?',
@@ -220,7 +220,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <Footer topAccounts={topAccounts} />
+      <Footer topAccounts={topAccounts} className="mt-12" />
     </>
   );
 }
