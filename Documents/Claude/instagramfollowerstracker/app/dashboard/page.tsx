@@ -94,14 +94,14 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    fetchAccounts();
-    fetchPlan();
-
     const pending = sessionStorage.getItem('pending_handle');
-    if (pending) {
-      sessionStorage.removeItem('pending_handle');
-      handleAdd(pending).catch(() => {});
-    }
+    if (pending) sessionStorage.removeItem('pending_handle');
+
+    // Await initial fetch so handleAdd's refresh doesn't get overwritten by a stale response
+    fetchAccounts().then(() => {
+      if (pending) handleAdd(pending).catch(() => {}); // handleAdd calls fetchAccounts internally
+    });
+    fetchPlan();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
