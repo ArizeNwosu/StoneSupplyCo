@@ -10,6 +10,7 @@ datasource db {
 model User {
   id               String           @id @default(cuid())
   email            String           @unique
+  password         String?          // null for magic-link-only users
   name             String?
   plan             Plan             @default(FREE)
   stripeCustomerId String?
