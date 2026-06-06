@@ -4,12 +4,14 @@ import { PrismaPg } from '@prisma/adapter-pg';
 function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
-    // During build/type generation without a real DB, return a non-functional client.
-    // The adapter will throw at runtime if DATABASE_URL is missing in production.
     const adapter = new PrismaPg({ connectionString: '' });
     return new PrismaClient({ adapter, log: ['error'] });
   }
-  const adapter = new PrismaPg({ connectionString });
+  // Append pgbouncer=true if using Supabase transaction pooler (port 6543)
+  const url = connectionString.includes('6543') && !connectionString.includes('pgbouncer')
+    ? `${connectionString}${connectionString.includes('?') ? '&' : '?'}pgbouncer=true`
+    : connectionString;
+  const adapter = new PrismaPg({ connectionString: url });
   return new PrismaClient({ adapter, log: ['error'] });
 }
 
