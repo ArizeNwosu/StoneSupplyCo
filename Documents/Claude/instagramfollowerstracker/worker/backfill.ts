@@ -6,31 +6,61 @@ export interface BackfillOptions {
   maxSnapshotsPerAccount?: number;  // how many Wayback snapshots to request (default 100)
   skipIfSnapshotsAbove?: number;    // skip account if it already has >= this many snapshots (default 10)
   handleFilter?: string;            // optional: only backfill one specific account
+  limit?: number;                   // max accounts to process in one run (default 5)
+  maxRuntimeMs?: number;            // stop before serverless timeout (default 240s)
 }
 
-export async function runBackfill(options: BackfillOptions = {}): Promise<void> {
+export interface BackfillResult {
+  startedAt: string;
+  finishedAt: string;
+  processed: number;
+  skipped: number;
+  failed: number;
+  inserted: number;
+  remainingEligible: number;
+}
+
+export async function runBackfill(options: BackfillOptions = {}): Promise<BackfillResult> {
+  const startedAt = new Date();
   const {
     maxSnapshotsPerAccount = 100,
     skipIfSnapshotsAbove = 10,
     handleFilter,
+    limit = 5,
+    maxRuntimeMs = 240_000,
   } = options;
+  const deadline = Date.now() + maxRuntimeMs;
 
   const accounts = await prisma.publicAccount.findMany({
     where: handleFilter ? { handle: handleFilter } : undefined,
     include: { _count: { select: { snapshots: true } } },
     orderBy: { followerCount: 'desc' },
+    take: handleFilter ? undefined : limit,
   });
 
   console.log(`[backfill] ${accounts.length} accounts to process`);
 
+  const result: BackfillResult = {
+    startedAt: startedAt.toISOString(),
+    finishedAt: startedAt.toISOString(),
+    processed: 0,
+    skipped: 0,
+    failed: 0,
+    inserted: 0,
+    remainingEligible: 0,
+  };
+
   for (const account of accounts) {
+    if (Date.now() >= deadline) break;
     const existingCount = account._count.snapshots;
 
     if (existingCount >= skipIfSnapshotsAbove) {
       console.log(`[backfill] Skipping @${account.handle} (${existingCount} snapshots already)`);
+      result.skipped++;
       continue;
     }
 
+    result.processed++;
     console.log(`[backfill] @${account.handle} — fetching Wayback snapshots (existing: ${existingCount})`);
 
     try {
@@ -64,7 +94,7 @@ export async function runBackfill(options: BackfillOptions = {}): Promise<void> 
       }
 
       // skipDuplicates handles concurrent runs that race on the unique(publicAccountId, takenAt) constraint
-      const result = await prisma.publicSnapshot.createMany({
+      const insertResult = await prisma.publicSnapshot.createMany({
         data: newSnapshots,
         skipDuplicates: true,
       });
@@ -72,10 +102,10 @@ export async function runBackfill(options: BackfillOptions = {}): Promise<void> 
       // Update account's current follower count — only if Wayback data is newer than what we have
       if (sorted.length > 0) {
         const latest = sorted[sorted.length - 1];
-        const shouldUpdate =
-          account.lastChecked === null ||
-          latest.timestamp > account.lastChecked;
-        if (shouldUpdate) {
+        if (
+          latest &&
+          (account.lastChecked === null || latest.timestamp > account.lastChecked)
+        ) {
           await prisma.publicAccount.update({
             where: { id: account.id },
             data: {
@@ -86,14 +116,29 @@ export async function runBackfill(options: BackfillOptions = {}): Promise<void> 
         }
       }
 
-      console.log(`[backfill] @${account.handle} — inserted ${result.count} new snapshots`);
+      console.log(`[backfill] @${account.handle} — inserted ${insertResult.count} new snapshots`);
+      result.inserted += insertResult.count;
     } catch (err) {
+      result.failed++;
       console.error(`[backfill] @${account.handle} failed:`, err);
     }
 
     // Rate limit: be polite to the Wayback Machine
-    await sleep(3000);
+    if (Date.now() + 3000 < deadline) {
+      await sleep(3000);
+    }
   }
 
+  const remainingAccounts = await prisma.publicAccount.findMany({
+    where: handleFilter
+      ? { handle: handleFilter }
+      : undefined,
+    include: { _count: { select: { snapshots: true } } },
+  });
+  result.remainingEligible = remainingAccounts.filter(
+    (account) => account._count.snapshots < skipIfSnapshotsAbove
+  ).length;
+  result.finishedAt = new Date().toISOString();
   console.log('[backfill] Done');
+  return result;
 }

@@ -62,11 +62,11 @@ export default function SignInPage() {
 
   if (magicLinkSent) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+      <main className="flex min-h-screen items-center justify-center bg-sky-50 px-4">
+        <div className="w-full max-w-sm rounded-lg border border-cyan-950/10 bg-white p-8 text-center shadow-sm">
           <Logo height={28} />
-          <p className="font-semibold text-gray-900 mt-6 mb-2">Check your email</p>
-          <p className="text-sm text-gray-500">
+          <p className="mb-2 mt-6 font-semibold text-slate-950">Check your email</p>
+          <p className="text-sm text-slate-600">
             We sent a sign-in link to <strong>{email}</strong>. Click it to sign in.
           </p>
         </div>
@@ -75,17 +75,17 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <main className="flex min-h-screen items-center justify-center bg-sky-50 px-4">
       <div className="w-full max-w-sm space-y-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <div className="flex flex-col items-center mb-8">
+        <div className="rounded-lg border border-cyan-950/10 bg-white p-8 shadow-sm">
+          <div className="mb-8 flex flex-col items-center">
             <Logo height={28} />
-            <p className="text-sm text-gray-500 mt-3">Sign in to your account</p>
+            <p className="mt-3 text-sm text-slate-600">Sign in to your account</p>
           </div>
 
           <form onSubmit={handlePasswordSignIn} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="mb-1 block text-sm font-semibold text-slate-700">
                 Email address
               </label>
               <input
@@ -96,12 +96,12 @@ export default function SignInPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full rounded-lg border border-cyan-950/10 px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="mb-1 block text-sm font-semibold text-slate-700">
                 Password
               </label>
               <input
@@ -112,7 +112,7 @@ export default function SignInPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Your password"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full rounded-lg border border-cyan-950/10 px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
               />
             </div>
 
@@ -121,46 +121,46 @@ export default function SignInPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white font-medium py-2.5 text-sm hover:opacity-90 transition disabled:opacity-60"
+              className="w-full rounded-full bg-slate-950 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
             >
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
 
           <div className="mt-4 flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-100" />
-            <span className="text-xs text-gray-400">or</span>
-            <div className="flex-1 h-px bg-gray-100" />
+            <div className="h-px flex-1 bg-cyan-950/10" />
+            <span className="text-xs text-slate-400">or</span>
+            <div className="h-px flex-1 bg-cyan-950/10" />
           </div>
 
           <button
             type="button"
             onClick={handleMagicLink}
             disabled={magicLinkLoading}
-            className="mt-4 w-full rounded-lg border border-gray-200 text-gray-600 font-medium py-2.5 text-sm hover:bg-gray-50 transition disabled:opacity-60"
+            className="mt-4 w-full rounded-full border border-cyan-950/10 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-cyan-50 disabled:opacity-60"
           >
             {magicLinkLoading ? 'Sending…' : 'Email me a sign-in link'}
           </button>
 
-          <p className="mt-5 text-center text-xs text-gray-400">
+          <p className="mt-5 text-center text-xs text-slate-500">
             No account?{' '}
-            <Link href="/auth/signup" className="text-purple-600 hover:underline">
+            <Link href="/auth/signup" className="font-semibold text-cyan-700 hover:text-cyan-900">
               Sign up free
             </Link>
           </p>
         </div>
 
         {isDev && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-6">
             <p className="text-xs font-semibold text-amber-700 mb-3 uppercase tracking-wide">
               Dev login (local only)
             </p>
-            <a
+            <Link
               href="/api/dev-login?email=test%40ifttracker.local&redirectTo=/dashboard"
-              className="block w-full text-center rounded-lg bg-amber-500 text-white font-medium py-2 text-sm hover:bg-amber-600 transition"
+              className="block w-full rounded-full bg-amber-500 py-2 text-center text-sm font-semibold text-white transition hover:bg-amber-600"
             >
               Sign in as test user
-            </a>
+            </Link>
             <p className="mt-2 text-center text-xs text-amber-600">test@ifttracker.local · PRO plan</p>
           </div>
         )}

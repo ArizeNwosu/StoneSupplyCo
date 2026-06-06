@@ -3,8 +3,8 @@ interface BadgeProps {
 }
 
 const styles: Record<BadgeProps['plan'], string> = {
-  FREE: 'bg-gray-100 text-gray-600',
-  PRO: 'bg-purple-100 text-purple-700',
+  FREE: 'bg-slate-100 text-slate-600',
+  PRO: 'bg-cyan-100 text-cyan-800',
   AGENCY: 'bg-amber-100 text-amber-700',
 };
 

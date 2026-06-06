@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { PLAN_LIMITS, CHART_UNLOCK_THRESHOLD } from '@/lib/limits';
 import { parseHandle, isValidHandle } from '@/lib/handles';
+import { sendMilestoneEmail } from '@/lib/email';
 
 const AddAccountSchema = z.object({
   handle: z.string().min(1).max(60),
@@ -102,12 +103,15 @@ export async function POST(req: NextRequest) {
     data: { userId: user.id, handle },
   });
 
-  // Take first snapshot immediately, non-blocking
-  // Import dynamically to keep scraper server-only
-  import('@/lib/scraper')
-    .then(({ fetchInstagramProfile }) => fetchInstagramProfile(handle))
-    .then(async (profile) => {
-      if (profile.followerCount === null) return;
+  let snapshotCount = 0;
+  let firstFollowerCount: number | null = null;
+
+  // Take first snapshot immediately. Import dynamically to keep scraper server-only.
+  try {
+    const { fetchInstagramProfile } = await import('@/lib/scraper');
+    const profile = await fetchInstagramProfile(handle);
+
+    if (profile.followerCount !== null) {
       await prisma.snapshot.create({
         data: {
           trackedAccountId: account.id,
@@ -116,27 +120,43 @@ export async function POST(req: NextRequest) {
           postCount: profile.postCount ?? undefined,
         },
       });
-      await prisma.trackedAccount.update({
-        where: { id: account.id },
-        data: {
-          snapshotCount: 1,
-          lastChecked: new Date(),
-          displayName: profile.displayName ?? undefined,
-          avatarUrl: profile.avatarUrl ?? undefined,
-          isPublic: !profile.isPrivate,
-        },
+      snapshotCount = 1;
+      firstFollowerCount = profile.followerCount;
+    }
+
+    const updatedAccount = await prisma.trackedAccount.update({
+      where: { id: account.id },
+      data: {
+        snapshotCount,
+        lastChecked: new Date(),
+        displayName: profile.displayName ?? undefined,
+        avatarUrl: profile.avatarUrl ?? undefined,
+        isPublic: !profile.isPrivate,
+        milestone1Sent: snapshotCount === 1,
+      },
+      include: { user: { select: { email: true } } },
+    });
+
+    // Milestone 1 email: worker checks count===1 never fires because
+    // snapshotCount is already 1 by the time cron runs, so send it here.
+    if (firstFollowerCount !== null && updatedAccount.user.email) {
+      await sendMilestoneEmail({
+        to: updatedAccount.user.email,
+        handle,
+        snapshotCount: 1,
+        followerCount: firstFollowerCount,
       });
-    })
-    .catch((err) =>
-      console.error(`[accounts] First snapshot failed for @${handle}:`, err)
-    );
+    }
+  } catch (err) {
+    console.error(`[accounts] First snapshot failed for @${handle}:`, err);
+  }
 
   return NextResponse.json(
     {
       id: account.id,
       handle: account.handle,
-      snapshotCount: 0,
-      chartReady: false,
+      snapshotCount,
+      chartReady: snapshotCount >= CHART_UNLOCK_THRESHOLD,
     },
     { status: 200 }
   );

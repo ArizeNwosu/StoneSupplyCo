@@ -17,7 +17,7 @@ interface AccountCardProps {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 80) return 'bg-green-400';
+  if (score >= 80) return 'bg-emerald-400';
   if (score >= 50) return 'bg-amber-400';
   return 'bg-red-400';
 }
@@ -49,10 +49,10 @@ export function AccountCard({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
-      className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+      className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all ${
         selected
-          ? 'bg-purple-50 border border-purple-200'
-          : 'hover:bg-gray-50 border border-transparent'
+          ? 'border-teal-300 bg-teal-50'
+          : 'border-transparent hover:border-cyan-950/10 hover:bg-slate-50'
       }`}
     >
       {avatarUrl ? (
@@ -64,13 +64,13 @@ export function AccountCard({
           className="rounded-full object-cover"
         />
       ) : (
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-sm shrink-0">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white">
           {handle[0]?.toUpperCase()}
         </div>
       )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className="text-sm font-medium text-gray-900 truncate">@{handle}</p>
+          <p className="truncate text-sm font-black text-slate-950">@{handle}</p>
           {authenticityScore !== null && (
             <span
               title={scoreTitle(authenticityScore)}
@@ -79,21 +79,21 @@ export function AccountCard({
           )}
         </div>
         {displayName && (
-          <p className="text-xs text-gray-500 truncate">{displayName}</p>
+          <p className="truncate text-xs font-semibold text-slate-500">{displayName}</p>
         )}
       </div>
       <div className="text-right shrink-0">
-        <p className="text-sm font-semibold text-gray-900">
+        <p className="text-sm font-black text-slate-950">
           {latestCount !== null ? formatCount(latestCount) : '—'}
         </p>
         {change24h !== null && (
           <p
             className={`text-xs ${
               changePositive
-                ? 'text-green-500'
+                ? 'text-emerald-600'
                 : changeNegative
-                ? 'text-red-400'
-                : 'text-gray-400'
+                ? 'text-red-500'
+                : 'text-slate-400'
             }`}
           >
             {formatChange(change24h)}
@@ -105,7 +105,7 @@ export function AccountCard({
           e.stopPropagation();
           onDelete(id);
         }}
-        className="ml-1 text-gray-300 hover:text-red-400 transition text-xs shrink-0"
+        className="ml-1 shrink-0 text-xs font-black text-slate-300 transition hover:text-red-500"
         aria-label={`Remove @${handle}`}
       >
         ✕

@@ -57,11 +57,11 @@ export function HandleSearch() {
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto">
+    <div className="w-full max-w-2xl">
       {/* Input row */}
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-3 rounded-[28px] border border-cyan-950/10 bg-white p-2 shadow-2xl shadow-cyan-950/10 sm:flex-row">
         <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm select-none">
+          <span className="absolute left-5 top-1/2 -translate-y-1/2 select-none text-sm font-bold text-slate-400">
             @
           </span>
           <input
@@ -76,64 +76,65 @@ export function HandleSearch() {
             placeholder="username"
             autoComplete="off"
             spellCheck={false}
-            className="w-full rounded-xl border border-gray-200 bg-white pl-7 pr-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm"
+            aria-label="Instagram username"
+            className="min-h-14 w-full rounded-[22px] border border-transparent bg-slate-50 pl-9 pr-4 text-base font-semibold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-cyan-300 focus:bg-white focus:ring-4 focus:ring-cyan-100"
           />
         </div>
         <button
           type="button"
           onClick={lookup}
           disabled={state === 'loading'}
-          className="shrink-0 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold px-6 py-3.5 text-sm hover:opacity-90 transition disabled:opacity-60 shadow-lg shadow-purple-200"
+          className="min-h-14 shrink-0 rounded-[22px] bg-slate-950 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-950/15 transition hover:-translate-y-0.5 hover:bg-slate-800 disabled:translate-y-0 disabled:opacity-60"
         >
-          {state === 'loading' ? 'Looking up…' : 'Look up'}
+          {state === 'loading' ? 'Checking...' : 'Check followers'}
         </button>
       </div>
 
       {/* Result panel */}
       {state === 'found' && result && (
-        <div className="mt-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center justify-between gap-4">
+        <div className="mt-4 flex flex-col gap-4 rounded-[28px] border border-cyan-950/10 bg-white p-5 shadow-xl shadow-cyan-950/10 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-2xl font-extrabold text-purple-600 tracking-tight">
+            <p className="text-2xl font-extrabold text-teal-700">
               {result.followerCount!.toLocaleString()}
             </p>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="mt-0.5 text-sm text-slate-500">
               followers · @{result.handle}
               {result.displayName && (
-                <span className="text-gray-400"> · {result.displayName}</span>
+                <span className="text-slate-400"> · {result.displayName}</span>
               )}
             </p>
           </div>
           <button
             type="button"
             onClick={startTracking}
-            className="shrink-0 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold px-5 py-2.5 text-sm hover:opacity-90 transition"
+            className="min-h-11 shrink-0 rounded-full bg-rose-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-rose-600"
           >
-            Track @{result.handle} →
+            Track @{result.handle}
           </button>
         </div>
       )}
 
       {state === 'not-found' && result && (
-        <div className="mt-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center justify-between gap-4">
-          <p className="text-sm text-gray-600">
+        <div className="mt-4 flex flex-col gap-4 rounded-[28px] border border-cyan-950/10 bg-white p-5 shadow-xl shadow-cyan-950/10 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-slate-600">
             <span className="font-medium">@{result.handle}</span> — we&apos;ll fetch the live count when you sign up.
           </p>
           <button
             type="button"
             onClick={startTracking}
-            className="shrink-0 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold px-5 py-2.5 text-sm hover:opacity-90 transition"
+            className="min-h-11 shrink-0 rounded-full bg-rose-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-rose-600"
           >
-            Start Tracking →
+            Start tracking
           </button>
         </div>
       )}
 
       {state === 'error' && (
-        <p className="mt-3 text-sm text-red-500 text-center">Something went wrong. Please try again.</p>
+        <p className="mt-3 text-center text-sm text-red-600">Something went wrong. Please try again.</p>
       )}
 
-      <p className="mt-3 text-xs text-gray-400 text-center">
-        Free forever · No credit card · 1 account included
+      <p className="mt-3 text-center text-xs font-semibold text-slate-500 sm:text-left">
+        Free forever / no credit card / no Instagram password
       </p>
     </div>
   );

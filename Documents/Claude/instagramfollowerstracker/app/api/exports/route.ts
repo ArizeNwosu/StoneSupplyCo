@@ -2,9 +2,31 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { PLAN_LIMITS } from '@/lib/limits';
-import { parseInstagramExport, diffExports, type ExportData } from '@/lib/export-parser';
+import { parseInstagramUpload, diffExports, type ExportData } from '@/lib/export-parser';
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
+const INSERT_CHUNK_SIZE = 1000;
+
+export async function GET() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const exports = await prisma.dataExport.findMany({
+    where: { userId: session.user.id },
+    orderBy: { uploadedAt: 'desc' },
+    take: 25,
+    select: {
+      id: true,
+      uploadedAt: true,
+      followerCount: true,
+      followingCount: true,
+    },
+  });
+
+  return NextResponse.json(exports);
+}
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -44,11 +66,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'File too large (max 50 MB)' }, { status: 413 });
   }
 
-  const text = await file.text();
-
   let parsed: ExportData;
   try {
-    parsed = parseInstagramExport(text);
+    parsed = await parseInstagramUpload(file);
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Failed to parse export file' },
@@ -76,16 +96,29 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       followerCount: parsed.followers.length,
       followingCount: parsed.following.length || null,
-      followers: {
-        create: parsed.followers.map((f) => ({
-          handle: f.handle,
-          displayName: f.displayName,
-          followedAt: f.followedAt,
-        })),
-      },
     },
-    select: { id: true, followerCount: true, uploadedAt: true },
+    select: { id: true, followerCount: true, followingCount: true, uploadedAt: true },
   });
+
+  await createRowsInChunks(
+    parsed.followers.map((f) => ({
+      dataExportId: newExport.id,
+      handle: f.handle,
+      displayName: f.displayName,
+      followedAt: f.followedAt,
+    })),
+    (data) => prisma.exportFollower.createMany({ data })
+  );
+
+  await createRowsInChunks(
+    parsed.following.map((f) => ({
+      dataExportId: newExport.id,
+      handle: f.handle,
+      displayName: f.displayName,
+      followedAt: f.followedAt,
+    })),
+    (data) => prisma.exportFollowing.createMany({ data })
+  );
 
   // Compute diff if previous export exists
   let diff: { newFollowers: { handle: string; displayName?: string }[]; lostFollowers: { handle: string; displayName?: string }[] } | null = null;
@@ -108,7 +141,17 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     uploadId: newExport.id,
     followerCount: newExport.followerCount,
+    followingCount: newExport.followingCount,
     uploadedAt: newExport.uploadedAt,
     diff,
   });
+}
+
+async function createRowsInChunks<T>(
+  rows: T[],
+  insert: (rows: T[]) => Promise<unknown>
+) {
+  for (let index = 0; index < rows.length; index += INSERT_CHUNK_SIZE) {
+    await insert(rows.slice(index, index + INSERT_CHUNK_SIZE));
+  }
 }

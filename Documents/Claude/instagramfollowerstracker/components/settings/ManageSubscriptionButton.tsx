@@ -35,7 +35,7 @@ export function ManageSubscriptionButton() {
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className="text-sm font-medium text-purple-600 hover:text-purple-700 disabled:opacity-40 transition"
+        className="text-sm font-semibold text-cyan-700 transition hover:text-cyan-900 disabled:opacity-40"
       >
         {loading ? 'Opening portal…' : 'Manage subscription →'}
       </button>

@@ -13,7 +13,7 @@ export async function getWaybackSnapshots(
   limit = 50
 ): Promise<WaybackSnapshot[]> {
   const url = `https://instagram.com/${handle}/`;
-  const cdxUrl = `http://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&fl=timestamp,statuscode&filter=statuscode:200&limit=${limit}&from=20200101`;
+  const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&fl=timestamp,statuscode&filter=statuscode:200&limit=${limit}&from=20200101`;
 
   let rows: string[][];
   try {

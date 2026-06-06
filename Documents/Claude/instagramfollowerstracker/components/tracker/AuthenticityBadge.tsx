@@ -39,17 +39,17 @@ export function AuthenticityBadge({ score, label, signals }: AuthenticityBadgePr
       </div>
       {/* Tooltip on hover */}
       <div className="absolute top-full left-0 mt-2 hidden group-hover:block z-50 w-64">
-        <div className="bg-gray-900 text-white text-xs rounded-xl p-3 shadow-xl">
+        <div className="rounded-lg bg-slate-950 p-3 text-xs text-white shadow-xl">
           <p className="font-semibold mb-1.5">Authenticity signals</p>
           <ul className="space-y-1">
             {signals.map((s, i) => (
-              <li key={i} className="text-gray-300 flex items-start gap-1.5">
+              <li key={i} className="flex items-start gap-1.5 text-slate-300">
                 <span className="mt-0.5 shrink-0">·</span>
                 {s}
               </li>
             ))}
           </ul>
-          <p className="text-gray-500 mt-2 text-[10px]">
+          <p className="mt-2 text-[10px] text-slate-500">
             Based on daily growth pattern analysis
           </p>
         </div>

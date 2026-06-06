@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
 interface Person {
@@ -15,9 +15,17 @@ interface DiffResult {
 
 interface UploadResult {
   uploadId: string;
-  followerCount: number;
+  followerCount: number | null;
+  followingCount: number | null;
   uploadedAt: string;
   diff: DiffResult | null;
+}
+
+interface StoredExport {
+  id: string;
+  uploadedAt: string;
+  followerCount: number | null;
+  followingCount: number | null;
 }
 
 interface UnfollowDetectorProps {
@@ -28,23 +36,44 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
+  const [storedExports, setStoredExports] = useState<StoredExport[]>([]);
+  const [loadingExports, setLoadingExports] = useState(userPlan !== 'FREE');
   const [error, setError] = useState<string | null>(null);
+
+  const loadExports = useCallback(async () => {
+    if (userPlan === 'FREE') return;
+
+    setLoadingExports(true);
+    try {
+      const res = await fetch('/api/exports');
+      if (res.ok) {
+        setStoredExports((await res.json()) as StoredExport[]);
+      }
+    } finally {
+      setLoadingExports(false);
+    }
+  }, [userPlan]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadExports();
+  }, [loadExports]);
 
   if (userPlan === 'FREE') {
     return (
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
+      <div className="rounded-lg border border-cyan-950/10 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-2">
-          <h3 className="text-sm font-semibold text-gray-900">Unfollow Detector</h3>
-          <span className="text-xs font-medium bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">PRO</span>
+          <h3 className="text-sm font-black text-slate-950">Unfollow Detector</h3>
+          <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-black text-teal-800">PRO</span>
         </div>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="mb-4 text-sm leading-6 text-slate-500">
           See exactly who followed and unfollowed you. Upload your Instagram data export and we&apos;ll show you every change since your last upload.
         </p>
         <Link
           href="/pricing"
-          className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold px-5 py-2.5 text-sm hover:opacity-90 transition"
+          className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-black text-white transition hover:bg-slate-800"
         >
-          Upgrade to Pro →
+          Upgrade to Pro
         </Link>
       </div>
     );
@@ -72,6 +101,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
       } else {
         setResult(data);
         if (fileRef.current) fileRef.current.value = '';
+        await loadExports();
       }
     } catch {
       setError('Network error. Please try again.');
@@ -81,19 +111,19 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-6 space-y-5">
+    <div className="space-y-5 rounded-lg border border-cyan-950/10 bg-white p-6 shadow-xl shadow-cyan-950/10">
       <div className="flex items-center gap-2">
-        <h3 className="text-sm font-semibold text-gray-900">Unfollow Detector</h3>
-        <span className="text-xs font-medium bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">PRO</span>
+        <h3 className="text-sm font-black text-slate-950">Unfollow Detector</h3>
+        <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-black text-teal-800">PRO</span>
       </div>
 
       {/* Instructions */}
-      <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 space-y-1.5">
-        <p className="font-medium text-gray-700 mb-2">How to get your Instagram export:</p>
+      <div className="space-y-1.5 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
+        <p className="mb-2 font-black text-slate-800">How to get your Instagram export:</p>
         <p>1. Open Instagram → <strong>Settings → Your Activity → Download Your Information</strong></p>
         <p>2. Select <strong>JSON format</strong>, tap &quot;Request a download&quot;</p>
         <p>3. Wait for the email (up to 48 hours), download the ZIP</p>
-        <p>4. Extract the ZIP and upload <strong>followers_1.json</strong> below</p>
+        <p>4. Upload the original ZIP below, or upload <strong>followers_1.json</strong> if you already extracted it</p>
       </div>
 
       {/* Upload area */}
@@ -101,14 +131,14 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
         <input
           ref={fileRef}
           type="file"
-          accept=".json,application/json"
-          className="text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition"
+          accept=".zip,.json,application/zip,application/x-zip-compressed,application/json"
+          className="text-sm text-slate-500 file:mr-3 file:rounded-full file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-bold file:text-slate-700 file:transition hover:file:bg-slate-200"
         />
         <button
           type="button"
           onClick={handleUpload}
           disabled={uploading}
-          className="shrink-0 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold px-5 py-2 text-sm hover:opacity-90 transition disabled:opacity-50"
+          className="shrink-0 rounded-full bg-slate-950 px-5 py-2 text-sm font-black text-white transition hover:bg-slate-800 disabled:opacity-50"
         >
           {uploading ? 'Analysing…' : 'Upload'}
         </button>
@@ -118,15 +148,21 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
 
       {/* Results */}
       {result && (
-        <div className="space-y-4 pt-2 border-t border-gray-100">
+        <div className="space-y-4 border-t border-cyan-950/10 pt-2">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">
-              {result.followerCount.toLocaleString()} followers in this export
+            <p className="text-sm font-semibold text-slate-500">
+              {formatCount(result.followerCount)} followers in this export
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs font-semibold text-slate-400">
               {new Date(result.uploadedAt).toLocaleDateString()}
             </p>
           </div>
+
+          <ExportButtons
+            exportId={result.uploadId}
+            hasFollowing={Boolean(result.followingCount)}
+            hasDiff={result.diff !== null}
+          />
 
           {result.diff === null ? (
             <div className="rounded-lg bg-blue-50 border border-blue-100 p-4">
@@ -153,8 +189,118 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
           )}
         </div>
       )}
+
+      <SavedExports
+        exports={storedExports}
+        loading={loadingExports}
+      />
     </div>
   );
+}
+
+function SavedExports({
+  exports,
+  loading,
+}: {
+  exports: StoredExport[];
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <div className="border-t border-cyan-950/10 pt-4">
+        <p className="text-xs font-semibold text-slate-400">Loading saved exports...</p>
+      </div>
+    );
+  }
+
+  if (exports.length === 0) {
+    return (
+      <div className="border-t border-cyan-950/10 pt-4">
+        <p className="text-sm font-black text-slate-950">Saved exports</p>
+        <p className="mt-1 text-xs font-semibold text-slate-400">No uploads saved yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 border-t border-cyan-950/10 pt-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-black text-slate-950">Saved exports</p>
+        <p className="text-xs font-semibold text-slate-400">Last {Math.min(exports.length, 5)}</p>
+      </div>
+      <div className="space-y-2">
+        {exports.slice(0, 5).map((item) => (
+          <div
+            key={item.id}
+            className="gap-3 rounded-lg border border-cyan-950/10 p-3 sm:flex sm:items-center sm:justify-between"
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-black text-slate-800">
+                {new Date(item.uploadedAt).toLocaleDateString()}
+              </p>
+              <p className="text-xs font-semibold text-slate-400">
+                {formatCount(item.followerCount)} followers
+                {item.followingCount ? ` / ${formatCount(item.followingCount)} following` : ''}
+              </p>
+            </div>
+            <div className="mt-3 sm:mt-0">
+              <ExportButtons
+                exportId={item.id}
+                hasFollowing={Boolean(item.followingCount)}
+                hasDiff
+                compact
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ExportButtons({
+  exportId,
+  hasFollowing,
+  hasDiff,
+  compact = false,
+}: {
+  exportId: string;
+  hasFollowing: boolean;
+  hasDiff: boolean;
+  compact?: boolean;
+}) {
+  const className = compact
+    ? 'inline-flex items-center rounded-full border border-cyan-950/10 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-teal-300 hover:text-slate-950'
+    : 'inline-flex items-center rounded-full border border-cyan-950/10 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-teal-300 hover:text-slate-950';
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <a className={className} href={downloadHref(exportId, 'followers')}>
+        Followers CSV
+      </a>
+      {hasFollowing && (
+        <a className={className} href={downloadHref(exportId, 'following')}>
+          Following CSV
+        </a>
+      )}
+      {hasDiff && (
+        <a className={className} href={downloadHref(exportId, 'diff')}>
+          Diff CSV
+        </a>
+      )}
+    </div>
+  );
+}
+
+function downloadHref(
+  exportId: string,
+  type: 'followers' | 'following' | 'diff'
+): string {
+  return `/api/exports/${exportId}/download?type=${type}&format=csv`;
+}
+
+function formatCount(count: number | null): string {
+  return typeof count === 'number' ? count.toLocaleString() : '0';
 }
 
 function DiffSection({
@@ -185,11 +331,11 @@ function DiffSection({
         )}
       </div>
       {people.length === 0 ? (
-        <p className="text-xs text-gray-400">{emptyText}</p>
+        <p className="text-xs text-slate-500">{emptyText}</p>
       ) : (
         <ul className="space-y-1.5">
           {shown.map((p) => (
-            <li key={p.handle} className="text-xs text-gray-700">
+            <li key={p.handle} className="text-xs text-slate-700">
               <a
                 href={`https://instagram.com/${p.handle}`}
                 target="_blank"
@@ -199,7 +345,7 @@ function DiffSection({
                 @{p.handle}
               </a>
               {p.displayName && (
-                <span className="text-gray-400 ml-1">{p.displayName}</span>
+                <span className="ml-1 text-slate-500">{p.displayName}</span>
               )}
             </li>
           ))}
@@ -209,7 +355,7 @@ function DiffSection({
         <button
           type="button"
           onClick={() => setExpanded((e) => !e)}
-          className="mt-2 text-xs text-gray-400 hover:text-gray-600 transition"
+          className="mt-2 text-xs text-slate-500 transition hover:text-slate-700"
         >
           {expanded ? 'Show less' : `Show all ${people.length}`}
         </button>

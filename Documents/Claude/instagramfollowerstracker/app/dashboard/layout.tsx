@@ -13,8 +13,8 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
+    <div className="h-screen flex flex-col">
+      <Navbar mode="app" />
       <div className="flex flex-1 overflow-hidden">{children}</div>
     </div>
   );

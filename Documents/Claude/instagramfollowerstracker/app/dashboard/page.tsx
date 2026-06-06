@@ -50,6 +50,8 @@ interface SnapshotData {
     current: number | null;
     change: number | null;
     changePct: number | null;
+    change7d: number | null;
+    change30d: number | null;
     avgDailyGain: number | null;
     peakCount: number | null;
     peakDate: string | null;
@@ -73,7 +75,6 @@ export default function DashboardPage() {
       setSelectedId((prev) => (data.length > 0 && !prev ? (data[0]?.id ?? null) : prev));
     }
     setLoading(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchSnapshots = useCallback(async (id: string) => {
@@ -91,36 +92,7 @@ export default function DashboardPage() {
     }
   }, []);
 
-  useEffect(() => {
-    const pending = sessionStorage.getItem('pending_handle');
-    if (pending) sessionStorage.removeItem('pending_handle');
-
-    // Await initial fetch so handleAdd's refresh doesn't get overwritten by a stale response
-    fetchAccounts().then(() => {
-      if (pending) handleAdd(pending).catch(() => {}); // handleAdd calls fetchAccounts internally
-    });
-    fetchPlan();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (selectedId) fetchSnapshots(selectedId);
-  }, [selectedId, fetchSnapshots]);
-
-  // Poll while waiting for first snapshot (every 5s) or while building chart (every 60s)
-  useEffect(() => {
-    const selected = accounts.find((a) => a.id === selectedId);
-    if (!selected || selected.chartReady) return;
-
-    const interval = selected.snapshotCount === 0 ? 5000 : 60_000;
-    const timer = setInterval(() => {
-      fetchAccounts();
-      if (selectedId) fetchSnapshots(selectedId);
-    }, interval);
-    return () => clearInterval(timer);
-  }, [selectedId, accounts, fetchAccounts, fetchSnapshots]);
-
-  const handleAdd = async (handle: string): Promise<{ error?: string }> => {
+  const handleAdd = useCallback(async (handle: string): Promise<{ error?: string }> => {
     const res = await fetch('/api/accounts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -138,7 +110,37 @@ export default function DashboardPage() {
     await fetchAccounts();
     setShowAddModal(false);
     return {};
-  };
+  }, [fetchAccounts]);
+
+  useEffect(() => {
+    const pending = sessionStorage.getItem('pending_handle');
+    if (pending) sessionStorage.removeItem('pending_handle');
+
+    // Await initial fetch so handleAdd's refresh doesn't get overwritten by a stale response
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchAccounts().then(() => {
+      if (pending) handleAdd(pending).catch(() => {}); // handleAdd calls fetchAccounts internally
+    });
+    void fetchPlan();
+  }, [fetchAccounts, fetchPlan, handleAdd]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (selectedId) void fetchSnapshots(selectedId);
+  }, [selectedId, fetchSnapshots]);
+
+  // Poll while waiting for first snapshot (every 5s) or while building chart (every 60s)
+  useEffect(() => {
+    const selected = accounts.find((a) => a.id === selectedId);
+    if (!selected || selected.chartReady) return;
+
+    const interval = selected.snapshotCount === 0 ? 5000 : 60_000;
+    const timer = setInterval(() => {
+      fetchAccounts();
+      if (selectedId) fetchSnapshots(selectedId);
+    }, interval);
+    return () => clearInterval(timer);
+  }, [selectedId, accounts, fetchAccounts, fetchSnapshots]);
 
   const handleDelete = async (id: string) => {
     await fetch(`/api/accounts/${id}`, { method: 'DELETE' });
@@ -156,7 +158,7 @@ export default function DashboardPage() {
     <>
       <Sidebar>
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-sm font-semibold text-gray-900">
+          <h1 className="text-sm font-black text-slate-950">
             Tracked Accounts
           </h1>
           <Button size="sm" onClick={() => setShowAddModal(true)}>
@@ -168,7 +170,7 @@ export default function DashboardPage() {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-16 bg-gray-100 animate-pulse rounded-xl"
+                className="h-16 animate-pulse rounded-lg bg-slate-100"
               />
             ))}
           </div>
@@ -188,19 +190,21 @@ export default function DashboardPage() {
         )}
       </Sidebar>
 
-      <main className="flex-1 p-6 overflow-y-auto bg-gray-50">
-        {!loading && accounts.length === 0 ? (
+      <main className="flex-1 overflow-y-auto bg-sky-50 p-6">
+        {loading ? (
+          <DashboardLoadingPanel />
+        ) : accounts.length === 0 ? (
           <EmptyState onAdd={() => setShowAddModal(true)} />
         ) : selected && snapshotData ? (
           <div className="max-w-4xl mx-auto space-y-6">
             <PatternAlerts />
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-2xl font-black text-slate-950">
                   @{selected.handle}
                 </h2>
                 {selected.displayName && (
-                  <p className="text-sm text-gray-500">{selected.displayName}</p>
+                  <p className="text-sm font-semibold text-slate-500">{selected.displayName}</p>
                 )}
                 <div className="mt-2">
                   {snapshotData.authenticityScore ? (
@@ -210,8 +214,8 @@ export default function DashboardPage() {
                       signals={snapshotData.authenticityScore.signals}
                     />
                   ) : snapshotData.snapshotCount >= 1 ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-gray-200 bg-gray-50 text-xs font-medium text-gray-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-gray-300 animate-pulse" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-950/10 bg-white px-2.5 py-1 text-xs font-bold text-slate-400">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-300" />
                       Analyzing · {snapshotData.snapshotCount}/5 snapshots
                     </span>
                   ) : null}
@@ -224,12 +228,12 @@ export default function DashboardPage() {
                 <MetricsRow
                   current={snapshotData.stats.current}
                   change24h={selected.change24h}
-                  change7d={null}
-                  change30d={snapshotData.stats.change}
+                  change7d={snapshotData.stats.change7d}
+                  change30d={snapshotData.stats.change30d}
                   avgDailyGain={snapshotData.stats.avgDailyGain}
                 />
-                <div className="bg-white rounded-xl border border-gray-100 p-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-4">
+                <div className="rounded-lg border border-cyan-950/10 bg-white p-6 shadow-xl shadow-cyan-950/10">
+                  <h3 className="mb-4 text-sm font-black text-slate-700">
                     Follower Count History
                   </h3>
                   <FollowerChart
@@ -248,7 +252,11 @@ export default function DashboardPage() {
             )}
             <UnfollowDetector userPlan={userPlan} />
           </div>
-        ) : null}
+        ) : selected ? (
+          <DashboardLoadingPanel handle={selected.handle} />
+        ) : (
+          <EmptyState onAdd={() => setShowAddModal(true)} />
+        )}
       </main>
 
       <Modal
@@ -267,5 +275,40 @@ export default function DashboardPage() {
         onClose={() => setShowUpgradeModal(false)}
       />
     </>
+  );
+}
+
+function DashboardLoadingPanel({ handle }: { handle?: string }) {
+  return (
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">
+            Loading tracker
+          </p>
+          <h2 className="mt-2 text-2xl font-black text-slate-950">
+            {handle ? `@${handle}` : 'Preparing dashboard'}
+          </h2>
+          <p className="mt-1 text-sm font-semibold text-slate-500">
+            Fetching account history and follower snapshots.
+          </p>
+        </div>
+        <div className="h-10 w-32 animate-pulse rounded-full bg-slate-200" />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="h-24 animate-pulse rounded-lg border border-cyan-950/10 bg-white shadow-sm"
+          />
+        ))}
+      </div>
+
+      <div className="rounded-lg border border-cyan-950/10 bg-white p-6 shadow-xl shadow-cyan-950/10">
+        <div className="mb-5 h-4 w-44 animate-pulse rounded-full bg-slate-200" />
+        <div className="h-80 animate-pulse rounded-lg bg-cyan-50" />
+      </div>
+    </div>
   );
 }

@@ -27,8 +27,8 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative z-10 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">{title}</h2>
+      <div className="relative z-10 w-full max-w-md rounded-lg border border-cyan-950/10 bg-white p-6 shadow-xl shadow-slate-950/10">
+        <h2 className="mb-4 text-lg font-semibold text-slate-950">{title}</h2>
         {children}
       </div>
     </div>

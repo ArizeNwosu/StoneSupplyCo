@@ -1,5 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
+import { SEO_PAGES } from '@/lib/seo-pages';
+
+export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = 'https://instagramfollowerstracker.com';
@@ -19,6 +22,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
+  const keywordPages: MetadataRoute.Sitemap = SEO_PAGES.map((page) => ({
+    url: `${base}/${page.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.85,
+  }));
+
   const publicAccounts = await prisma.publicAccount
     .findMany({
       select: { handle: true, lastChecked: true },
@@ -32,5 +42,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...accountPages];
+  return [...staticPages, ...keywordPages, ...accountPages];
 }

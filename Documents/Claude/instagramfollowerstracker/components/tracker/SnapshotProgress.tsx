@@ -48,23 +48,23 @@ export function SnapshotProgress({
       {/* Follower count — always show once available */}
       {latestCount !== null ? (
         <div className="text-center mb-8">
-          <p className="text-6xl font-extrabold text-purple-600 tracking-tight">
+          <p className="text-6xl font-black text-teal-700">
             {formatCount(latestCount)}
           </p>
-          <p className="text-gray-500 mt-2 text-sm flex items-center justify-center gap-2">
+          <p className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold text-slate-500">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
             Live · @{handle}
           </p>
         </div>
       ) : isCapturing ? (
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 text-sm text-gray-500">
+          <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-500" />
             </span>
             Fetching follower count for @{handle}…
           </div>
@@ -72,25 +72,25 @@ export function SnapshotProgress({
       ) : null}
 
       {/* Progress card */}
-      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-8">
+      <div className="rounded-lg border border-cyan-950/10 bg-white p-8 shadow-xl shadow-cyan-950/10">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
+          <h3 className="flex items-center gap-2 text-sm font-black text-slate-950">
             Building your chart
             {isCapturing && (
-              <span className="text-xs font-normal text-purple-500 animate-pulse">
+              <span className="animate-pulse text-xs font-bold text-teal-700">
                 capturing now…
               </span>
             )}
           </h3>
-          <span className="text-sm font-medium text-purple-600">
+          <span className="text-sm font-black text-teal-700">
             {count} / {CHART_UNLOCK_THRESHOLD} snapshots
           </span>
         </div>
 
         {/* Progress bar */}
-        <div className="w-full bg-gray-100 rounded-full h-3 mb-5 overflow-hidden">
+        <div className="mb-5 h-3 w-full overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-1000 ease-out relative overflow-hidden"
+            className="relative h-3 overflow-hidden rounded-full bg-teal-600 transition-all duration-1000 ease-out"
             style={{ width: `${barPct}%` }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
@@ -107,15 +107,15 @@ export function SnapshotProgress({
                 <div
                   className={`w-2.5 h-2.5 rounded-full transition-all duration-500 ${
                     done
-                      ? 'bg-purple-500'
+                      ? 'bg-teal-600'
                       : isNext
-                      ? 'bg-purple-200 ring-2 ring-purple-300 ring-offset-1 animate-pulse'
-                      : 'bg-gray-200'
+                      ? 'animate-pulse bg-teal-200 ring-2 ring-teal-300 ring-offset-1'
+                      : 'bg-slate-200'
                   }`}
                 />
                 <span
                   className={`text-xs ${
-                    done ? 'text-purple-600 font-medium' : 'text-gray-400'
+                    done ? 'font-bold text-teal-700' : 'text-slate-400'
                   }`}
                 >
                   Day {n}
@@ -150,7 +150,7 @@ export function SnapshotProgress({
               text={
                 <>
                   Next snapshot in{' '}
-                  <span className="font-medium text-gray-800">
+                  <span className="font-medium text-slate-800">
                     ~{hoursLeft}h
                   </span>
                 </>
@@ -159,7 +159,7 @@ export function SnapshotProgress({
           )}
         </div>
 
-        <div className="mt-6 pt-5 border-t border-gray-100 text-xs text-gray-400">
+        <div className="mt-6 border-t border-cyan-950/10 pt-5 text-xs font-semibold text-slate-400">
           We snapshot follower counts every 24 hours. We&apos;ll email you when
           your chart is ready.
         </div>
@@ -182,17 +182,17 @@ function StatusRow({
       <span
         className={`mt-0.5 shrink-0 leading-none ${
           done
-            ? 'text-green-500'
+            ? 'text-emerald-600'
             : active
-            ? 'text-purple-400 animate-pulse'
-            : 'text-gray-300'
+            ? 'animate-pulse text-teal-600'
+            : 'text-slate-300'
         }`}
       >
         {done ? '✓' : active ? '◉' : '○'}
       </span>
       <span
         className={
-          done ? 'text-gray-400' : active ? 'text-gray-800 font-medium' : 'text-gray-500'
+          done ? 'text-slate-400' : active ? 'font-bold text-slate-800' : 'text-slate-500'
         }
       >
         {text}

@@ -7,11 +7,17 @@ interface EmptyStateProps {
 export function EmptyState({ onAdd }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
-      <div className="text-5xl mb-4">📊</div>
-      <h2 className="text-xl font-semibold text-gray-900 mb-2">
+      <div className="mb-6">
+        <svg viewBox="0 0 48 48" width="48" height="48" fill="none" aria-hidden="true">
+          <rect width="48" height="48" rx="8" fill="#ecfeff" />
+          <path d="M14 34 L24 14 L34 34" stroke="#0f766e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M17 28 L31 28" stroke="#fb7185" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      </div>
+      <h2 className="mb-2 text-xl font-black text-slate-950">
         No accounts tracked yet
       </h2>
-      <p className="text-gray-500 mb-6 max-w-sm text-sm">
+      <p className="mb-6 max-w-sm text-sm leading-6 text-slate-500">
         Add any public Instagram account to start tracking follower growth over
         time.
       </p>

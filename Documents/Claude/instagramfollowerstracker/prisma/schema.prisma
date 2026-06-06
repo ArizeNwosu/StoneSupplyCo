@@ -10,52 +10,46 @@ datasource db {
 model User {
   id               String           @id @default(cuid())
   email            String           @unique
-  password         String?          // null for magic-link-only users
   name             String?
   plan             Plan             @default(FREE)
   stripeCustomerId String?
   stripeSubId      String?
-  metaUserId       String?          // Meta EYI OAuth user ID (Phase 2)
-  eyiConnected     Boolean          @default(false)
-  eyiConnectedAt   DateTime?
-  apiKeyHash       String?
-  apiKeyPrefix     String?          // e.g. "ift_a3f9" — shown in UI, never the full key
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
-  trackedAccounts  TrackedAccount[]
+  eyiConnected     Boolean          @default(false)
+  eyiConnectedAt   DateTime?
+  metaUserId       String?
+  apiKeyHash       String?
+  apiKeyPrefix     String?
+  password         String?
+  accounts         Account[]
   alerts           Alert[]
   dataExports      DataExport[]
   exportJobs       ExportJob[]
-  accounts         Account[]
-  sessions         Session[]
   reportLinks      ReportLink[]
-}
-
-enum Plan {
-  FREE
-  PRO
-  AGENCY
+  sessions         Session[]
+  trackedAccounts  TrackedAccount[]
 }
 
 model TrackedAccount {
-  id              String      @id @default(cuid())
-  userId          String
-  handle          String
-  displayName     String?
-  avatarUrl       String?
-  isPublic        Boolean     @default(true)
-  createdAt       DateTime    @default(now())
-  lastChecked     DateTime?
-  snapshotCount   Int         @default(0)
-  milestone1Sent  Boolean     @default(false)
-  milestone3Sent  Boolean     @default(false)
-  milestone7Sent  Boolean     @default(false)
-  milestone30Sent   Boolean     @default(false)
-  authenticityScore Int?                        // 0–100, null until computed from ≥5 snapshots
-  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  snapshots       Snapshot[]
-  alerts          Alert[]
-  reportLinks     ReportLink[]
+  id                String       @id @default(cuid())
+  userId            String
+  handle            String
+  displayName       String?
+  avatarUrl         String?
+  isPublic          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  lastChecked       DateTime?
+  milestone1Sent    Boolean      @default(false)
+  milestone30Sent   Boolean      @default(false)
+  milestone3Sent    Boolean      @default(false)
+  milestone7Sent    Boolean      @default(false)
+  snapshotCount     Int          @default(0)
+  authenticityScore Int?
+  alerts            Alert[]
+  reportLinks       ReportLink[]
+  snapshots         Snapshot[]
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, handle])
   @@index([handle])
@@ -70,6 +64,7 @@ model Snapshot {
   takenAt          DateTime       @default(now())
   trackedAccount   TrackedAccount @relation(fields: [trackedAccountId], references: [id], onDelete: Cascade)
 
+  @@unique([trackedAccountId, takenAt])
   @@index([trackedAccountId, takenAt])
 }
 
@@ -101,22 +96,16 @@ model PublicSnapshot {
   @@index([publicAccountId, takenAt])
 }
 
-// Pro tier: user-uploaded Instagram data exports for unfollow detection
 model DataExport {
-  id             String           @id @default(cuid())
+  id             String            @id @default(cuid())
   userId         String
-  uploadedAt     DateTime         @default(now())
-  source         ExportSource     @default(MANUAL_UPLOAD)
+  uploadedAt     DateTime          @default(now())
+  source         ExportSource      @default(MANUAL_UPLOAD)
   followerCount  Int?
   followingCount Int?
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   followers      ExportFollower[]
   following      ExportFollowing[]
-}
-
-enum ExportSource {
-  MANUAL_UPLOAD
-  EYI_AUTO
 }
 
 model ExportFollower {
@@ -157,21 +146,6 @@ model ExportJob {
   @@index([userId, status])
 }
 
-enum ExportJobType {
-  FOLLOWERS_CSV
-  FOLLOWING_CSV
-  UNFOLLOW_DIFF_CSV
-  SCHEDULED_MONTHLY
-}
-
-enum ExportJobStatus {
-  PENDING
-  PROCESSING
-  READY
-  FAILED
-  EXPIRED
-}
-
 model Alert {
   id               String         @id @default(cuid())
   userId           String
@@ -180,31 +154,22 @@ model Alert {
   threshold        Int?
   lastTriggered    DateTime?
   createdAt        DateTime       @default(now())
-  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   trackedAccount   TrackedAccount @relation(fields: [trackedAccountId], references: [id], onDelete: Cascade)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-enum AlertType {
-  SNAPSHOT_MILESTONE
-  GAIN_THRESHOLD
-  LOSS_THRESHOLD
-  DAILY_SUMMARY
-  WEEKLY_SUMMARY
-}
-
-// NextAuth required models
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -241,4 +206,38 @@ model ReportLink {
 
   @@index([token])
   @@index([userId])
+}
+
+enum Plan {
+  FREE
+  PRO
+  AGENCY
+}
+
+enum ExportSource {
+  MANUAL_UPLOAD
+  EYI_AUTO
+}
+
+enum ExportJobType {
+  FOLLOWERS_CSV
+  FOLLOWING_CSV
+  UNFOLLOW_DIFF_CSV
+  SCHEDULED_MONTHLY
+}
+
+enum ExportJobStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+  EXPIRED
+}
+
+enum AlertType {
+  GAIN_THRESHOLD
+  LOSS_THRESHOLD
+  DAILY_SUMMARY
+  SNAPSHOT_MILESTONE
+  WEEKLY_SUMMARY
 }

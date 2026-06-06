@@ -8,10 +8,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<NonNullable<ButtonProps['variant']>, string> = {
   primary:
-    'bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:opacity-90 shadow-sm',
+    'bg-slate-950 text-white hover:bg-slate-800 shadow-sm',
   secondary:
-    'bg-white border border-gray-200 text-gray-900 hover:bg-gray-50',
-  ghost: 'text-gray-600 hover:bg-gray-100',
+    'bg-white border border-cyan-950/10 text-slate-900 hover:bg-slate-50',
+  ghost: 'text-slate-600 hover:bg-slate-100',
   danger: 'bg-red-500 text-white hover:bg-red-600',
 };
 
@@ -34,7 +34,7 @@ export function Button({
     <button
       {...props}
       disabled={disabled ?? loading}
-      className={`inline-flex items-center justify-center rounded-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
     >
       {loading && (
         <svg

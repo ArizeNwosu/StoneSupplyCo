@@ -41,8 +41,8 @@ export function FollowerChart({ snapshots, handle }: FollowerChartProps) {
             {
               label: `@${handle} followers`,
               data: snapshots.map((s) => s.followerCount),
-              borderColor: '#9333ea',
-              backgroundColor: 'rgba(147,51,234,0.08)',
+              borderColor: '#0f766e',
+              backgroundColor: 'rgba(20,184,166,0.14)',
               fill: true,
               tension: 0.4,
               pointRadius: snapshots.length > 60 ? 0 : 3,
@@ -67,7 +67,7 @@ export function FollowerChart({ snapshots, handle }: FollowerChartProps) {
               ticks: {
                 callback: (v) => formatCount(Number(v)),
               },
-              grid: { color: 'rgba(0,0,0,0.04)' },
+              grid: { color: 'rgba(15,23,42,0.06)' },
             },
             x: {
               grid: { display: false },
@@ -86,7 +86,7 @@ export function FollowerChart({ snapshots, handle }: FollowerChartProps) {
 
   if (snapshots.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64 bg-gray-50 rounded-xl text-gray-400 text-sm">
+      <div className="flex h-64 items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-slate-400">
         No snapshot data yet — check back after the first daily sync.
       </div>
     );
