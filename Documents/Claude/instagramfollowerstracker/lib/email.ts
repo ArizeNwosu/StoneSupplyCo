@@ -1,6 +1,10 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY ?? '');
+  return _resend;
+}
 const FROM = process.env.EMAIL_FROM ?? 'noreply@instagramfollowerstracker.com';
 
 export async function sendMilestoneEmail({
@@ -55,7 +59,7 @@ export async function sendMilestoneEmail({
   if (!subject || !html) return;
 
   try {
-    await resend.emails.send({ from: FROM, to, subject, html });
+    await getResend().emails.send({ from: FROM, to, subject, html });
   } catch (err) {
     console.error(`[email] Failed to send milestone ${snapshotCount} email to ${to}:`, err);
   }
