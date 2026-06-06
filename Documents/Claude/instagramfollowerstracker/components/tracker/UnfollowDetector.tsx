@@ -157,7 +157,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
         <h3 className="text-sm font-black text-slate-950">Unfollow Detector</h3>
         {!isPro && (
           <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-black text-teal-800">
-            PRO names
+            PRO
           </span>
         )}
         {isPro && (
