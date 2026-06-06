@@ -6,6 +6,9 @@ import { PLAN_LIMITS, CHART_UNLOCK_THRESHOLD } from '@/lib/limits';
 import { parseHandle, isValidHandle } from '@/lib/handles';
 import { sendMilestoneEmail } from '@/lib/email';
 
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
 const AddAccountSchema = z.object({
   handle: z.string().min(1).max(60),
 });
