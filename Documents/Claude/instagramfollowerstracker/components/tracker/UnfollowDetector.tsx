@@ -37,12 +37,12 @@ const PHONE_GUIDE_STEPS = [
   {
     icon: '☰',
     title: 'Open Settings',
-    body: 'Tap the three lines in the top-right corner, then tap "Settings and privacy".',
+    body: 'Tap the three lines in the top-right corner, then tap "Accounts Center".',
   },
   {
     icon: '🕐',
     title: 'Your Activity',
-    body: 'Scroll down and tap "Your activity".',
+    body: 'Scroll down and tap "Your information and permissions".',
   },
   {
     icon: '⬇️',
@@ -51,18 +51,18 @@ const PHONE_GUIDE_STEPS = [
   },
   {
     icon: '✅',
-    title: 'Select followers & following',
-    body: 'Tap "Download or transfer information" → "Some of your information" → check "Followers and following" → tap "Download to device".',
+    title: 'Create Export',
+    body: 'Tap "Create export" → "Export to device" → check "Date range" → tap "All time" then "Save".',
   },
   {
     icon: '📄',
     title: 'Choose JSON format',
-    body: 'Set the format to JSON (not HTML), then tap "Create files". Instagram will email you a download link — this can take a few minutes up to 48 hours.',
+    body: 'Tap "Format" and set it to JSON (not HTML), then tap "Save". Next tap "Start export" — Instagram may ask for your password. Enter it and tap "Continue". You\'ll see the requested export and Instagram will email you a download link (a few minutes up to 48 hours).',
   },
   {
     icon: '📧',
     title: 'Download the ZIP',
-    body: 'Open the email from Instagram, download the ZIP file to your phone, then come back here and upload it.',
+    body: 'Instagram will email you when the download is ready. Open the email, download the ZIP file to your phone or computer, then come back here and upload it.',
   },
 ];
 
