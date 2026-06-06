@@ -50,8 +50,8 @@ async function igFetch(url: string, timeoutMs = 20_000): Promise<Response> {
 
   // URL-wrapper style (ScraperAPI, ScrapingBee, etc.)
   if (proxy.startsWith('http') && proxy.includes('api_key')) {
-    const proxiedUrl = `${proxy}&url=${encodeURIComponent(url)}`;
-    return fetch(proxiedUrl, { signal });
+    const proxiedUrl = `${proxy}&url=${encodeURIComponent(url)}&keep_headers=true`;
+    return fetch(proxiedUrl, { headers, signal });
   }
 
   // Standard HTTP/HTTPS proxy via undici ProxyAgent
