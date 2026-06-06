@@ -175,7 +175,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
       const url = new URL(window.location.href);
       url.searchParams.delete('drive');
       window.history.replaceState({}, '', url.toString());
-      setStage('syncing');
+      queueMicrotask(() => setStage('syncing'));
       void (async () => {
         try {
           const res = await fetch('/api/drive/sync', { method: 'POST' });
@@ -212,7 +212,6 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
         }
       })();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleUpload = useCallback(async () => {
@@ -278,7 +277,6 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
           <GuideStage
             steps={commonSteps}
             currentStep={guideStep}
-            isLast={isLastCommonStep}
             nextLabel="Next"
             onNext={() => {
               if (isLastCommonStep) {
@@ -316,7 +314,6 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
             steps={pathSteps}
             currentStep={pathStep}
             totalOffset={commonSteps.length}
-            isLast={isLastPathStep}
             nextLabel={isLastPathStep && exportPath === 'drive' ? 'Connect Google Drive →' : 'Next'}
             onNext={() => {
               if (isLastPathStep) {
@@ -451,7 +448,6 @@ function GuideStage({
   steps,
   currentStep,
   totalOffset = 0,
-  isLast,
   nextLabel = 'Next',
   onNext,
   onBack,
@@ -459,7 +455,6 @@ function GuideStage({
   steps: { icon: string; title: string; body: string }[];
   currentStep: number;
   totalOffset?: number;
-  isLast: boolean;
   nextLabel?: string;
   onNext: () => void;
   onBack: () => void;
@@ -562,7 +557,7 @@ function BranchStage({
               <p>• First export: up to 2 days</p>
               <p>• Subsequent daily exports: 1 day or less</p>
               <p className="mt-2 text-amber-700">
-                <strong>Tip:</strong> After setting up Drive, also do a one-time "Export to device" upload below — it gives you immediate results while waiting for Drive to deliver your first export.
+                <strong>Tip:</strong> After setting up Drive, also do a one-time &quot;Export to device&quot; upload below — it gives you immediate results while waiting for Drive to deliver your first export.
               </p>
             </div>
           </div>
@@ -875,7 +870,7 @@ function GoogleDrivePanel() {
           </p>
         </div>
       </div>
-      <a
+      <Link
         href="/api/drive/connect"
         className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-cyan-950/15 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-400 hover:text-slate-950"
       >
@@ -888,7 +883,7 @@ function GoogleDrivePanel() {
           <path d="M73.4 26.65l-7.35-12.7c-.8-1.4-1.95-2.5-3.3-3.3L49 25l16.75 29.1 16.75-29.1c-.8-1.4-1.2-2.95-1.2-4.5z" fill="#FFBA00"/>
         </svg>
         Connect Google Drive
-      </a>
+      </Link>
     </div>
   );
 }

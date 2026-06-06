@@ -12,6 +12,24 @@ export interface InstagramProfileData {
   fetchedAt: Date;
 }
 
+interface ScraperAttempt {
+  source: 'web_profile_info' | 'html';
+  ok: boolean;
+  status: number | null;
+  contentType: string | null;
+  followerCount: number | null;
+  error: string | null;
+}
+
+export interface InstagramProfileDebugResult {
+  profile: InstagramProfileData;
+  attempts: ScraperAttempt[];
+  env: {
+    hasSessionId: boolean;
+    hasProxyUrl: boolean;
+  };
+}
+
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -84,10 +102,8 @@ function profileFromUser(handle: string, user: IgUser): InstagramProfileData {
   };
 }
 
-export async function fetchInstagramProfile(
-  handle: string
-): Promise<InstagramProfileData> {
-  const empty: InstagramProfileData = {
+function emptyProfile(handle: string): InstagramProfileData {
+  return {
     handle,
     followerCount: null,
     followingCount: null,
@@ -98,6 +114,37 @@ export async function fetchInstagramProfile(
     isPrivate: false,
     fetchedAt: new Date(),
   };
+}
+
+function profileFromHtml(handle: string, html: string): InstagramProfileData {
+  const empty = emptyProfile(handle);
+  const followerMatch =
+    html.match(/"edge_followed_by"\s*:\s*\{\s*"count"\s*:\s*(\d+)/) ??
+    html.match(/"follower_count"\s*:\s*(\d+)/);
+  const followingMatch =
+    html.match(/"edge_follow"\s*:\s*\{\s*"count"\s*:\s*(\d+)/) ??
+    html.match(/"following_count"\s*:\s*(\d+)/);
+  const postMatch =
+    html.match(
+      /"edge_owner_to_timeline_media"\s*:\s*\{\s*"count"\s*:\s*(\d+)/
+    ) ?? html.match(/"media_count"\s*:\s*(\d+)/);
+  const nameMatch = html.match(/"full_name"\s*:\s*"([^"]+)"/);
+  const privateMatch = html.match(/"is_private"\s*:\s*(true|false)/);
+
+  return {
+    ...empty,
+    followerCount: followerMatch?.[1] ? parseInt(followerMatch[1], 10) : null,
+    followingCount: followingMatch?.[1] ? parseInt(followingMatch[1], 10) : null,
+    postCount: postMatch?.[1] ? parseInt(postMatch[1], 10) : null,
+    displayName: nameMatch?.[1] ?? null,
+    isPrivate: privateMatch?.[1] === 'true',
+  };
+}
+
+export async function fetchInstagramProfile(
+  handle: string
+): Promise<InstagramProfileData> {
+  const empty = emptyProfile(handle);
 
   // ── Primary: internal API endpoint ────────────────────────────────────────
   try {
@@ -122,31 +169,127 @@ export async function fetchInstagramProfile(
 
     if (!res.ok) return empty;
 
-    const html = await res.text();
-
-    const followerMatch =
-      html.match(/"edge_followed_by"\s*:\s*\{\s*"count"\s*:\s*(\d+)/) ??
-      html.match(/"follower_count"\s*:\s*(\d+)/);
-    const followingMatch =
-      html.match(/"edge_follow"\s*:\s*\{\s*"count"\s*:\s*(\d+)/) ??
-      html.match(/"following_count"\s*:\s*(\d+)/);
-    const postMatch =
-      html.match(
-        /"edge_owner_to_timeline_media"\s*:\s*\{\s*"count"\s*:\s*(\d+)/
-      ) ?? html.match(/"media_count"\s*:\s*(\d+)/);
-    const nameMatch = html.match(/"full_name"\s*:\s*"([^"]+)"/);
-    const privateMatch = html.match(/"is_private"\s*:\s*(true|false)/);
-
-    return {
-      ...empty,
-      followerCount: followerMatch?.[1] ? parseInt(followerMatch[1], 10) : null,
-      followingCount: followingMatch?.[1] ? parseInt(followingMatch[1], 10) : null,
-      postCount: postMatch?.[1] ? parseInt(postMatch[1], 10) : null,
-      displayName: nameMatch?.[1] ?? null,
-      isPrivate: privateMatch?.[1] === 'true',
-    };
+    return profileFromHtml(handle, await res.text());
   } catch (err) {
     console.error(`[scraper] Failed to fetch @${handle}:`, err);
     return empty;
   }
+}
+
+export async function debugInstagramProfileFetch(
+  handle: string
+): Promise<InstagramProfileDebugResult> {
+  const attempts: ScraperAttempt[] = [];
+
+  try {
+    const res = await igFetch(
+      `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`
+    );
+    const contentType = res.headers.get('content-type');
+
+    if (res.ok) {
+      const data = (await res.json()) as { data?: { user?: IgUser } };
+      const user = data?.data?.user;
+      const profile = user ? profileFromUser(handle, user) : emptyProfile(handle);
+      attempts.push({
+        source: 'web_profile_info',
+        ok: profile.followerCount !== null,
+        status: res.status,
+        contentType,
+        followerCount: profile.followerCount,
+        error: profile.followerCount === null ? 'No follower count in JSON' : null,
+      });
+      if (profile.followerCount !== null) {
+        return {
+          profile,
+          attempts,
+          env: {
+            hasSessionId: Boolean(process.env.INSTAGRAM_SESSION_ID),
+            hasProxyUrl: Boolean(process.env.PROXY_URL),
+          },
+        };
+      }
+    } else {
+      attempts.push({
+        source: 'web_profile_info',
+        ok: false,
+        status: res.status,
+        contentType,
+        followerCount: null,
+        error: `HTTP ${res.status}`,
+      });
+    }
+  } catch (err) {
+    attempts.push({
+      source: 'web_profile_info',
+      ok: false,
+      status: null,
+      contentType: null,
+      followerCount: null,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  try {
+    const res = await igFetch(`https://www.instagram.com/${handle}/`, {
+      render: true,
+    });
+    const contentType = res.headers.get('content-type');
+
+    if (!res.ok) {
+      attempts.push({
+        source: 'html',
+        ok: false,
+        status: res.status,
+        contentType,
+        followerCount: null,
+        error: `HTTP ${res.status}`,
+      });
+      return {
+        profile: emptyProfile(handle),
+        attempts,
+        env: {
+          hasSessionId: Boolean(process.env.INSTAGRAM_SESSION_ID),
+          hasProxyUrl: Boolean(process.env.PROXY_URL),
+        },
+      };
+    }
+
+    const profile = profileFromHtml(handle, await res.text());
+    attempts.push({
+      source: 'html',
+      ok: profile.followerCount !== null,
+      status: res.status,
+      contentType,
+      followerCount: profile.followerCount,
+      error: profile.followerCount === null ? 'No follower count in HTML' : null,
+    });
+
+    return {
+      profile,
+      attempts,
+      env: {
+        hasSessionId: Boolean(process.env.INSTAGRAM_SESSION_ID),
+        hasProxyUrl: Boolean(process.env.PROXY_URL),
+      },
+    };
+  } catch (err) {
+    attempts.push({
+      source: 'html',
+      ok: false,
+      status: null,
+      contentType: null,
+      followerCount: null,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  return {
+    profile: emptyProfile(handle),
+    attempts,
+    env: {
+      hasSessionId: Boolean(process.env.INSTAGRAM_SESSION_ID),
+      hasProxyUrl: Boolean(process.env.PROXY_URL),
+    },
+  };
 }
