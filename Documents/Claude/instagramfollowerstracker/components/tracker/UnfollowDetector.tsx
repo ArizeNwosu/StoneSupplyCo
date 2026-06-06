@@ -27,10 +27,13 @@ interface UnfollowDetectorProps {
   userPlan: 'FREE' | 'PRO' | 'AGENCY';
 }
 
-type Stage = 'intro' | 'device' | 'guide' | 'upload' | 'syncing' | 'results';
+type Stage = 'intro' | 'device' | 'guide' | 'branch' | 'guide-path' | 'upload' | 'syncing' | 'results';
 type Device = 'phone' | 'desktop';
+type ExportPath = 'device' | 'drive';
 
-const PHONE_GUIDE_STEPS = [
+// ── Common steps (same for both export paths) ──────────────────────────────
+
+const PHONE_COMMON_STEPS = [
   {
     icon: '📱',
     title: 'Open Instagram',
@@ -43,32 +46,17 @@ const PHONE_GUIDE_STEPS = [
   },
   {
     icon: '🕐',
-    title: 'Your Activity',
+    title: 'Your information',
     body: 'Scroll down and tap "Your information and permissions".',
   },
   {
     icon: '⬇️',
-    title: 'Download your information',
-    body: 'Tap "Download your information". If you see "Export your information" instead, tap that — it\'s the same thing.',
-  },
-  {
-    icon: '✅',
     title: 'Create Export',
-    body: 'Tap "Create export" → "Export to device" → check "Date range" → tap "All time" then "Save".',
-  },
-  {
-    icon: '📄',
-    title: 'Choose JSON format',
-    body: 'Tap "Format" and set it to JSON (not HTML), then tap "Save". Next tap "Start export" — Instagram may ask for your password. Enter it and tap "Continue". You\'ll see the requested export and Instagram will email you a download link (a few minutes up to 48 hours).',
-  },
-  {
-    icon: '📧',
-    title: 'Download the ZIP',
-    body: 'Instagram will email you when the download is ready. Open the email, download the ZIP file to your phone or computer, then come back here and upload it.',
+    body: 'Tap "Download your information" (or "Export your information"). Then tap "Create export" — you\'ll be shown two options on the next screen.',
   },
 ];
 
-const DESKTOP_GUIDE_STEPS = [
+const DESKTOP_COMMON_STEPS = [
   {
     icon: '💻',
     title: 'Go to Instagram.com',
@@ -86,12 +74,35 @@ const DESKTOP_GUIDE_STEPS = [
   },
   {
     icon: '⬇️',
-    title: 'Download your information',
-    body: 'Click "Your information and permissions". You should see "Export your information" — click that, then click "Create Export".',
+    title: 'Create Export',
+    body: 'Click "Your information and permissions". You should see "Export your information" — click that, then click "Create Export". You\'ll be shown two options on the next screen.',
   },
+];
+
+// ── Device (manual upload) path ────────────────────────────────────────────
+
+const PHONE_DEVICE_STEPS = [
   {
     icon: '✅',
-    title: 'Select your account',
+    title: 'Export to device',
+    body: 'Tap "Export to device" → check "Date range" → tap "All time" then "Save".',
+  },
+  {
+    icon: '📄',
+    title: 'Choose JSON format',
+    body: 'Tap "Format" and set it to JSON (not HTML), then tap "Save". Next tap "Start export" — Instagram may ask for your password. Enter it and tap "Continue". Instagram will email you a download link (a few minutes up to 48 hours).',
+  },
+  {
+    icon: '📧',
+    title: 'Download the ZIP',
+    body: 'Instagram will email you when the download is ready. Open the email, download the ZIP file to your phone or computer, then come back here and upload it.',
+  },
+];
+
+const DESKTOP_DEVICE_STEPS = [
+  {
+    icon: '✅',
+    title: 'Export to device',
     body: 'Select the account you want to track and click "Export to device". Then click "Date range" → check "All time" → click "Save".',
   },
   {
@@ -106,20 +117,55 @@ const DESKTOP_GUIDE_STEPS = [
   },
 ];
 
+// ── Google Drive (auto-sync) path ──────────────────────────────────────────
+
+const PHONE_DRIVE_STEPS = [
+  {
+    icon: '☁️',
+    title: 'Select your account',
+    body: 'Scroll down and check "Google Drive" → tap "Next" → select "Daily" → select "3 years" → tap "Next" → tap "Connect". You\'ll be prompted to sign in with Google to authorize Meta to access your Google Drive. Tap "Continue".',
+  },
+  {
+    icon: '📄',
+    title: 'Choose Date Range & JSON format',
+    body: 'Tap "Date range" → check "All time" → tap "Save". Tap "Format" and set it to JSON (not HTML), then tap "Save" → tap "Start export". You may be prompted to re-enter your password. Instagram will begin transferring your data to Google Drive and will email you within minutes (up to 48 hours).',
+  },
+];
+
+const DESKTOP_DRIVE_STEPS = [
+  {
+    icon: '☁️',
+    title: 'Select your account',
+    body: 'Scroll down and check "Google Drive" → click "Next" → select "Daily" → select "3 years" → click "Next" → click "Connect". You\'ll be prompted to sign in with Google to authorize Meta to access your Google Drive. Click "Continue".',
+  },
+  {
+    icon: '📄',
+    title: 'Choose Date Range & JSON format',
+    body: 'Click "Date range" → check "All time" → click "Save". Click "Format" and set it to JSON (not HTML), then click "Save" → click "Start export". You may be prompted to re-enter your password. Instagram will begin transferring your data to Google Drive and will email you within minutes (up to 48 hours).',
+  },
+];
+
 export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
   const isPro = userPlan !== 'FREE';
 
   const [stage, setStage] = useState<Stage>(isPro ? 'upload' : 'intro');
   const [device, setDevice] = useState<Device | null>(null);
+  const [exportPath, setExportPath] = useState<ExportPath | null>(null);
   const [guideStep, setGuideStep] = useState(0);
+  const [pathStep, setPathStep] = useState(0);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const guideSteps = device === 'desktop' ? DESKTOP_GUIDE_STEPS : PHONE_GUIDE_STEPS;
-  const isLastGuideStep = guideStep === guideSteps.length - 1;
+  const commonSteps = device === 'desktop' ? DESKTOP_COMMON_STEPS : PHONE_COMMON_STEPS;
+  const isLastCommonStep = guideStep === commonSteps.length - 1;
+
+  const pathSteps = exportPath === 'drive'
+    ? (device === 'desktop' ? DESKTOP_DRIVE_STEPS : PHONE_DRIVE_STEPS)
+    : (device === 'desktop' ? DESKTOP_DEVICE_STEPS : PHONE_DEVICE_STEPS);
+  const isLastPathStep = pathStep === pathSteps.length - 1;
 
   // When user returns from Google OAuth, auto-trigger a Drive sync
   useEffect(() => {
@@ -230,12 +276,13 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
 
         {stage === 'guide' && device && (
           <GuideStage
-            steps={guideSteps}
+            steps={commonSteps}
             currentStep={guideStep}
-            isLast={isLastGuideStep}
+            isLast={isLastCommonStep}
+            nextLabel="Next"
             onNext={() => {
-              if (isLastGuideStep) {
-                setStage('upload');
+              if (isLastCommonStep) {
+                setStage('branch');
               } else {
                 setGuideStep((s) => s + 1);
               }
@@ -245,6 +292,48 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
                 setStage('device');
               } else {
                 setGuideStep((s) => s - 1);
+              }
+            }}
+          />
+        )}
+
+        {stage === 'branch' && (
+          <BranchStage
+            onSelect={(path) => {
+              setExportPath(path);
+              setPathStep(0);
+              setStage('guide-path');
+            }}
+            onBack={() => {
+              setGuideStep(commonSteps.length - 1);
+              setStage('guide');
+            }}
+          />
+        )}
+
+        {stage === 'guide-path' && device && exportPath && (
+          <GuideStage
+            steps={pathSteps}
+            currentStep={pathStep}
+            totalOffset={commonSteps.length}
+            isLast={isLastPathStep}
+            nextLabel={isLastPathStep && exportPath === 'drive' ? 'Connect Google Drive →' : 'Next'}
+            onNext={() => {
+              if (isLastPathStep) {
+                if (exportPath === 'drive') {
+                  window.location.href = '/api/drive/connect';
+                } else {
+                  setStage('upload');
+                }
+              } else {
+                setPathStep((s) => s + 1);
+              }
+            }}
+            onBack={() => {
+              if (pathStep === 0) {
+                setStage('branch');
+              } else {
+                setPathStep((s) => s - 1);
               }
             }}
           />
@@ -264,7 +353,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
             uploading={uploading}
             error={error}
             onUpload={handleUpload}
-            onBack={isPro ? undefined : () => setStage('guide')}
+            onBack={isPro ? undefined : () => setStage('guide-path')}
           />
         )}
 
@@ -361,29 +450,35 @@ function DeviceStage({ onSelect }: { onSelect: (d: Device) => void }) {
 function GuideStage({
   steps,
   currentStep,
+  totalOffset = 0,
   isLast,
+  nextLabel = 'Next',
   onNext,
   onBack,
 }: {
-  steps: typeof PHONE_GUIDE_STEPS;
+  steps: { icon: string; title: string; body: string }[];
   currentStep: number;
+  totalOffset?: number;
   isLast: boolean;
+  nextLabel?: string;
   onNext: () => void;
   onBack: () => void;
 }) {
   const step = steps[currentStep] ?? steps[0]!;
+  const totalSteps = totalOffset + steps.length;
+  const displayStep = totalOffset + currentStep + 1;
 
   return (
     <div className="space-y-6">
-      {/* Progress dots */}
+      {/* Progress dots — across all steps */}
       <div className="flex items-center justify-center gap-1.5">
-        {steps.map((_, i) => (
+        {Array.from({ length: totalSteps }).map((_, i) => (
           <div
             key={i}
             className={`h-1.5 rounded-full transition-all ${
-              i === currentStep
+              i === totalOffset + currentStep
                 ? 'w-6 bg-slate-950'
-                : i < currentStep
+                : i < totalOffset + currentStep
                 ? 'w-1.5 bg-slate-400'
                 : 'w-1.5 bg-slate-200'
             }`}
@@ -395,7 +490,7 @@ function GuideStage({
       <div className="rounded-2xl border border-cyan-950/10 bg-slate-50 p-6 text-center">
         <div className="mb-4 text-5xl">{step.icon}</div>
         <p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-400">
-          Step {currentStep + 1} of {steps.length}
+          Step {displayStep} of {totalSteps}
         </p>
         <h4 className="mb-3 text-lg font-black text-slate-950">{step.title}</h4>
         <p className="text-sm leading-6 text-slate-600">{step.body}</p>
@@ -415,9 +510,72 @@ function GuideStage({
           onClick={onNext}
           className="flex-[2] rounded-full bg-slate-950 px-4 py-2.5 text-sm font-black text-white transition hover:bg-slate-800"
         >
-          {isLast ? 'Upload my file →' : 'Next'}
+          {nextLabel}
         </button>
       </div>
+    </div>
+  );
+}
+
+function BranchStage({
+  onSelect,
+  onBack,
+}: {
+  onSelect: (path: ExportPath) => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="space-y-5">
+      <div className="text-center">
+        <h4 className="text-lg font-black text-slate-950">Which export option do you see?</h4>
+        <p className="mt-1 text-sm text-slate-500">Choose the path that matches what Instagram is showing you.</p>
+      </div>
+
+      <div className="grid gap-4">
+        <button
+          type="button"
+          onClick={() => onSelect('device')}
+          className="flex items-start gap-4 rounded-2xl border-2 border-cyan-950/10 bg-slate-50 p-5 text-left transition hover:border-slate-950 hover:bg-white"
+        >
+          <span className="mt-0.5 text-3xl">📲</span>
+          <div>
+            <p className="font-black text-slate-950">Export to device</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Download a ZIP file to your phone or computer, then upload it here. Ready in minutes.
+            </p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onSelect('drive')}
+          className="flex items-start gap-4 rounded-2xl border-2 border-cyan-950/10 bg-slate-50 p-5 text-left transition hover:border-slate-950 hover:bg-white"
+        >
+          <span className="mt-0.5 text-3xl">☁️</span>
+          <div>
+            <p className="font-black text-slate-950">Export to external service</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Send your data directly to Google Drive and let us sync it automatically — no more manual uploads.
+            </p>
+            <div className="mt-3 rounded-xl border border-amber-100 bg-amber-50 p-3 text-xs text-amber-800">
+              <p className="font-bold mb-1">⏱ How long Drive exports take</p>
+              <p>• First export: up to 2 days</p>
+              <p>• Subsequent daily exports: 1 day or less</p>
+              <p className="mt-2 text-amber-700">
+                <strong>Tip:</strong> After setting up Drive, also do a one-time "Export to device" upload below — it gives you immediate results while waiting for Drive to deliver your first export.
+              </p>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <button
+        type="button"
+        onClick={onBack}
+        className="w-full rounded-full border border-cyan-950/15 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-slate-400"
+      >
+        Back
+      </button>
     </div>
   );
 }
