@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
 interface Person {
@@ -11,6 +11,8 @@ interface Person {
 interface DiffResult {
   newFollowers: Person[];
   lostFollowers: Person[];
+  newCount: number;
+  lostCount: number;
 }
 
 interface UploadResult {
@@ -465,8 +467,8 @@ function ResultsStage({
 }) {
   const { diff, followerCount, followingCount, uploadedAt } = result;
 
-  const lostCount = diff?.lostFollowers.length ?? 0;
-  const newCount = diff?.newFollowers.length ?? 0;
+  const lostCount = diff?.lostCount ?? 0;
+  const newCount = diff?.newCount ?? 0;
   const isFirst = diff === null;
 
   return (
@@ -561,6 +563,112 @@ function ResultsStage({
       >
         Upload another export
       </button>
+
+      <GoogleDrivePanel />
+    </div>
+  );
+}
+
+function GoogleDrivePanel() {
+  const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'error'>('idle');
+  const [lastSync, setLastSync] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      setStatus('loading');
+      try {
+        const res = await fetch('/api/drive/status');
+        const data = (await res.json()) as { connected: boolean; lastSync: string | null };
+        setStatus(data.connected ? 'connected' : 'idle');
+        setLastSync(data.lastSync);
+      } catch {
+        setStatus('idle');
+      }
+    })();
+  }, []);
+
+  const handleDisconnect = async () => {
+    await fetch('/api/drive/disconnect', { method: 'DELETE' });
+    setStatus('idle');
+    setLastSync(null);
+  };
+
+  const handleManualSync = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch('/api/drive/sync', { method: 'POST' });
+      const data = (await res.json()) as { status: string; lastSync?: string };
+      if (data.status === 'synced') setLastSync(new Date().toISOString());
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  if (status === 'loading') return null;
+
+  if (status === 'connected') {
+    return (
+      <div className="rounded-2xl border border-green-100 bg-green-50 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">✅</span>
+            <div>
+              <p className="text-sm font-black text-green-800">Google Drive connected</p>
+              {lastSync && (
+                <p className="text-xs text-green-600">
+                  Last synced {new Date(lastSync).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleManualSync}
+              disabled={syncing}
+              className="rounded-full border border-green-200 bg-white px-3 py-1.5 text-xs font-bold text-green-700 transition hover:border-green-400 disabled:opacity-50"
+            >
+              {syncing ? 'Syncing…' : 'Sync now'}
+            </button>
+            <button
+              type="button"
+              onClick={handleDisconnect}
+              className="rounded-full border border-green-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:border-red-300 hover:text-red-600"
+            >
+              Disconnect
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-cyan-950/10 bg-slate-50 p-4">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 text-2xl">☁️</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-black text-slate-950">Skip the upload — use Google Drive</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Set Instagram to export daily to Google Drive, connect once, and we&apos;ll sync your data automatically every day.
+          </p>
+        </div>
+      </div>
+      <a
+        href="/api/drive/connect"
+        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-cyan-950/15 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-400 hover:text-slate-950"
+      >
+        <svg className="h-4 w-4" viewBox="0 0 87.3 78" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5L6.6 66.85z" fill="#0066DA"/>
+          <path d="M43.65 25L29.9 1.2C28.55.4 27 0 25.45 0 23.9 0 22.35.4 21 1.2L6.6 66.85l16.75-29.1L43.65 25z" fill="#00AC47"/>
+          <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75L86.1 57.5c.8-1.4 1.2-2.95 1.2-4.5H59.75L73.55 76.8z" fill="#EA4335"/>
+          <path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.95 0H34.35c-1.55 0-3.1.4-4.45 1.2L43.65 25z" fill="#00832D"/>
+          <path d="M59.75 53H27.55L13.8 76.8c1.35.8 2.9 1.2 4.45 1.2h50.8c1.55 0 3.1-.4 4.45-1.2L59.75 53z" fill="#2684FC"/>
+          <path d="M73.4 26.65l-7.35-12.7c-.8-1.4-1.95-2.5-3.3-3.3L49 25l16.75 29.1 16.75-29.1c-.8-1.4-1.2-2.95-1.2-4.5z" fill="#FFBA00"/>
+        </svg>
+        Connect Google Drive
+      </a>
     </div>
   );
 }

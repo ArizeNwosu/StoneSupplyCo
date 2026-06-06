@@ -42,12 +42,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
 
-  if (!PLAN_LIMITS[user.plan as keyof typeof PLAN_LIMITS].unfollowDetection) {
-    return NextResponse.json(
-      { error: 'Unfollow detection requires Pro plan', upgrade: '/pricing' },
-      { status: 402 }
-    );
-  }
+  const isPro = PLAN_LIMITS[user.plan as keyof typeof PLAN_LIMITS].unfollowDetection;
 
   let formData: FormData;
   try {
@@ -120,8 +115,8 @@ export async function POST(req: NextRequest) {
     (data) => prisma.exportFollowing.createMany({ data })
   );
 
-  // Compute diff if previous export exists
-  let diff: { newFollowers: { handle: string; displayName?: string }[]; lostFollowers: { handle: string; displayName?: string }[] } | null = null;
+  // Compute diff if previous export exists — names only returned for Pro users
+  let diff: { newFollowers: { handle: string; displayName?: string }[]; lostFollowers: { handle: string; displayName?: string }[]; newCount: number; lostCount: number } | null = null;
 
   if (previousExport) {
     const prevData: ExportData = {
@@ -133,8 +128,10 @@ export async function POST(req: NextRequest) {
     };
     const result = diffExports(prevData, parsed);
     diff = {
-      newFollowers: result.newFollowers.map((f) => ({ handle: f.handle, displayName: f.displayName })),
-      lostFollowers: result.lostFollowers.map((f) => ({ handle: f.handle, displayName: f.displayName })),
+      newCount: result.newFollowers.length,
+      lostCount: result.lostFollowers.length,
+      newFollowers: isPro ? result.newFollowers.map((f) => ({ handle: f.handle, displayName: f.displayName })) : [],
+      lostFollowers: isPro ? result.lostFollowers.map((f) => ({ handle: f.handle, displayName: f.displayName })) : [],
     };
   }
 
