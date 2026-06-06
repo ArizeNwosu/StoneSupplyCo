@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { AccountCard } from '@/components/tracker/AccountCard';
 import { AddAccountForm } from '@/components/tracker/AddAccountForm';
@@ -61,6 +61,7 @@ interface SnapshotData {
 export default function DashboardPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const backfillFiredRef = useRef(false);
   const [snapshotData, setSnapshotData] = useState<SnapshotData | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -132,6 +133,17 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (selectedId) void fetchSnapshots(selectedId);
   }, [selectedId, fetchSnapshots]);
+
+  // On first load, fire backfill for any existing accounts that have no snapshots yet
+  useEffect(() => {
+    if (loading || backfillFiredRef.current) return;
+    backfillFiredRef.current = true;
+    accounts
+      .filter((a) => a.snapshotCount === 0)
+      .forEach((a) => {
+        fetch(`/api/accounts/${a.id}/backfill`, { method: 'POST' }).catch(() => {});
+      });
+  }, [loading, accounts]);
 
   // Poll while waiting for first snapshot (every 5s) or while building chart (every 60s)
   useEffect(() => {
