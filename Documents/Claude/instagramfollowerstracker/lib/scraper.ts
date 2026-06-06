@@ -48,16 +48,10 @@ async function igFetch(url: string, timeoutMs = 20_000): Promise<Response> {
     return fetch(url, { headers, signal });
   }
 
-  // URL-wrapper style (ScraperAPI, ScrapingBee, etc.)
-  if (proxy.startsWith('http') && proxy.includes('api_key')) {
-    const proxiedUrl = `${proxy}&url=${encodeURIComponent(url)}&keep_headers=true`;
-    return fetch(proxiedUrl, { headers, signal });
-  }
-
-  // Standard HTTP/HTTPS proxy via undici ProxyAgent
-  const { ProxyAgent, fetch: undiciFetch } = await import('undici');
-  const dispatcher = new ProxyAgent(proxy);
-  return undiciFetch(url, { headers, signal, dispatcher }) as unknown as Response;
+  // URL-wrapper style proxy (ScraperAPI, ScrapingBee, etc.)
+  // For standard HTTP proxies, set PROXY_URL to a URL-wrapper service instead.
+  const proxiedUrl = `${proxy}&url=${encodeURIComponent(url)}&keep_headers=true`;
+  return fetch(proxiedUrl, { headers, signal });
 }
 
 interface IgUser {
