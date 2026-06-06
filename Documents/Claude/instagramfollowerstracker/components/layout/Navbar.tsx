@@ -1,12 +1,15 @@
 import Link from 'next/link';
 import { Logo } from '@/components/layout/Logo';
+import { auth } from '@/lib/auth';
 
 interface NavbarProps {
   mode?: 'public' | 'app';
 }
 
-export function Navbar({ mode = 'public' }: NavbarProps) {
+export async function Navbar({ mode = 'public' }: NavbarProps) {
+  const session = await auth();
   const isApp = mode === 'app';
+  const isSignedIn = !!session?.user;
 
   return (
     <nav className="sticky top-0 z-40 border-b border-cyan-950/10 bg-white/90 backdrop-blur-xl">
@@ -36,16 +39,16 @@ export function Navbar({ mode = 'public' }: NavbarProps) {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href={isApp ? '/dashboard/settings' : '/auth/signin'}
+            href={isApp || isSignedIn ? '/dashboard/settings' : '/auth/signin'}
             className="hidden rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition hover:text-slate-950 md:inline-flex"
           >
-            {isApp ? 'Settings' : 'Log in'}
+            {isApp || isSignedIn ? 'Settings' : 'Log in'}
           </Link>
           <Link
             href="/dashboard"
             className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-950 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-cyan-950/15 transition hover:-translate-y-0.5 hover:bg-slate-800"
           >
-            {isApp ? 'Dashboard' : 'Start free'}
+            {isApp || isSignedIn ? 'Dashboard' : 'Start free'}
           </Link>
         </div>
       </div>
