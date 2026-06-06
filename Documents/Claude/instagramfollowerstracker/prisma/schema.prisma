@@ -1,0 +1,243 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               String           @id @default(cuid())
+  email            String           @unique
+  name             String?
+  plan             Plan             @default(FREE)
+  stripeCustomerId String?
+  stripeSubId      String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  eyiConnected     Boolean          @default(false)
+  eyiConnectedAt   DateTime?
+  metaUserId       String?
+  apiKeyHash       String?
+  apiKeyPrefix     String?
+  password         String?
+  accounts         Account[]
+  alerts           Alert[]
+  dataExports      DataExport[]
+  exportJobs       ExportJob[]
+  reportLinks      ReportLink[]
+  sessions         Session[]
+  trackedAccounts  TrackedAccount[]
+}
+
+model TrackedAccount {
+  id                String       @id @default(cuid())
+  userId            String
+  handle            String
+  displayName       String?
+  avatarUrl         String?
+  isPublic          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  lastChecked       DateTime?
+  milestone1Sent    Boolean      @default(false)
+  milestone30Sent   Boolean      @default(false)
+  milestone3Sent    Boolean      @default(false)
+  milestone7Sent    Boolean      @default(false)
+  snapshotCount     Int          @default(0)
+  authenticityScore Int?
+  alerts            Alert[]
+  reportLinks       ReportLink[]
+  snapshots         Snapshot[]
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, handle])
+  @@index([handle])
+}
+
+model Snapshot {
+  id               String         @id @default(cuid())
+  trackedAccountId String
+  followerCount    Int
+  followingCount   Int?
+  postCount        Int?
+  takenAt          DateTime       @default(now())
+  trackedAccount   TrackedAccount @relation(fields: [trackedAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([trackedAccountId, takenAt])
+  @@index([trackedAccountId, takenAt])
+}
+
+model PublicAccount {
+  id             String           @id @default(cuid())
+  handle         String           @unique
+  displayName    String?
+  avatarUrl      String?
+  bio            String?
+  category       String?
+  followerCount  Int?
+  followingCount Int?
+  postCount      Int?
+  lastChecked    DateTime?
+  createdAt      DateTime         @default(now())
+  snapshots      PublicSnapshot[]
+}
+
+model PublicSnapshot {
+  id              String        @id @default(cuid())
+  publicAccountId String
+  followerCount   Int
+  followingCount  Int?
+  postCount       Int?
+  takenAt         DateTime      @default(now())
+  publicAccount   PublicAccount @relation(fields: [publicAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([publicAccountId, takenAt])
+  @@index([publicAccountId, takenAt])
+}
+
+model DataExport {
+  id             String            @id @default(cuid())
+  userId         String
+  uploadedAt     DateTime          @default(now())
+  source         ExportSource      @default(MANUAL_UPLOAD)
+  followerCount  Int?
+  followingCount Int?
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  followers      ExportFollower[]
+  following      ExportFollowing[]
+}
+
+model ExportFollower {
+  id           String     @id @default(cuid())
+  dataExportId String
+  handle       String
+  displayName  String?
+  followedAt   DateTime?
+  dataExport   DataExport @relation(fields: [dataExportId], references: [id], onDelete: Cascade)
+
+  @@index([dataExportId])
+  @@index([handle])
+}
+
+model ExportFollowing {
+  id           String     @id @default(cuid())
+  dataExportId String
+  handle       String
+  displayName  String?
+  followedAt   DateTime?
+  dataExport   DataExport @relation(fields: [dataExportId], references: [id], onDelete: Cascade)
+
+  @@index([dataExportId])
+  @@index([handle])
+}
+
+model ExportJob {
+  id          String          @id @default(cuid())
+  userId      String
+  type        ExportJobType
+  status      ExportJobStatus @default(PENDING)
+  downloadUrl String?
+  expiresAt   DateTime?
+  createdAt   DateTime        @default(now())
+  completedAt DateTime?
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+}
+
+model Alert {
+  id               String         @id @default(cuid())
+  userId           String
+  trackedAccountId String
+  type             AlertType
+  threshold        Int?
+  lastTriggered    DateTime?
+  createdAt        DateTime       @default(now())
+  trackedAccount   TrackedAccount @relation(fields: [trackedAccountId], references: [id], onDelete: Cascade)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model ReportLink {
+  id               String         @id @default(cuid())
+  token            String         @unique @default(cuid())
+  trackedAccountId String
+  userId           String
+  label            String?
+  expiresAt        DateTime?
+  viewCount        Int            @default(0)
+  createdAt        DateTime       @default(now())
+  trackedAccount   TrackedAccount @relation(fields: [trackedAccountId], references: [id], onDelete: Cascade)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+enum Plan {
+  FREE
+  PRO
+  AGENCY
+}
+
+enum ExportSource {
+  MANUAL_UPLOAD
+  EYI_AUTO
+}
+
+enum ExportJobType {
+  FOLLOWERS_CSV
+  FOLLOWING_CSV
+  UNFOLLOW_DIFF_CSV
+  SCHEDULED_MONTHLY
+}
+
+enum ExportJobStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+  EXPIRED
+}
+
+enum AlertType {
+  GAIN_THRESHOLD
+  LOSS_THRESHOLD
+  DAILY_SUMMARY
+  SNAPSHOT_MILESTONE
+  WEEKLY_SUMMARY
+}

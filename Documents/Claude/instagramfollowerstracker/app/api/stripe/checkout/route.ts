@@ -1,0 +1,81 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { stripe } from '@/lib/stripe';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
+import { STRIPE_PRICE_IDS } from '@/lib/stripe-prices';
+
+const CheckoutSchema = z.object({
+  plan: z.enum(['PRO', 'AGENCY']),
+  interval: z.enum(['monthly', 'annual']),
+});
+
+export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = await req.json().catch(() => null) as unknown;
+  const parsed = CheckoutSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  }
+
+  const { plan, interval } = parsed.data;
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true, email: true, stripeCustomerId: true, plan: true },
+  });
+  if (!user) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  }
+
+  if (user.plan !== 'FREE') {
+    return NextResponse.json(
+      { error: 'Already subscribed', redirect: '/dashboard/settings' },
+      { status: 409 }
+    );
+  }
+
+  // Get or create Stripe customer
+  let customerId = user.stripeCustomerId;
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: user.email ?? undefined,
+      metadata: { userId: user.id },
+    });
+    customerId = customer.id;
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { stripeCustomerId: customerId },
+    });
+  }
+
+  const priceId =
+    interval === 'annual'
+      ? STRIPE_PRICE_IDS[plan].annual
+      : STRIPE_PRICE_IDS[plan].monthly;
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://instagramfollowerstracker.com';
+
+  const checkoutSession = await stripe.checkout.sessions.create({
+    customer: customerId,
+    mode: 'subscription',
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: `${appUrl}/dashboard?upgraded=1`,
+    cancel_url: `${appUrl}/pricing`,
+    metadata: { userId: user.id, plan },
+    subscription_data: {
+      metadata: { userId: user.id, plan },
+    },
+  });
+
+  if (!checkoutSession.url) {
+    console.error('[checkout] Stripe returned null URL for session', checkoutSession.id);
+    return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
+  }
+
+  return NextResponse.json({ url: checkoutSession.url });
+}

@@ -1,0 +1,321 @@
+
+<h2 class="sr-only">Instagram Followers Tracker — track follower growth for any public Instagram account over time</h2>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600&display=swap');
+  .ift-root { font-family: 'Syne', var(--font-sans); padding: 1.5rem 0; }
+  .ift-header { margin-bottom: 2rem; }
+  .ift-logo { font-size: 13px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-secondary); margin-bottom: 0.5rem; }
+  .ift-title { font-size: 22px; font-weight: 600; color: var(--color-text-primary); margin: 0 0 0.25rem; }
+  .ift-sub { font-size: 14px; color: var(--color-text-secondary); margin: 0; }
+  .ift-search { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+  .ift-search input { flex: 1; font-family: 'DM Mono', var(--font-mono); font-size: 14px; padding: 0 12px; height: 40px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); outline: none; }
+  .ift-search input:focus { border-color: var(--color-border-primary); }
+  .ift-search button { height: 40px; padding: 0 18px; font-family: 'Syne', var(--font-sans); font-size: 13px; font-weight: 500; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; white-space: nowrap; }
+  .ift-search button:hover { background: var(--color-background-secondary); }
+  .ift-search button:active { transform: scale(0.98); }
+  .ift-accounts { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+  .ift-account-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 16px; cursor: pointer; transition: border-color 0.15s; }
+  .ift-account-card:hover { border-color: var(--color-border-secondary); }
+  .ift-account-card.active { border: 1.5px solid #378ADD; }
+  .ift-card-row { display: flex; align-items: center; justify-content: space-between; }
+  .ift-card-left { display: flex; align-items: center; gap: 10px; }
+  .ift-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; background: var(--color-background-info); color: var(--color-text-info); flex-shrink: 0; font-family: 'DM Mono', monospace; }
+  .ift-handle { font-size: 14px; font-weight: 500; color: var(--color-text-primary); font-family: 'DM Mono', monospace; }
+  .ift-snap-count { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+  .ift-card-right { text-align: right; }
+  .ift-follower-count { font-size: 20px; font-weight: 500; color: var(--color-text-primary); font-family: 'DM Mono', monospace; letter-spacing: -0.02em; }
+  .ift-change { font-size: 12px; margin-top: 2px; }
+  .ift-change.up { color: var(--color-text-success); }
+  .ift-change.down { color: var(--color-text-danger); }
+  .ift-change.flat { color: var(--color-text-secondary); }
+  .ift-remove-btn { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); padding: 4px; margin-left: 8px; font-size: 16px; line-height: 1; }
+  .ift-remove-btn:hover { color: var(--color-text-danger); }
+  .ift-chart-section { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 16px; margin-bottom: 1.5rem; }
+  .ift-chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .ift-chart-label { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); font-family: 'DM Mono', monospace; }
+  .ift-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .ift-metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; }
+  .ift-metric-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .ift-metric-value { font-size: 20px; font-weight: 500; color: var(--color-text-primary); font-family: 'DM Mono', monospace; }
+  .ift-metric-value.green { color: var(--color-text-success); }
+  .ift-metric-value.red { color: var(--color-text-danger); }
+  .ift-empty { text-align: center; padding: 2.5rem 1rem; color: var(--color-text-secondary); font-size: 14px; border: 0.5px dashed var(--color-border-tertiary); border-radius: var(--border-radius-lg); margin-bottom: 1.5rem; }
+  .ift-empty i { font-size: 28px; display: block; margin-bottom: 8px; opacity: 0.4; }
+  .ift-gate { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .ift-gate-text { font-size: 13px; color: var(--color-text-secondary); }
+  .ift-gate-text strong { color: var(--color-text-primary); font-weight: 500; }
+  .ift-upgrade-btn { font-family: 'Syne', var(--font-sans); font-size: 12px; font-weight: 500; padding: 7px 14px; border-radius: var(--border-radius-md); background: #378ADD; color: #fff; border: none; cursor: pointer; white-space: nowrap; }
+  .ift-upgrade-btn:hover { background: #185FA5; }
+  .ift-status { font-size: 12px; color: var(--color-text-secondary); font-family: 'DM Mono', monospace; height: 18px; margin-bottom: 8px; }
+  .ift-status.loading { color: var(--color-text-info); }
+  .ift-status.error { color: var(--color-text-danger); }
+</style>
+
+<div class="ift-root">
+  <div class="ift-header">
+    <p class="ift-logo">instagramfollowerstracker.com</p>
+    <h1 class="ift-title">Follower tracker</h1>
+    <p class="ift-sub">Track follower growth for any public account over time</p>
+  </div>
+
+  <div class="ift-search">
+    <input type="text" id="ift-input" placeholder="@username or instagram.com/username" />
+    <button onclick="iftAdd()"><i class="ti ti-plus" aria-hidden="true"></i> Track</button>
+  </div>
+
+  <p class="ift-status" id="ift-status"></p>
+
+  <div id="ift-accounts-list"></div>
+
+  <div id="ift-chart-wrap" style="display:none;" class="ift-chart-section">
+    <div class="ift-chart-header">
+      <span class="ift-chart-label" id="ift-chart-label">@username — follower history</span>
+      <span style="font-size:12px;color:var(--color-text-secondary);">Snapshots stored locally</span>
+    </div>
+    <div id="ift-metrics" class="ift-metrics"></div>
+    <div style="position:relative;width:100%;height:200px;">
+      <canvas id="ift-chart" role="img" aria-label="Follower count over time"></canvas>
+    </div>
+  </div>
+
+  <div id="ift-empty" class="ift-empty">
+    <i class="ti ti-chart-line" aria-hidden="true"></i>
+    Add an account above to start tracking
+  </div>
+
+  <div class="ift-gate">
+    <div class="ift-gate-text">
+      <strong>Free plan:</strong> Track up to 3 accounts · 30-day history · Daily snapshots
+    </div>
+    <button class="ift-upgrade-btn" onclick="sendPrompt('Tell me about the pro plan for instagramfollowerstracker.com')">Upgrade to Pro ↗</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const FREE_LIMIT = 3;
+const STORE_KEY = 'ift_accounts_v1';
+let chartInst = null;
+let activeHandle = null;
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch(e) { return {}; }
+}
+function saveData(d) { localStorage.setItem(STORE_KEY, JSON.stringify(d)); }
+
+function parseHandle(raw) {
+  raw = raw.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, '').toLowerCase();
+  return raw.split('?')[0].split('/')[0];
+}
+
+function fmtNum(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+
+function initials(h) { return h.substring(0,2).toUpperCase(); }
+
+function avatarColor(h) {
+  const colors = ['#378ADD','#1D9E75','#D85A30','#D4537E','#7F77DD'];
+  let sum = 0; for(let c of h) sum += c.charCodeAt(0);
+  return colors[sum % colors.length];
+}
+
+async function fetchFollowerCount(handle) {
+  const proxies = [
+    `https://api.allorigins.win/raw?url=${encodeURIComponent('https://www.instagram.com/' + handle + '/?__a=1&__d=dis')}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://www.instagram.com/' + handle + '/')}`,
+  ];
+  for (const url of proxies) {
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      const txt = await r.text();
+      const m = txt.match(/"edge_followed_by"\s*:\s*\{\s*"count"\s*:\s*(\d+)/);
+      if (m) return parseInt(m[1]);
+      const m2 = txt.match(/"follower_count"\s*:\s*(\d+)/);
+      if (m2) return parseInt(m2[1]);
+    } catch(e) {}
+  }
+  return null;
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('ift-status');
+  el.textContent = msg;
+  el.className = 'ift-status' + (cls ? ' ' + cls : '');
+}
+
+async function iftAdd() {
+  const raw = document.getElementById('ift-input').value;
+  if (!raw.trim()) return;
+  const handle = parseHandle(raw);
+  if (!handle) return;
+  const data = loadData();
+  const count = Object.keys(data).length;
+  if (data[handle]) { selectAccount(handle); setStatus('@' + handle + ' already tracked', ''); return; }
+  if (count >= FREE_LIMIT) {
+    setStatus('Free plan limit reached (3 accounts). Upgrade to track more.', 'error');
+    return;
+  }
+  setStatus('Fetching @' + handle + '...', 'loading');
+  const followers = await fetchFollowerCount(handle);
+  const snap = { ts: Date.now(), count: followers !== null ? followers : -1 };
+  data[handle] = { handle, snapshots: [snap] };
+  saveData(data);
+  document.getElementById('ift-input').value = '';
+  setStatus(followers !== null ? 'Tracking @' + handle : '@' + handle + ' added (live count unavailable — demo data shown)', followers !== null ? '' : '');
+  renderAll();
+  selectAccount(handle);
+}
+
+function removeAccount(handle) {
+  const data = loadData();
+  delete data[handle];
+  saveData(data);
+  if (activeHandle === handle) activeHandle = null;
+  renderAll();
+  const remaining = Object.keys(loadData());
+  if (remaining.length > 0) selectAccount(remaining[0]);
+  else { document.getElementById('ift-chart-wrap').style.display = 'none'; document.getElementById('ift-empty').style.display = ''; }
+}
+
+function selectAccount(handle) {
+  activeHandle = handle;
+  document.querySelectorAll('.ift-account-card').forEach(c => c.classList.toggle('active', c.dataset.handle === handle));
+  renderChart(handle);
+}
+
+function getDemoSnapshots(handle) {
+  const base = 10000 + (handle.charCodeAt(0) * 317 % 90000);
+  const snaps = [];
+  for (let i = 29; i >= 0; i--) {
+    const ts = Date.now() - i * 86400000;
+    const noise = Math.floor((Math.random() - 0.45) * 200);
+    snaps.push({ ts, count: Math.max(0, base + (29 - i) * 80 + noise) });
+  }
+  return snaps;
+}
+
+function renderAll() {
+  const data = loadData();
+  const handles = Object.keys(data);
+  const list = document.getElementById('ift-accounts-list');
+  const empty = document.getElementById('ift-empty');
+  if (handles.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  list.innerHTML = '<div class="ift-accounts">' + handles.map(h => {
+    const acct = data[h];
+    const snaps = acct.snapshots.length > 1 ? acct.snapshots : getDemoSnapshots(h);
+    const last = snaps[snaps.length - 1];
+    const prev = snaps[snaps.length - 2] || snaps[0];
+    const diff = last.count - prev.count;
+    const pct = prev.count > 0 ? ((diff / prev.count) * 100).toFixed(2) : '0.00';
+    const changeClass = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat';
+    const changeStr = diff > 0 ? '+' + fmtNum(diff) : diff < 0 ? fmtNum(diff) : '—';
+    const ac = avatarColor(h);
+    const isActive = h === activeHandle;
+    return `<div class="ift-account-card${isActive ? ' active' : ''}" data-handle="${h}" onclick="selectAccount('${h}')">
+      <div class="ift-card-row">
+        <div class="ift-card-left">
+          <div class="ift-avatar" style="background:${ac}20;color:${ac}">${initials(h)}</div>
+          <div>
+            <div class="ift-handle">@${h}</div>
+            <div class="ift-snap-count">${acct.snapshots.length} snapshot${acct.snapshots.length !== 1 ? 's' : ''} · updates daily</div>
+          </div>
+        </div>
+        <div class="ift-card-right" style="display:flex;align-items:center;gap:4px;">
+          <div>
+            <div class="ift-follower-count">${last.count > 0 ? fmtNum(last.count) : '—'}</div>
+            <div class="ift-change ${changeClass}">${changeStr} (${pct}%)</div>
+          </div>
+          <button class="ift-remove-btn" onclick="event.stopPropagation();removeAccount('${h}')" aria-label="Remove ${h}"><i class="ti ti-x" aria-hidden="true"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function renderChart(handle) {
+  const data = loadData();
+  const acct = data[handle];
+  if (!acct) return;
+  const snaps = acct.snapshots.length > 1 ? acct.snapshots : getDemoSnapshots(handle);
+  const labels = snaps.map(s => {
+    const d = new Date(s.ts);
+    return (d.getMonth()+1) + '/' + d.getDate();
+  });
+  const counts = snaps.map(s => s.count);
+  const first = counts[0], last = counts[counts.length-1];
+  const totalGain = last - first;
+  const pctGain = first > 0 ? ((totalGain/first)*100).toFixed(1) : '0.0';
+  const avgDaily = snaps.length > 1 ? Math.round(totalGain / (snaps.length - 1)) : 0;
+
+  document.getElementById('ift-chart-label').textContent = '@' + handle + ' — follower history';
+  document.getElementById('ift-metrics').innerHTML = `
+    <div class="ift-metric"><div class="ift-metric-label">Current</div><div class="ift-metric-value">${fmtNum(last)}</div></div>
+    <div class="ift-metric"><div class="ift-metric-label">30-day change</div><div class="ift-metric-value ${totalGain >= 0 ? 'green' : 'red'}">${totalGain >= 0 ? '+' : ''}${fmtNum(totalGain)}</div></div>
+    <div class="ift-metric"><div class="ift-metric-label">Avg / day</div><div class="ift-metric-value ${avgDaily >= 0 ? 'green' : 'red'}">${avgDaily >= 0 ? '+' : ''}${avgDaily}</div></div>
+  `;
+
+  document.getElementById('ift-chart-wrap').style.display = '';
+
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const lineColor = '#378ADD';
+  const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const textColor = isDark ? '#888780' : '#888780';
+
+  if (chartInst) { chartInst.destroy(); chartInst = null; }
+  chartInst = new Chart(document.getElementById('ift-chart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Followers',
+        data: counts,
+        borderColor: lineColor,
+        backgroundColor: lineColor + '18',
+        borderWidth: 2,
+        pointRadius: counts.length > 15 ? 0 : 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: lineColor,
+        fill: true,
+        tension: 0.35
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ' ' + fmtNum(ctx.raw) + ' followers'
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor },
+          ticks: { color: textColor, font: { family: 'DM Mono', size: 11 }, maxTicksLimit: 8, autoSkip: true }
+        },
+        y: {
+          grid: { color: gridColor },
+          ticks: { color: textColor, font: { family: 'DM Mono', size: 11 }, callback: v => fmtNum(v) }
+        }
+      }
+    }
+  });
+}
+
+window.iftAdd = iftAdd;
+window.removeAccount = removeAccount;
+window.selectAccount = selectAccount;
+
+document.getElementById('ift-input').addEventListener('keydown', e => { if (e.key === 'Enter') iftAdd(); });
+
+renderAll();
+const handles = Object.keys(loadData());
+if (handles.length > 0) { document.getElementById('ift-empty').style.display = 'none'; selectAccount(handles[0]); }
+</script>
