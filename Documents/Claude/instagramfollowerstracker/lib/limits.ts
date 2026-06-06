@@ -14,7 +14,7 @@ export const PLAN_LIMITS = {
     apiAccess: false,
   },
   AGENCY: {
-    maxAccounts: 100,
+    maxAccounts: null, // unlimited
     historyDays: null,
     unfollowDetection: true,
     alerts: true,

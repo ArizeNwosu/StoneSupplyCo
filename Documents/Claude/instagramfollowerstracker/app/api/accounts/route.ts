@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
   }
 
   const limit = PLAN_LIMITS[user.plan].maxAccounts;
-  if (user._count.trackedAccounts >= limit) {
+  if (limit !== null && user._count.trackedAccounts >= limit) {
     return NextResponse.json(
       { error: 'Plan limit reached', limit, upgrade: '/pricing' },
       { status: 402 }
