@@ -11,13 +11,12 @@ interface KeywordLandingPageProps {
 }
 
 export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
-  const topAccounts = await prisma.publicAccount
-    .findMany({
-      orderBy: { followerCount: 'desc' },
-      take: 100,
-      select: { handle: true },
-    })
-    .catch(() => [] as { handle: string }[]);
+  const topAccounts = await Promise.race([
+    prisma.publicAccount
+      .findMany({ orderBy: { followerCount: 'desc' }, take: 100, select: { handle: true } })
+      .catch(() => [] as { handle: string }[]),
+    new Promise<{ handle: string }[]>((resolve) => setTimeout(() => resolve([]), 5000)),
+  ]);
 
   const breadcrumbSchema = {
     '@context': 'https://schema.org',

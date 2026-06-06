@@ -151,13 +151,14 @@ const reviews = [
 ];
 
 export default async function HomePage() {
-  const topAccounts = await prisma.publicAccount
-    .findMany({
-      orderBy: { followerCount: 'desc' },
-      take: 100,
-      select: { handle: true, displayName: true, followerCount: true },
-    })
-    .catch(() => [] as { handle: string; displayName: string | null; followerCount: number | null }[]);
+  const topAccounts = await Promise.race([
+    prisma.publicAccount
+      .findMany({ orderBy: { followerCount: 'desc' }, take: 100, select: { handle: true, displayName: true, followerCount: true } })
+      .catch(() => [] as { handle: string; displayName: string | null; followerCount: number | null }[]),
+    new Promise<{ handle: string; displayName: string | null; followerCount: number | null }[]>((resolve) =>
+      setTimeout(() => resolve([]), 5000)
+    ),
+  ]);
 
   return (
     <>
