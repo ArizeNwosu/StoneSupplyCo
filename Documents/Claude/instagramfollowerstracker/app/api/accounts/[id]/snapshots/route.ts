@@ -32,8 +32,17 @@ export async function GET(
     select: { takenAt: true, followerCount: true },
   });
 
-  const snapshotCount = account.snapshotCount;
+  // Use actual snapshot count — more reliable than the cached field
+  const snapshotCount = snapshots.length;
   const chartReady = snapshotCount >= CHART_UNLOCK_THRESHOLD;
+
+  // Correct the cached field if it drifted
+  if (account.snapshotCount !== snapshotCount) {
+    prisma.trackedAccount.update({
+      where: { id },
+      data: { snapshotCount },
+    }).catch(() => {});
+  }
 
   const current = snapshots.at(-1)?.followerCount ?? null;
   const oldest = snapshots[0]?.followerCount ?? null;
