@@ -8,7 +8,7 @@ import { prisma } from './prisma';
 
 const providers: Provider[] = [
   Resend({
-    apiKey: process.env.RESEND_API_KEY,
+    apiKey: process.env.RESEND_API_KEY ?? 're_placeholder',
     from: process.env.EMAIL_FROM ?? 'noreply@instagramfollowerstracker.com',
   }),
   Credentials({
