@@ -75,32 +75,32 @@ const DESKTOP_GUIDE_STEPS = [
   {
     icon: '👤',
     title: 'Open Settings',
-    body: 'Click your profile photo in the top-right corner, then click "Settings".',
+    body: 'Click the "Edit profile" button below your profile photo in the top-right corner to open your settings panel.',
   },
   {
-    icon: '🕐',
-    title: 'Your Activity',
-    body: 'In the left sidebar, click "Your activity".',
+    icon: '🏠',
+    title: 'Account Center',
+    body: 'In the left sidebar, click "Account Center".',
   },
   {
     icon: '⬇️',
     title: 'Download your information',
-    body: 'Click "Download your information". If you see "Export your information" instead, click that — it\'s the same thing.',
+    body: 'Click "Your information and permissions". You should see "Export your information" — click that, then click "Create Export".',
   },
   {
     icon: '✅',
-    title: 'Select followers & following',
-    body: 'Click "Download or transfer information" → "Some of your information" → check "Followers and following" → click "Download to device".',
+    title: 'Select your account',
+    body: 'Select the account you want to track and click "Export to device". Then click "Date range" → check "All time" → click "Save".',
   },
   {
     icon: '📄',
     title: 'Choose JSON format',
-    body: 'Set the format to JSON (not HTML), then click "Create files". Instagram will email you a download link within minutes (up to 48 hours).',
+    body: 'Click "Format" and set it to JSON (not HTML), then click "Save" → click "Start export". You may be prompted to re-enter your password. Instagram will then email you a download link within minutes (up to 48 hours).',
   },
   {
     icon: '📧',
     title: 'Download the ZIP',
-    body: 'Open the email from Instagram, download the ZIP file, then come back here and upload it below.',
+    body: 'Instagram will email you when the download is ready. Open the email, download the ZIP file, then come back here and upload it.',
   },
 ];
 
