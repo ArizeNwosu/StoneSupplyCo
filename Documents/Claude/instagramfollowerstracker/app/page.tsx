@@ -6,6 +6,8 @@ import { HandleSearch } from '@/components/home/HandleSearch';
 import { prisma } from '@/lib/prisma';
 import { formatCount } from '@/lib/format';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Instagram Followers Tracker — Track Any Account Free',
   description:
