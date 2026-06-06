@@ -144,12 +144,15 @@ export default function DashboardPage() {
       .forEach((a) => {
         // Live scrape first — updates snapshotCount immediately if successful
         fetch(`/api/accounts/${a.id}/refresh`, { method: 'POST' })
-          .then(() => fetchAccounts())
+          .then(async () => {
+            await fetchAccounts();
+            void fetchSnapshots(a.id);
+          })
           .catch(() => {});
         // Backfill runs in parallel for historical data
         fetch(`/api/accounts/${a.id}/backfill`, { method: 'POST' }).catch(() => {});
       });
-  }, [loading, accounts, fetchAccounts]);
+  }, [loading, accounts, fetchAccounts, fetchSnapshots]);
 
   // Poll while waiting for first snapshot (every 5s) or while building chart (every 60s)
   useEffect(() => {
