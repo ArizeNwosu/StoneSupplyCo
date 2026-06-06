@@ -113,6 +113,7 @@ export default function DashboardPage() {
       fetch(`/api/accounts/${data.id}/backfill`, { method: 'POST' }).catch(() => {});
     }
     await fetchAccounts();
+    if (data.id) setSelectedId(data.id);
     setShowAddModal(false);
     return {};
   }, [fetchAccounts]);
