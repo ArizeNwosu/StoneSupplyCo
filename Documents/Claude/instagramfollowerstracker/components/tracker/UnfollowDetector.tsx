@@ -27,7 +27,7 @@ interface UnfollowDetectorProps {
   userPlan: 'FREE' | 'PRO' | 'AGENCY';
 }
 
-type Stage = 'intro' | 'device' | 'guide' | 'upload' | 'results';
+type Stage = 'intro' | 'device' | 'guide' | 'upload' | 'syncing' | 'results';
 type Device = 'phone' | 'desktop';
 
 const PHONE_GUIDE_STEPS = [
@@ -121,6 +121,54 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
   const guideSteps = device === 'desktop' ? DESKTOP_GUIDE_STEPS : PHONE_GUIDE_STEPS;
   const isLastGuideStep = guideStep === guideSteps.length - 1;
 
+  // When user returns from Google OAuth, auto-trigger a Drive sync
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('drive') === 'connected') {
+      // Remove the query param from URL without a page reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete('drive');
+      window.history.replaceState({}, '', url.toString());
+      setStage('syncing');
+      void (async () => {
+        try {
+          const res = await fetch('/api/drive/sync', { method: 'POST' });
+          const data = (await res.json()) as { status: string; followerCount?: number; lostFollowers?: number; newFollowers?: number };
+          if (data.status === 'synced') {
+            // Fetch the latest export to show as result
+            const exportsRes = await fetch('/api/exports');
+            const exports = (await exportsRes.json()) as Array<{ id: string; followerCount: number | null; followingCount: number | null; uploadedAt: string }>;
+            const latest = exports[0];
+            if (latest) {
+              setResult({
+                uploadId: latest.id,
+                followerCount: latest.followerCount,
+                followingCount: latest.followingCount,
+                uploadedAt: latest.uploadedAt,
+                diff: data.lostFollowers !== undefined
+                  ? { lostCount: data.lostFollowers, newCount: data.newFollowers ?? 0, lostFollowers: [], newFollowers: [] }
+                  : null,
+              });
+              setStage('results');
+            } else {
+              setStage('upload');
+            }
+          } else if (data.status === 'no_new_files') {
+            setError('Drive connected! No new export found yet — Instagram may still be preparing it (can take up to 48 hours).');
+            setStage('upload');
+          } else {
+            setError('Drive sync failed. Try uploading manually or sync again later.');
+            setStage('upload');
+          }
+        } catch {
+          setError('Could not connect to Drive sync. Try again later.');
+          setStage('upload');
+        }
+      })();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleUpload = useCallback(async () => {
     const file = fileRef.current?.files?.[0];
     if (!file) {
@@ -200,6 +248,14 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
               }
             }}
           />
+        )}
+
+        {stage === 'syncing' && (
+          <div className="flex flex-col items-center gap-4 py-10 text-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-slate-950" />
+            <p className="text-sm font-bold text-slate-700">Syncing from Google Drive…</p>
+            <p className="text-xs text-slate-400">This usually takes a few seconds.</p>
+          </div>
         )}
 
         {stage === 'upload' && (
@@ -452,6 +508,14 @@ function UploadStage({
           {uploading ? 'Analysing…' : 'Analyse my data'}
         </button>
       </div>
+
+      <div className="relative flex items-center gap-3">
+        <div className="h-px flex-1 bg-cyan-950/10" />
+        <span className="text-xs font-semibold text-slate-400">or skip uploads entirely</span>
+        <div className="h-px flex-1 bg-cyan-950/10" />
+      </div>
+
+      <GoogleDrivePanel />
     </div>
   );
 }
@@ -563,8 +627,6 @@ function ResultsStage({
       >
         Upload another export
       </button>
-
-      <GoogleDrivePanel />
     </div>
   );
 }
