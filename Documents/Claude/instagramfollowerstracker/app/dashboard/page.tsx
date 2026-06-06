@@ -134,16 +134,21 @@ export default function DashboardPage() {
     if (selectedId) void fetchSnapshots(selectedId);
   }, [selectedId, fetchSnapshots]);
 
-  // On first load, fire backfill for any existing accounts that have no snapshots yet
+  // On first load: for accounts with no snapshots, fire a live refresh then backfill
   useEffect(() => {
     if (loading || backfillFiredRef.current) return;
     backfillFiredRef.current = true;
     accounts
       .filter((a) => a.snapshotCount === 0)
       .forEach((a) => {
+        // Live scrape first — updates snapshotCount immediately if successful
+        fetch(`/api/accounts/${a.id}/refresh`, { method: 'POST' })
+          .then(() => fetchAccounts())
+          .catch(() => {});
+        // Backfill runs in parallel for historical data
         fetch(`/api/accounts/${a.id}/backfill`, { method: 'POST' }).catch(() => {});
       });
-  }, [loading, accounts]);
+  }, [loading, accounts, fetchAccounts]);
 
   // Poll while waiting for first snapshot (every 5s) or while building chart (every 60s)
   useEffect(() => {
