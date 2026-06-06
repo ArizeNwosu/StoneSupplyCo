@@ -98,7 +98,7 @@ export default function DashboardPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ handle }),
     });
-    const data = (await res.json()) as { error?: string };
+    const data = (await res.json()) as { id?: string; error?: string };
     if (!res.ok) {
       if (res.status === 402) {
         setShowAddModal(false);
@@ -106,6 +106,10 @@ export default function DashboardPage() {
         return {};
       }
       return { error: data.error ?? 'Something went wrong' };
+    }
+    // Fire Wayback backfill in the background — don't block the UI
+    if (data.id) {
+      fetch(`/api/accounts/${data.id}/backfill`, { method: 'POST' }).catch(() => {});
     }
     await fetchAccounts();
     setShowAddModal(false);

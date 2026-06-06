@@ -1,6 +1,6 @@
-// Wayback Machine CDX API client — used for historical backfill of public accounts
-// Only called from worker/backfill.ts, never from API routes
+// Wayback Machine CDX API client — historical backfill for public and tracked accounts
 
+import { prisma } from './prisma';
 import { sleep } from './scraper';
 
 export interface WaybackSnapshot {
@@ -72,4 +72,71 @@ function parseWaybackTimestamp(ts: string): Date {
   return new Date(
     `${ts.slice(0, 4)}-${ts.slice(4, 6)}-${ts.slice(6, 8)}T${ts.slice(8, 10)}:${ts.slice(10, 12)}:${ts.slice(12, 14)}Z`
   );
+}
+
+export interface BackfillTrackedResult {
+  inserted: number;
+  skipped: number;
+}
+
+/**
+ * Backfill historical snapshots for a user-tracked account using the Wayback Machine.
+ * Writes to the Snapshot model and updates snapshotCount on TrackedAccount.
+ */
+export async function backfillTrackedAccount(
+  trackedAccountId: string,
+  handle: string,
+  maxSnapshots = 365
+): Promise<BackfillTrackedResult> {
+  const existing = await prisma.snapshot.findMany({
+    where: { trackedAccountId },
+    select: { takenAt: true },
+  });
+  const existingDates = new Set(
+    existing.map((s) => s.takenAt.toISOString().slice(0, 10))
+  );
+
+  const waybackSnaps = await getWaybackSnapshots(handle, maxSnapshots);
+
+  const newSnapshots: Array<{
+    trackedAccountId: string;
+    followerCount: number;
+    takenAt: Date;
+  }> = [];
+
+  const sorted = waybackSnaps
+    .filter((s) => s.followerCount !== null)
+    .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+  for (const snap of sorted) {
+    const dateKey = snap.timestamp.toISOString().slice(0, 10);
+    if (existingDates.has(dateKey)) continue;
+    newSnapshots.push({
+      trackedAccountId,
+      followerCount: snap.followerCount as number,
+      takenAt: snap.timestamp,
+    });
+    existingDates.add(dateKey);
+  }
+
+  if (newSnapshots.length === 0) {
+    return { inserted: 0, skipped: sorted.length };
+  }
+
+  await prisma.snapshot.createMany({ data: newSnapshots, skipDuplicates: true });
+
+  // Update snapshotCount to reflect total (existing + new)
+  const totalCount = await prisma.snapshot.count({ where: { trackedAccountId } });
+  await prisma.trackedAccount.update({
+    where: { id: trackedAccountId },
+    data: {
+      snapshotCount: totalCount,
+      // Only update lastChecked if the most recent Wayback snap is newer
+      ...(sorted.length > 0 && sorted[sorted.length - 1]
+        ? { lastChecked: sorted[sorted.length - 1]!.timestamp }
+        : {}),
+    },
+  });
+
+  return { inserted: newSnapshots.length, skipped: sorted.length - newSnapshots.length };
 }
