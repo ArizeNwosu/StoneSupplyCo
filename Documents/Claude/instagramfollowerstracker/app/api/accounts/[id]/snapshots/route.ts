@@ -38,7 +38,9 @@ export async function GET(
   const current = snapshots.at(-1)?.followerCount ?? null;
   const oldest = snapshots[0]?.followerCount ?? null;
   const change =
-    current !== null && oldest !== null ? current - oldest : null;
+    current !== null && oldest !== null && snapshots.length > 1
+      ? current - oldest
+      : null;
   const changePct =
     change !== null && oldest ? Math.round((change / oldest) * 100) : null;
   const peak = snapshots.reduce<

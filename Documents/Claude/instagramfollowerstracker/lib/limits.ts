@@ -22,7 +22,7 @@ export const PLAN_LIMITS = {
   },
 } as const;
 
-export const CHART_UNLOCK_THRESHOLD = 7; // snapshots needed before chart renders
+export const CHART_UNLOCK_THRESHOLD = 1;
 
 // Display prices only — safe to import in client components.
 // Stripe price IDs are server-side only: see lib/stripe-prices.ts
