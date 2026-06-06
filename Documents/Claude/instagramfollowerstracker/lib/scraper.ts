@@ -16,15 +16,49 @@ export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const BASE_HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-  Accept: '*/*',
-  'Accept-Language': 'en-US,en;q=0.9',
-  'x-ig-app-id': '936619743392459',
-  Origin: 'https://www.instagram.com',
-  Referer: 'https://www.instagram.com/',
-};
+function buildHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'User-Agent':
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+    Accept: '*/*',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'x-ig-app-id': '936619743392459',
+    Origin: 'https://www.instagram.com',
+    Referer: 'https://www.instagram.com/',
+  };
+  // Session cookie bypasses IP-based blocking on server/cloud IPs.
+  // Set INSTAGRAM_SESSION_ID in env to a valid sessionid cookie value.
+  const sessionId = process.env.INSTAGRAM_SESSION_ID;
+  if (sessionId) {
+    headers['Cookie'] = `sessionid=${sessionId}`;
+  }
+  return headers;
+}
+
+// Route the request through PROXY_URL if set.
+// Supports two formats:
+//   ScraperAPI / URL-wrapper:  PROXY_URL=https://api.scraperapi.com?api_key=KEY
+//   Standard HTTP proxy:       PROXY_URL=http://user:pass@host:port
+async function igFetch(url: string, timeoutMs = 20_000): Promise<Response> {
+  const proxy = process.env.PROXY_URL;
+  const headers = buildHeaders();
+  const signal = AbortSignal.timeout(timeoutMs);
+
+  if (!proxy) {
+    return fetch(url, { headers, signal });
+  }
+
+  // URL-wrapper style (ScraperAPI, ScrapingBee, etc.)
+  if (proxy.startsWith('http') && proxy.includes('api_key')) {
+    const proxiedUrl = `${proxy}&url=${encodeURIComponent(url)}`;
+    return fetch(proxiedUrl, { signal });
+  }
+
+  // Standard HTTP/HTTPS proxy via undici ProxyAgent
+  const { ProxyAgent, fetch: undiciFetch } = await import('undici');
+  const dispatcher = new ProxyAgent(proxy);
+  return undiciFetch(url, { headers, signal, dispatcher }) as unknown as Response;
+}
 
 interface IgUser {
   edge_followed_by?: { count: number };
@@ -72,9 +106,8 @@ export async function fetchInstagramProfile(
 
   // ── Primary: internal API endpoint ────────────────────────────────────────
   try {
-    const res = await fetch(
-      `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`,
-      { headers: BASE_HEADERS, signal: AbortSignal.timeout(15_000) }
+    const res = await igFetch(
+      `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`
     );
 
     if (res.ok) {
@@ -90,10 +123,7 @@ export async function fetchInstagramProfile(
 
   // ── Fallback: parse follower count from page HTML ─────────────────────────
   try {
-    const res = await fetch(`https://www.instagram.com/${handle}/`, {
-      headers: BASE_HEADERS,
-      signal: AbortSignal.timeout(15_000),
-    });
+    const res = await igFetch(`https://www.instagram.com/${handle}/`);
 
     if (!res.ok) return empty;
 
@@ -114,12 +144,8 @@ export async function fetchInstagramProfile(
 
     return {
       ...empty,
-      followerCount: followerMatch?.[1]
-        ? parseInt(followerMatch[1], 10)
-        : null,
-      followingCount: followingMatch?.[1]
-        ? parseInt(followingMatch[1], 10)
-        : null,
+      followerCount: followerMatch?.[1] ? parseInt(followerMatch[1], 10) : null,
+      followingCount: followingMatch?.[1] ? parseInt(followingMatch[1], 10) : null,
       postCount: postMatch?.[1] ? parseInt(postMatch[1], 10) : null,
       displayName: nameMatch?.[1] ?? null,
       isPrivate: privateMatch?.[1] === 'true',
