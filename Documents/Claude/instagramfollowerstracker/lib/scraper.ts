@@ -35,11 +35,13 @@ function buildHeaders(): Record<string, string> {
   return headers;
 }
 
-// Route the request through PROXY_URL if set.
-// Supports two formats:
-//   ScraperAPI / URL-wrapper:  PROXY_URL=https://api.scraperapi.com?api_key=KEY
-//   Standard HTTP proxy:       PROXY_URL=http://user:pass@host:port
-async function igFetch(url: string, timeoutMs = 20_000): Promise<Response> {
+// Route the request through PROXY_URL if set (ScraperAPI / URL-wrapper style).
+// render=true tells ScraperAPI to execute JavaScript before returning HTML,
+// which is needed for Instagram pages that load follower counts client-side.
+async function igFetch(
+  url: string,
+  { timeoutMs = 20_000, render = false } = {}
+): Promise<Response> {
   const proxy = process.env.PROXY_URL;
   const headers = buildHeaders();
   const signal = AbortSignal.timeout(timeoutMs);
@@ -48,9 +50,8 @@ async function igFetch(url: string, timeoutMs = 20_000): Promise<Response> {
     return fetch(url, { headers, signal });
   }
 
-  // URL-wrapper style proxy (ScraperAPI, ScrapingBee, etc.)
-  // For standard HTTP proxies, set PROXY_URL to a URL-wrapper service instead.
-  const proxiedUrl = `${proxy}&url=${encodeURIComponent(url)}&keep_headers=true`;
+  let proxiedUrl = `${proxy}&url=${encodeURIComponent(url)}&keep_headers=true`;
+  if (render) proxiedUrl += '&render=true';
   return fetch(proxiedUrl, { headers, signal });
 }
 
@@ -117,7 +118,7 @@ export async function fetchInstagramProfile(
 
   // ── Fallback: parse follower count from page HTML ─────────────────────────
   try {
-    const res = await igFetch(`https://www.instagram.com/${handle}/`);
+    const res = await igFetch(`https://www.instagram.com/${handle}/`, { render: true });
 
     if (!res.ok) return empty;
 
