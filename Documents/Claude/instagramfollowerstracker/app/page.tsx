@@ -5,6 +5,7 @@ import { Footer } from '@/components/layout/Footer';
 import { HandleSearch } from '@/components/home/HandleSearch';
 import { prisma } from '@/lib/prisma';
 import { formatCount } from '@/lib/format';
+import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -153,14 +154,20 @@ const reviews = [
 ];
 
 export default async function HomePage() {
-  const topAccounts = await Promise.race([
+  const [session, topAccounts] = await Promise.all([
+    auth(),
+    Promise.race([
     prisma.publicAccount
       .findMany({ orderBy: { followerCount: 'desc' }, take: 100, select: { handle: true, displayName: true, followerCount: true } })
       .catch(() => [] as { handle: string; displayName: string | null; followerCount: number | null }[]),
-    new Promise<{ handle: string; displayName: string | null; followerCount: number | null }[]>((resolve) =>
-      setTimeout(() => resolve([]), 5000)
-    ),
+      new Promise<{ handle: string; displayName: string | null; followerCount: number | null }[]>((resolve) =>
+        setTimeout(() => resolve([]), 5000)
+      ),
+    ]),
   ]);
+
+  const ctaHref = session?.user ? '/dashboard' : '/auth/signup';
+  const ctaLabel = session?.user ? 'Go to Dashboard' : 'Start tracking free';
 
   return (
     <>
@@ -279,10 +286,10 @@ export default async function HomePage() {
                   easier to explain.
                 </p>
                 <Link
-                  href="/auth/signup"
+                  href={ctaHref}
                   className="mt-7 inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-black text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-100"
                 >
-                  Start tracking free
+                  {ctaLabel}
                 </Link>
               </div>
 
@@ -441,10 +448,10 @@ export default async function HomePage() {
               </p>
             </div>
             <Link
-              href="/auth/signup"
+              href={ctaHref}
               className="inline-flex min-h-12 items-center justify-center rounded-full bg-cyan-300 px-6 py-3 text-sm font-black text-slate-950 transition hover:-translate-y-0.5 hover:bg-white"
             >
-              Start free
+              {ctaLabel}
             </Link>
           </div>
         </section>

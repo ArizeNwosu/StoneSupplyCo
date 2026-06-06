@@ -5,18 +5,25 @@ import { HandleSearch } from '@/components/home/HandleSearch';
 import type { SeoPageConfig } from '@/lib/seo-pages';
 import { SEO_PAGES } from '@/lib/seo-pages';
 import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 interface KeywordLandingPageProps {
   page: SeoPageConfig;
 }
 
 export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
-  const topAccounts = await Promise.race([
-    prisma.publicAccount
-      .findMany({ orderBy: { followerCount: 'desc' }, take: 100, select: { handle: true } })
-      .catch(() => [] as { handle: string }[]),
-    new Promise<{ handle: string }[]>((resolve) => setTimeout(() => resolve([]), 5000)),
+  const [session, topAccounts] = await Promise.all([
+    auth(),
+    Promise.race([
+      prisma.publicAccount
+        .findMany({ orderBy: { followerCount: 'desc' }, take: 100, select: { handle: true } })
+        .catch(() => [] as { handle: string }[]),
+      new Promise<{ handle: string }[]>((resolve) => setTimeout(() => resolve([]), 5000)),
+    ]),
   ]);
+
+  const ctaHref = session?.user ? '/dashboard' : '/auth/signup';
+  const ctaLabel = session?.user ? 'Go to Dashboard' : page.primaryCta;
 
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
@@ -83,10 +90,10 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link
-                  href="/auth/signup"
+                  href={ctaHref}
                   className="inline-flex min-h-12 items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-slate-800"
                 >
-                  {page.primaryCta}
+                  {ctaLabel}
                 </Link>
                 <Link
                   href="/pricing"
@@ -217,10 +224,10 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
               </p>
             </div>
             <Link
-              href="/auth/signup"
+              href={ctaHref}
               className="inline-flex min-h-12 items-center justify-center rounded-full bg-cyan-300 px-6 py-3 text-sm font-black text-slate-950 transition hover:-translate-y-0.5 hover:bg-white"
             >
-              Start Tracking Free
+              {ctaLabel}
             </Link>
           </div>
         </section>

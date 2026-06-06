@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import Link from 'next/link';
 
 interface Person {
@@ -21,65 +21,105 @@ interface UploadResult {
   diff: DiffResult | null;
 }
 
-interface StoredExport {
-  id: string;
-  uploadedAt: string;
-  followerCount: number | null;
-  followingCount: number | null;
-}
-
 interface UnfollowDetectorProps {
   userPlan: 'FREE' | 'PRO' | 'AGENCY';
 }
 
+type Stage = 'intro' | 'device' | 'guide' | 'upload' | 'results';
+type Device = 'phone' | 'desktop';
+
+const PHONE_GUIDE_STEPS = [
+  {
+    icon: '📱',
+    title: 'Open Instagram',
+    body: 'Tap your profile photo in the bottom-right corner of the app.',
+  },
+  {
+    icon: '☰',
+    title: 'Open Settings',
+    body: 'Tap the three lines in the top-right corner, then tap "Settings and privacy".',
+  },
+  {
+    icon: '🕐',
+    title: 'Your Activity',
+    body: 'Scroll down and tap "Your activity".',
+  },
+  {
+    icon: '⬇️',
+    title: 'Download your information',
+    body: 'Tap "Download your information". If you see "Export your information" instead, tap that — it\'s the same thing.',
+  },
+  {
+    icon: '✅',
+    title: 'Select followers & following',
+    body: 'Tap "Download or transfer information" → "Some of your information" → check "Followers and following" → tap "Download to device".',
+  },
+  {
+    icon: '📄',
+    title: 'Choose JSON format',
+    body: 'Set the format to JSON (not HTML), then tap "Create files". Instagram will email you a download link — this can take a few minutes up to 48 hours.',
+  },
+  {
+    icon: '📧',
+    title: 'Download the ZIP',
+    body: 'Open the email from Instagram, download the ZIP file to your phone, then come back here and upload it.',
+  },
+];
+
+const DESKTOP_GUIDE_STEPS = [
+  {
+    icon: '💻',
+    title: 'Go to Instagram.com',
+    body: 'Open instagram.com in your browser and make sure you\'re signed in.',
+  },
+  {
+    icon: '👤',
+    title: 'Open Settings',
+    body: 'Click your profile photo in the top-right corner, then click "Settings".',
+  },
+  {
+    icon: '🕐',
+    title: 'Your Activity',
+    body: 'In the left sidebar, click "Your activity".',
+  },
+  {
+    icon: '⬇️',
+    title: 'Download your information',
+    body: 'Click "Download your information". If you see "Export your information" instead, click that — it\'s the same thing.',
+  },
+  {
+    icon: '✅',
+    title: 'Select followers & following',
+    body: 'Click "Download or transfer information" → "Some of your information" → check "Followers and following" → click "Download to device".',
+  },
+  {
+    icon: '📄',
+    title: 'Choose JSON format',
+    body: 'Set the format to JSON (not HTML), then click "Create files". Instagram will email you a download link within minutes (up to 48 hours).',
+  },
+  {
+    icon: '📧',
+    title: 'Download the ZIP',
+    body: 'Open the email from Instagram, download the ZIP file, then come back here and upload it below.',
+  },
+];
+
 export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
+  const isPro = userPlan !== 'FREE';
+
+  const [stage, setStage] = useState<Stage>(isPro ? 'upload' : 'intro');
+  const [device, setDevice] = useState<Device | null>(null);
+  const [guideStep, setGuideStep] = useState(0);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
-  const [storedExports, setStoredExports] = useState<StoredExport[]>([]);
-  const [loadingExports, setLoadingExports] = useState(userPlan !== 'FREE');
   const [error, setError] = useState<string | null>(null);
 
-  const loadExports = useCallback(async () => {
-    if (userPlan === 'FREE') return;
+  const guideSteps = device === 'desktop' ? DESKTOP_GUIDE_STEPS : PHONE_GUIDE_STEPS;
+  const isLastGuideStep = guideStep === guideSteps.length - 1;
 
-    setLoadingExports(true);
-    try {
-      const res = await fetch('/api/exports');
-      if (res.ok) {
-        setStoredExports((await res.json()) as StoredExport[]);
-      }
-    } finally {
-      setLoadingExports(false);
-    }
-  }, [userPlan]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadExports();
-  }, [loadExports]);
-
-  if (userPlan === 'FREE') {
-    return (
-      <div className="rounded-lg border border-cyan-950/10 bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-2">
-          <h3 className="text-sm font-black text-slate-950">Unfollow Detector</h3>
-          <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-black text-teal-800">PRO</span>
-        </div>
-        <p className="mb-4 text-sm leading-6 text-slate-500">
-          See exactly who followed and unfollowed you. Upload your Instagram data export and we&apos;ll show you every change since your last upload.
-        </p>
-        <Link
-          href="/pricing"
-          className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-black text-white transition hover:bg-slate-800"
-        >
-          Upgrade to Pro
-        </Link>
-      </div>
-    );
-  }
-
-  const handleUpload = async () => {
+  const handleUpload = useCallback(async () => {
     const file = fileRef.current?.files?.[0];
     if (!file) {
       setError('Please select a file first.');
@@ -101,206 +141,495 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
       } else {
         setResult(data);
         if (fileRef.current) fileRef.current.value = '';
-        await loadExports();
+        setStage('results');
       }
     } catch {
       setError('Network error. Please try again.');
     } finally {
       setUploading(false);
     }
-  };
+  }, []);
 
   return (
-    <div className="space-y-5 rounded-lg border border-cyan-950/10 bg-white p-6 shadow-xl shadow-cyan-950/10">
-      <div className="flex items-center gap-2">
+    <div className="rounded-2xl border border-cyan-950/10 bg-white shadow-xl shadow-cyan-950/10 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-2 border-b border-cyan-950/10 px-6 py-4">
         <h3 className="text-sm font-black text-slate-950">Unfollow Detector</h3>
-        <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-black text-teal-800">PRO</span>
+        {!isPro && (
+          <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-black text-teal-800">
+            PRO names
+          </span>
+        )}
+        {isPro && (
+          <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-black text-teal-800">PRO</span>
+        )}
       </div>
 
-      {/* Instructions */}
-      <div className="space-y-1.5 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
-        <p className="mb-2 font-black text-slate-800">How to get your Instagram export:</p>
-        <p>1. Open Instagram → <strong>Settings → Your Activity → Download Your Information</strong></p>
-        <p>2. Select <strong>JSON format</strong>, tap &quot;Request a download&quot;</p>
-        <p>3. Wait for the email (up to 48 hours), download the ZIP</p>
-        <p>4. Upload the original ZIP below, or upload <strong>followers_1.json</strong> if you already extracted it</p>
-      </div>
+      <div className="p-6">
+        {stage === 'intro' && <IntroStage onStart={() => setStage('device')} />}
 
-      {/* Upload area */}
-      <div className="flex items-center gap-3">
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".zip,.json,application/zip,application/x-zip-compressed,application/json"
-          className="text-sm text-slate-500 file:mr-3 file:rounded-full file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-bold file:text-slate-700 file:transition hover:file:bg-slate-200"
-        />
-        <button
-          type="button"
-          onClick={handleUpload}
-          disabled={uploading}
-          className="shrink-0 rounded-full bg-slate-950 px-5 py-2 text-sm font-black text-white transition hover:bg-slate-800 disabled:opacity-50"
-        >
-          {uploading ? 'Analysing…' : 'Upload'}
-        </button>
-      </div>
-
-      {error && <p className="text-sm text-red-500">{error}</p>}
-
-      {/* Results */}
-      {result && (
-        <div className="space-y-4 border-t border-cyan-950/10 pt-2">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-slate-500">
-              {formatCount(result.followerCount)} followers in this export
-            </p>
-            <p className="text-xs font-semibold text-slate-400">
-              {new Date(result.uploadedAt).toLocaleDateString()}
-            </p>
-          </div>
-
-          <ExportButtons
-            exportId={result.uploadId}
-            hasFollowing={Boolean(result.followingCount)}
-            hasDiff={result.diff !== null}
+        {stage === 'device' && (
+          <DeviceStage
+            onSelect={(d) => {
+              setDevice(d);
+              setGuideStep(0);
+              setStage('guide');
+            }}
           />
+        )}
 
-          {result.diff === null ? (
-            <div className="rounded-lg bg-blue-50 border border-blue-100 p-4">
-              <p className="text-sm text-blue-700 font-medium">First upload saved</p>
-              <p className="text-sm text-blue-600 mt-1">
-                Upload again after a few days to see who followed or unfollowed you.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <DiffSection
-                title="Lost followers"
-                people={result.diff.lostFollowers}
-                emptyText="No one unfollowed you"
-                variant="lost"
-              />
-              <DiffSection
-                title="New followers"
-                people={result.diff.newFollowers}
-                emptyText="No new followers"
-                variant="new"
-              />
-            </div>
-          )}
-        </div>
-      )}
+        {stage === 'guide' && device && (
+          <GuideStage
+            steps={guideSteps}
+            currentStep={guideStep}
+            isLast={isLastGuideStep}
+            onNext={() => {
+              if (isLastGuideStep) {
+                setStage('upload');
+              } else {
+                setGuideStep((s) => s + 1);
+              }
+            }}
+            onBack={() => {
+              if (guideStep === 0) {
+                setStage('device');
+              } else {
+                setGuideStep((s) => s - 1);
+              }
+            }}
+          />
+        )}
 
-      <SavedExports
-        exports={storedExports}
-        loading={loadingExports}
-      />
+        {stage === 'upload' && (
+          <UploadStage
+            fileRef={fileRef}
+            uploading={uploading}
+            error={error}
+            onUpload={handleUpload}
+            onBack={isPro ? undefined : () => setStage('guide')}
+          />
+        )}
+
+        {stage === 'results' && result && (
+          <ResultsStage
+            result={result}
+            isPro={isPro}
+            onUploadAnother={() => {
+              setResult(null);
+              setError(null);
+              setStage('upload');
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }
 
-function SavedExports({
-  exports,
-  loading,
-}: {
-  exports: StoredExport[];
-  loading: boolean;
-}) {
-  if (loading) {
-    return (
-      <div className="border-t border-cyan-950/10 pt-4">
-        <p className="text-xs font-semibold text-slate-400">Loading saved exports...</p>
-      </div>
-    );
-  }
-
-  if (exports.length === 0) {
-    return (
-      <div className="border-t border-cyan-950/10 pt-4">
-        <p className="text-sm font-black text-slate-950">Saved exports</p>
-        <p className="mt-1 text-xs font-semibold text-slate-400">No uploads saved yet.</p>
-      </div>
-    );
-  }
-
+function IntroStage({ onStart }: { onStart: () => void }) {
   return (
-    <div className="space-y-3 border-t border-cyan-950/10 pt-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-black text-slate-950">Saved exports</p>
-        <p className="text-xs font-semibold text-slate-400">Last {Math.min(exports.length, 5)}</p>
+    <div className="space-y-6 text-center">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-3xl">
+        🔍
       </div>
       <div className="space-y-2">
-        {exports.slice(0, 5).map((item) => (
+        <h4 className="text-xl font-black text-slate-950">
+          Find out who unfollowed you
+        </h4>
+        <p className="mx-auto max-w-sm text-sm leading-6 text-slate-500">
+          Upload your Instagram data export and we&apos;ll instantly show you who unfollowed you since your last check. Free to try — no card needed.
+        </p>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { emoji: '👀', label: 'See unfollowers' },
+          { emoji: '✨', label: 'New followers' },
+          { emoji: '📊', label: 'Growth stats' },
+        ].map(({ emoji, label }) => (
           <div
-            key={item.id}
-            className="gap-3 rounded-lg border border-cyan-950/10 p-3 sm:flex sm:items-center sm:justify-between"
+            key={label}
+            className="rounded-xl border border-cyan-950/10 bg-slate-50 px-3 py-3 text-center"
           >
-            <div className="min-w-0">
-              <p className="text-sm font-black text-slate-800">
-                {new Date(item.uploadedAt).toLocaleDateString()}
-              </p>
-              <p className="text-xs font-semibold text-slate-400">
-                {formatCount(item.followerCount)} followers
-                {item.followingCount ? ` / ${formatCount(item.followingCount)} following` : ''}
-              </p>
-            </div>
-            <div className="mt-3 sm:mt-0">
-              <ExportButtons
-                exportId={item.id}
-                hasFollowing={Boolean(item.followingCount)}
-                hasDiff
-                compact
-              />
-            </div>
+            <div className="text-2xl">{emoji}</div>
+            <p className="mt-1 text-xs font-semibold text-slate-600">{label}</p>
           </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={onStart}
+        className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-slate-800"
+      >
+        Get started — it&apos;s free
+      </button>
+    </div>
+  );
+}
+
+function DeviceStage({ onSelect }: { onSelect: (d: Device) => void }) {
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h4 className="text-lg font-black text-slate-950">How are you using Instagram?</h4>
+        <p className="mt-1 text-sm text-slate-500">
+          We&apos;ll show you the right steps for your device.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        {(
+          [
+            { device: 'phone' as Device, icon: '📱', label: 'On my phone', sub: 'iOS or Android' },
+            { device: 'desktop' as Device, icon: '💻', label: 'On my computer', sub: 'Mac or Windows' },
+          ] as const
+        ).map(({ device, icon, label, sub }) => (
+          <button
+            key={device}
+            type="button"
+            onClick={() => onSelect(device)}
+            className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-cyan-950/10 bg-slate-50 p-6 text-center transition hover:border-slate-950 hover:bg-white"
+          >
+            <span className="text-4xl">{icon}</span>
+            <div>
+              <p className="text-sm font-black text-slate-900">{label}</p>
+              <p className="text-xs text-slate-500">{sub}</p>
+            </div>
+          </button>
         ))}
       </div>
     </div>
   );
 }
 
-function ExportButtons({
-  exportId,
-  hasFollowing,
-  hasDiff,
-  compact = false,
+function GuideStage({
+  steps,
+  currentStep,
+  isLast,
+  onNext,
+  onBack,
 }: {
-  exportId: string;
-  hasFollowing: boolean;
-  hasDiff: boolean;
-  compact?: boolean;
+  steps: typeof PHONE_GUIDE_STEPS;
+  currentStep: number;
+  isLast: boolean;
+  onNext: () => void;
+  onBack: () => void;
 }) {
-  const className = compact
-    ? 'inline-flex items-center rounded-full border border-cyan-950/10 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-teal-300 hover:text-slate-950'
-    : 'inline-flex items-center rounded-full border border-cyan-950/10 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-teal-300 hover:text-slate-950';
+  const step = steps[currentStep] ?? steps[0]!;
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <a className={className} href={downloadHref(exportId, 'followers')}>
-        Followers CSV
-      </a>
-      {hasFollowing && (
-        <a className={className} href={downloadHref(exportId, 'following')}>
-          Following CSV
-        </a>
-      )}
-      {hasDiff && (
-        <a className={className} href={downloadHref(exportId, 'diff')}>
-          Diff CSV
-        </a>
-      )}
+    <div className="space-y-6">
+      {/* Progress dots */}
+      <div className="flex items-center justify-center gap-1.5">
+        {steps.map((_, i) => (
+          <div
+            key={i}
+            className={`h-1.5 rounded-full transition-all ${
+              i === currentStep
+                ? 'w-6 bg-slate-950'
+                : i < currentStep
+                ? 'w-1.5 bg-slate-400'
+                : 'w-1.5 bg-slate-200'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Step content */}
+      <div className="rounded-2xl border border-cyan-950/10 bg-slate-50 p-6 text-center">
+        <div className="mb-4 text-5xl">{step.icon}</div>
+        <p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-400">
+          Step {currentStep + 1} of {steps.length}
+        </p>
+        <h4 className="mb-3 text-lg font-black text-slate-950">{step.title}</h4>
+        <p className="text-sm leading-6 text-slate-600">{step.body}</p>
+      </div>
+
+      {/* Nav */}
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex-1 rounded-full border border-cyan-950/15 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-slate-400 hover:text-slate-900"
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={onNext}
+          className="flex-[2] rounded-full bg-slate-950 px-4 py-2.5 text-sm font-black text-white transition hover:bg-slate-800"
+        >
+          {isLast ? 'Upload my file →' : 'Next'}
+        </button>
+      </div>
     </div>
   );
 }
 
-function downloadHref(
-  exportId: string,
-  type: 'followers' | 'following' | 'diff'
-): string {
-  return `/api/exports/${exportId}/download?type=${type}&format=csv`;
+function UploadStage({
+  fileRef,
+  uploading,
+  error,
+  onUpload,
+  onBack,
+}: {
+  fileRef: React.RefObject<HTMLInputElement | null>;
+  uploading: boolean;
+  error: string | null;
+  onUpload: () => void;
+  onBack?: () => void;
+}) {
+  const [dragging, setDragging] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (!file || !fileRef.current) return;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    fileRef.current.files = dt.files;
+    setFileName(file.name);
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="text-center">
+        <h4 className="text-lg font-black text-slate-950">Upload your Instagram export</h4>
+        <p className="mt-1 text-sm text-slate-500">
+          Upload the ZIP file Instagram sent you. We accept the full ZIP or just <strong>followers_1.json</strong>.
+        </p>
+      </div>
+
+      {/* Drop zone */}
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+        className={`relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-8 text-center transition ${
+          dragging
+            ? 'border-slate-950 bg-slate-50'
+            : 'border-cyan-950/20 bg-slate-50/50 hover:border-slate-400'
+        }`}
+      >
+        <div className="text-3xl">📂</div>
+        <div>
+          <p className="text-sm font-bold text-slate-700">
+            {fileName ?? 'Drop your ZIP here'}
+          </p>
+          <p className="text-xs text-slate-400">or click to browse</p>
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".zip,.json,application/zip,application/x-zip-compressed,application/json"
+          className="absolute inset-0 cursor-pointer opacity-0"
+          onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+        />
+      </div>
+
+      {error && (
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
+      )}
+
+      <div className="flex gap-3">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex-1 rounded-full border border-cyan-950/15 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-slate-400"
+          >
+            Back
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onUpload}
+          disabled={uploading}
+          className="flex-[2] rounded-full bg-slate-950 px-5 py-2.5 text-sm font-black text-white transition hover:bg-slate-800 disabled:opacity-50"
+        >
+          {uploading ? 'Analysing…' : 'Analyse my data'}
+        </button>
+      </div>
+    </div>
+  );
 }
 
-function formatCount(count: number | null): string {
-  return typeof count === 'number' ? count.toLocaleString() : '0';
+function ResultsStage({
+  result,
+  isPro,
+  onUploadAnother,
+}: {
+  result: UploadResult;
+  isPro: boolean;
+  onUploadAnother: () => void;
+}) {
+  const { diff, followerCount, followingCount, uploadedAt } = result;
+
+  const lostCount = diff?.lostFollowers.length ?? 0;
+  const newCount = diff?.newFollowers.length ?? 0;
+  const isFirst = diff === null;
+
+  return (
+    <div className="space-y-5">
+      {/* Summary bar */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-slate-500">
+          {formatCount(followerCount)} followers · {formatCount(followingCount)} following
+        </p>
+        <p className="text-xs text-slate-400">{new Date(uploadedAt).toLocaleDateString()}</p>
+      </div>
+
+      {isFirst ? (
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-center">
+          <div className="text-3xl mb-2">🎉</div>
+          <p className="text-sm font-black text-blue-800">First upload saved!</p>
+          <p className="mt-1 text-sm text-blue-600">
+            Upload again in a few days to see exactly who followed or unfollowed you.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Stat cards — visible to everyone */}
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard
+              value={lostCount}
+              label="Unfollowed you"
+              color="red"
+            />
+            <StatCard
+              value={newCount}
+              label="New followers"
+              color="green"
+            />
+          </div>
+
+          {/* Names — gated for free users */}
+          {isPro ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <DiffSection
+                title="Lost followers"
+                people={diff!.lostFollowers}
+                emptyText="No one unfollowed you"
+                variant="lost"
+              />
+              <DiffSection
+                title="New followers"
+                people={diff!.newFollowers}
+                emptyText="No new followers"
+                variant="new"
+              />
+            </div>
+          ) : (
+            <PaywallNames
+              lostCount={lostCount}
+              newCount={newCount}
+            />
+          )}
+
+          {/* CSV export for Pro */}
+          {isPro && (
+            <div className="flex flex-wrap gap-2 border-t border-cyan-950/10 pt-4">
+              <a
+                href={downloadHref(result.uploadId, 'followers')}
+                className="inline-flex items-center rounded-full border border-cyan-950/10 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-teal-300 hover:text-slate-950"
+              >
+                Followers CSV
+              </a>
+              {followingCount && (
+                <a
+                  href={downloadHref(result.uploadId, 'following')}
+                  className="inline-flex items-center rounded-full border border-cyan-950/10 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-teal-300 hover:text-slate-950"
+                >
+                  Following CSV
+                </a>
+              )}
+              <a
+                href={downloadHref(result.uploadId, 'diff')}
+                className="inline-flex items-center rounded-full border border-cyan-950/10 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-teal-300 hover:text-slate-950"
+              >
+                Changes CSV
+              </a>
+            </div>
+          )}
+        </>
+      )}
+
+      <button
+        type="button"
+        onClick={onUploadAnother}
+        className="w-full rounded-full border border-cyan-950/15 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-slate-400 hover:text-slate-900"
+      >
+        Upload another export
+      </button>
+    </div>
+  );
+}
+
+function StatCard({
+  value,
+  label,
+  color,
+}: {
+  value: number;
+  label: string;
+  color: 'red' | 'green';
+}) {
+  const bg = color === 'red' ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100';
+  const text = color === 'red' ? 'text-red-700' : 'text-green-700';
+  const num = color === 'red' ? 'text-red-600' : 'text-green-600';
+
+  return (
+    <div className={`rounded-xl border p-4 text-center ${bg}`}>
+      <p className={`text-3xl font-black ${num}`}>{value}</p>
+      <p className={`mt-1 text-xs font-semibold ${text}`}>{label}</p>
+    </div>
+  );
+}
+
+function PaywallNames({
+  lostCount,
+  newCount,
+}: {
+  lostCount: number;
+  newCount: number;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-cyan-950/10">
+      {/* Blurred preview */}
+      <div className="pointer-events-none select-none p-4 opacity-30 blur-sm">
+        <p className="mb-2 text-xs font-bold text-red-600">Lost followers ({lostCount})</p>
+        {Array.from({ length: Math.min(lostCount, 4) }).map((_, i) => (
+          <p key={i} className="mb-1 text-xs text-slate-700">
+            @{'█'.repeat(6 + (i % 4))}
+          </p>
+        ))}
+        <p className="mb-2 mt-3 text-xs font-bold text-green-600">New followers ({newCount})</p>
+        {Array.from({ length: Math.min(newCount, 3) }).map((_, i) => (
+          <p key={i} className="mb-1 text-xs text-slate-700">
+            @{'█'.repeat(5 + (i % 5))}
+          </p>
+        ))}
+      </div>
+      {/* Overlay */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/80 p-6 text-center backdrop-blur-sm">
+        <span className="text-2xl">🔒</span>
+        <div>
+          <p className="text-sm font-black text-slate-950">
+            See all {lostCount + newCount} names
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Upgrade to Pro to reveal who unfollowed you and your new followers.
+          </p>
+        </div>
+        <Link
+          href="/pricing"
+          className="inline-flex min-h-10 items-center justify-center rounded-full bg-slate-950 px-5 py-2 text-sm font-black text-white transition hover:bg-slate-800"
+        >
+          Upgrade to Pro
+        </Link>
+      </div>
+    </div>
+  );
 }
 
 function DiffSection({
@@ -321,13 +650,11 @@ function DiffSection({
   const countColorClass = variant === 'lost' ? 'text-red-500' : 'text-green-500';
 
   return (
-    <div className={`rounded-lg border p-4 ${bgClass}`}>
-      <div className="flex items-center justify-between mb-3">
+    <div className={`rounded-xl border p-4 ${bgClass}`}>
+      <div className="mb-3 flex items-center justify-between">
         <p className={`text-sm font-semibold ${colorClass}`}>{title}</p>
         {people.length > 0 && (
-          <span className={`text-xs font-medium ${countColorClass}`}>
-            {people.length}
-          </span>
+          <span className={`text-xs font-medium ${countColorClass}`}>{people.length}</span>
         )}
       </div>
       {people.length === 0 ? (
@@ -362,4 +689,12 @@ function DiffSection({
       )}
     </div>
   );
+}
+
+function downloadHref(exportId: string, type: 'followers' | 'following' | 'diff'): string {
+  return `/api/exports/${exportId}/download?type=${type}&format=csv`;
+}
+
+function formatCount(count: number | null): string {
+  return typeof count === 'number' ? count.toLocaleString() : '0';
 }
