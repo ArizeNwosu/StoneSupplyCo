@@ -25,7 +25,7 @@ const faqItems = [
   {
     question: 'How do I track Instagram follower growth for free?',
     answer:
-      'Create a free account, add one public Instagram handle, and the tracker collects daily follower snapshots so you can see growth trends over time.',
+      'Create a free account, add one public Instagram handle, and seed the first follower-count snapshot from the profile page. The dashboard builds growth history as new snapshots are captured.',
   },
   {
     question: 'Can I track who unfollowed me on Instagram?',
@@ -40,7 +40,7 @@ const faqItems = [
   {
     question: 'How do I see Instagram follower count history?',
     answer:
-      'Add a public account to the dashboard. The app records daily snapshots and displays the history in growth charts with daily, weekly, and monthly movement.',
+      'Add a public account to the dashboard, capture the current follower count, and return to add or collect new snapshots. The app displays the history in growth charts with daily, weekly, and monthly movement.',
   },
   {
     question: 'Is this a website that tracks Instagram followers?',
@@ -69,7 +69,7 @@ const faqSchema = {
 
 const proofStats = [
   { value: '0', label: 'Instagram passwords requested' },
-  { value: 'Daily', label: 'Follower count snapshots' },
+  { value: 'Instant', label: 'First snapshot from profile count' },
   { value: 'CSV', label: 'Follower exports on Pro' },
   { value: 'Web', label: 'No app install required' },
 ];
@@ -84,7 +84,7 @@ const featureCards = [
   {
     title: 'Track growth history',
     description:
-      'Daily snapshots build a clean chart of follower growth, spikes, and slowdowns.',
+      'Manual, browser-assisted, and server snapshots build a clean chart of follower growth, spikes, and slowdowns.',
     icon: ChartIcon,
   },
   {
@@ -127,7 +127,7 @@ const workflow = [
   },
   {
     title: 'Start the daily record',
-    description: 'The app stores follower counts and keeps the full history.',
+    description: 'Seed the first count immediately, then add new captures as history builds.',
   },
   {
     title: 'Compare the changes',
@@ -200,7 +200,7 @@ export default async function HomePage() {
                 Instagram Followers Tracker
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-700 sm:text-xl">
-                Look up any public account, build daily follower count history,
+                Look up any public account, capture the first follower snapshot immediately,
                 and use your own Instagram exports to find new and missing
                 followers without risky login-sharing apps.
               </p>
@@ -209,7 +209,7 @@ export default async function HomePage() {
               </div>
               <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-600">
                 <span className="rounded-full bg-white px-4 py-2 shadow-sm">Public account pages</span>
-                <span className="rounded-full bg-white px-4 py-2 shadow-sm">Growth charts</span>
+                <span className="rounded-full bg-white px-4 py-2 shadow-sm">Instant first snapshot</span>
                 <span className="rounded-full bg-white px-4 py-2 shadow-sm">Unfollower diffs</span>
               </div>
             </div>

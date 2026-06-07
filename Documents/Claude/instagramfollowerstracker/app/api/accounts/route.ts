@@ -5,12 +5,14 @@ import { auth } from '@/lib/auth';
 import { PLAN_LIMITS, CHART_UNLOCK_THRESHOLD } from '@/lib/limits';
 import { parseHandle, isValidHandle } from '@/lib/handles';
 import { sendMilestoneEmail } from '@/lib/email';
+import { parseFollowerCount } from '@/lib/counts';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 const AddAccountSchema = z.object({
   handle: z.string().min(1).max(60),
+  followerCount: z.string().max(30).optional(),
 });
 
 export async function GET() {
@@ -74,6 +76,16 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+  const manualFollowerCount = parsed.data.followerCount
+    ? parseFollowerCount(parsed.data.followerCount)
+    : null;
+
+  if (parsed.data.followerCount && manualFollowerCount === null) {
+    return NextResponse.json(
+      { error: 'Invalid follower count' },
+      { status: 400 }
+    );
+  }
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -117,18 +129,19 @@ export async function POST(req: NextRequest) {
   try {
     const { fetchInstagramProfile } = await import('@/lib/scraper');
     const profile = await fetchInstagramProfile(handle);
+    const followerCount = profile.followerCount ?? manualFollowerCount;
 
-    if (profile.followerCount !== null) {
+    if (followerCount !== null) {
       await prisma.snapshot.create({
         data: {
           trackedAccountId: account.id,
-          followerCount: profile.followerCount,
+          followerCount,
           followingCount: profile.followingCount ?? undefined,
           postCount: profile.postCount ?? undefined,
         },
       });
       snapshotCount = 1;
-      firstFollowerCount = profile.followerCount;
+      firstFollowerCount = followerCount;
     }
 
     const updatedAccount = await prisma.trackedAccount.update({
