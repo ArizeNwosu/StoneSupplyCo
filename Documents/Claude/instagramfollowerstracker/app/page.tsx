@@ -10,9 +10,9 @@ import { auth } from '@/lib/auth';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Instagram Followers Tracker — Track Any Account Free',
+  title: 'Instagram Followers Tracker - Track Public Accounts Free',
   description:
-    'The best free Instagram followers tracker. Track follower counts, growth history, and unfollowers for any public Instagram account. No login required for public stats.',
+    'Track follower counts, growth history, and public Instagram account trends for competitors, creators, brands, and clients. No login required for public stats.',
   alternates: { canonical: 'https://instagramfollowerstracker.com' },
 };
 
@@ -20,12 +20,12 @@ const faqItems = [
   {
     question: 'What is the best Instagram follower tracker app?',
     answer:
-      'Instagram Followers Tracker is the best free option for browser-based follower count tracking. It tracks public accounts, stores growth history, and lets Pro users compare Instagram data exports for person-level follower changes.',
+      'Instagram Followers Tracker is built for public account monitoring: competitors, creators, brands, clients, and campaign watchlists. It stores follower-count history and separates own-account unfollower analysis into the official export workflow.',
   },
   {
     question: 'How do I track Instagram follower growth for free?',
     answer:
-      'Create a free account, add one public Instagram handle, and use browser capture to save the first follower-count snapshot from the profile page. The dashboard builds growth history as new snapshots are captured.',
+      'Create a free account, add a public Instagram handle you want to watch, and use browser capture to save the first follower-count snapshot. The dashboard builds growth history as new snapshots are captured.',
   },
   {
     question: 'Can I track who unfollowed me on Instagram?',
@@ -40,7 +40,7 @@ const faqItems = [
   {
     question: 'How do I see Instagram follower count history?',
     answer:
-      'Add a public account to the dashboard, capture the current follower count, and return to add or collect new snapshots. The app displays the history in growth charts with daily, weekly, and monthly movement.',
+      'Add a public account, competitor, creator, brand, or client profile to the dashboard. The app displays follower-count history in growth charts with daily, weekly, and monthly movement.',
   },
   {
     question: 'Is this a website that tracks Instagram followers?',
@@ -70,7 +70,7 @@ const faqSchema = {
 const proofStats = [
   { value: '0', label: 'Instagram passwords requested' },
   { value: 'Browser', label: 'First snapshot capture' },
-  { value: 'CSV', label: 'Follower exports on Pro' },
+  { value: 'Public', label: 'Competitor and creator tracking' },
   { value: 'Web', label: 'No app install required' },
 ];
 
@@ -78,19 +78,19 @@ const featureCards = [
   {
     title: 'Find follower drops',
     description:
-      'See when an account loses followers and compare the movement against prior days.',
+      'See when a public account loses followers and compare the movement against prior days.',
     icon: ShieldIcon,
   },
   {
     title: 'Track growth history',
     description:
-      'Manual, browser-assisted, and server snapshots build a clean chart of follower growth, spikes, and slowdowns.',
+      'Browser-assisted and server snapshots build a clean chart of public follower growth, spikes, and slowdowns.',
     icon: ChartIcon,
   },
   {
-    title: 'Upload Instagram exports',
+    title: 'Monitor other accounts',
     description:
-      'Compare official Instagram exports or scheduled Google Drive snapshots to see new and missing followers.',
+      'Watch creators, brands, competitors, clients, athletes, and campaign targets in one dashboard.',
     icon: UploadIcon,
   },
   {
@@ -108,7 +108,7 @@ const comparisonRows = [
   },
   {
     bad: 'Depend on risky app-store scraping flows',
-    good: 'Uses public counts and user-owned exports',
+    good: 'Separates public account tracking from user-owned export diffs',
   },
   {
     bad: 'Hide changes behind vague “activity” screens',
@@ -127,11 +127,11 @@ const workflow = [
   },
   {
     title: 'Start the daily record',
-    description: 'Use browser capture to save the first snapshot, then add new captures as history builds.',
+    description: 'Save the first public follower snapshot, then add new captures as history builds.',
   },
   {
     title: 'Compare the changes',
-    description: 'Use charts, scheduled exports, and CSV downloads to see what moved.',
+    description: 'Use charts, deltas, reports, and export workflows to see what moved.',
   },
 ];
 
@@ -200,9 +200,9 @@ export default async function HomePage() {
                 Instagram Followers Tracker
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-700 sm:text-xl">
-                Look up any public account, capture the first follower snapshot immediately,
-                and use your own Instagram exports to find new and missing
-                followers without risky login-sharing apps.
+                Track public Instagram accounts your native Insights cannot show you:
+                competitors, creators, brands, clients, and campaign targets.
+                Own-account unfollower analysis uses official Instagram exports.
               </p>
               <div className="mt-8">
                 <HandleSearch />
@@ -210,7 +210,7 @@ export default async function HomePage() {
               <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-600">
                 <span className="rounded-full bg-white px-4 py-2 shadow-sm">Public account pages</span>
                 <span className="rounded-full bg-white px-4 py-2 shadow-sm">Instant first snapshot</span>
-                <span className="rounded-full bg-white px-4 py-2 shadow-sm">Unfollower diffs</span>
+                <span className="rounded-full bg-white px-4 py-2 shadow-sm">Competitor watchlists</span>
               </div>
             </div>
 

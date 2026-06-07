@@ -7,11 +7,11 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   metadataBase: new URL('https://instagramfollowerstracker.com'),
   title: {
-    default: 'Instagram Followers Tracker — Track Any Account Free',
+    default: 'Instagram Followers Tracker - Track Public Account Growth',
     template: '%s | Instagram Followers Tracker',
   },
   description:
-    'Track Instagram follower counts for any public account. See growth history, daily changes, and trends. The best free Instagram followers tracker — no login required for public pages.',
+    'Track public Instagram follower counts for competitors, creators, brands, clients, and campaign targets. See growth history, daily changes, and trends.',
   keywords: [
     'instagram followers tracker',
     'ig follower tracker',
@@ -25,14 +25,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     siteName: 'Instagram Followers Tracker',
-    title: 'Instagram Followers Tracker — Track Any Account Free',
+    title: 'Instagram Followers Tracker - Track Public Account Growth',
     description:
-      'Track Instagram follower counts for any public account. See growth history and daily changes.',
+      'Track public Instagram follower counts for competitors, creators, brands, clients, and campaign targets.',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Instagram Followers Tracker',
-    description: 'Track Instagram follower counts for any public account.',
+    description: 'Track public Instagram follower counts and growth history.',
   },
   robots: { index: true, follow: true },
 };

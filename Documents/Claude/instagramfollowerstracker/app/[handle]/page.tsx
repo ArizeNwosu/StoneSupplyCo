@@ -236,14 +236,14 @@ export default async function HandlePage({ params }: PageProps) {
           <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 lg:grid-cols-[1fr_0.8fr] lg:items-center">
             <div>
               <p className="text-sm font-black uppercase text-cyan-300">
-                Track your own accounts
+                Track accounts like this
               </p>
               <h2 className="mt-3 text-4xl font-black leading-tight">
                 Build this same history for any public Instagram account.
               </h2>
               <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
-                One account is free. Upgrade when you need more accounts,
-                export uploads, shareable reports, or API access.
+                One public account is free. Upgrade when you need more
+                competitor, creator, brand, or client accounts.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 lg:justify-end">

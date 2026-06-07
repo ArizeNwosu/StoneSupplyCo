@@ -354,13 +354,13 @@ export const SEO_PAGES: SeoPageConfig[] = [
   {
     slug: 'instagram-follower-tracker-online-free',
     title: 'Instagram Follower Tracker Online Free',
-    metaTitle: 'Instagram Follower Tracker Online Free - No App Required',
+    metaTitle: 'Instagram Follower Tracker Online Free - Track Public Accounts',
     description:
-      'Track Instagram followers online for free. Look up public accounts, save daily follower history, and build growth charts from your browser.',
-    eyebrow: 'Free browser-based tracking',
+      'Track public Instagram accounts online for free. Watch competitors, creators, brands, clients, and campaign targets with follower-count history.',
+    eyebrow: 'Free public account tracking',
     h1: 'Instagram Follower Tracker Online Free',
     intro:
-      'Look up public Instagram follower counts online and start building daily follower history with one free tracked account.',
+      'Look up any public Instagram account and start building follower-count history for the accounts Instagram Insights will not show you.',
     primaryCta: 'Start free',
     secondaryCta: 'View pricing',
     keywordCluster: [
@@ -382,14 +382,14 @@ export const SEO_PAGES: SeoPageConfig[] = [
           'Look up cached follower data for seeded and already-tracked public handles.',
       },
       {
-        title: 'Track your own account',
+        title: 'Track competitors',
         description:
-          'Create a free account and start collecting daily follower snapshots.',
+          'Create a free account and start collecting follower snapshots for a public competitor or creator.',
       },
       {
-        title: 'Watch competitors',
+        title: 'Monitor clients',
         description:
-          'Follow public competitor accounts and see growth trends over time.',
+          'Follow client and campaign accounts so you can report growth trends over time.',
       },
     ],
     workflow: [
@@ -399,7 +399,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
       },
       {
         title: 'Save it to your dashboard',
-        description: 'Your first tracked account is free and keeps full history.',
+        description: 'Your first public tracked account is free and keeps full history.',
       },
       {
         title: 'Return as history builds',
@@ -410,12 +410,12 @@ export const SEO_PAGES: SeoPageConfig[] = [
       {
         question: 'Is the online follower tracker free?',
         answer:
-          'Yes. The free plan tracks 1 public Instagram account with full follower-count history.',
+          'Yes. The free plan tracks 1 public Instagram account with follower-count history.',
       },
       {
-        question: 'Do I need to install anything?',
+        question: 'Is this mainly for my own account?',
         answer:
-          'No. It is a browser-based tracker, so there is no app download required.',
+          'The follower tracker is strongest for public accounts you do not own, such as competitors, creators, brands, and clients. For your own exact unfollower names, use the Instagram export workflow.',
       },
     ],
   },
@@ -424,11 +424,11 @@ export const SEO_PAGES: SeoPageConfig[] = [
     title: 'Instagram Growth Tracker',
     metaTitle: 'Instagram Growth Tracker - Track Follower Growth',
     description:
-      'Track Instagram follower growth with daily snapshots, growth charts, 7-day trends, 30-day trends, and average daily gain metrics.',
-    eyebrow: 'Growth analytics',
+      'Track Instagram follower growth for public competitors, creators, brands, and clients with snapshots, growth charts, 7-day trends, and 30-day trends.',
+    eyebrow: 'Public growth analytics',
     h1: 'Instagram Growth Tracker',
     intro:
-      'Measure Instagram growth over time with follower-count history, daily deltas, trend metrics, and shareable account reports.',
+      'Measure public Instagram growth over time for the accounts you need to watch outside your own native Insights dashboard.',
     primaryCta: 'Track growth',
     secondaryCta: 'See plans',
     keywordCluster: [
@@ -445,9 +445,9 @@ export const SEO_PAGES: SeoPageConfig[] = [
     ],
     useCases: [
       {
-        title: 'Campaign measurement',
+        title: 'Campaign watchlists',
         description:
-          'Connect follower growth to launches, collaborations, and posting cadence.',
+          'Watch public campaign targets, collaborators, and ambassador accounts during launches.',
       },
       {
         title: 'Competitor benchmarks',
@@ -457,13 +457,13 @@ export const SEO_PAGES: SeoPageConfig[] = [
       {
         title: 'Creator reporting',
         description:
-          'Use clean follower charts for client and sponsor updates.',
+          'Use clean public follower charts for client, sponsor, and partnership updates.',
       },
     ],
     workflow: [
       {
         title: 'Choose accounts',
-        description: 'Track your own profile or any public creator, brand, or competitor.',
+        description: 'Track public creators, brands, competitors, clients, or campaign targets.',
       },
       {
         title: 'Build history',
@@ -478,7 +478,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
       {
         question: 'What does an Instagram growth tracker measure?',
         answer:
-          'It tracks follower-count changes over time, including daily deltas and longer trend windows.',
+          'It tracks public follower-count changes over time, including daily deltas and longer trend windows.',
       },
       {
         question: 'Can I track competitors?',
@@ -490,13 +490,13 @@ export const SEO_PAGES: SeoPageConfig[] = [
   {
     slug: 'instagram-follower-count-tracker',
     title: 'Instagram Follower Count Tracker',
-    metaTitle: 'Instagram Follower Count Tracker - Historical Counts',
+    metaTitle: 'Instagram Follower Count Tracker - Public Account History',
     description:
-      'Use an Instagram follower count tracker to save daily follower numbers, chart historical counts, and see how an account changes over time.',
-    eyebrow: 'Follower count history',
+      'Use an Instagram follower count tracker to save historical public follower counts for competitors, creators, brands, and clients.',
+    eyebrow: 'Public follower count history',
     h1: 'Instagram Follower Count Tracker',
     intro:
-      'Save Instagram follower counts over time so you can answer what changed, when it changed, and how fast the account is growing.',
+      'Save public Instagram follower counts over time so you can answer what changed, when it changed, and how fast another account is growing.',
     primaryCta: 'Track follower count',
     secondaryCta: 'See pricing',
     keywordCluster: [
@@ -515,7 +515,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
       {
         title: 'Historical lookup',
         description:
-          'Build a record of follower count changes that Instagram does not provide natively.',
+          'Build a record of public follower count changes for accounts outside your own Insights.',
       },
       {
         title: 'Trend analysis',
@@ -525,13 +525,13 @@ export const SEO_PAGES: SeoPageConfig[] = [
       {
         title: 'Simple reporting',
         description:
-          'Use follower-count history as the baseline for social reporting.',
+          'Use public follower-count history as the baseline for competitor, creator, or client reporting.',
       },
     ],
     workflow: [
       {
         title: 'Add the account',
-        description: 'Start tracking a public Instagram handle in seconds.',
+        description: 'Start tracking a public competitor, creator, brand, client, or campaign handle.',
       },
       {
         title: 'Store the count',
@@ -546,12 +546,12 @@ export const SEO_PAGES: SeoPageConfig[] = [
       {
         question: 'Why track follower count history?',
         answer:
-          'Instagram shows the current count, but not a clear historical chart. This tracker fills that gap.',
+          'Instagram shows current public counts, but not a clear public history for accounts you do not own. This tracker fills that gap.',
       },
       {
         question: 'How many days of history are stored?',
         answer:
-          'All plans are designed to keep full follower-count history for tracked accounts.',
+          'All plans are designed to keep full follower-count history for tracked public accounts.',
       },
     ],
   },
@@ -560,11 +560,11 @@ export const SEO_PAGES: SeoPageConfig[] = [
     title: 'Instagram Tracking Tools',
     metaTitle: 'Instagram Tracking Tools - Follower Growth and Reports',
     description:
-      'Explore Instagram tracking tools for follower growth, unfollow detection, public account monitoring, share reports, widgets, and API access.',
+      'Explore Instagram tracking tools for public follower growth, competitor monitoring, unfollow detection, client reports, widgets, and API access.',
     eyebrow: 'Creator and agency toolkit',
     h1: 'Instagram Tracking Tools',
     intro:
-      'Use one focused toolkit for Instagram follower counts, growth history, unfollow workflows, client reports, widgets, and API access.',
+      'Use one focused toolkit for public Instagram account monitoring, owned-account unfollow workflows, client reports, widgets, and API access.',
     primaryCta: 'Try the tracker',
     secondaryCta: 'View plans',
     keywordCluster: [
@@ -583,7 +583,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
       {
         title: 'Creator monitoring',
         description:
-          'Track growth and follower drops without juggling multiple apps.',
+          'Track public creator growth and follower drops without juggling multiple apps.',
       },
       {
         title: 'Agency reporting',
@@ -599,7 +599,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
     workflow: [
       {
         title: 'Start with tracking',
-        description: 'Add accounts and collect daily follower-count snapshots.',
+        description: 'Add public accounts and collect follower-count snapshots.',
       },
       {
         title: 'Layer on workflows',
@@ -614,7 +614,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
       {
         question: 'What Instagram tracking tools are included?',
         answer:
-          'The product includes follower tracking, growth charts, export-based unfollow detection, report links, widgets, and API access by plan.',
+          'The product includes public follower tracking, growth charts, export-based owned-account unfollow detection, report links, widgets, and API access by plan.',
       },
       {
         question: 'Is this for agencies?',
@@ -628,11 +628,11 @@ export const SEO_PAGES: SeoPageConfig[] = [
     title: 'Best Instagram Follower Tracker App',
     metaTitle: 'Best Instagram Follower Tracker App - Browser Alternative',
     description:
-      'Compare what a good Instagram follower tracker app should include: public account tracking, daily history, growth charts, and unfollow workflows.',
+      'Compare what a good Instagram follower tracker app should include for public account monitoring: daily history, growth charts, competitor tracking, and reports.',
     eyebrow: 'App alternative',
     h1: 'Best Instagram Follower Tracker App',
     intro:
-      'A strong Instagram follower tracker should be accurate, transparent, browser-based, and useful on day one without asking for risky account access.',
+      'A strong Instagram follower tracker should help you watch public accounts you do not own: competitors, creators, brands, clients, and campaign targets.',
     primaryCta: 'Use the browser tracker',
     secondaryCta: 'Compare plans',
     keywordCluster: [
@@ -651,7 +651,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
       {
         title: 'Avoid risky app access',
         description:
-          'Track public follower counts without handing over Instagram login credentials.',
+          'Track public follower counts without handing over Instagram login credentials or relying on native Insights.',
       },
       {
         title: 'Get usable history',
@@ -661,7 +661,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
       {
         title: 'Upgrade only when needed',
         description:
-          'Start with one free account, then add more accounts and workflows as usage grows.',
+          'Start with one public account, then add more watchlist accounts and workflows as usage grows.',
       },
     ],
     workflow: [
@@ -671,7 +671,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
       },
       {
         title: 'Create a tracker',
-        description: 'Save an account and start collecting history.',
+        description: 'Save a public account and start collecting history.',
       },
       {
         title: 'Use the dashboard',
@@ -687,7 +687,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
       {
         question: 'What should the best follower tracker include?',
         answer:
-          'Look for daily history, public account support, clear limits, export workflows, and no need to share your Instagram password.',
+          'Look for public account history, competitor watchlists, clear limits, reporting workflows, and no need to share your Instagram password.',
       },
     ],
   },
