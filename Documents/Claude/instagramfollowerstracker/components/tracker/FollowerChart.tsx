@@ -17,6 +17,7 @@ interface FollowerChartProps {
 export function FollowerChart({ snapshots, handle }: FollowerChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<ChartType | null>(null);
+  const firstSnapshot = snapshots[0];
 
   useEffect(() => {
     if (!canvasRef.current || snapshots.length === 0) return;
@@ -88,6 +89,28 @@ export function FollowerChart({ snapshots, handle }: FollowerChartProps) {
     return (
       <div className="flex h-64 items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-slate-400">
         No snapshot data yet — check back after the first daily sync.
+      </div>
+    );
+  }
+
+  if (snapshots.length === 1 && firstSnapshot) {
+    return (
+      <div className="flex h-64 flex-col justify-between rounded-lg bg-slate-50 p-6">
+        <div>
+          <p className="text-xs font-bold uppercase text-teal-700">
+            First snapshot captured
+          </p>
+          <p className="mt-3 text-5xl font-black text-slate-950">
+            {formatCount(firstSnapshot.followerCount)}
+          </p>
+          <p className="mt-2 text-sm font-semibold text-slate-500">
+            @{handle} on {formatDate(firstSnapshot.takenAt)}
+          </p>
+        </div>
+        <div className="relative h-16">
+          <div className="absolute inset-x-0 bottom-5 border-t border-dashed border-cyan-950/15" />
+          <div className="absolute bottom-3 left-1/2 h-5 w-5 -translate-x-1/2 rounded-full border-4 border-white bg-teal-600 shadow-lg shadow-teal-900/20" />
+        </div>
       </div>
     );
   }

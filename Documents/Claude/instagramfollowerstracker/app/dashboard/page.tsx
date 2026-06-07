@@ -11,6 +11,7 @@ import { SnapshotProgress } from '@/components/tracker/SnapshotProgress';
 import { ShareReportButton } from '@/components/tracker/ShareReportButton';
 import { AuthenticityBadge } from '@/components/tracker/AuthenticityBadge';
 import { PatternAlerts } from '@/components/tracker/PatternAlerts';
+import { BrowserCollectorPanel } from '@/components/tracker/BrowserCollectorPanel';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { UpgradeModal } from '@/components/tracker/UpgradeModal';
@@ -275,6 +276,10 @@ export default function DashboardPage() {
                 lastChecked={selected.lastChecked}
               />
             )}
+            <BrowserCollectorPanel
+              accountId={selected.id}
+              handle={selected.handle}
+            />
             <UnfollowDetector userPlan={userPlan} />
           </div>
         ) : selected ? (
