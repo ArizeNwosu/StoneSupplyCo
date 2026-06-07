@@ -11,6 +11,11 @@ export interface ExportData {
   following: ExportPerson[];
 }
 
+export interface ParsedUpload {
+  data: ExportData;
+  recentlyUnfollowed: ExportPerson[];
+}
+
 export interface UnfollowDiff {
   newFollowers: ExportPerson[];
   lostFollowers: ExportPerson[];
@@ -22,48 +27,94 @@ const ZIP_EOCD_SIGNATURE = 0x06054b50;
 const ZIP_CENTRAL_DIRECTORY_SIGNATURE = 0x02014b50;
 const ZIP_LOCAL_FILE_SIGNATURE = 0x04034b50;
 
-export async function parseInstagramUpload(file: File): Promise<ExportData> {
-  const lowerName = file.name.toLowerCase();
-  const buffer = Buffer.from(await file.arrayBuffer());
+// ── Public entry point ─────────────────────────────────────────────────────
+// Accepts one or more files — auto-detects format (JSON/HTML) and role
+// (followers / following / recently_unfollowed) from filename.
 
-  if (lowerName.endsWith('.zip') || file.type.includes('zip')) {
-    const files = extractInstagramFilesFromZip(buffer);
-    return {
-      followers: dedupePeople([
-        ...files.followersJson.flatMap((c) => parsePeopleJson(c, 'followers')),
-        ...files.followersHtml.flatMap((c) => parsePeopleHtml(c, 'followers')),
-      ]),
-      following: dedupePeople([
-        ...(files.followingJson ? parsePeopleJson(files.followingJson, 'following') : []),
-        ...(files.followingHtml ? parsePeopleHtml(files.followingHtml, 'following') : []),
-      ]),
-    };
+export async function parseMultipleInstagramFiles(files: File[]): Promise<ParsedUpload> {
+  const allFollowers: ExportPerson[] = [];
+  const allFollowing: ExportPerson[] = [];
+  const allRecentlyUnfollowed: ExportPerson[] = [];
+
+  for (const file of files) {
+    const lowerName = file.name.toLowerCase();
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    if (lowerName.endsWith('.zip') || file.type.includes('zip')) {
+      const extracted = extractInstagramFilesFromZip(buffer);
+      allFollowers.push(
+        ...extracted.followersJson.flatMap((c) => parsePeopleJson(c, 'followers')),
+        ...extracted.followersHtml.flatMap((c) => parsePeopleHtml(c, 'followers'))
+      );
+      allFollowing.push(
+        ...(extracted.followingJson ? parsePeopleJson(extracted.followingJson, 'following') : []),
+        ...(extracted.followingHtml ? parsePeopleHtml(extracted.followingHtml, 'following') : [])
+      );
+      continue;
+    }
+
+    const text = buffer.toString('utf8');
+    const role = detectRole(lowerName, text);
+
+    if (role === 'recently_unfollowed') {
+      allRecentlyUnfollowed.push(...parseRecentlyUnfollowedHtml(text));
+    } else if (role === 'following') {
+      allFollowing.push(...(lowerName.endsWith('.html') ? parsePeopleHtml(text, 'following') : parsePeopleJson(text, 'following')));
+    } else {
+      // followers (or unknown JSON — try both)
+      if (lowerName.endsWith('.html')) {
+        allFollowers.push(...parsePeopleHtml(text, 'followers'));
+      } else {
+        const parsed = parseInstagramExport(text);
+        allFollowers.push(...parsed.followers);
+        allFollowing.push(...parsed.following);
+      }
+    }
   }
 
-  const text = buffer.toString('utf8');
-
-  if (lowerName.endsWith('.html')) {
-    // Single HTML file: determine type by filename
-    const kind: RelationshipKind = lowerName.includes('following') ? 'following' : 'followers';
-    const people = parsePeopleHtml(text, kind);
-    return kind === 'following'
-      ? { followers: [], following: people }
-      : { followers: people, following: [] };
-  }
-
-  return parseInstagramExport(text);
-}
-
-export function parseInstagramExport(fileContent: string): ExportData {
   return {
-    followers: parsePeopleJson(fileContent, 'followers'),
-    following: parsePeopleJson(fileContent, 'following'),
+    data: {
+      followers: dedupePeople(allFollowers),
+      following: dedupePeople(allFollowing),
+    },
+    recentlyUnfollowed: dedupePeople(allRecentlyUnfollowed),
   };
 }
 
-// ── HTML parsing ───────────────────────────────────────────────────────────
-// followers_1.html  → href="https://www.instagram.com/HANDLE"
-// following.html    → href="https://www.instagram.com/_u/HANDLE"
+// Legacy single-file entry point (kept for compatibility).
+export async function parseInstagramUpload(file: File): Promise<ExportData> {
+  const result = await parseMultipleInstagramFiles([file]);
+  return result.data;
+}
+
+// ── Role detection ─────────────────────────────────────────────────────────
+
+function detectRole(lowerName: string, _text: string): 'followers' | 'following' | 'recently_unfollowed' {
+  if (/recently.unfollowed/.test(lowerName)) return 'recently_unfollowed';
+  // "following" but NOT "followers"
+  if (/\bfollowing\b/.test(lowerName) && !/\bfollowers\b/.test(lowerName)) return 'following';
+  return 'followers';
+}
+
+// ── HTML: recently_unfollowed_profiles.html ────────────────────────────────
+// Structure: <td>Username</td><td>handle</td> table pairs
+
+function parseRecentlyUnfollowedHtml(html: string): ExportPerson[] {
+  const people: ExportPerson[] = [];
+  const re = /Username<\/td><td[^>]*>([^<]+)<\/td>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(html)) !== null) {
+    const handle = match[1]!.trim().toLowerCase();
+    if (/^[a-z0-9._]{1,30}$/.test(handle)) {
+      people.push({ handle });
+    }
+  }
+  return dedupePeople(people);
+}
+
+// ── HTML: followers_1.html / following.html ────────────────────────────────
+// followers_1.html → href="https://www.instagram.com/HANDLE"
+// following.html   → href="https://www.instagram.com/_u/HANDLE"
 
 function parsePeopleHtml(html: string, kind: RelationshipKind): ExportPerson[] {
   const people: ExportPerson[] = [];
@@ -82,7 +133,14 @@ function parsePeopleHtml(html: string, kind: RelationshipKind): ExportPerson[] {
   return dedupePeople(people);
 }
 
-// ── JSON parsing ───────────────────────────────────────────────────────────
+// ── JSON ───────────────────────────────────────────────────────────────────
+
+export function parseInstagramExport(fileContent: string): ExportData {
+  return {
+    followers: parsePeopleJson(fileContent, 'followers'),
+    following: parsePeopleJson(fileContent, 'following'),
+  };
+}
 
 function parsePeopleJson(fileContent: string, kind: RelationshipKind): ExportPerson[] {
   let data: unknown;
@@ -91,7 +149,6 @@ function parsePeopleJson(fileContent: string, kind: RelationshipKind): ExportPer
   } catch {
     throw new Error('Invalid JSON - could not parse the uploaded file.');
   }
-
   const entries = findRelationshipEntries(data, kind);
   return dedupePeople(parseRelationshipEntries(entries));
 }
@@ -99,37 +156,31 @@ function parsePeopleJson(fileContent: string, kind: RelationshipKind): ExportPer
 function findRelationshipEntries(data: unknown, kind: RelationshipKind): unknown[] {
   if (Array.isArray(data)) return data;
   if (!data || typeof data !== 'object') return [];
-
   const obj = data as Record<string, unknown>;
   const keys =
     kind === 'followers'
       ? ['relationships_followers', 'followers_1', 'followers']
       : ['relationships_following', 'following'];
-
   for (const key of keys) {
     const value = obj[key];
     if (Array.isArray(value)) return value;
   }
-
   return [];
 }
 
 function parseRelationshipEntries(entries: unknown[]): ExportPerson[] {
   const people: ExportPerson[] = [];
-
   for (const item of entries) {
     if (!item || typeof item !== 'object') continue;
     const itemObj = item as Record<string, unknown>;
     const title = typeof itemObj.title === 'string' ? itemObj.title : undefined;
     const listData = itemObj.string_list_data;
     if (!Array.isArray(listData)) continue;
-
     for (const entry of listData) {
       if (!entry || typeof entry !== 'object') continue;
       const entryObj = entry as Record<string, unknown>;
       const handle = normalizeHandle(entryObj.value, entryObj.href);
       if (!handle) continue;
-
       people.push({
         handle,
         displayName: title || undefined,
@@ -140,7 +191,6 @@ function parseRelationshipEntries(entries: unknown[]): ExportPerson[] {
       });
     }
   }
-
   return people;
 }
 
@@ -158,15 +208,13 @@ function normalizeHandle(value: unknown, href: unknown): string | null {
 function dedupePeople(people: ExportPerson[]): ExportPerson[] {
   const byHandle = new Map<string, ExportPerson>();
   for (const person of people) {
-    if (!byHandle.has(person.handle)) {
-      byHandle.set(person.handle, person);
-    }
+    if (!byHandle.has(person.handle)) byHandle.set(person.handle, person);
   }
   return [...byHandle.values()].sort((a, b) => a.handle.localeCompare(b.handle));
 }
 
 // ── ZIP extraction ─────────────────────────────────────────────────────────
-// Only decompresses the specific files we need — skips all media/other files.
+// Only decompresses the target files — skips all media and unrelated entries.
 
 function extractInstagramFilesFromZip(buffer: Buffer): {
   followersJson: string[];
@@ -190,7 +238,6 @@ function extractInstagramFilesFromZip(buffer: Buffer): {
     if (buffer.readUInt32LE(offset) !== ZIP_CENTRAL_DIRECTORY_SIGNATURE) {
       throw new Error('Invalid ZIP central directory.');
     }
-
     const compressionMethod = buffer.readUInt16LE(offset + 10);
     const compressedSize = buffer.readUInt32LE(offset + 20);
     const fileNameLength = buffer.readUInt16LE(offset + 28);
@@ -224,10 +271,9 @@ function extractInstagramFilesFromZip(buffer: Buffer): {
 
   if (!hasData) {
     throw new Error(
-      'No Instagram followers/following files found in the ZIP. Upload the original Instagram data ZIP, followers_1.json, or followers_1.html.'
+      'No followers/following files found in the ZIP. Extract the ZIP and drag the 3 files from connections/followers_and_following/ instead.'
     );
   }
-
   return result;
 }
 
@@ -240,35 +286,28 @@ function readZipEntryText(
   if (buffer.readUInt32LE(localHeaderOffset) !== ZIP_LOCAL_FILE_SIGNATURE) {
     throw new Error('Invalid ZIP local file header.');
   }
-
   const fileNameLength = buffer.readUInt16LE(localHeaderOffset + 26);
   const extraLength = buffer.readUInt16LE(localHeaderOffset + 28);
   const dataStart = localHeaderOffset + 30 + fileNameLength + extraLength;
   const compressed = buffer.subarray(dataStart, dataStart + compressedSize);
-
   if (compressionMethod === 0) return compressed.toString('utf8');
   if (compressionMethod === 8) return inflateRawSync(compressed).toString('utf8');
-
   throw new Error(`Unsupported ZIP compression method: ${compressionMethod}`);
 }
 
 function findEndOfCentralDirectory(buffer: Buffer): number {
   const minOffset = Math.max(0, buffer.length - 65_557);
   for (let offset = buffer.length - 22; offset >= minOffset; offset--) {
-    if (buffer.readUInt32LE(offset) === ZIP_EOCD_SIGNATURE) {
-      return offset;
-    }
+    if (buffer.readUInt32LE(offset) === ZIP_EOCD_SIGNATURE) return offset;
   }
   throw new Error('Invalid ZIP file.');
 }
 
-export function diffExports(
-  previous: ExportData,
-  current: ExportData
-): UnfollowDiff {
+// ── Diff ───────────────────────────────────────────────────────────────────
+
+export function diffExports(previous: ExportData, current: ExportData): UnfollowDiff {
   const prevHandles = new Set(previous.followers.map((f) => f.handle));
   const currHandles = new Set(current.followers.map((f) => f.handle));
-
   return {
     newFollowers: current.followers.filter((f) => !prevHandles.has(f.handle)),
     lostFollowers: previous.followers.filter((f) => !currHandles.has(f.handle)),

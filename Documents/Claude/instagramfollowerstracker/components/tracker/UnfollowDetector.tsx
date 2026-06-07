@@ -21,6 +21,8 @@ interface UploadResult {
   followingCount: number | null;
   uploadedAt: string;
   diff: DiffResult | null;
+  recentlyUnfollowed: Person[];
+  recentlyUnfollowedCount: number;
 }
 
 interface UnfollowDetectorProps {
@@ -194,6 +196,8 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
                 diff: data.lostFollowers !== undefined
                   ? { lostCount: data.lostFollowers, newCount: data.newFollowers ?? 0, lostFollowers: [], newFollowers: [] }
                   : null,
+                recentlyUnfollowed: [],
+                recentlyUnfollowedCount: 0,
               });
               setStage('results');
             } else {
@@ -215,9 +219,9 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
   }, []);
 
   const handleUpload = useCallback(async () => {
-    const file = fileRef.current?.files?.[0];
-    if (!file) {
-      setError('Please select a file first.');
+    const files = Array.from(fileRef.current?.files ?? []);
+    if (files.length === 0) {
+      setError('Please select at least one file.');
       return;
     }
 
@@ -226,7 +230,9 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
     setResult(null);
 
     const formData = new FormData();
-    formData.append('file', file);
+    for (const file of files) {
+      formData.append('file', file);
+    }
 
     try {
       const res = await fetch('/api/exports', { method: 'POST', body: formData });
@@ -575,6 +581,12 @@ function BranchStage({
   );
 }
 
+const TARGET_FILES = [
+  { name: 'followers_1.html', desc: 'your followers list' },
+  { name: 'following.html', desc: 'who you follow' },
+  { name: 'recently_unfollowed_profiles.html', desc: 'recent unfollows' },
+];
+
 function UploadStage({
   fileRef,
   uploading,
@@ -589,26 +601,60 @@ function UploadStage({
   onStartGuide?: () => void;
 }) {
   const [dragging, setDragging] = useState(false);
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+
+  const syncFileNames = (fileList: FileList | null) => {
+    setSelectedFiles(fileList ? Array.from(fileList).map((f) => f.name) : []);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (!file || !fileRef.current) return;
+    if (!fileRef.current) return;
     const dt = new DataTransfer();
-    dt.items.add(file);
+    for (const file of Array.from(e.dataTransfer.files)) {
+      dt.items.add(file);
+    }
     fileRef.current.files = dt.files;
-    setFileName(file.name);
+    syncFileNames(dt.files);
   };
+
+  const knownNames = new Set(TARGET_FILES.map((f) => f.name));
+  const recognizedSelected = selectedFiles.filter((n) => knownNames.has(n));
+  const unrecognizedSelected = selectedFiles.filter((n) => !knownNames.has(n));
 
   return (
     <div className="space-y-5">
-      <div>
-        <h4 className="text-base font-black text-slate-950">Upload your Instagram export</h4>
-        <p className="mt-1 text-sm text-slate-500">
-          Upload the ZIP Instagram emailed you, or just <strong>followers_1.html</strong> from the <code className="text-xs bg-slate-100 px-1 rounded">connections/followers_and_following/</code> folder.
-        </p>
+      {/* Instructions */}
+      <div className="rounded-xl border border-cyan-950/10 bg-slate-50 p-4">
+        <p className="text-xs font-black uppercase tracking-wide text-slate-500 mb-3">How to get your files</p>
+        <ol className="space-y-2">
+          {[
+            'Unzip the file Instagram emailed you',
+            <>Open the <code className="bg-white border border-slate-200 rounded px-1 text-xs">connections</code> folder</>,
+            <>Open the <code className="bg-white border border-slate-200 rounded px-1 text-xs">followers_and_following</code> folder</>,
+            'Drag all 3 files below (in any order)',
+          ].map((step, i) => (
+            <li key={i} className="flex gap-2.5 text-xs text-slate-600 font-medium">
+              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-cyan-950 text-white font-black text-[9px]">{i + 1}</span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-3 space-y-1">
+          {TARGET_FILES.map((f) => {
+            const selected = selectedFiles.includes(f.name);
+            return (
+              <div key={f.name} className="flex items-center gap-2">
+                <span className={`text-xs font-bold ${selected ? 'text-green-600' : 'text-slate-400'}`}>
+                  {selected ? '✓' : '○'}
+                </span>
+                <code className={`text-xs ${selected ? 'text-slate-800' : 'text-slate-500'}`}>{f.name}</code>
+                <span className="text-xs text-slate-400">— {f.desc}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Drop zone */}
@@ -619,22 +665,35 @@ function UploadStage({
         className={`relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-8 text-center transition ${
           dragging
             ? 'border-slate-950 bg-slate-50'
+            : selectedFiles.length > 0
+            ? 'border-green-400 bg-green-50/40'
             : 'border-cyan-950/20 bg-slate-50/50 hover:border-slate-400'
         }`}
       >
-        <div className="text-3xl">📂</div>
-        <div>
-          <p className="text-sm font-bold text-slate-700">
-            {fileName ?? 'Drop your ZIP or JSON here'}
-          </p>
-          <p className="text-xs text-slate-400">or click to browse</p>
-        </div>
+        <div className="text-3xl">{selectedFiles.length > 0 ? '✅' : '📂'}</div>
+        {selectedFiles.length === 0 ? (
+          <div>
+            <p className="text-sm font-bold text-slate-700">Drop your 3 files here</p>
+            <p className="text-xs text-slate-400">or click to browse — select all at once</p>
+          </div>
+        ) : (
+          <div className="w-full text-left space-y-1">
+            {recognizedSelected.map((name) => (
+              <p key={name} className="text-xs font-bold text-green-700">✓ {name}</p>
+            ))}
+            {unrecognizedSelected.map((name) => (
+              <p key={name} className="text-xs font-medium text-slate-500">• {name}</p>
+            ))}
+            <p className="text-xs text-slate-400 pt-1">Click to change selection</p>
+          </div>
+        )}
         <input
           ref={fileRef}
           type="file"
+          multiple
           accept=".zip,.json,.html,application/zip,application/x-zip-compressed,application/json,text/html"
           className="absolute inset-0 cursor-pointer opacity-0"
-          onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+          onChange={(e) => syncFileNames(e.target.files)}
         />
       </div>
 
@@ -645,7 +704,7 @@ function UploadStage({
       <button
         type="button"
         onClick={onUpload}
-        disabled={uploading}
+        disabled={uploading || selectedFiles.length === 0}
         className="w-full rounded-full bg-slate-950 px-5 py-2.5 text-sm font-black text-white transition hover:bg-slate-800 disabled:opacity-50"
       >
         {uploading ? 'Analysing…' : 'Analyse my data'}
@@ -684,11 +743,12 @@ function ResultsStage({
   isPro: boolean;
   onUploadAnother: () => void;
 }) {
-  const { diff, followerCount, followingCount, uploadedAt } = result;
+  const { diff, followerCount, followingCount, uploadedAt, recentlyUnfollowed, recentlyUnfollowedCount } = result;
 
   const lostCount = diff?.lostCount ?? 0;
   const newCount = diff?.newCount ?? 0;
   const isFirst = diff === null;
+  const unfollowedCount = recentlyUnfollowedCount ?? recentlyUnfollowed?.length ?? 0;
 
   return (
     <div className="space-y-5">
@@ -699,6 +759,41 @@ function ResultsStage({
         </p>
         <p className="text-xs text-slate-400">{new Date(uploadedAt).toLocaleDateString()}</p>
       </div>
+
+      {/* Recently unfollowed by you — shown whenever file was included */}
+      {unfollowedCount > 0 && (
+        <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-black text-amber-800">
+                You recently unfollowed {unfollowedCount} {unfollowedCount === 1 ? 'account' : 'accounts'}
+              </p>
+              {isPro && recentlyUnfollowed?.length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                  {recentlyUnfollowed.slice(0, 10).map((p) => (
+                    <a
+                      key={p.handle}
+                      href={`https://instagram.com/${p.handle}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-medium text-amber-700 hover:underline"
+                    >
+                      @{p.handle}
+                    </a>
+                  ))}
+                  {recentlyUnfollowed.length > 10 && (
+                    <span className="text-xs text-amber-600">+{recentlyUnfollowed.length - 10} more</span>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-1 text-xs text-amber-600">
+                  {isPro ? 'From recently_unfollowed_profiles.html' : 'Upgrade to Pro to see who'}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {isFirst ? (
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-center">

@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { PLAN_LIMITS } from '@/lib/limits';
-import { parseInstagramUpload, diffExports, type ExportData } from '@/lib/export-parser';
+import { parseMultipleInstagramFiles, diffExports, type ExportData } from '@/lib/export-parser';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
+const MAX_TOTAL_BYTES = 50 * 1024 * 1024; // 50 MB across all files
 const INSERT_CHUNK_SIZE = 1000;
 
 export async function GET() {
@@ -54,19 +54,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Expected multipart/form-data' }, { status: 400 });
   }
 
-  const fileEntry = formData.get('file');
-  if (!fileEntry || typeof fileEntry === 'string') {
-    return NextResponse.json({ error: 'Missing file field' }, { status: 400 });
+  const fileEntries = formData.getAll('file');
+  const files = fileEntries.filter((e): e is File => typeof e !== 'string' && e.size > 0);
+
+  if (files.length === 0) {
+    return NextResponse.json({ error: 'No files received' }, { status: 400 });
   }
 
-  const file = fileEntry as File;
-  if (file.size > MAX_FILE_BYTES) {
-    return NextResponse.json({ error: 'File too large (max 50 MB)' }, { status: 413 });
+  const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+  if (totalSize > MAX_TOTAL_BYTES) {
+    return NextResponse.json(
+      { error: 'Files too large (50 MB total max). Extract the ZIP and upload the 3 HTML files directly.' },
+      { status: 413 }
+    );
   }
 
   let parsed: ExportData;
+  let recentlyUnfollowed: { handle: string }[];
   try {
-    parsed = await parseInstagramUpload(file);
+    const result = await parseMultipleInstagramFiles(files);
+    parsed = result.data;
+    recentlyUnfollowed = result.recentlyUnfollowed;
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Failed to parse export file' },
@@ -76,7 +84,7 @@ export async function POST(req: NextRequest) {
 
   if (parsed.followers.length === 0 && parsed.following.length === 0) {
     return NextResponse.json(
-      { error: 'No followers or following data found. Upload your Instagram data ZIP, followers_1.json, or followers_1.html.' },
+      { error: 'No followers or following data found. Make sure you uploaded followers_1.html and/or following.html.' },
       { status: 400 }
     );
   }
@@ -92,7 +100,7 @@ export async function POST(req: NextRequest) {
   const newExport = await prisma.dataExport.create({
     data: {
       userId: user.id,
-      followerCount: parsed.followers.length,
+      followerCount: parsed.followers.length || null,
       followingCount: parsed.following.length || null,
     },
     select: { id: true, followerCount: true, followingCount: true, uploadedAt: true },
@@ -119,7 +127,12 @@ export async function POST(req: NextRequest) {
   );
 
   // Compute diff if previous export exists — names only returned for Pro users
-  let diff: { newFollowers: { handle: string; displayName?: string }[]; lostFollowers: { handle: string; displayName?: string }[]; newCount: number; lostCount: number } | null = null;
+  let diff: {
+    newFollowers: { handle: string; displayName?: string }[];
+    lostFollowers: { handle: string; displayName?: string }[];
+    newCount: number;
+    lostCount: number;
+  } | null = null;
 
   if (previousExport) {
     const prevData: ExportData = {
@@ -144,6 +157,9 @@ export async function POST(req: NextRequest) {
     followingCount: newExport.followingCount,
     uploadedAt: newExport.uploadedAt,
     diff,
+    // Returned but not persisted — supplementary data from recently_unfollowed_profiles.html
+    recentlyUnfollowed: isPro ? recentlyUnfollowed : [],
+    recentlyUnfollowedCount: recentlyUnfollowed.length,
   });
 }
 
