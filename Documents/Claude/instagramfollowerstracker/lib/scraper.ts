@@ -14,6 +14,7 @@ export interface InstagramProfileData {
 
 interface ScraperAttempt {
   source: 'web_profile_info' | 'html';
+  mode: string;
   ok: boolean;
   status: number | null;
   contentType: string | null;
@@ -34,7 +35,7 @@ export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function buildHeaders(): Record<string, string> {
+function buildHeaders({ includeSession = true } = {}): Record<string, string> {
   const headers: Record<string, string> = {
     'User-Agent':
       'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
@@ -47,7 +48,7 @@ function buildHeaders(): Record<string, string> {
   // Session cookie bypasses IP-based blocking on server/cloud IPs.
   // Set INSTAGRAM_SESSION_ID in env to a valid sessionid cookie value.
   const sessionId = process.env.INSTAGRAM_SESSION_ID;
-  if (sessionId) {
+  if (includeSession && sessionId) {
     headers['Cookie'] = `sessionid=${sessionId}`;
   }
   return headers;
@@ -58,19 +59,33 @@ function buildHeaders(): Record<string, string> {
 // which is needed for Instagram pages that load follower counts client-side.
 async function igFetch(
   url: string,
-  { timeoutMs = 20_000, render = false } = {}
+  {
+    timeoutMs = 20_000,
+    render = false,
+    includeSession = true,
+    keepHeaders = true,
+    premium = false,
+  } = {}
 ): Promise<Response> {
   const proxy = process.env.PROXY_URL;
-  const headers = buildHeaders();
+  const headers = buildHeaders({ includeSession });
   const signal = AbortSignal.timeout(timeoutMs);
 
   if (!proxy) {
     return fetch(url, { headers, signal });
   }
 
-  let proxiedUrl = `${proxy}&url=${encodeURIComponent(url)}&keep_headers=true`;
+  let proxiedUrl = `${proxy}&url=${encodeURIComponent(url)}&country_code=us&device_type=mobile`;
+  if (keepHeaders) proxiedUrl += '&keep_headers=true';
   if (render) proxiedUrl += '&render=true';
-  return fetch(proxiedUrl, { headers, signal });
+  if (premium || process.env.SCRAPERAPI_PREMIUM === 'true') {
+    proxiedUrl += '&premium=true';
+  }
+  if (process.env.SCRAPERAPI_ULTRA_PREMIUM === 'true') {
+    proxiedUrl += '&ultra_premium=true';
+  }
+
+  return fetch(proxiedUrl, { headers: keepHeaders ? headers : undefined, signal });
 }
 
 interface IgUser {
@@ -145,60 +160,181 @@ export async function fetchInstagramProfile(
   handle: string
 ): Promise<InstagramProfileData> {
   const empty = emptyProfile(handle);
+  const profileUrl = `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`;
+  const pageUrl = `https://www.instagram.com/${handle}/`;
+  const hasSession = Boolean(process.env.INSTAGRAM_SESSION_ID);
 
   // ── Primary: internal API endpoint ────────────────────────────────────────
-  try {
-    const res = await igFetch(
-      `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`
-    );
+  const apiModes = [
+    { includeSession: true, keepHeaders: true, premium: false },
+    ...(hasSession
+      ? [{ includeSession: false, keepHeaders: true, premium: false }]
+      : []),
+    { includeSession: false, keepHeaders: true, premium: true },
+  ];
 
-    if (res.ok) {
-      const data = (await res.json()) as { data?: { user?: IgUser } };
-      const user = data?.data?.user;
-      if (user && (user.edge_followed_by?.count ?? user.follower_count) != null) {
-        return profileFromUser(handle, user);
+  for (const mode of apiModes) {
+    try {
+      const res = await igFetch(profileUrl, mode);
+
+      if (res.ok) {
+        const data = (await res.json()) as { data?: { user?: IgUser } };
+        const user = data?.data?.user;
+        if (user && (user.edge_followed_by?.count ?? user.follower_count) != null) {
+          return profileFromUser(handle, user);
+        }
       }
+    } catch {
+      // try the next mode, then fall through to HTML fallback
     }
-  } catch {
-    // fall through to HTML fallback
   }
 
   // ── Fallback: parse follower count from page HTML ─────────────────────────
-  try {
-    const res = await igFetch(`https://www.instagram.com/${handle}/`, { render: true });
+  const htmlModes = [
+    { render: true, includeSession: true, keepHeaders: true, premium: false },
+    { render: true, includeSession: false, keepHeaders: false, premium: false },
+    { render: true, includeSession: false, keepHeaders: false, premium: true },
+  ];
 
-    if (!res.ok) return empty;
+  for (const mode of htmlModes) {
+    try {
+      const res = await igFetch(pageUrl, mode);
 
-    return profileFromHtml(handle, await res.text());
-  } catch (err) {
-    console.error(`[scraper] Failed to fetch @${handle}:`, err);
-    return empty;
+      if (res.ok) {
+        const profile = profileFromHtml(handle, await res.text());
+        if (profile.followerCount !== null) return profile;
+      }
+    } catch (err) {
+      console.error(`[scraper] Failed to fetch @${handle}:`, err);
+    }
   }
+
+  return empty;
 }
 
 export async function debugInstagramProfileFetch(
   handle: string
 ): Promise<InstagramProfileDebugResult> {
   const attempts: ScraperAttempt[] = [];
+  const profileUrl = `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`;
+  const pageUrl = `https://www.instagram.com/${handle}/`;
+  const hasSession = Boolean(process.env.INSTAGRAM_SESSION_ID);
 
-  try {
-    const res = await igFetch(
-      `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`
-    );
-    const contentType = res.headers.get('content-type');
+  const apiModes = [
+    {
+      label: 'headers+session',
+      options: { includeSession: true, keepHeaders: true, premium: false },
+    },
+    ...(hasSession
+      ? [
+          {
+            label: 'headers-no-session',
+            options: { includeSession: false, keepHeaders: true, premium: false },
+          },
+        ]
+      : []),
+    {
+      label: 'headers-no-session-premium',
+      options: { includeSession: false, keepHeaders: true, premium: true },
+    },
+  ];
 
-    if (res.ok) {
-      const data = (await res.json()) as { data?: { user?: IgUser } };
-      const user = data?.data?.user;
-      const profile = user ? profileFromUser(handle, user) : emptyProfile(handle);
+  for (const mode of apiModes) {
+    try {
+      const res = await igFetch(profileUrl, mode.options);
+      const contentType = res.headers.get('content-type');
+
+      if (res.ok) {
+        const data = (await res.json()) as { data?: { user?: IgUser } };
+        const user = data?.data?.user;
+        const profile = user ? profileFromUser(handle, user) : emptyProfile(handle);
+        attempts.push({
+          source: 'web_profile_info',
+          mode: mode.label,
+          ok: profile.followerCount !== null,
+          status: res.status,
+          contentType,
+          followerCount: profile.followerCount,
+          error: profile.followerCount === null ? 'No follower count in JSON' : null,
+        });
+        if (profile.followerCount !== null) {
+          return {
+            profile,
+            attempts,
+            env: {
+              hasSessionId: Boolean(process.env.INSTAGRAM_SESSION_ID),
+              hasProxyUrl: Boolean(process.env.PROXY_URL),
+            },
+          };
+        }
+      } else {
+        attempts.push({
+          source: 'web_profile_info',
+          mode: mode.label,
+          ok: false,
+          status: res.status,
+          contentType,
+          followerCount: null,
+          error: `HTTP ${res.status}`,
+        });
+      }
+    } catch (err) {
       attempts.push({
         source: 'web_profile_info',
+        mode: mode.label,
+        ok: false,
+        status: null,
+        contentType: null,
+        followerCount: null,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  const htmlModes = [
+    {
+      label: 'headers+session+render',
+      options: { render: true, includeSession: true, keepHeaders: true, premium: false },
+    },
+    {
+      label: 'proxy-managed-headers+render',
+      options: { render: true, includeSession: false, keepHeaders: false, premium: false },
+    },
+    {
+      label: 'proxy-managed-headers+render+premium',
+      options: { render: true, includeSession: false, keepHeaders: false, premium: true },
+    },
+  ];
+
+  for (const mode of htmlModes) {
+    try {
+      const res = await igFetch(pageUrl, mode.options);
+      const contentType = res.headers.get('content-type');
+
+      if (!res.ok) {
+        attempts.push({
+          source: 'html',
+          mode: mode.label,
+          ok: false,
+          status: res.status,
+          contentType,
+          followerCount: null,
+          error: `HTTP ${res.status}`,
+        });
+        continue;
+      }
+
+      const profile = profileFromHtml(handle, await res.text());
+      attempts.push({
+        source: 'html',
+        mode: mode.label,
         ok: profile.followerCount !== null,
         status: res.status,
         contentType,
         followerCount: profile.followerCount,
-        error: profile.followerCount === null ? 'No follower count in JSON' : null,
+        error: profile.followerCount === null ? 'No follower count in HTML' : null,
       });
+
       if (profile.followerCount !== null) {
         return {
           profile,
@@ -209,79 +345,17 @@ export async function debugInstagramProfileFetch(
           },
         };
       }
-    } else {
-      attempts.push({
-        source: 'web_profile_info',
-        ok: false,
-        status: res.status,
-        contentType,
-        followerCount: null,
-        error: `HTTP ${res.status}`,
-      });
-    }
-  } catch (err) {
-    attempts.push({
-      source: 'web_profile_info',
-      ok: false,
-      status: null,
-      contentType: null,
-      followerCount: null,
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-
-  try {
-    const res = await igFetch(`https://www.instagram.com/${handle}/`, {
-      render: true,
-    });
-    const contentType = res.headers.get('content-type');
-
-    if (!res.ok) {
+    } catch (err) {
       attempts.push({
         source: 'html',
+        mode: mode.label,
         ok: false,
-        status: res.status,
-        contentType,
+        status: null,
+        contentType: null,
         followerCount: null,
-        error: `HTTP ${res.status}`,
+        error: err instanceof Error ? err.message : String(err),
       });
-      return {
-        profile: emptyProfile(handle),
-        attempts,
-        env: {
-          hasSessionId: Boolean(process.env.INSTAGRAM_SESSION_ID),
-          hasProxyUrl: Boolean(process.env.PROXY_URL),
-        },
-      };
     }
-
-    const profile = profileFromHtml(handle, await res.text());
-    attempts.push({
-      source: 'html',
-      ok: profile.followerCount !== null,
-      status: res.status,
-      contentType,
-      followerCount: profile.followerCount,
-      error: profile.followerCount === null ? 'No follower count in HTML' : null,
-    });
-
-    return {
-      profile,
-      attempts,
-      env: {
-        hasSessionId: Boolean(process.env.INSTAGRAM_SESSION_ID),
-        hasProxyUrl: Boolean(process.env.PROXY_URL),
-      },
-    };
-  } catch (err) {
-    attempts.push({
-      source: 'html',
-      ok: false,
-      status: null,
-      contentType: null,
-      followerCount: null,
-      error: err instanceof Error ? err.message : String(err),
-    });
   }
 
   return {
