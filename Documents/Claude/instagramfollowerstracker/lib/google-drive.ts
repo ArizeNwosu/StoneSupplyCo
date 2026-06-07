@@ -84,6 +84,7 @@ export async function getValidGoogleToken(user: {
 interface DriveFile {
   id: string;
   name: string;
+  mimeType: string;
   modifiedTime: string;
   size: string;
 }
@@ -92,16 +93,31 @@ export async function findInstagramExportsInDrive(
   accessToken: string,
   since?: Date | null
 ): Promise<DriveFile[]> {
-  const conditions = [`name = 'followers_1.json'`, `trashed = false`];
+  const conditions = [
+    `trashed = false`,
+    `mimeType != 'application/vnd.google-apps.folder'`,
+    `(` +
+      [
+        `name contains 'followers'`,
+        `name contains 'Followers'`,
+        `name contains 'following'`,
+        `name contains 'Following'`,
+        `name contains 'instagram'`,
+        `name contains 'Instagram'`,
+        `name contains '.zip'`,
+        `name contains '.ZIP'`,
+      ].join(' or ') +
+      `)`,
+  ];
   if (since) {
     conditions.push(`modifiedTime > '${since.toISOString()}'`);
   }
 
   const params = new URLSearchParams({
     q: conditions.join(' and '),
-    fields: 'files(id,name,modifiedTime,size)',
+    fields: 'files(id,name,mimeType,modifiedTime,size)',
     orderBy: 'modifiedTime desc',
-    pageSize: '5',
+    pageSize: '50',
   });
 
   const res = await fetch(`${GOOGLE_DRIVE_API}/files?${params}`, {

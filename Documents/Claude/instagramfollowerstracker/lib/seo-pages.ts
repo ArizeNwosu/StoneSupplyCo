@@ -21,136 +21,333 @@ export const SEO_PAGES: SeoPageConfig[] = [
   {
     slug: 'unfollow-tracker',
     title: 'Unfollow Tracker',
-    metaTitle: 'Unfollow Tracker - Track Follower Drops Over Time',
+    metaTitle: 'Unfollow Tracker - See Follower Changes Without Login',
     description:
-      'Use a browser-based unfollow tracker to spot follower drops, new followers, and daily Instagram audience changes without installing an app.',
-    eyebrow: 'Follower loss monitoring',
+      'Use a safer unfollow tracker to compare official Instagram follower exports, find new and missing followers, and avoid sharing your Instagram password.',
+    eyebrow: 'No-login unfollower tracking',
     h1: 'Unfollow Tracker',
     intro:
-      'Track daily follower changes, spot unusual drops, and keep a clean timeline of when your Instagram audience moved up or down.',
-    primaryCta: 'Start Tracking Free',
+      'Find follower changes without handing over your Instagram login. Upload official exports or connect Google Drive for recurring follower-list snapshots.',
+    primaryCta: 'Check unfollowers',
     secondaryCta: 'Compare plans',
     keywordCluster: [
       'unfollow tracker',
       'unfollowers track',
       'instagram unfollow tracker',
       'ig unfollow tracker',
+      'unfollowers tracker online',
     ],
     proofPoints: [
-      'Daily follower snapshots',
-      'Follower gain and loss history',
+      'Official Instagram export workflow',
+      'New and missing follower diffs',
       'No mobile app required',
-      'Works with public Instagram accounts',
+      'No Instagram password required',
     ],
     useCases: [
       {
         title: 'Find sudden drops',
         description:
-          'See when an account lost followers and compare the change against previous days.',
+          'Compare follower exports to see who disappeared between snapshots.',
       },
       {
         title: 'Track recovery',
         description:
-          'Monitor whether follower count rebounds after a campaign, post, or algorithm shift.',
+          'See new followers alongside lost followers so you understand the net change.',
       },
       {
-        title: 'Report client changes',
+        title: 'Stay safer',
         description:
-          'Turn recurring follower-count tracking into simple reports for creators and brands.',
+          'Avoid unfollower apps that ask for your Instagram username and password.',
       },
     ],
     workflow: [
       {
-        title: 'Add a handle',
-        description: 'Paste any public Instagram username or profile URL.',
+        title: 'Export your Instagram data',
+        description: 'Use Accounts Center to request follower data in JSON format.',
       },
       {
-        title: 'Collect snapshots',
-        description: 'The tracker stores follower counts daily and keeps full history.',
+        title: 'Upload or connect Drive',
+        description: 'Upload the ZIP once or set Instagram to send scheduled exports to Google Drive.',
       },
       {
-        title: 'Review gains and losses',
-        description: 'Use charts and deltas to see what changed and when.',
+        title: 'Review follower changes',
+        description: 'Compare exports to see new followers, lost followers, and CSV downloads.',
       },
     ],
     faq: [
       {
         question: 'Can this show exactly who unfollowed me?',
         answer:
-          'Follower-count tracking shows when drops happened. Pro users can upload their own Instagram data exports to compare follower lists between uploads.',
+          'Yes. Upload two or more official Instagram follower exports and the app compares the lists to show new and missing followers.',
       },
       {
-        question: 'Does it work without an app?',
+        question: 'Does it work without my Instagram password?',
         answer:
-          'Yes. The tracker runs in the browser and stores daily follower-count history for public Instagram accounts.',
+          'Yes. The unfollower workflow uses files exported from Instagram Accounts Center, so you do not share your Instagram login with this product.',
       },
     ],
   },
   {
     slug: 'instagram-unfollow-tracker',
     title: 'Instagram Unfollow Tracker',
-    metaTitle: 'Instagram Unfollow Tracker - Find Follower Changes',
+    metaTitle: 'Instagram Unfollow Tracker - Find Who Unfollowed You',
     description:
-      'Track Instagram unfollow events by combining daily follower counts with optional Instagram data export diffing for Pro accounts.',
-    eyebrow: 'Instagram-specific unfollow tracking',
+      'Find who unfollowed you on Instagram using official Instagram data exports or scheduled Google Drive exports. No Instagram password required.',
+    eyebrow: 'Safer Instagram unfollower tracking',
     h1: 'Instagram Unfollow Tracker',
     intro:
-      'Use daily Instagram follower snapshots and optional data-export uploads to understand who followed, who left, and when changes happened.',
-    primaryCta: 'Track an account',
+      'Upload your Instagram export or connect Google Drive to compare follower lists over time and see who followed or unfollowed you.',
+    primaryCta: 'Find unfollowers',
     secondaryCta: 'See pricing',
     keywordCluster: [
       'instagram unfollow tracker',
       'track followers and unfollowers on instagram',
       'free instagram unfollow tracker',
       'track lost followers instagram',
+      'instagram unfollow tracker online',
     ],
     proofPoints: [
-      'Public account follower-count tracking',
-      'Optional export-based follower list diffing',
-      'Daily change timeline',
-      'Shareable reports for Agency users',
+      'Official export upload',
+      'Scheduled Google Drive sync',
+      'New and lost follower lists',
+      'No Instagram password required',
     ],
     useCases: [
       {
         title: 'Creator retention',
         description:
-          'Understand how your audience reacts after posts, collaborations, and launches.',
+          'See which followers appeared or disappeared after posts, collaborations, and launches.',
       },
       {
-        title: 'Brand monitoring',
+        title: 'Owned-account monitoring',
         description:
-          'Watch competitor and ambassador accounts for sharp follower drops or spikes.',
+          'Use your own Instagram data exports for person-level follower change tracking.',
       },
       {
         title: 'Follower list diffing',
         description:
-          'Upload exports over time to compare follower lists from your own Instagram data.',
+          'Compare exports over time to reveal the exact handles behind the change.',
       },
     ],
     workflow: [
       {
-        title: 'Start with count tracking',
-        description: 'Add a public account and collect follower-count history automatically.',
+        title: 'Choose export mode',
+        description: 'Upload a ZIP manually or set Instagram to export daily to Google Drive.',
       },
       {
-        title: 'Upload exports if needed',
-        description: 'Use Pro export uploads when you need person-level follower changes.',
+        title: 'Save follower snapshots',
+        description: 'Each export becomes a snapshot of your follower and following lists.',
       },
       {
-        title: 'Act on the pattern',
-        description: 'Review drops, spikes, and repeat events from one dashboard.',
+        title: 'See who changed',
+        description: 'Review new followers, lost followers, and export CSVs from the dashboard.',
       },
     ],
     faq: [
       {
-        question: 'Is this compliant with Instagram data access limits?',
+        question: 'Can I set this up once?',
         answer:
-          'The public tracker stores public follower counts. Person-level unfollow detection uses data files the user exports from their own Instagram account.',
+          'For your own account, you can set Instagram to export data to Google Drive on a recurring cadence, then connect Drive so the app checks for new exports.',
       },
       {
-        question: 'How often does the tracker update?',
+        question: 'Can this track competitors?',
         answer:
-          'Tracked accounts are designed for daily snapshots, with history kept over time.',
+          'Person-level unfollower detection only works for your own Instagram export. Public competitor tracking uses follower-count snapshots, not private follower lists.',
+      },
+    ],
+  },
+  {
+    slug: 'track-who-unfollowed-you-on-instagram',
+    title: 'Track Who Unfollowed You on Instagram',
+    metaTitle: 'Track Who Unfollowed You on Instagram - Safe Export Method',
+    description:
+      'Learn how to track who unfollowed you on Instagram with official follower exports, Google Drive sync, and no password-sharing apps.',
+    eyebrow: 'Step-by-step unfollower guide',
+    h1: 'Track Who Unfollowed You on Instagram',
+    intro:
+      'The safest way to see who unfollowed you is to compare your own Instagram follower exports over time instead of giving a third-party app your password.',
+    primaryCta: 'Start the safe check',
+    secondaryCta: 'View plans',
+    keywordCluster: [
+      'track who unfollowed you on instagram free',
+      'free who unfollowed me on instagram',
+      'keep track of who unfollowed you on instagram',
+      'track who follows and unfollows you on instagram',
+    ],
+    proofPoints: [
+      'Uses Instagram Accounts Center exports',
+      'Works with ZIP or followers JSON files',
+      'Google Drive sync option',
+      'CSV exports on Pro',
+    ],
+    useCases: [
+      {
+        title: 'First unfollower check',
+        description: 'Upload your first export to create the baseline follower list.',
+      },
+      {
+        title: 'Repeat comparisons',
+        description: 'Upload another export later to see exactly what changed.',
+      },
+      {
+        title: 'Recurring checks',
+        description: 'Use scheduled Google Drive exports so new snapshots arrive without manual uploads.',
+      },
+    ],
+    workflow: [
+      {
+        title: 'Request your export',
+        description: 'Open Instagram Accounts Center and choose follower data in JSON format.',
+      },
+      {
+        title: 'Create a baseline',
+        description: 'Upload the ZIP to save the first follower-list snapshot.',
+      },
+      {
+        title: 'Compare the next export',
+        description: 'The app shows new followers, lost followers, and downloadable CSVs.',
+      },
+    ],
+    faq: [
+      {
+        question: 'Can I see who unfollowed me from one export?',
+        answer:
+          'One export creates the baseline. You need a later export to compare against before exact lost-follower names can be shown.',
+      },
+      {
+        question: 'Is this safer than unfollower apps?',
+        answer:
+          'Yes. This workflow avoids password sharing and uses data you export directly from Instagram.',
+      },
+    ],
+  },
+  {
+    slug: 'instagram-unfollow-tracker-without-login',
+    title: 'Instagram Unfollow Tracker Without Login',
+    metaTitle: 'Instagram Unfollow Tracker Without Login - No Password Needed',
+    description:
+      'Use an Instagram unfollow tracker without login sharing. Compare official Instagram exports to find new and lost followers safely.',
+    eyebrow: 'No-password Instagram tracking',
+    h1: 'Instagram Unfollow Tracker Without Login',
+    intro:
+      'Do not give unfollower apps your Instagram credentials. Use official exports and follower-list comparisons to find changes without risky login sharing.',
+    primaryCta: 'Use no-login tracking',
+    secondaryCta: 'Compare plans',
+    keywordCluster: [
+      'instagram unfollowers tracker without login',
+      'instagram unfollow tracker website',
+      'online instagram unfollow tracker',
+      'unfollower tracker instagram online',
+    ],
+    proofPoints: [
+      'No Instagram credentials stored',
+      'Official data export workflow',
+      'Manual upload or Drive sync',
+      'Follower-list diff reports',
+    ],
+    useCases: [
+      {
+        title: 'Avoid risky permissions',
+        description: 'Get follower changes without giving another app control of your Instagram account.',
+      },
+      {
+        title: 'Check from the web',
+        description: 'Use a browser dashboard instead of installing a mobile unfollower app.',
+      },
+      {
+        title: 'Keep export history',
+        description: 'Store export snapshots so each comparison has a clear timestamp.',
+      },
+    ],
+    workflow: [
+      {
+        title: 'Export from Instagram',
+        description: 'Use Instagram Accounts Center instead of third-party login screens.',
+      },
+      {
+        title: 'Upload or sync',
+        description: 'Choose a one-time ZIP upload or recurring Google Drive exports.',
+      },
+      {
+        title: 'Review diffs',
+        description: 'See counts for everyone new and everyone missing since the previous export.',
+      },
+    ],
+    faq: [
+      {
+        question: 'Do I have to log in with Instagram?',
+        answer:
+          'No. The product never needs your Instagram password for unfollower detection.',
+      },
+      {
+        question: 'Why use exports instead of login?',
+        answer:
+          'Exports keep you in control of the data source and reduce the risk that comes with credential-sharing unfollower apps.',
+      },
+    ],
+  },
+  {
+    slug: 'instagram-followers-and-unfollowers-tracker',
+    title: 'Instagram Followers and Unfollowers Tracker',
+    metaTitle: 'Instagram Followers and Unfollowers Tracker - Compare Changes',
+    description:
+      'Track Instagram followers and unfollowers by comparing official follower exports, scheduled Drive snapshots, and follower-count history.',
+    eyebrow: 'Followers and unfollowers',
+    h1: 'Instagram Followers and Unfollowers Tracker',
+    intro:
+      'Combine follower-count history with official export diffs so you can see both the size of the audience change and the handles behind it.',
+    primaryCta: 'Track follower changes',
+    secondaryCta: 'See pricing',
+    keywordCluster: [
+      'track followers and unfollowers on instagram',
+      'instagram followers and unfollowers tracker',
+      'followers and unfollowers tracker for instagram',
+      'best app to track followers and unfollowers on instagram',
+    ],
+    proofPoints: [
+      'Follower-count snapshots',
+      'Follower export diffs',
+      'Lost and new follower counts',
+      'CSV downloads for Pro',
+    ],
+    useCases: [
+      {
+        title: 'Growth and churn',
+        description: 'Separate net follower growth from the people who came and went.',
+      },
+      {
+        title: 'Creator analysis',
+        description: 'Understand audience reaction after content, promos, and launches.',
+      },
+      {
+        title: 'Owned-account reports',
+        description: 'Use official export data when you need person-level follower lists.',
+      },
+    ],
+    workflow: [
+      {
+        title: 'Create follower history',
+        description: 'Capture or sync follower counts so the chart starts building.',
+      },
+      {
+        title: 'Add export snapshots',
+        description: 'Upload official Instagram exports or connect scheduled Drive exports.',
+      },
+      {
+        title: 'Download results',
+        description: 'Export follower lists, following lists, and unfollower diffs as CSVs.',
+      },
+    ],
+    faq: [
+      {
+        question: 'Can this show both followers and unfollowers?',
+        answer:
+          'Yes. Export comparisons show new followers and lost followers between snapshots.',
+      },
+      {
+        question: 'Does it track public accounts too?',
+        answer:
+          'Public accounts can be tracked by follower count. Exact follower and unfollower names require the official export for your own account.',
       },
     ],
   },

@@ -30,7 +30,7 @@ const faqItems = [
   {
     question: 'Can I track who unfollowed me on Instagram?',
     answer:
-      'Yes. Pro users can upload their own Instagram data exports over time. The app compares follower lists and shows who is new or missing between uploads.',
+      'Yes. Upload official Instagram data exports over time, or connect scheduled Google Drive exports, and the app compares follower lists to show who is new or missing.',
   },
   {
     question: 'Do I need to share my Instagram password?',
@@ -90,7 +90,7 @@ const featureCards = [
   {
     title: 'Upload Instagram exports',
     description:
-      'Compare your own exported follower files to see new and missing followers.',
+      'Compare official Instagram exports or scheduled Google Drive snapshots to see new and missing followers.',
     icon: UploadIcon,
   },
   {
@@ -131,7 +131,7 @@ const workflow = [
   },
   {
     title: 'Compare the changes',
-    description: 'Use charts, export uploads, and CSV downloads to see what moved.',
+    description: 'Use charts, scheduled exports, and CSV downloads to see what moved.',
   },
 ];
 

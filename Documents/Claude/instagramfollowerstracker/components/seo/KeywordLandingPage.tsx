@@ -24,6 +24,10 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
 
   const ctaHref = session?.user ? '/dashboard' : '/auth/signup';
   const ctaLabel = session?.user ? 'Go to Dashboard' : page.primaryCta;
+  const isUnfollowPage =
+    page.slug.includes('unfollow') ||
+    page.slug.includes('who-unfollowed') ||
+    page.slug.includes('followers-and-unfollowers');
 
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
@@ -104,12 +108,49 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
               </div>
             </div>
 
-            <div className="rounded-lg border border-cyan-950/10 bg-white p-5 shadow-2xl shadow-cyan-950/10">
-              <p className="mb-4 text-sm font-black text-slate-950">
-                Look up an Instagram account
-              </p>
-              <HandleSearch />
-            </div>
+            {isUnfollowPage ? (
+              <div className="rounded-lg border border-cyan-950/10 bg-white p-5 shadow-2xl shadow-cyan-950/10">
+                <p className="text-sm font-black uppercase text-teal-700">
+                  No Instagram password
+                </p>
+                <h2 className="mt-2 text-2xl font-black text-slate-950">
+                  Safer unfollower tracking
+                </h2>
+                <div className="mt-5 space-y-3">
+                  {[
+                    'Upload the official Instagram export ZIP',
+                    'Connect Google Drive for scheduled exports',
+                    'Compare new and missing followers over time',
+                  ].map((item, index) => (
+                    <div key={item} className="flex gap-3 rounded-lg border border-cyan-950/10 bg-slate-50 p-3">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-950 text-xs font-black text-white">
+                        {index + 1}
+                      </span>
+                      <p className="text-sm font-bold leading-6 text-slate-700">
+                        {item}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <Link
+                  href={ctaHref}
+                  className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-black text-white transition hover:bg-slate-800"
+                >
+                  {ctaLabel}
+                </Link>
+                <p className="mt-3 text-xs font-semibold leading-5 text-slate-500">
+                  For your own account, use official Instagram data exports.
+                  Public account tracking stays separate.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-cyan-950/10 bg-white p-5 shadow-2xl shadow-cyan-950/10">
+                <p className="mb-4 text-sm font-black text-slate-950">
+                  Look up an Instagram account
+                </p>
+                <HandleSearch />
+              </div>
+            )}
           </div>
         </section>
 
