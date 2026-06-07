@@ -294,6 +294,10 @@ function debugEnv() {
   };
 }
 
+function shouldPreferApify() {
+  return Boolean(process.env.APIFY_TOKEN) && process.env.SCRAPER_PROVIDER !== 'direct';
+}
+
 export async function fetchInstagramProfile(
   handle: string
 ): Promise<InstagramProfileData> {
@@ -301,6 +305,16 @@ export async function fetchInstagramProfile(
   const profileUrl = `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`;
   const pageUrl = `https://www.instagram.com/${handle}/`;
   const hasSession = Boolean(process.env.INSTAGRAM_SESSION_ID);
+
+  if (shouldPreferApify()) {
+    try {
+      const apify = await fetchApifyProfile(handle);
+      if (apify.profile.followerCount !== null) return apify.profile;
+      console.error(`[scraper] Apify returned no data for @${handle}: ${apify.error}`);
+    } catch (err) {
+      console.error(`[scraper] Apify primary failed for @${handle}:`, err);
+    }
+  }
 
   // ── Primary: internal API endpoint ────────────────────────────────────────
   const apiModes = [
@@ -347,11 +361,13 @@ export async function fetchInstagramProfile(
     }
   }
 
-  try {
-    const apify = await fetchApifyProfile(handle);
-    if (apify.profile.followerCount !== null) return apify.profile;
-  } catch (err) {
-    console.error(`[scraper] Apify fallback failed for @${handle}:`, err);
+  if (!shouldPreferApify()) {
+    try {
+      const apify = await fetchApifyProfile(handle);
+      if (apify.profile.followerCount !== null) return apify.profile;
+    } catch (err) {
+      console.error(`[scraper] Apify fallback failed for @${handle}:`, err);
+    }
   }
 
   return empty;

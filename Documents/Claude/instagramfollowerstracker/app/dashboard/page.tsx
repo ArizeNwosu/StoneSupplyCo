@@ -11,6 +11,7 @@ import { SnapshotProgress } from '@/components/tracker/SnapshotProgress';
 import { ShareReportButton } from '@/components/tracker/ShareReportButton';
 import { AuthenticityBadge } from '@/components/tracker/AuthenticityBadge';
 import { PatternAlerts } from '@/components/tracker/PatternAlerts';
+import { AutomaticTrackingPanel } from '@/components/tracker/AutomaticTrackingPanel';
 import { BrowserCollectorPanel } from '@/components/tracker/BrowserCollectorPanel';
 import { ManualSnapshotPanel } from '@/components/tracker/ManualSnapshotPanel';
 import { Button } from '@/components/ui/Button';
@@ -277,10 +278,19 @@ export default function DashboardPage() {
                 lastChecked={selected.lastChecked}
               />
             )}
+            <AutomaticTrackingPanel
+              handle={selected.handle}
+              snapshotCount={snapshotData.snapshotCount}
+              lastChecked={selected.lastChecked}
+              onRefresh={async () => {
+                await fetch(`/api/accounts/${selected.id}/refresh`, { method: 'POST' });
+                await fetchAccounts();
+                await fetchSnapshots(selected.id);
+              }}
+            />
             <BrowserCollectorPanel
               accountId={selected.id}
               handle={selected.handle}
-              snapshotCount={snapshotData.snapshotCount}
               onRefresh={() => {
                 void fetchAccounts();
                 void fetchSnapshots(selected.id);

@@ -148,7 +148,7 @@ const DESKTOP_DRIVE_STEPS = [
 export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
   const isPro = userPlan !== 'FREE';
 
-  const [stage, setStage] = useState<Stage>(isPro ? 'upload' : 'intro');
+  const [stage, setStage] = useState<Stage>('intro');
   const [device, setDevice] = useState<Device | null>(null);
   const [exportPath, setExportPath] = useState<ExportPath | null>(null);
   const [guideStep, setGuideStep] = useState(0);

@@ -11,14 +11,12 @@ interface CollectorConfig {
 interface BrowserCollectorPanelProps {
   accountId: string;
   handle: string;
-  snapshotCount: number;
   onRefresh: () => void;
 }
 
 export function BrowserCollectorPanel({
   accountId,
   handle,
-  snapshotCount,
   onRefresh,
 }: BrowserCollectorPanelProps) {
   const [config, setConfig] = useState<CollectorConfig | null>(null);
@@ -63,20 +61,24 @@ export function BrowserCollectorPanel({
     setTimeout(() => setCopied(false), 1800);
   };
   const instagramUrl = `https://www.instagram.com/${handle}/`;
-  const hasSnapshots = snapshotCount > 0;
 
   return (
-    <div className="rounded-lg border border-teal-200 bg-white p-5 shadow-sm">
+    <details className="rounded-lg border border-cyan-950/10 bg-white p-4 shadow-sm">
+      <summary className="cursor-pointer text-sm font-black text-slate-700">
+        Fallback: browser capture
+      </summary>
+      <div className="mt-4">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-xs font-black uppercase text-teal-700">
-            {hasSnapshots ? 'Keep tracking' : 'Recommended next step'}
+          <p className="text-xs font-black uppercase text-slate-400">
+            Use only if automatic capture misses
           </p>
           <h3 className="mt-1 text-lg font-black text-slate-950">
             Capture @{handle} from Instagram
           </h3>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-            Use your browser to collect the count from the profile page. This avoids blocked server scraping and starts building real history.
+            Use your browser to collect the count from the profile page if the
+            automated collector cannot reach Instagram.
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
@@ -159,7 +161,8 @@ export function BrowserCollectorPanel({
       {error ? (
         <p className="mt-3 text-xs font-bold text-red-600">{error}</p>
       ) : null}
-    </div>
+      </div>
+    </details>
   );
 }
 
