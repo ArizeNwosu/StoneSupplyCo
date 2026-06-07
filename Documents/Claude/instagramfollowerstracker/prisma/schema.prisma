@@ -104,6 +104,7 @@ model PublicSnapshot {
 model DataExport {
   id             String            @id @default(cuid())
   userId         String
+  handle         String?
   uploadedAt     DateTime          @default(now())
   source         ExportSource      @default(MANUAL_UPLOAD)
   followerCount  Int?
@@ -111,6 +112,8 @@ model DataExport {
   user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   followers      ExportFollower[]
   following      ExportFollowing[]
+
+  @@index([userId, handle])
 }
 
 model ExportFollower {

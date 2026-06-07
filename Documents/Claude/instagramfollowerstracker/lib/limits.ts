@@ -1,6 +1,7 @@
 export const PLAN_LIMITS = {
   FREE: {
     maxAccounts: 1,
+    maxUnfollowAccounts: 1,
     historyDays: null,        // null = no limit, full history always
     unfollowDetection: false,
     alerts: false,
@@ -8,6 +9,7 @@ export const PLAN_LIMITS = {
   },
   PRO: {
     maxAccounts: 10,
+    maxUnfollowAccounts: 5,
     historyDays: null,
     unfollowDetection: true,  // via Instagram data export upload
     alerts: true,
@@ -15,6 +17,7 @@ export const PLAN_LIMITS = {
   },
   AGENCY: {
     maxAccounts: null, // unlimited
+    maxUnfollowAccounts: null, // unlimited
     historyDays: null,
     unfollowDetection: true,
     alerts: true,

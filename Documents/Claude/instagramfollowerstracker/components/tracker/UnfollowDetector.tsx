@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { PLAN_LIMITS } from '@/lib/limits';
 
 interface Person {
   handle: string;
@@ -23,6 +24,12 @@ interface UploadResult {
   diff: DiffResult | null;
   recentlyUnfollowed: Person[];
   recentlyUnfollowedCount: number;
+}
+
+interface UnfollowAccount {
+  handle: string;
+  lastUploadAt: string;
+  followerCount: number | null;
 }
 
 interface UnfollowDetectorProps {
@@ -162,19 +169,36 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [unfollowAccounts, setUnfollowAccounts] = useState<UnfollowAccount[]>([]);
+  const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
+  const [uploadHandle, setUploadHandle] = useState('');
+
+  const maxUnfollowAccounts = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS].maxUnfollowAccounts;
+  const canAddMore = maxUnfollowAccounts === null || unfollowAccounts.length < maxUnfollowAccounts;
+
   // Load persisted results on mount so data survives refresh / logout.
   // First-time visitors (no uploads, never seen guide) start at the guide.
   useEffect(() => {
     void (async () => {
       try {
-        const res = await fetch('/api/exports/latest');
-        if (res.ok) {
-          const data = (await res.json()) as UploadResult | null;
-          if (data) {
-            setResult(data);
-            setStage('results');
+        const accountsRes = await fetch('/api/exports/accounts');
+        if (accountsRes.ok) {
+          const accountsData = (await accountsRes.json()) as UnfollowAccount[];
+          setUnfollowAccounts(accountsData);
+
+          if (accountsData.length > 0) {
+            const firstHandle = accountsData[0]!.handle;
+            setSelectedHandle(firstHandle);
+            setUploadHandle(firstHandle);
+            const res = await fetch(`/api/exports/latest?handle=${encodeURIComponent(firstHandle)}`);
+            if (res.ok) {
+              const data = (await res.json()) as UploadResult | null;
+              if (data) {
+                setResult(data);
+                setStage('results');
+              }
+            }
           } else {
-            // No uploads yet — show guide the first time
             const hasSeen = typeof window !== 'undefined' && localStorage.getItem('ift_guide_seen');
             if (!hasSeen) setStage('device');
           }
@@ -244,6 +268,30 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
     }
   }, []);
 
+  const switchAccount = useCallback(async (handle: string) => {
+    if (handle === selectedHandle && stage === 'results') return;
+    setSelectedHandle(handle);
+    setUploadHandle(handle);
+    setLoadingExisting(true);
+    try {
+      const res = await fetch(`/api/exports/latest?handle=${encodeURIComponent(handle)}`);
+      if (res.ok) {
+        const data = (await res.json()) as UploadResult | null;
+        if (data) {
+          setResult(data);
+          setStage('results');
+        } else {
+          setResult(null);
+          setStage('upload');
+        }
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoadingExisting(false);
+    }
+  }, [selectedHandle, stage]);
+
   const handleUpload = useCallback(async () => {
     const files = Array.from(fileRef.current?.files ?? []);
     if (files.length === 0) {
@@ -260,6 +308,11 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
       formData.append('file', file);
     }
 
+    const normalizedHandle = uploadHandle.trim().replace(/^@/, '').toLowerCase();
+    if (normalizedHandle) {
+      formData.append('handle', normalizedHandle);
+    }
+
     try {
       const res = await fetch('/api/exports', { method: 'POST', body: formData });
       const data = (await res.json()) as UploadResult & { error?: string };
@@ -268,6 +321,14 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
       } else {
         setResult(data);
         if (fileRef.current) fileRef.current.value = '';
+        if (normalizedHandle) {
+          setSelectedHandle(normalizedHandle);
+        }
+        // Refresh accounts list
+        const accountsRes = await fetch('/api/exports/accounts');
+        if (accountsRes.ok) {
+          setUnfollowAccounts((await accountsRes.json()) as UnfollowAccount[]);
+        }
         setStage('results');
       }
     } catch {
@@ -275,7 +336,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
     } finally {
       setUploading(false);
     }
-  }, []);
+  }, [uploadHandle]);
 
   return (
     <div className="rounded-2xl border border-cyan-950/10 bg-white shadow-xl shadow-cyan-950/10 overflow-hidden">
@@ -291,6 +352,48 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
           <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-black text-teal-800">PRO</span>
         )}
       </div>
+
+      {/* Account tabs */}
+      {!loadingExisting && unfollowAccounts.length > 0 && (
+        <div className="flex items-center gap-1 overflow-x-auto border-b border-cyan-950/10 bg-slate-50/50 px-4 py-2">
+          {unfollowAccounts.map((a) => (
+            <button
+              key={a.handle}
+              type="button"
+              onClick={() => void switchAccount(a.handle)}
+              className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-bold transition ${
+                selectedHandle === a.handle
+                  ? 'bg-slate-950 text-white'
+                  : 'text-slate-500 hover:bg-slate-200 hover:text-slate-900'
+              }`}
+            >
+              @{a.handle}
+            </button>
+          ))}
+          {canAddMore && (
+            <button
+              type="button"
+              onClick={() => {
+                setResult(null);
+                setError(null);
+                setUploadHandle('');
+                setStage('upload');
+              }}
+              className="ml-1 flex-shrink-0 rounded-full border border-dashed border-cyan-950/20 px-3 py-1 text-xs font-bold text-slate-400 transition hover:border-slate-400 hover:text-slate-600"
+            >
+              + Add account
+            </button>
+          )}
+          {!canAddMore && (
+            <Link
+              href="/pricing"
+              className="ml-auto flex-shrink-0 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 transition hover:bg-amber-100"
+            >
+              Upgrade for more ↗
+            </Link>
+          )}
+        </div>
+      )}
 
       <div className="p-6">
         {loadingExisting ? (
@@ -400,6 +503,13 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
             error={error}
             onUpload={handleUpload}
             onStartGuide={() => setStage('device')}
+            handle={uploadHandle}
+            onHandleChange={setUploadHandle}
+            hasExistingAccounts={unfollowAccounts.length > 0}
+            onCancel={unfollowAccounts.length > 0 ? () => {
+              const first = unfollowAccounts[0];
+              if (first) void switchAccount(first.handle);
+            } : undefined}
           />
         )}
 
@@ -410,6 +520,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
             onUploadAnother={() => {
               setResult(null);
               setError(null);
+              setUploadHandle(selectedHandle ?? '');
               setStage('upload');
             }}
           />
@@ -643,12 +754,20 @@ function UploadStage({
   error,
   onUpload,
   onStartGuide,
+  handle,
+  onHandleChange,
+  hasExistingAccounts,
+  onCancel,
 }: {
   fileRef: React.RefObject<HTMLInputElement | null>;
   uploading: boolean;
   error: string | null;
   onUpload: () => void;
   onStartGuide?: () => void;
+  handle: string;
+  onHandleChange: (v: string) => void;
+  hasExistingAccounts: boolean;
+  onCancel?: () => void;
 }) {
   const [dragging, setDragging] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
@@ -675,6 +794,24 @@ function UploadStage({
 
   return (
     <div className="space-y-5">
+      {/* Handle input */}
+      <div>
+        <label className="text-xs font-black uppercase tracking-wide text-slate-500">Your Instagram username</label>
+        <div className="mt-1.5 flex items-center gap-1.5 rounded-xl border border-cyan-950/15 bg-slate-50 px-3 py-2.5">
+          <span className="text-sm font-semibold text-slate-400">@</span>
+          <input
+            type="text"
+            value={handle}
+            onChange={(e) => onHandleChange(e.target.value.replace(/^@/, '').toLowerCase().replace(/[^a-z0-9._]/g, ''))}
+            placeholder="yourhandle"
+            className="flex-1 bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-300"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+          />
+        </div>
+      </div>
+
       {/* Instructions */}
       <div className="rounded-xl border border-cyan-950/10 bg-slate-50 p-4">
         <p className="text-xs font-black uppercase tracking-wide text-slate-500 mb-3">How to get your files</p>
@@ -754,11 +891,21 @@ function UploadStage({
       <button
         type="button"
         onClick={onUpload}
-        disabled={uploading || selectedFiles.length === 0}
+        disabled={uploading || selectedFiles.length === 0 || handle.trim() === ''}
         className="w-full rounded-full bg-slate-950 px-5 py-2.5 text-sm font-black text-white transition hover:bg-slate-800 disabled:opacity-50"
       >
         {uploading ? 'Analysing…' : 'Analyse my data'}
       </button>
+
+      {hasExistingAccounts && onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full text-center text-xs font-semibold text-slate-400 hover:text-slate-600 transition"
+        >
+          ← Back to my accounts
+        </button>
+      )}
 
       <div className="relative flex items-center gap-3">
         <div className="h-px flex-1 bg-cyan-950/10" />

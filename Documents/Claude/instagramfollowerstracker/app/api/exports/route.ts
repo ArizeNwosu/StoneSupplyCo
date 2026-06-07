@@ -46,12 +46,43 @@ export async function POST(req: NextRequest) {
   }
 
   const isPro = PLAN_LIMITS[user.plan as keyof typeof PLAN_LIMITS].unfollowDetection;
+  const maxUnfollowAccounts = PLAN_LIMITS[user.plan as keyof typeof PLAN_LIMITS].maxUnfollowAccounts;
 
   let formData: FormData;
   try {
     formData = await req.formData();
   } catch {
     return NextResponse.json({ error: 'Expected multipart/form-data' }, { status: 400 });
+  }
+
+  // Read and validate handle
+  const rawHandle = formData.get('handle');
+  const handle: string | null =
+    typeof rawHandle === 'string' && rawHandle.trim().length > 0
+      ? rawHandle.trim().toLowerCase()
+      : null;
+
+  if (handle !== null && !/^[a-z0-9._]{1,30}$/.test(handle)) {
+    return NextResponse.json({ error: 'Invalid Instagram handle.' }, { status: 400 });
+  }
+
+  // Enforce plan limit for distinct unfollow accounts
+  if (maxUnfollowAccounts !== null && handle) {
+    const existingHandles = await prisma.dataExport.findMany({
+      where: { userId: user.id, handle: { not: null } },
+      select: { handle: true },
+      distinct: ['handle'],
+    });
+    const isNewHandle = !existingHandles.some((e) => e.handle === handle);
+    if (isNewHandle && existingHandles.length >= maxUnfollowAccounts) {
+      return NextResponse.json(
+        {
+          error: `Plan limit: you can track up to ${maxUnfollowAccounts} Instagram account${maxUnfollowAccounts === 1 ? '' : 's'}. Upgrade to add more.`,
+          upgrade: '/pricing',
+        },
+        { status: 402 }
+      );
+    }
   }
 
   const fileEntries = formData.getAll('file');
@@ -89,9 +120,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Get the previous export to diff against
+  // Get the previous export to diff against (scoped to same handle if provided)
   const previousExport = await prisma.dataExport.findFirst({
-    where: { userId: user.id },
+    where: handle ? { userId: user.id, handle } : { userId: user.id },
     orderBy: { uploadedAt: 'desc' },
     include: { followers: { select: { handle: true, displayName: true } } },
   });
@@ -100,6 +131,7 @@ export async function POST(req: NextRequest) {
   const newExport = await prisma.dataExport.create({
     data: {
       userId: user.id,
+      handle: handle ?? null,
       followerCount: parsed.followers.length || null,
       followingCount: parsed.following.length || null,
     },

@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { PLAN_LIMITS } from '@/lib/limits';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -19,9 +19,16 @@ export async function GET() {
 
   const isPro = PLAN_LIMITS[user.plan as keyof typeof PLAN_LIMITS].unfollowDetection;
 
+  const { searchParams } = new URL(req.url);
+  const handle = searchParams.get('handle') ?? null;
+
+  const whereClause = handle
+    ? { userId: user.id, handle }
+    : { userId: user.id };
+
   // Fetch the two most recent exports with follower AND following lists
   const exports = await prisma.dataExport.findMany({
-    where: { userId: user.id },
+    where: whereClause,
     orderBy: { uploadedAt: 'desc' },
     take: 2,
     include: {
