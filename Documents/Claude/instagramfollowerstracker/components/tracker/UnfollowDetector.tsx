@@ -155,11 +155,32 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
   const [exportPath, setExportPath] = useState<ExportPath | null>(null);
   const [guideStep, setGuideStep] = useState(0);
   const [pathStep, setPathStep] = useState(0);
+  const [loadingExisting, setLoadingExisting] = useState(true);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Load persisted results on mount so data survives refresh / logout
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch('/api/exports/latest');
+        if (res.ok) {
+          const data = (await res.json()) as UploadResult | null;
+          if (data) {
+            setResult(data);
+            setStage('results');
+          }
+        }
+      } catch {
+        // silent — fall through to upload stage
+      } finally {
+        setLoadingExisting(false);
+      }
+    })();
+  }, []);
 
   const commonSteps = device === 'desktop' ? DESKTOP_COMMON_STEPS : PHONE_COMMON_STEPS;
   const isLastCommonStep = guideStep === commonSteps.length - 1;
@@ -267,9 +288,21 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
       </div>
 
       <div className="p-6">
-        {stage === 'intro' && <IntroStage onStart={() => setStage('device')} />}
+        {loadingExisting ? (
+          <div className="space-y-4">
+            <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />
+            <div className="grid grid-cols-3 gap-2.5">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-16 animate-pulse rounded-xl bg-slate-100" />
+              ))}
+            </div>
+            <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
+          </div>
+        ) : null}
 
-        {stage === 'device' && (
+        {!loadingExisting && stage === 'intro' && <IntroStage onStart={() => setStage('device')} />}
+
+        {!loadingExisting && stage === 'device' && (
           <DeviceStage
             onSelect={(d) => {
               setDevice(d);
@@ -342,7 +375,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
           />
         )}
 
-        {stage === 'syncing' && (
+        {!loadingExisting && stage === 'syncing' && (
           <div className="flex flex-col items-center gap-4 py-10 text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-slate-950" />
             <p className="text-sm font-bold text-slate-700">Syncing from Google Drive…</p>
@@ -350,7 +383,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
           </div>
         )}
 
-        {stage === 'upload' && (
+        {!loadingExisting && stage === 'upload' && (
           <UploadStage
             fileRef={fileRef}
             uploading={uploading}
@@ -360,7 +393,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
           />
         )}
 
-        {stage === 'results' && result && (
+        {!loadingExisting && stage === 'results' && result && (
           <ResultsStage
             result={result}
             isPro={isPro}
