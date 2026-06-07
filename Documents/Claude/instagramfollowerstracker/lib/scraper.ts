@@ -13,7 +13,7 @@ export interface InstagramProfileData {
 }
 
 interface ScraperAttempt {
-  source: 'web_profile_info' | 'html';
+  source: 'web_profile_info' | 'html' | 'apify';
   mode: string;
   ok: boolean;
   status: number | null;
@@ -28,6 +28,7 @@ export interface InstagramProfileDebugResult {
   env: {
     hasSessionId: boolean;
     hasProxyUrl: boolean;
+    hasApifyToken: boolean;
   };
 }
 
@@ -102,6 +103,8 @@ interface IgUser {
   is_private?: boolean;
 }
 
+type ApifyProfile = Record<string, unknown>;
+
 function profileFromUser(handle: string, user: IgUser): InstagramProfileData {
   return {
     handle,
@@ -113,6 +116,76 @@ function profileFromUser(handle: string, user: IgUser): InstagramProfileData {
     bio: user.biography ?? null,
     avatarUrl: user.profile_pic_url_hd ?? user.profile_pic_url ?? null,
     isPrivate: user.is_private ?? false,
+    fetchedAt: new Date(),
+  };
+}
+
+function numberFromUnknown(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseInt(value.replace(/[^\d]/g, ''), 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function stringFromUnknown(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+function booleanFromUnknown(value: unknown): boolean {
+  return typeof value === 'boolean' ? value : false;
+}
+
+function firstNumber(item: ApifyProfile, keys: string[]): number | null {
+  for (const key of keys) {
+    const value = numberFromUnknown(item[key]);
+    if (value !== null) return value;
+  }
+  return null;
+}
+
+function firstString(item: ApifyProfile, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = stringFromUnknown(item[key]);
+    if (value !== null) return value;
+  }
+  return null;
+}
+
+function profileFromApify(handle: string, item: ApifyProfile): InstagramProfileData {
+  return {
+    handle: firstString(item, ['username', 'handle']) ?? handle,
+    followerCount: firstNumber(item, [
+      'followersCount',
+      'followers',
+      'followerCount',
+      'followers_count',
+      'followedByCount',
+    ]),
+    followingCount: firstNumber(item, [
+      'followsCount',
+      'following',
+      'followingCount',
+      'following_count',
+    ]),
+    postCount: firstNumber(item, [
+      'postsCount',
+      'postCount',
+      'post_count',
+      'mediaCount',
+      'media_count',
+    ]),
+    displayName: firstString(item, ['fullName', 'full_name', 'name']),
+    bio: firstString(item, ['biography', 'bio']),
+    avatarUrl: firstString(item, [
+      'profilePicUrlHD',
+      'profilePicUrl',
+      'profile_pic_url_hd',
+      'profile_pic_url',
+    ]),
+    isPrivate:
+      booleanFromUnknown(item.isPrivate) || booleanFromUnknown(item.is_private),
     fetchedAt: new Date(),
   };
 }
@@ -153,6 +226,71 @@ function profileFromHtml(handle: string, html: string): InstagramProfileData {
     postCount: postMatch?.[1] ? parseInt(postMatch[1], 10) : null,
     displayName: nameMatch?.[1] ?? null,
     isPrivate: privateMatch?.[1] === 'true',
+  };
+}
+
+function apifyEnv() {
+  const token = process.env.APIFY_TOKEN;
+  const actorId = process.env.APIFY_ACTOR_ID ?? 'apify/instagram-profile-scraper';
+  return {
+    token,
+    actorId: actorId.replace('/', '~'),
+  };
+}
+
+async function fetchApifyProfile(handle: string): Promise<{
+  profile: InstagramProfileData;
+  status: number | null;
+  contentType: string | null;
+  error: string | null;
+}> {
+  const { token, actorId } = apifyEnv();
+  if (!token) {
+    return {
+      profile: emptyProfile(handle),
+      status: null,
+      contentType: null,
+      error: 'APIFY_TOKEN is not configured',
+    };
+  }
+
+  const res = await fetch(
+    `https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items?token=${encodeURIComponent(token)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usernames: [handle] }),
+      signal: AbortSignal.timeout(55_000),
+    }
+  );
+  const contentType = res.headers.get('content-type');
+
+  if (!res.ok) {
+    return {
+      profile: emptyProfile(handle),
+      status: res.status,
+      contentType,
+      error: `HTTP ${res.status}`,
+    };
+  }
+
+  const items = (await res.json()) as ApifyProfile[];
+  const item = Array.isArray(items) ? items[0] : null;
+  const profile = item ? profileFromApify(handle, item) : emptyProfile(handle);
+
+  return {
+    profile,
+    status: res.status,
+    contentType,
+    error: profile.followerCount === null ? 'No follower count in Apify result' : null,
+  };
+}
+
+function debugEnv() {
+  return {
+    hasSessionId: Boolean(process.env.INSTAGRAM_SESSION_ID),
+    hasProxyUrl: Boolean(process.env.PROXY_URL),
+    hasApifyToken: Boolean(process.env.APIFY_TOKEN),
   };
 }
 
@@ -209,6 +347,13 @@ export async function fetchInstagramProfile(
     }
   }
 
+  try {
+    const apify = await fetchApifyProfile(handle);
+    if (apify.profile.followerCount !== null) return apify.profile;
+  } catch (err) {
+    console.error(`[scraper] Apify fallback failed for @${handle}:`, err);
+  }
+
   return empty;
 }
 
@@ -261,10 +406,7 @@ export async function debugInstagramProfileFetch(
           return {
             profile,
             attempts,
-            env: {
-              hasSessionId: Boolean(process.env.INSTAGRAM_SESSION_ID),
-              hasProxyUrl: Boolean(process.env.PROXY_URL),
-            },
+            env: debugEnv(),
           };
         }
       } else {
@@ -339,10 +481,7 @@ export async function debugInstagramProfileFetch(
         return {
           profile,
           attempts,
-          env: {
-            hasSessionId: Boolean(process.env.INSTAGRAM_SESSION_ID),
-            hasProxyUrl: Boolean(process.env.PROXY_URL),
-          },
+          env: debugEnv(),
         };
       }
     } catch (err) {
@@ -358,12 +497,42 @@ export async function debugInstagramProfileFetch(
     }
   }
 
+  if (process.env.APIFY_TOKEN) {
+    try {
+      const apify = await fetchApifyProfile(handle);
+      attempts.push({
+        source: 'apify',
+        mode: apifyEnv().actorId,
+        ok: apify.profile.followerCount !== null,
+        status: apify.status,
+        contentType: apify.contentType,
+        followerCount: apify.profile.followerCount,
+        error: apify.error,
+      });
+
+      if (apify.profile.followerCount !== null) {
+        return {
+          profile: apify.profile,
+          attempts,
+          env: debugEnv(),
+        };
+      }
+    } catch (err) {
+      attempts.push({
+        source: 'apify',
+        mode: apifyEnv().actorId,
+        ok: false,
+        status: null,
+        contentType: null,
+        followerCount: null,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
   return {
     profile: emptyProfile(handle),
     attempts,
-    env: {
-      hasSessionId: Boolean(process.env.INSTAGRAM_SESSION_ID),
-      hasProxyUrl: Boolean(process.env.PROXY_URL),
-    },
+    env: debugEnv(),
   };
 }
