@@ -744,139 +744,226 @@ function ResultsStage({
   onUploadAnother: () => void;
 }) {
   const { diff, followerCount, followingCount, uploadedAt, recentlyUnfollowed, recentlyUnfollowedCount } = result;
-
   const lostCount = diff?.lostCount ?? 0;
   const newCount = diff?.newCount ?? 0;
   const isFirst = diff === null;
-  const unfollowedCount = recentlyUnfollowedCount ?? recentlyUnfollowed?.length ?? 0;
+  const unfollowedCount = recentlyUnfollowedCount ?? 0;
+  const net = newCount - lostCount;
+  const fc = followerCount ?? 0;
+  const fwc = followingCount ?? 0;
+  const netTotal = fc - fwc;
+  const maxBar = Math.max(fc, fwc, 1);
 
   return (
-    <div className="space-y-5">
-      {/* Summary bar */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-slate-500">
-          {formatCount(followerCount)} followers · {formatCount(followingCount)} following
-        </p>
-        <p className="text-xs text-slate-400">{new Date(uploadedAt).toLocaleDateString()}</p>
+    <div className="space-y-4">
+
+      {/* ── Dark overview panel ── */}
+      <div className="rounded-2xl bg-slate-950 p-5">
+        {/* Status row */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
+            </span>
+            <span className="text-xs font-black uppercase tracking-widest text-green-400">Tracking Active</span>
+          </div>
+          <span className="text-xs font-medium text-slate-500">
+            {new Date(uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          </span>
+        </div>
+
+        {/* Big 3 stats */}
+        <div className="grid grid-cols-3 gap-2 mb-5">
+          <div>
+            <p className="text-2xl font-black text-white tabular-nums">{fc.toLocaleString()}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">Followers</p>
+          </div>
+          <div>
+            <p className="text-2xl font-black text-white tabular-nums">{fwc.toLocaleString()}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">Following</p>
+          </div>
+          <div>
+            <p className={`text-2xl font-black tabular-nums ${netTotal >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {netTotal >= 0 ? '+' : ''}{netTotal.toLocaleString()}
+            </p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">Net</p>
+          </div>
+        </div>
+
+        {/* Ratio bars */}
+        <div className="space-y-2.5">
+          <div>
+            <div className="flex justify-between mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Followers</span>
+              <span className="text-[10px] text-slate-600">{fc.toLocaleString()}</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+              <div className="h-full rounded-full bg-cyan-500 transition-all duration-700" style={{ width: `${(fc / maxBar) * 100}%` }} />
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Following</span>
+              <span className="text-[10px] text-slate-600">{fwc.toLocaleString()}</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+              <div className="h-full rounded-full bg-slate-500 transition-all duration-700" style={{ width: `${(fwc / maxBar) * 100}%` }} />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Recently unfollowed by you — shown whenever file was included */}
-      {unfollowedCount > 0 && (
-        <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
-          <div className="flex items-start justify-between gap-3">
+      {/* ── First upload: baseline card ── */}
+      {isFirst && (
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-5">
+          <div className="flex gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-lg">🎯</div>
             <div>
-              <p className="text-sm font-black text-amber-800">
-                You recently unfollowed {unfollowedCount} {unfollowedCount === 1 ? 'account' : 'accounts'}
+              <p className="font-black text-indigo-900">Baseline established</p>
+              <p className="mt-1 text-sm leading-relaxed text-indigo-600">
+                Your snapshot is saved. Upload again in a few days and we&apos;ll show you exactly who followed or unfollowed you since today.
               </p>
-              {isPro && recentlyUnfollowed?.length > 0 ? (
-                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-                  {recentlyUnfollowed.slice(0, 10).map((p) => (
-                    <a
-                      key={p.handle}
-                      href={`https://instagram.com/${p.handle}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-medium text-amber-700 hover:underline"
-                    >
-                      @{p.handle}
-                    </a>
-                  ))}
-                  {recentlyUnfollowed.length > 10 && (
-                    <span className="text-xs text-amber-600">+{recentlyUnfollowed.length - 10} more</span>
-                  )}
-                </div>
-              ) : (
-                <p className="mt-1 text-xs text-amber-600">
-                  {isPro ? 'From recently_unfollowed_profiles.html' : 'Upgrade to Pro to see who'}
-                </p>
-              )}
+              <p className="mt-2.5 text-xs font-bold text-indigo-400">
+                Tip: You can request a new Instagram export anytime from Account Center.
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {isFirst ? (
-        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-center">
-          <div className="text-3xl mb-2">🎉</div>
-          <p className="text-sm font-black text-blue-800">First upload saved!</p>
-          <p className="mt-1 text-sm text-blue-600">
-            Upload again in a few days to see exactly who followed or unfollowed you.
-          </p>
-        </div>
-      ) : (
+      {/* ── Diff: KPI cards + chart + lists ── */}
+      {!isFirst && (
         <>
-          {/* Stat cards — visible to everyone */}
-          <div className="grid grid-cols-2 gap-3">
-            <StatCard
-              value={lostCount}
-              label="Unfollowed you"
-              color="red"
-            />
-            <StatCard
-              value={newCount}
-              label="New followers"
-              color="green"
-            />
+          {/* 3 KPI cards */}
+          <div className="grid grid-cols-3 gap-2.5">
+            {[
+              { label: 'Unfollowed You', value: lostCount, bg: 'bg-red-50', border: 'border-red-100', num: 'text-red-600', sub: 'text-red-400', icon: '↓' },
+              { label: 'New Followers', value: newCount, bg: 'bg-green-50', border: 'border-green-100', num: 'text-green-600', sub: 'text-green-400', icon: '↑' },
+              { label: 'You Unfollowed', value: unfollowedCount, bg: 'bg-amber-50', border: 'border-amber-100', num: 'text-amber-600', sub: 'text-amber-400', icon: '→' },
+            ].map(({ label, value, bg, border, num, sub, icon }) => (
+              <div key={label} className={`rounded-xl border p-3 ${bg} ${border}`}>
+                <p className={`text-[10px] font-black uppercase tracking-wide ${sub} mb-1`}>{icon}</p>
+                <p className={`text-2xl font-black tabular-nums leading-none ${num}`}>{value}</p>
+                <p className={`text-[10px] font-bold mt-1.5 leading-tight ${num} opacity-70`}>{label}</p>
+              </div>
+            ))}
           </div>
 
-          {/* Names — gated for free users */}
-          {isPro ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <DiffSection
-                title="Lost followers"
-                people={diff!.lostFollowers}
-                emptyText="No one unfollowed you"
-                variant="lost"
-              />
-              <DiffSection
-                title="New followers"
-                people={diff!.newFollowers}
-                emptyText="No new followers"
-                variant="new"
-              />
+          {/* Change chart */}
+          {(lostCount > 0 || newCount > 0) && (
+            <div className="rounded-xl border border-cyan-950/10 bg-white p-4">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-xs font-black uppercase tracking-wider text-slate-400">Change This Period</p>
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-black ${
+                  net > 0 ? 'bg-green-100 text-green-700' : net < 0 ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'
+                }`}>
+                  {net > 0 ? '↑' : net < 0 ? '↓' : '→'} {net > 0 ? '+' : ''}{net} net
+                </span>
+              </div>
+              {[
+                { label: 'Unfollowed you', value: lostCount, bar: 'bg-red-400', text: 'text-red-600' },
+                { label: 'New followers', value: newCount, bar: 'bg-green-400', text: 'text-green-600' },
+              ].map(({ label, value, bar, text }) => {
+                const maxChange = Math.max(lostCount, newCount, 1);
+                return (
+                  <div key={label} className="flex items-center gap-3 mb-2.5 last:mb-0">
+                    <span className="text-xs font-medium text-slate-500 w-24 shrink-0">{label}</span>
+                    <div className="flex-1 h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                      <div className={`h-full rounded-full ${bar} transition-all duration-700`} style={{ width: `${(value / maxChange) * 100}%` }} />
+                    </div>
+                    <span className={`text-sm font-black tabular-nums w-5 text-right ${text}`}>{value}</span>
+                  </div>
+                );
+              })}
             </div>
-          ) : (
-            <PaywallNames
-              lostCount={lostCount}
-              newCount={newCount}
-            />
           )}
 
-          {/* CSV export for Pro */}
-          {isPro && (
-            <div className="flex flex-wrap gap-2 border-t border-cyan-950/10 pt-4">
-              <a
-                href={downloadHref(result.uploadId, 'followers')}
-                className="inline-flex items-center rounded-full border border-cyan-950/10 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-teal-300 hover:text-slate-950"
-              >
-                Followers CSV
-              </a>
-              {followingCount && (
-                <a
-                  href={downloadHref(result.uploadId, 'following')}
-                  className="inline-flex items-center rounded-full border border-cyan-950/10 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-teal-300 hover:text-slate-950"
-                >
-                  Following CSV
-                </a>
+          {/* Detail lists */}
+          {isPro ? (
+            <div className="space-y-3">
+              {diff!.lostFollowers.length > 0 && (
+                <DiffSection title="Unfollowed you" people={diff!.lostFollowers} emptyText="" variant="lost" />
               )}
-              <a
-                href={downloadHref(result.uploadId, 'diff')}
-                className="inline-flex items-center rounded-full border border-cyan-950/10 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-teal-300 hover:text-slate-950"
-              >
-                Changes CSV
-              </a>
+              {diff!.newFollowers.length > 0 && (
+                <DiffSection title="New followers" people={diff!.newFollowers} emptyText="" variant="new" />
+              )}
+              {unfollowedCount > 0 && recentlyUnfollowed.length > 0 && (
+                <YouUnfollowedSection people={recentlyUnfollowed} />
+              )}
             </div>
+          ) : (
+            <PaywallNames lostCount={lostCount} newCount={newCount} unfollowedCount={unfollowedCount} />
           )}
         </>
       )}
 
+      {/* ── Recently unfollowed (first upload, no diff) ── */}
+      {isFirst && unfollowedCount > 0 && (
+        isPro && recentlyUnfollowed.length > 0
+          ? <YouUnfollowedSection people={recentlyUnfollowed} />
+          : (
+            <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
+              <p className="text-sm font-black text-amber-800">You recently unfollowed {unfollowedCount} {unfollowedCount === 1 ? 'account' : 'accounts'}</p>
+              {!isPro && <p className="mt-1 text-xs text-amber-600">Upgrade to Pro to see who</p>}
+            </div>
+          )
+      )}
+
+      {/* ── CSV exports (Pro) ── */}
+      {isPro && !isFirst && (
+        <div className="flex flex-wrap gap-2 border-t border-cyan-950/10 pt-1">
+          {[
+            { href: downloadHref(result.uploadId, 'followers'), label: 'Followers CSV' },
+            ...(followingCount ? [{ href: downloadHref(result.uploadId, 'following'), label: 'Following CSV' }] : []),
+            { href: downloadHref(result.uploadId, 'diff'), label: 'Changes CSV' },
+          ].map(({ href, label }) => (
+            <a
+              key={label}
+              href={href}
+              className="inline-flex items-center rounded-full border border-cyan-950/10 px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:border-slate-400 hover:text-slate-950"
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+      )}
+
+      {/* ── Upload another ── */}
       <button
         type="button"
         onClick={onUploadAnother}
         className="w-full rounded-full border border-cyan-950/15 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-slate-400 hover:text-slate-900"
       >
-        Upload another export
+        Upload next snapshot →
       </button>
+    </div>
+  );
+}
+
+function YouUnfollowedSection({ people }: { people: Person[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? people : people.slice(0, 5);
+  return (
+    <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-sm font-semibold text-amber-700">You recently unfollowed</p>
+        <span className="text-xs font-bold text-amber-500">{people.length}</span>
+      </div>
+      <ul className="space-y-1.5">
+        {shown.map((p) => (
+          <li key={p.handle} className="text-xs text-slate-700">
+            <a href={`https://instagram.com/${p.handle}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
+              @{p.handle}
+            </a>
+          </li>
+        ))}
+      </ul>
+      {people.length > 5 && (
+        <button type="button" onClick={() => setExpanded((e) => !e)} className="mt-2 text-xs text-amber-600 hover:text-amber-800">
+          {expanded ? 'Show less' : `Show all ${people.length}`}
+        </button>
+      )}
     </div>
   );
 }
@@ -1009,36 +1096,42 @@ function StatCard({
 function PaywallNames({
   lostCount,
   newCount,
+  unfollowedCount = 0,
 }: {
   lostCount: number;
   newCount: number;
+  unfollowedCount?: number;
 }) {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-cyan-950/10">
       {/* Blurred preview */}
       <div className="pointer-events-none select-none p-4 opacity-30 blur-sm">
-        <p className="mb-2 text-xs font-bold text-red-600">Lost followers ({lostCount})</p>
-        {Array.from({ length: Math.min(lostCount, 4) }).map((_, i) => (
-          <p key={i} className="mb-1 text-xs text-slate-700">
-            @{'█'.repeat(6 + (i % 4))}
-          </p>
+        <p className="mb-2 text-xs font-bold text-red-600">Unfollowed you ({lostCount})</p>
+        {Array.from({ length: Math.min(lostCount, 3) }).map((_, i) => (
+          <p key={i} className="mb-1 text-xs text-slate-700">@{'█'.repeat(6 + (i % 4))}</p>
         ))}
         <p className="mb-2 mt-3 text-xs font-bold text-green-600">New followers ({newCount})</p>
         {Array.from({ length: Math.min(newCount, 3) }).map((_, i) => (
-          <p key={i} className="mb-1 text-xs text-slate-700">
-            @{'█'.repeat(5 + (i % 5))}
-          </p>
+          <p key={i} className="mb-1 text-xs text-slate-700">@{'█'.repeat(5 + (i % 5))}</p>
         ))}
+        {unfollowedCount > 0 && (
+          <>
+            <p className="mb-2 mt-3 text-xs font-bold text-amber-600">You unfollowed ({unfollowedCount})</p>
+            {Array.from({ length: Math.min(unfollowedCount, 2) }).map((_, i) => (
+              <p key={i} className="mb-1 text-xs text-slate-700">@{'█'.repeat(7 + (i % 3))}</p>
+            ))}
+          </>
+        )}
       </div>
       {/* Overlay */}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/80 p-6 text-center backdrop-blur-sm">
         <span className="text-2xl">🔒</span>
         <div>
           <p className="text-sm font-black text-slate-950">
-            See all {lostCount + newCount} names
+            See all {lostCount + newCount + unfollowedCount} names
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            Upgrade to Pro to reveal who unfollowed you and your new followers.
+            Upgrade to Pro to see who unfollowed you, new followers, and accounts you stopped following.
           </p>
         </div>
         <Link
