@@ -294,80 +294,47 @@ function debugEnv() {
   };
 }
 
-function shouldPreferApify() {
-  return Boolean(process.env.APIFY_TOKEN) && process.env.SCRAPER_PROVIDER !== 'direct';
-}
-
 export async function fetchInstagramProfile(
   handle: string
 ): Promise<InstagramProfileData> {
   const empty = emptyProfile(handle);
-  const profileUrl = `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`;
-  const pageUrl = `https://www.instagram.com/${handle}/`;
-  const hasSession = Boolean(process.env.INSTAGRAM_SESSION_ID);
 
-  if (shouldPreferApify()) {
+  // ── Primary: Apify (no session cookie, maintenance-free) ──────────────────
+  if (process.env.APIFY_TOKEN) {
     try {
       const apify = await fetchApifyProfile(handle);
       if (apify.profile.followerCount !== null) return apify.profile;
       console.error(`[scraper] Apify returned no data for @${handle}: ${apify.error}`);
     } catch (err) {
-      console.error(`[scraper] Apify primary failed for @${handle}:`, err);
+      console.error(`[scraper] Apify failed for @${handle}:`, err);
     }
   }
 
-  // ── Primary: internal API endpoint ────────────────────────────────────────
-  const apiModes = [
-    { includeSession: true, keepHeaders: true, premium: false },
-    ...(hasSession
-      ? [{ includeSession: false, keepHeaders: true, premium: false }]
-      : []),
-    { includeSession: false, keepHeaders: true, premium: true },
-  ];
+  // ── Fallback: direct fetch via proxy (no session required) ────────────────
+  const profileUrl = `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`;
+  const pageUrl = `https://www.instagram.com/${handle}/`;
 
-  for (const mode of apiModes) {
-    try {
-      const res = await igFetch(profileUrl, mode);
-
-      if (res.ok) {
-        const data = (await res.json()) as { data?: { user?: IgUser } };
-        const user = data?.data?.user;
-        if (user && (user.edge_followed_by?.count ?? user.follower_count) != null) {
-          return profileFromUser(handle, user);
-        }
+  try {
+    const res = await igFetch(profileUrl, { includeSession: false, keepHeaders: true, premium: true });
+    if (res.ok) {
+      const data = (await res.json()) as { data?: { user?: IgUser } };
+      const user = data?.data?.user;
+      if (user && (user.edge_followed_by?.count ?? user.follower_count) != null) {
+        return profileFromUser(handle, user);
       }
-    } catch {
-      // try the next mode, then fall through to HTML fallback
     }
+  } catch {
+    // fall through to HTML
   }
 
-  // ── Fallback: parse follower count from page HTML ─────────────────────────
-  const htmlModes = [
-    { render: true, includeSession: true, keepHeaders: true, premium: false },
-    { render: true, includeSession: false, keepHeaders: false, premium: false },
-    { render: true, includeSession: false, keepHeaders: false, premium: true },
-  ];
-
-  for (const mode of htmlModes) {
-    try {
-      const res = await igFetch(pageUrl, mode);
-
-      if (res.ok) {
-        const profile = profileFromHtml(handle, await res.text());
-        if (profile.followerCount !== null) return profile;
-      }
-    } catch (err) {
-      console.error(`[scraper] Failed to fetch @${handle}:`, err);
+  try {
+    const res = await igFetch(pageUrl, { render: true, includeSession: false, keepHeaders: false, premium: true });
+    if (res.ok) {
+      const profile = profileFromHtml(handle, await res.text());
+      if (profile.followerCount !== null) return profile;
     }
-  }
-
-  if (!shouldPreferApify()) {
-    try {
-      const apify = await fetchApifyProfile(handle);
-      if (apify.profile.followerCount !== null) return apify.profile;
-    } catch (err) {
-      console.error(`[scraper] Apify fallback failed for @${handle}:`, err);
-    }
+  } catch (err) {
+    console.error(`[scraper] All methods failed for @${handle}:`, err);
   }
 
   return empty;
