@@ -25,7 +25,7 @@ const faqItems = [
   {
     question: 'How do I track Instagram follower growth for free?',
     answer:
-      'Create a free account, add one public Instagram handle, and seed the first follower-count snapshot from the profile page. The dashboard builds growth history as new snapshots are captured.',
+      'Create a free account, add one public Instagram handle, and use browser capture to save the first follower-count snapshot from the profile page. The dashboard builds growth history as new snapshots are captured.',
   },
   {
     question: 'Can I track who unfollowed me on Instagram?',
@@ -69,7 +69,7 @@ const faqSchema = {
 
 const proofStats = [
   { value: '0', label: 'Instagram passwords requested' },
-  { value: 'Instant', label: 'First snapshot from profile count' },
+  { value: 'Browser', label: 'First snapshot capture' },
   { value: 'CSV', label: 'Follower exports on Pro' },
   { value: 'Web', label: 'No app install required' },
 ];
@@ -127,7 +127,7 @@ const workflow = [
   },
   {
     title: 'Start the daily record',
-    description: 'Seed the first count immediately, then add new captures as history builds.',
+    description: 'Use browser capture to save the first snapshot, then add new captures as history builds.',
   },
   {
     title: 'Compare the changes',

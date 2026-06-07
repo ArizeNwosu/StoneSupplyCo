@@ -277,6 +277,15 @@ export default function DashboardPage() {
                 lastChecked={selected.lastChecked}
               />
             )}
+            <BrowserCollectorPanel
+              accountId={selected.id}
+              handle={selected.handle}
+              snapshotCount={snapshotData.snapshotCount}
+              onRefresh={() => {
+                void fetchAccounts();
+                void fetchSnapshots(selected.id);
+              }}
+            />
             <ManualSnapshotPanel
               accountId={selected.id}
               handle={selected.handle}
@@ -284,10 +293,6 @@ export default function DashboardPage() {
                 void fetchAccounts();
                 void fetchSnapshots(selected.id);
               }}
-            />
-            <BrowserCollectorPanel
-              accountId={selected.id}
-              handle={selected.handle}
             />
             <UnfollowDetector userPlan={userPlan} />
           </div>
