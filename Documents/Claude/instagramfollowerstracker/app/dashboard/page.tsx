@@ -12,8 +12,6 @@ import { ShareReportButton } from '@/components/tracker/ShareReportButton';
 import { AuthenticityBadge } from '@/components/tracker/AuthenticityBadge';
 import { PatternAlerts } from '@/components/tracker/PatternAlerts';
 import { AutomaticTrackingPanel } from '@/components/tracker/AutomaticTrackingPanel';
-import { BrowserCollectorPanel } from '@/components/tracker/BrowserCollectorPanel';
-import { ManualSnapshotPanel } from '@/components/tracker/ManualSnapshotPanel';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { UpgradeModal } from '@/components/tracker/UpgradeModal';
@@ -96,11 +94,11 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const handleAdd = useCallback(async (handle: string, followerCount?: string): Promise<{ error?: string }> => {
+  const handleAdd = useCallback(async (handle: string): Promise<{ error?: string }> => {
     const res = await fetch('/api/accounts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ handle, followerCount }),
+      body: JSON.stringify({ handle }),
     });
     const data = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
     if (!res.ok) {
@@ -286,22 +284,6 @@ export default function DashboardPage() {
                 await fetch(`/api/accounts/${selected.id}/refresh`, { method: 'POST' });
                 await fetchAccounts();
                 await fetchSnapshots(selected.id);
-              }}
-            />
-            <BrowserCollectorPanel
-              accountId={selected.id}
-              handle={selected.handle}
-              onRefresh={() => {
-                void fetchAccounts();
-                void fetchSnapshots(selected.id);
-              }}
-            />
-            <ManualSnapshotPanel
-              accountId={selected.id}
-              handle={selected.handle}
-              onSaved={() => {
-                void fetchAccounts();
-                void fetchSnapshots(selected.id);
               }}
             />
             <UnfollowDetector userPlan={userPlan} />
