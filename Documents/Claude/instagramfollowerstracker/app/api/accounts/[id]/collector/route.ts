@@ -88,7 +88,6 @@ function buildBookmarklet({
   }
   fetch(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       token,
       handle: pathHandle || targetHandle,
