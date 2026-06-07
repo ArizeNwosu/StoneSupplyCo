@@ -29,14 +29,28 @@ export async function parseInstagramUpload(file: File): Promise<ExportData> {
   if (lowerName.endsWith('.zip') || file.type.includes('zip')) {
     const files = extractInstagramFilesFromZip(buffer);
     return {
-      followers: dedupePeople(
-        files.followers.flatMap((content) => parsePeopleJson(content, 'followers'))
-      ),
-      following: files.following ? parsePeopleJson(files.following, 'following') : [],
+      followers: dedupePeople([
+        ...files.followersJson.flatMap((c) => parsePeopleJson(c, 'followers')),
+        ...files.followersHtml.flatMap((c) => parsePeopleHtml(c, 'followers')),
+      ]),
+      following: dedupePeople([
+        ...(files.followingJson ? parsePeopleJson(files.followingJson, 'following') : []),
+        ...(files.followingHtml ? parsePeopleHtml(files.followingHtml, 'following') : []),
+      ]),
     };
   }
 
   const text = buffer.toString('utf8');
+
+  if (lowerName.endsWith('.html')) {
+    // Single HTML file: determine type by filename
+    const kind: RelationshipKind = lowerName.includes('following') ? 'following' : 'followers';
+    const people = parsePeopleHtml(text, kind);
+    return kind === 'following'
+      ? { followers: [], following: people }
+      : { followers: people, following: [] };
+  }
+
   return parseInstagramExport(text);
 }
 
@@ -46,6 +60,29 @@ export function parseInstagramExport(fileContent: string): ExportData {
     following: parsePeopleJson(fileContent, 'following'),
   };
 }
+
+// ── HTML parsing ───────────────────────────────────────────────────────────
+// followers_1.html  → href="https://www.instagram.com/HANDLE"
+// following.html    → href="https://www.instagram.com/_u/HANDLE"
+
+function parsePeopleHtml(html: string, kind: RelationshipKind): ExportPerson[] {
+  const people: ExportPerson[] = [];
+  const re =
+    kind === 'following'
+      ? /href="https:\/\/www\.instagram\.com\/_u\/([a-z0-9._]{1,30})"/gi
+      : /href="https:\/\/www\.instagram\.com\/(?!_u\/)([a-z0-9._]{1,30})"/gi;
+
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(html)) !== null) {
+    const handle = match[1]!.toLowerCase();
+    if (/^[a-z0-9._]{1,30}$/.test(handle)) {
+      people.push({ handle });
+    }
+  }
+  return dedupePeople(people);
+}
+
+// ── JSON parsing ───────────────────────────────────────────────────────────
 
 function parsePeopleJson(fileContent: string, kind: RelationshipKind): ExportPerson[] {
   let data: unknown;
@@ -128,39 +165,25 @@ function dedupePeople(people: ExportPerson[]): ExportPerson[] {
   return [...byHandle.values()].sort((a, b) => a.handle.localeCompare(b.handle));
 }
 
+// ── ZIP extraction ─────────────────────────────────────────────────────────
+// Only decompresses the specific files we need — skips all media/other files.
+
 function extractInstagramFilesFromZip(buffer: Buffer): {
-  followers: string[];
-  following?: string;
+  followersJson: string[];
+  followersHtml: string[];
+  followingJson?: string;
+  followingHtml?: string;
 } {
-  const entries = readZipEntries(buffer);
-  const result: { followers: string[]; following?: string } = {
-    followers: [],
-  };
-
-  for (const entry of entries) {
-    const name = entry.name.toLowerCase();
-    if (/(^|\/)followers_?\d*\.json$/.test(name)) {
-      result.followers.push(entry.text);
-    }
-    if (!result.following && /(^|\/)following\.json$/.test(name)) {
-      result.following = entry.text;
-    }
-  }
-
-  if (result.followers.length === 0 && !result.following) {
-    throw new Error(
-      'No Instagram followers/following JSON files found in the ZIP. Upload the original Instagram data ZIP or followers_1.json.'
-    );
-  }
-
-  return result;
-}
-
-function readZipEntries(buffer: Buffer): Array<{ name: string; text: string }> {
   const eocdOffset = findEndOfCentralDirectory(buffer);
   const entryCount = buffer.readUInt16LE(eocdOffset + 10);
   const centralDirectoryOffset = buffer.readUInt32LE(eocdOffset + 16);
-  const entries: Array<{ name: string; text: string }> = [];
+
+  const result: {
+    followersJson: string[];
+    followersHtml: string[];
+    followingJson?: string;
+    followingHtml?: string;
+  } = { followersJson: [], followersHtml: [] };
 
   let offset = centralDirectoryOffset;
   for (let i = 0; i < entryCount; i++) {
@@ -175,19 +198,37 @@ function readZipEntries(buffer: Buffer): Array<{ name: string; text: string }> {
     const commentLength = buffer.readUInt16LE(offset + 32);
     const localHeaderOffset = buffer.readUInt32LE(offset + 42);
     const nameStart = offset + 46;
-    const name = buffer.toString('utf8', nameStart, nameStart + fileNameLength);
+    const name = buffer.toString('utf8', nameStart, nameStart + fileNameLength).toLowerCase();
 
-    if (name.endsWith('.json')) {
-      entries.push({
-        name,
-        text: readZipEntryText(buffer, localHeaderOffset, compressedSize, compressionMethod),
-      });
+    const isFollowersJson = /(^|\/)followers_?\d*\.json$/.test(name);
+    const isFollowersHtml = /(^|\/)followers_?\d*\.html$/.test(name);
+    const isFollowingJson = !result.followingJson && /(^|\/)following\.json$/.test(name);
+    const isFollowingHtml = !result.followingHtml && /(^|\/)following\.html$/.test(name);
+
+    if (isFollowersJson || isFollowersHtml || isFollowingJson || isFollowingHtml) {
+      const text = readZipEntryText(buffer, localHeaderOffset, compressedSize, compressionMethod);
+      if (isFollowersJson) result.followersJson.push(text);
+      else if (isFollowersHtml) result.followersHtml.push(text);
+      else if (isFollowingJson) result.followingJson = text;
+      else if (isFollowingHtml) result.followingHtml = text;
     }
 
     offset = nameStart + fileNameLength + extraLength + commentLength;
   }
 
-  return entries;
+  const hasData =
+    result.followersJson.length > 0 ||
+    result.followersHtml.length > 0 ||
+    result.followingJson ||
+    result.followingHtml;
+
+  if (!hasData) {
+    throw new Error(
+      'No Instagram followers/following files found in the ZIP. Upload the original Instagram data ZIP, followers_1.json, or followers_1.html.'
+    );
+  }
+
+  return result;
 }
 
 function readZipEntryText(

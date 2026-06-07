@@ -607,7 +607,7 @@ function UploadStage({
       <div>
         <h4 className="text-base font-black text-slate-950">Upload your Instagram export</h4>
         <p className="mt-1 text-sm text-slate-500">
-          Upload the ZIP file Instagram emailed you. We accept the full ZIP or just <strong>followers_1.json</strong>.
+          Upload the ZIP Instagram emailed you, or just <strong>followers_1.html</strong> from the <code className="text-xs bg-slate-100 px-1 rounded">connections/followers_and_following/</code> folder.
         </p>
       </div>
 
@@ -632,7 +632,7 @@ function UploadStage({
         <input
           ref={fileRef}
           type="file"
-          accept=".zip,.json,application/zip,application/x-zip-compressed,application/json"
+          accept=".zip,.json,.html,application/zip,application/x-zip-compressed,application/json,text/html"
           className="absolute inset-0 cursor-pointer opacity-0"
           onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
         />

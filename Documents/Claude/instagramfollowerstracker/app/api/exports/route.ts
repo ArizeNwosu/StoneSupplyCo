@@ -74,9 +74,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (parsed.followers.length === 0) {
+  if (parsed.followers.length === 0 && parsed.following.length === 0) {
     return NextResponse.json(
-      { error: 'No followers found in this file. Make sure you uploaded followers_1.json from your Instagram data export.' },
+      { error: 'No followers or following data found. Upload your Instagram data ZIP, followers_1.json, or followers_1.html.' },
       { status: 400 }
     );
   }
