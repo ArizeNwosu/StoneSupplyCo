@@ -19,13 +19,14 @@ export async function GET() {
 
   const isPro = PLAN_LIMITS[user.plan as keyof typeof PLAN_LIMITS].unfollowDetection;
 
-  // Fetch the two most recent exports with their follower lists to recompute diff
+  // Fetch the two most recent exports with follower AND following lists
   const exports = await prisma.dataExport.findMany({
     where: { userId: user.id },
     orderBy: { uploadedAt: 'desc' },
     take: 2,
     include: {
       followers: { select: { handle: true, displayName: true } },
+      following: { select: { handle: true, displayName: true } },
     },
   });
 
@@ -40,6 +41,9 @@ export async function GET() {
     newCount: number;
     lostCount: number;
   } | null = null;
+
+  // Accounts in previous following but not current following = you unfollowed them
+  let youUnfollowed: { handle: string; displayName?: string }[] = [];
 
   if (previous) {
     const prevHandles = new Set(previous.followers.map((f) => f.handle));
@@ -58,6 +62,14 @@ export async function GET() {
         ? newFollowers.map((f) => ({ handle: f.handle, displayName: f.displayName ?? undefined }))
         : [],
     };
+
+    // Compute who you unfollowed from stored following lists
+    if (previous.following.length > 0 || latest.following.length > 0) {
+      const currFollowingHandles = new Set(latest.following.map((f) => f.handle));
+      youUnfollowed = previous.following
+        .filter((f) => !currFollowingHandles.has(f.handle))
+        .map((f) => ({ handle: f.handle, displayName: f.displayName ?? undefined }));
+    }
   }
 
   return NextResponse.json({
@@ -66,7 +78,7 @@ export async function GET() {
     followingCount: latest.followingCount,
     uploadedAt: latest.uploadedAt.toISOString(),
     diff,
-    recentlyUnfollowed: [],
-    recentlyUnfollowedCount: 0,
+    recentlyUnfollowed: isPro ? youUnfollowed : [],
+    recentlyUnfollowedCount: youUnfollowed.length,
   });
 }

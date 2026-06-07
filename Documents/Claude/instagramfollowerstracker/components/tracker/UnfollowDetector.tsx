@@ -162,7 +162,8 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Load persisted results on mount so data survives refresh / logout
+  // Load persisted results on mount so data survives refresh / logout.
+  // First-time visitors (no uploads, never seen guide) start at the guide.
   useEffect(() => {
     void (async () => {
       try {
@@ -172,6 +173,10 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
           if (data) {
             setResult(data);
             setStage('results');
+          } else {
+            // No uploads yet — show guide the first time
+            const hasSeen = typeof window !== 'undefined' && localStorage.getItem('ift_guide_seen');
+            if (!hasSeen) setStage('device');
           }
         }
       } catch {
@@ -309,6 +314,10 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
               setGuideStep(0);
               setStage('guide');
             }}
+            onBack={() => {
+              localStorage.setItem('ift_guide_seen', '1');
+              setStage('upload');
+            }}
           />
         )}
 
@@ -359,6 +368,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
                 if (exportPath === 'drive') {
                   window.location.href = '/api/drive/connect';
                 } else {
+                  localStorage.setItem('ift_guide_seen', '1');
                   setStage('upload');
                 }
               } else {
@@ -449,7 +459,7 @@ function IntroStage({ onStart }: { onStart: () => void }) {
   );
 }
 
-function DeviceStage({ onSelect }: { onSelect: (d: Device) => void }) {
+function DeviceStage({ onSelect, onBack }: { onSelect: (d: Device) => void; onBack: () => void }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -479,6 +489,13 @@ function DeviceStage({ onSelect }: { onSelect: (d: Device) => void }) {
           </button>
         ))}
       </div>
+      <button
+        type="button"
+        onClick={onBack}
+        className="w-full text-center text-xs font-semibold text-slate-400 hover:text-slate-600 transition"
+      >
+        Skip guide — I already have my files →
+      </button>
     </div>
   );
 }
@@ -782,6 +799,11 @@ function ResultsStage({
   const isFirst = diff === null;
   const unfollowedCount = recentlyUnfollowedCount ?? 0;
   const net = newCount - lostCount;
+  // If the API returned names, treat as Pro regardless of prop timing (fixes race condition)
+  const effectiveIsPro = isPro ||
+    (diff?.lostFollowers?.length ?? 0) > 0 ||
+    (diff?.newFollowers?.length ?? 0) > 0 ||
+    recentlyUnfollowed.length > 0;
   const fc = followerCount ?? 0;
   const fwc = followingCount ?? 0;
   const netTotal = fc - fwc;
@@ -913,7 +935,7 @@ function ResultsStage({
           )}
 
           {/* Detail lists */}
-          {isPro ? (
+          {effectiveIsPro ? (
             <div className="space-y-3">
               {diff!.lostFollowers.length > 0 && (
                 <DiffSection title="Unfollowed you" people={diff!.lostFollowers} emptyText="" variant="lost" />
@@ -921,7 +943,7 @@ function ResultsStage({
               {diff!.newFollowers.length > 0 && (
                 <DiffSection title="New followers" people={diff!.newFollowers} emptyText="" variant="new" />
               )}
-              {unfollowedCount > 0 && recentlyUnfollowed.length > 0 && (
+              {recentlyUnfollowed.length > 0 && (
                 <YouUnfollowedSection people={recentlyUnfollowed} />
               )}
             </div>
@@ -933,19 +955,21 @@ function ResultsStage({
 
       {/* ── Recently unfollowed (first upload, no diff) ── */}
       {isFirst && unfollowedCount > 0 && (
-        isPro && recentlyUnfollowed.length > 0
+        effectiveIsPro && recentlyUnfollowed.length > 0
           ? <YouUnfollowedSection people={recentlyUnfollowed} />
           : (
             <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
               <p className="text-sm font-black text-amber-800">You recently unfollowed {unfollowedCount} {unfollowedCount === 1 ? 'account' : 'accounts'}</p>
-              {!isPro && <p className="mt-1 text-xs text-amber-600">Upgrade to Pro to see who</p>}
+              {!effectiveIsPro && <p className="mt-1 text-xs text-amber-600">Upgrade to Pro to see who</p>}
             </div>
           )
       )}
 
       {/* ── CSV exports (Pro) ── */}
-      {isPro && !isFirst && (
-        <div className="flex flex-wrap gap-2 border-t border-cyan-950/10 pt-1">
+      {effectiveIsPro && !isFirst && (
+        <div className="border-t border-cyan-950/10 pt-3 space-y-2">
+          <p className="text-xs font-bold text-slate-400">Export:</p>
+          <div className="flex flex-wrap gap-2">
           {[
             { href: downloadHref(result.uploadId, 'followers'), label: 'Followers CSV' },
             ...(followingCount ? [{ href: downloadHref(result.uploadId, 'following'), label: 'Following CSV' }] : []),
@@ -959,6 +983,7 @@ function ResultsStage({
               {label}
             </a>
           ))}
+          </div>
         </div>
       )}
 

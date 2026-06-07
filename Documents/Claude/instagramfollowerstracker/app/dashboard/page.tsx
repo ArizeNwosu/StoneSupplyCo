@@ -221,77 +221,81 @@ export default function DashboardPage() {
           <DashboardLoadingPanel />
         ) : accounts.length === 0 ? (
           <EmptyState onAdd={() => setShowAddModal(true)} />
-        ) : selected && snapshotData ? (
+        ) : (
           <div className="max-w-4xl mx-auto space-y-6">
-            <PatternAlerts />
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-2xl font-black text-slate-950">
-                  @{selected.handle}
-                </h2>
-                {selected.displayName && (
-                  <p className="text-sm font-semibold text-slate-500">{selected.displayName}</p>
-                )}
-                <div className="mt-2">
-                  {snapshotData.authenticityScore ? (
-                    <AuthenticityBadge
-                      score={snapshotData.authenticityScore.score}
-                      label={snapshotData.authenticityScore.label}
-                      signals={snapshotData.authenticityScore.signals}
-                    />
-                  ) : snapshotData.snapshotCount >= 1 ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-950/10 bg-white px-2.5 py-1 text-xs font-bold text-slate-400">
-                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-300" />
-                      Analyzing · {snapshotData.snapshotCount}/5 snapshots
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-              <ShareReportButton accountId={selected.id} />
-            </div>
-            {snapshotData.chartReady && snapshotData.stats ? (
+            {selected && snapshotData ? (
               <>
-                <MetricsRow
-                  current={snapshotData.stats.current}
-                  change24h={selected.change24h}
-                  change7d={snapshotData.stats.change7d}
-                  change30d={snapshotData.stats.change30d}
-                  avgDailyGain={snapshotData.stats.avgDailyGain}
-                />
-                <div className="rounded-lg border border-cyan-950/10 bg-white p-6 shadow-xl shadow-cyan-950/10">
-                  <h3 className="mb-4 text-sm font-black text-slate-700">
-                    Follower Count History
-                  </h3>
-                  <FollowerChart
-                    snapshots={snapshotData.snapshots}
-                    handle={selected.handle}
-                  />
+                <PatternAlerts />
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-950">
+                      @{selected.handle}
+                    </h2>
+                    {selected.displayName && (
+                      <p className="text-sm font-semibold text-slate-500">{selected.displayName}</p>
+                    )}
+                    <div className="mt-2">
+                      {snapshotData.authenticityScore ? (
+                        <AuthenticityBadge
+                          score={snapshotData.authenticityScore.score}
+                          label={snapshotData.authenticityScore.label}
+                          signals={snapshotData.authenticityScore.signals}
+                        />
+                      ) : snapshotData.snapshotCount >= 1 ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-950/10 bg-white px-2.5 py-1 text-xs font-bold text-slate-400">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-300" />
+                          Analyzing · {snapshotData.snapshotCount}/5 snapshots
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <ShareReportButton accountId={selected.id} />
                 </div>
+                {snapshotData.chartReady && snapshotData.stats ? (
+                  <>
+                    <MetricsRow
+                      current={snapshotData.stats.current}
+                      change24h={selected.change24h}
+                      change7d={snapshotData.stats.change7d}
+                      change30d={snapshotData.stats.change30d}
+                      avgDailyGain={snapshotData.stats.avgDailyGain}
+                    />
+                    <div className="rounded-lg border border-cyan-950/10 bg-white p-6 shadow-xl shadow-cyan-950/10">
+                      <h3 className="mb-4 text-sm font-black text-slate-700">
+                        Follower Count History
+                      </h3>
+                      <FollowerChart
+                        snapshots={snapshotData.snapshots}
+                        handle={selected.handle}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <SnapshotProgress
+                    handle={selected.handle}
+                    snapshotCount={snapshotData.snapshotCount}
+                    latestCount={selected.latestCount}
+                    lastChecked={selected.lastChecked}
+                  />
+                )}
+                <AutomaticTrackingPanel
+                  handle={selected.handle}
+                  snapshotCount={snapshotData.snapshotCount}
+                  lastChecked={selected.lastChecked}
+                  onRefresh={async () => {
+                    await fetch(`/api/accounts/${selected.id}/refresh`, { method: 'POST' });
+                    await fetchAccounts();
+                    await fetchSnapshots(selected.id);
+                  }}
+                />
               </>
-            ) : (
-              <SnapshotProgress
-                handle={selected.handle}
-                snapshotCount={snapshotData.snapshotCount}
-                latestCount={selected.latestCount}
-                lastChecked={selected.lastChecked}
-              />
-            )}
-            <AutomaticTrackingPanel
-              handle={selected.handle}
-              snapshotCount={snapshotData.snapshotCount}
-              lastChecked={selected.lastChecked}
-              onRefresh={async () => {
-                await fetch(`/api/accounts/${selected.id}/refresh`, { method: 'POST' });
-                await fetchAccounts();
-                await fetchSnapshots(selected.id);
-              }}
-            />
+            ) : selected ? (
+              <DashboardLoadingPanel handle={selected.handle} />
+            ) : null}
+
+            {/* Unfollow Detector is always visible — independent of which account is selected */}
             <UnfollowDetector userPlan={userPlan} />
           </div>
-        ) : selected ? (
-          <DashboardLoadingPanel handle={selected.handle} />
-        ) : (
-          <EmptyState onAdd={() => setShowAddModal(true)} />
         )}
       </main>
 
