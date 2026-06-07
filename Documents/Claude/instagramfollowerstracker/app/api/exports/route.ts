@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma';
 import { PLAN_LIMITS } from '@/lib/limits';
 import { parseInstagramUpload, diffExports, type ExportData } from '@/lib/export-parser';
 
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
 const INSERT_CHUNK_SIZE = 1000;
 

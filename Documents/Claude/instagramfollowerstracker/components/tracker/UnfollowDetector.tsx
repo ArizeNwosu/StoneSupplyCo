@@ -148,7 +148,7 @@ const DESKTOP_DRIVE_STEPS = [
 export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
   const isPro = userPlan !== 'FREE';
 
-  const [stage, setStage] = useState<Stage>('intro');
+  const [stage, setStage] = useState<Stage>('upload');
   const [device, setDevice] = useState<Device | null>(null);
   const [exportPath, setExportPath] = useState<ExportPath | null>(null);
   const [guideStep, setGuideStep] = useState(0);
@@ -350,7 +350,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
             uploading={uploading}
             error={error}
             onUpload={handleUpload}
-            onBack={isPro ? undefined : () => setStage('guide-path')}
+            onStartGuide={() => setStage('device')}
           />
         )}
 
@@ -580,13 +580,13 @@ function UploadStage({
   uploading,
   error,
   onUpload,
-  onBack,
+  onStartGuide,
 }: {
   fileRef: React.RefObject<HTMLInputElement | null>;
   uploading: boolean;
   error: string | null;
   onUpload: () => void;
-  onBack?: () => void;
+  onStartGuide?: () => void;
 }) {
   const [dragging, setDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -604,10 +604,10 @@ function UploadStage({
 
   return (
     <div className="space-y-5">
-      <div className="text-center">
-        <h4 className="text-lg font-black text-slate-950">Upload your Instagram export</h4>
+      <div>
+        <h4 className="text-base font-black text-slate-950">Upload your Instagram export</h4>
         <p className="mt-1 text-sm text-slate-500">
-          Upload the ZIP file Instagram sent you. We accept the full ZIP or just <strong>followers_1.json</strong>.
+          Upload the ZIP file Instagram emailed you. We accept the full ZIP or just <strong>followers_1.json</strong>.
         </p>
       </div>
 
@@ -625,7 +625,7 @@ function UploadStage({
         <div className="text-3xl">📂</div>
         <div>
           <p className="text-sm font-bold text-slate-700">
-            {fileName ?? 'Drop your ZIP here'}
+            {fileName ?? 'Drop your ZIP or JSON here'}
           </p>
           <p className="text-xs text-slate-400">or click to browse</p>
         </div>
@@ -642,33 +642,35 @@ function UploadStage({
         <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
       )}
 
-      <div className="flex gap-3">
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex-1 rounded-full border border-cyan-950/15 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-slate-400"
-          >
-            Back
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onUpload}
-          disabled={uploading}
-          className="flex-[2] rounded-full bg-slate-950 px-5 py-2.5 text-sm font-black text-white transition hover:bg-slate-800 disabled:opacity-50"
-        >
-          {uploading ? 'Analysing…' : 'Analyse my data'}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={onUpload}
+        disabled={uploading}
+        className="w-full rounded-full bg-slate-950 px-5 py-2.5 text-sm font-black text-white transition hover:bg-slate-800 disabled:opacity-50"
+      >
+        {uploading ? 'Analysing…' : 'Analyse my data'}
+      </button>
 
       <div className="relative flex items-center gap-3">
         <div className="h-px flex-1 bg-cyan-950/10" />
-        <span className="text-xs font-semibold text-slate-400">or skip uploads entirely</span>
+        <span className="text-xs font-semibold text-slate-400">or connect automatically</span>
         <div className="h-px flex-1 bg-cyan-950/10" />
       </div>
 
       <GoogleDrivePanel />
+
+      {onStartGuide && (
+        <p className="text-center text-xs text-slate-400">
+          Don&apos;t have your export yet?{' '}
+          <button
+            type="button"
+            onClick={onStartGuide}
+            className="font-bold text-slate-600 underline hover:text-slate-900"
+          >
+            See step-by-step guide →
+          </button>
+        </p>
+      )}
     </div>
   );
 }
