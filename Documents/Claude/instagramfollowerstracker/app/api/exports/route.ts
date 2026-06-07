@@ -183,6 +183,10 @@ export async function POST(req: NextRequest) {
     };
   }
 
+  // Ghost following: accounts you follow that don't follow you back
+  const followerHandles = new Set(parsed.followers.map((f) => f.handle));
+  const ghostFollowing = parsed.following.filter((f) => !followerHandles.has(f.handle));
+
   return NextResponse.json({
     uploadId: newExport.id,
     followerCount: newExport.followerCount,
@@ -192,6 +196,10 @@ export async function POST(req: NextRequest) {
     // Returned but not persisted — supplementary data from recently_unfollowed_profiles.html
     recentlyUnfollowed: isPro ? recentlyUnfollowed : [],
     recentlyUnfollowedCount: recentlyUnfollowed.length,
+    ghostFollowing: isPro
+      ? ghostFollowing.map((f) => ({ handle: f.handle, displayName: f.displayName ?? undefined }))
+      : [],
+    ghostFollowingCount: ghostFollowing.length,
   });
 }
 

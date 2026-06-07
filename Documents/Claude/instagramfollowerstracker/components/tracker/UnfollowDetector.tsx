@@ -24,6 +24,8 @@ interface UploadResult {
   diff: DiffResult | null;
   recentlyUnfollowed: Person[];
   recentlyUnfollowedCount: number;
+  ghostFollowing: Person[];
+  ghostFollowingCount: number;
 }
 
 interface UnfollowAccount {
@@ -248,6 +250,8 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
                   : null,
                 recentlyUnfollowed: [],
                 recentlyUnfollowedCount: 0,
+                ghostFollowing: [],
+                ghostFollowingCount: 0,
               });
               setStage('results');
             } else {
@@ -891,7 +895,7 @@ function UploadStage({
       <button
         type="button"
         onClick={onUpload}
-        disabled={uploading || selectedFiles.length === 0 || handle.trim() === ''}
+        disabled={uploading || selectedFiles.length === 0}
         className="w-full rounded-full bg-slate-950 px-5 py-2.5 text-sm font-black text-white transition hover:bg-slate-800 disabled:opacity-50"
       >
         {uploading ? 'Analysing…' : 'Analyse my data'}
@@ -940,7 +944,7 @@ function ResultsStage({
   isPro: boolean;
   onUploadAnother: () => void;
 }) {
-  const { diff, followerCount, followingCount, uploadedAt, recentlyUnfollowed, recentlyUnfollowedCount } = result;
+  const { diff, followerCount, followingCount, uploadedAt, recentlyUnfollowed, recentlyUnfollowedCount, ghostFollowing, ghostFollowingCount } = result;
   const lostCount = diff?.lostCount ?? 0;
   const newCount = diff?.newCount ?? 0;
   const isFirst = diff === null;
@@ -950,11 +954,13 @@ function ResultsStage({
   const effectiveIsPro = isPro ||
     (diff?.lostFollowers?.length ?? 0) > 0 ||
     (diff?.newFollowers?.length ?? 0) > 0 ||
-    recentlyUnfollowed.length > 0;
+    recentlyUnfollowed.length > 0 ||
+    (ghostFollowing?.length ?? 0) > 0;
   const fc = followerCount ?? 0;
   const fwc = followingCount ?? 0;
   const netTotal = fc - fwc;
   const maxBar = Math.max(fc, fwc, 1);
+  const ghostCount = ghostFollowingCount ?? 0;
 
   return (
     <div className="space-y-4">
@@ -975,8 +981,8 @@ function ResultsStage({
           </span>
         </div>
 
-        {/* Big 3 stats */}
-        <div className="grid grid-cols-3 gap-2 mb-5">
+        {/* Stats grid */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-5">
           <div>
             <p className="text-2xl font-black text-white tabular-nums">{fc.toLocaleString()}</p>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">Followers</p>
@@ -989,8 +995,14 @@ function ResultsStage({
             <p className={`text-2xl font-black tabular-nums ${netTotal >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {netTotal >= 0 ? '+' : ''}{netTotal.toLocaleString()}
             </p>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">Net</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">Net ratio</p>
           </div>
+          {ghostCount > 0 && (
+            <div>
+              <p className="text-2xl font-black text-amber-400 tabular-nums">{ghostCount.toLocaleString()}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">Not following back</p>
+            </div>
+          )}
         </div>
 
         {/* Ratio bars */}
@@ -1093,23 +1105,39 @@ function ResultsStage({
               {recentlyUnfollowed.length > 0 && (
                 <YouUnfollowedSection people={recentlyUnfollowed} />
               )}
+              {ghostCount > 0 && (
+                <GhostFollowingSection people={ghostFollowing ?? []} count={ghostCount} />
+              )}
             </div>
           ) : (
-            <PaywallNames lostCount={lostCount} newCount={newCount} unfollowedCount={unfollowedCount} />
+            <PaywallNames lostCount={lostCount} newCount={newCount} unfollowedCount={unfollowedCount} ghostCount={ghostCount} />
           )}
         </>
       )}
 
-      {/* ── Recently unfollowed (first upload, no diff) ── */}
-      {isFirst && unfollowedCount > 0 && (
-        effectiveIsPro && recentlyUnfollowed.length > 0
-          ? <YouUnfollowedSection people={recentlyUnfollowed} />
-          : (
-            <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
-              <p className="text-sm font-black text-amber-800">You recently unfollowed {unfollowedCount} {unfollowedCount === 1 ? 'account' : 'accounts'}</p>
-              {!effectiveIsPro && <p className="mt-1 text-xs text-amber-600">Upgrade to Pro to see who</p>}
+      {/* ── First upload: recently unfollowed + ghost following ── */}
+      {isFirst && (
+        <div className="space-y-3">
+          {unfollowedCount > 0 && (
+            effectiveIsPro && recentlyUnfollowed.length > 0
+              ? <YouUnfollowedSection people={recentlyUnfollowed} />
+              : (
+                <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
+                  <p className="text-sm font-black text-amber-800">You recently unfollowed {unfollowedCount} {unfollowedCount === 1 ? 'account' : 'accounts'}</p>
+                  {!effectiveIsPro && <p className="mt-1 text-xs text-amber-600">Upgrade to Pro to see who</p>}
+                </div>
+              )
+          )}
+          {ghostCount > 0 && effectiveIsPro && (
+            <GhostFollowingSection people={ghostFollowing ?? []} count={ghostCount} />
+          )}
+          {ghostCount > 0 && !effectiveIsPro && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-black text-slate-800">{ghostCount.toLocaleString()} accounts don&apos;t follow you back</p>
+              <p className="mt-1 text-xs text-slate-500">Upgrade to Pro to see who and clean up your following list.</p>
             </div>
-          )
+          )}
+        </div>
       )}
 
       {/* ── CSV exports (Pro) ── */}
@@ -1298,15 +1326,62 @@ function StatCard({
   );
 }
 
+function GhostFollowingSection({ people, count }: { people: Person[]; count: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? people : people.slice(0, 5);
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-sm font-semibold text-slate-700">Not following you back</p>
+        <span className="text-xs font-bold text-slate-400">{count.toLocaleString()}</span>
+      </div>
+      <p className="mb-3 text-xs text-slate-500">
+        You follow these accounts but they don&apos;t follow you back. Unfollowing them can improve your reach.
+      </p>
+      {people.length > 0 && (
+        <>
+          <ul className="space-y-1.5">
+            {shown.map((p) => (
+              <li key={p.handle} className="text-xs text-slate-700">
+                <a
+                  href={`https://instagram.com/${p.handle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  @{p.handle}
+                </a>
+                {p.displayName && <span className="ml-1 text-slate-400">{p.displayName}</span>}
+              </li>
+            ))}
+          </ul>
+          {count > 5 && (
+            <button
+              type="button"
+              onClick={() => setExpanded((e) => !e)}
+              className="mt-2 text-xs text-slate-500 transition hover:text-slate-700"
+            >
+              {expanded ? 'Show less' : `Show all ${count.toLocaleString()}`}
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function PaywallNames({
   lostCount,
   newCount,
   unfollowedCount = 0,
+  ghostCount = 0,
 }: {
   lostCount: number;
   newCount: number;
   unfollowedCount?: number;
+  ghostCount?: number;
 }) {
+  const total = lostCount + newCount + unfollowedCount + ghostCount;
   return (
     <div className="relative overflow-hidden rounded-2xl border border-cyan-950/10">
       {/* Blurred preview */}
@@ -1327,16 +1402,24 @@ function PaywallNames({
             ))}
           </>
         )}
+        {ghostCount > 0 && (
+          <>
+            <p className="mb-2 mt-3 text-xs font-bold text-slate-600">Not following back ({ghostCount})</p>
+            {Array.from({ length: Math.min(ghostCount, 2) }).map((_, i) => (
+              <p key={i} className="mb-1 text-xs text-slate-700">@{'█'.repeat(8 + (i % 3))}</p>
+            ))}
+          </>
+        )}
       </div>
       {/* Overlay */}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/80 p-6 text-center backdrop-blur-sm">
         <span className="text-2xl">🔒</span>
         <div>
           <p className="text-sm font-black text-slate-950">
-            See all {lostCount + newCount + unfollowedCount} names
+            See all {total.toLocaleString()} names
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            Upgrade to Pro to see who unfollowed you, new followers, and accounts you stopped following.
+            Upgrade to Pro to see who unfollowed you, new followers, accounts you stopped following, and who isn&apos;t following you back.
           </p>
         </div>
         <Link

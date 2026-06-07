@@ -79,6 +79,10 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Ghost following: accounts you follow that don't follow you back
+  const latestFollowerHandles = new Set(latest.followers.map((f) => f.handle));
+  const ghostFollowing = latest.following.filter((f) => !latestFollowerHandles.has(f.handle));
+
   return NextResponse.json({
     uploadId: latest.id,
     followerCount: latest.followerCount,
@@ -87,5 +91,9 @@ export async function GET(req: NextRequest) {
     diff,
     recentlyUnfollowed: isPro ? youUnfollowed : [],
     recentlyUnfollowedCount: youUnfollowed.length,
+    ghostFollowing: isPro
+      ? ghostFollowing.map((f) => ({ handle: f.handle, displayName: f.displayName ?? undefined }))
+      : [],
+    ghostFollowingCount: ghostFollowing.length,
   });
 }
