@@ -1,19 +1,15 @@
 'use client';
 
-import { Button } from '@/components/ui/Button';
-
 interface AutomaticTrackingPanelProps {
   handle: string;
   snapshotCount: number;
   lastChecked: string | null;
-  onRefresh: () => Promise<void> | void;
 }
 
 export function AutomaticTrackingPanel({
   handle,
   snapshotCount,
   lastChecked,
-  onRefresh,
 }: AutomaticTrackingPanelProps) {
   const hasSnapshots = snapshotCount > 0;
 
@@ -32,9 +28,6 @@ export function AutomaticTrackingPanel({
             need to provide the Instagram username.
           </p>
         </div>
-        <Button type="button" variant="secondary" onClick={() => void onRefresh()}>
-          Run now
-        </Button>
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">

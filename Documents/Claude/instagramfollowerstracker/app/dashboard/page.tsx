@@ -282,11 +282,6 @@ export default function DashboardPage() {
                   handle={selected.handle}
                   snapshotCount={snapshotData.snapshotCount}
                   lastChecked={selected.lastChecked}
-                  onRefresh={async () => {
-                    await fetch(`/api/accounts/${selected.id}/refresh`, { method: 'POST' });
-                    await fetchAccounts();
-                    await fetchSnapshots(selected.id);
-                  }}
                 />
               </>
             ) : selected ? (

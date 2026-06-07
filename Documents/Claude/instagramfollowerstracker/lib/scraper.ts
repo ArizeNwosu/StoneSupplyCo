@@ -286,6 +286,50 @@ async function fetchApifyProfile(handle: string): Promise<{
   };
 }
 
+// Fetch multiple profiles in a single Apify run — use this in the cron worker
+// instead of calling fetchInstagramProfile once per account (which would take
+// 30-60 s per account and blow past the Vercel function time limit).
+export async function fetchInstagramProfilesBatch(
+  handles: string[]
+): Promise<Map<string, InstagramProfileData>> {
+  const result = new Map<string, InstagramProfileData>();
+  if (handles.length === 0) return result;
+
+  const { token, actorId } = apifyEnv();
+  if (!token) {
+    console.error('[scraper] APIFY_TOKEN not set — batch fetch skipped');
+    return result;
+  }
+
+  try {
+    const res = await fetch(
+      `https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items?token=${encodeURIComponent(token)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usernames: handles }),
+        // Give Apify 4 min for a batch — well within the 5-min cron window
+        signal: AbortSignal.timeout(240_000),
+      }
+    );
+
+    if (!res.ok) {
+      console.error(`[scraper] Apify batch HTTP ${res.status}`);
+      return result;
+    }
+
+    const items = (await res.json()) as ApifyProfile[];
+    for (const item of Array.isArray(items) ? items : []) {
+      const profile = profileFromApify(String(item.username ?? ''), item);
+      if (profile.handle) result.set(profile.handle.toLowerCase(), profile);
+    }
+  } catch (err) {
+    console.error('[scraper] Apify batch failed:', err);
+  }
+
+  return result;
+}
+
 function debugEnv() {
   return {
     hasSessionId: Boolean(process.env.INSTAGRAM_SESSION_ID),

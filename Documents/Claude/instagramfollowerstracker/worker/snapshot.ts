@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { fetchInstagramProfile, sleep } from '@/lib/scraper';
+import { fetchInstagramProfile, fetchInstagramProfilesBatch, sleep } from '@/lib/scraper';
 import { sendMilestoneEmail } from '@/lib/email';
 
 export type SnapshotScope = 'all' | 'tracked' | 'public';
@@ -119,82 +119,89 @@ async function snapshotTrackedAccounts({
     take: limit,
   });
 
-  for (const account of accounts) {
-    if (Date.now() >= deadline) break;
-    stats.processed++;
+  if (accounts.length === 0) return;
 
-    try {
+  // Skip accounts that already have a snapshot today (unless force)
+  const due: typeof accounts = [];
+  for (const account of accounts) {
+    if (!force) {
       const existing = await prisma.snapshot.findFirst({
-        where: {
-          trackedAccountId: account.id,
-          takenAt: { gte: dayStart, lt: dayEnd },
-        },
+        where: { trackedAccountId: account.id, takenAt: { gte: dayStart, lt: dayEnd } },
         select: { id: true },
       });
+      if (existing) { stats.skipped++; continue; }
+    }
+    due.push(account);
+  }
 
-      if (existing && !force) {
-        stats.skipped++;
-        continue;
-      }
+  if (due.length === 0) return;
+  stats.processed += due.length;
 
-      const profile = await fetchInstagramProfile(account.handle);
-      if (profile.followerCount === null) {
+  // Fetch all handles in a single Apify batch call — avoids 30-60s × N timeout
+  const handles = due.map((a) => a.handle);
+  const profiles = await fetchInstagramProfilesBatch(handles);
+
+  for (const account of due) {
+    if (Date.now() >= deadline) break;
+
+    const profile = profiles.get(account.handle.toLowerCase());
+    if (!profile || profile.followerCount === null) {
+      // Fall back to single fetch if batch missed this account
+      try {
+        const single = await fetchInstagramProfile(account.handle);
+        if (single.followerCount === null) { stats.noData++; continue; }
+        profiles.set(account.handle.toLowerCase(), single);
+      } catch {
         stats.noData++;
         continue;
       }
+    }
+
+    const resolved = profiles.get(account.handle.toLowerCase())!;
+    if (resolved.followerCount === null) { stats.noData++; continue; }
+
+    try {
+      const existing = await prisma.snapshot.findFirst({
+        where: { trackedAccountId: account.id, takenAt: { gte: dayStart, lt: dayEnd } },
+        select: { id: true },
+      });
 
       await prisma.snapshot.upsert({
-        where: {
-          trackedAccountId_takenAt: {
-            trackedAccountId: account.id,
-            takenAt: dayStart,
-          },
-        },
+        where: { trackedAccountId_takenAt: { trackedAccountId: account.id, takenAt: dayStart } },
         create: {
           trackedAccountId: account.id,
-          followerCount: profile.followerCount,
-          followingCount: profile.followingCount ?? undefined,
-          postCount: profile.postCount ?? undefined,
+          followerCount: resolved.followerCount,
+          followingCount: resolved.followingCount ?? undefined,
+          postCount: resolved.postCount ?? undefined,
           takenAt: dayStart,
         },
         update: {
-          followerCount: profile.followerCount,
-          followingCount: profile.followingCount ?? undefined,
-          postCount: profile.postCount ?? undefined,
+          followerCount: resolved.followerCount,
+          followingCount: resolved.followingCount ?? undefined,
+          postCount: resolved.postCount ?? undefined,
         },
       });
 
-      const snapshotCount = await prisma.snapshot.count({
-        where: { trackedAccountId: account.id },
-      });
+      const snapshotCount = await prisma.snapshot.count({ where: { trackedAccountId: account.id } });
 
       const updated = await prisma.trackedAccount.update({
         where: { id: account.id },
         data: {
           lastChecked: new Date(),
-          displayName: profile.displayName ?? undefined,
-          avatarUrl: profile.avatarUrl ?? undefined,
-          isPublic: !profile.isPrivate,
+          displayName: resolved.displayName ?? undefined,
+          avatarUrl: resolved.avatarUrl ?? undefined,
+          isPublic: !resolved.isPrivate,
           snapshotCount,
         },
         include: { user: { select: { email: true } } },
       });
 
-      if (existing) {
-        stats.updated++;
-      } else {
-        stats.created++;
-      }
+      if (existing) { stats.updated++; } else { stats.created++; }
 
-      await sendMilestoneIfNeeded({
-        account: updated,
-        followerCount: profile.followerCount,
-      });
-
-      await politeDelay(deadline);
+      await sendMilestoneIfNeeded({ account: updated, followerCount: resolved.followerCount });
     } catch (err) {
       stats.failed++;
-      console.error(`[snapshot] Failed for @${account.handle}:`, err);
+      console.error(`[snapshot] DB write failed for @${account.handle}:`, err);
     }
   }
 }
