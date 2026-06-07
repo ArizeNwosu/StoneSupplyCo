@@ -36,6 +36,12 @@ export async function Navbar({ mode = 'public' }: NavbarProps) {
           >
             Unfollowers
           </Link>
+          <Link
+            href="/blog"
+            className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-slate-950"
+          >
+            Blog
+          </Link>
         </div>
         <div className="flex items-center gap-2">
           <Link
