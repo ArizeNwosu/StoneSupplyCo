@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.cdninstagram.com' },
-      { protocol: 'https', hostname: 'scontent.**.fbcdn.net' },
+      { protocol: 'https', hostname: '**.fbcdn.net' },
     ],
   },
   // Prevent Playwright and heavy server packages from being bundled client-side

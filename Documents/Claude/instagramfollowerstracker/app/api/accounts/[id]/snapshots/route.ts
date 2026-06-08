@@ -108,10 +108,12 @@ export async function GET(
           changePct,
           change7d,
           change30d,
-          avgDailyGain:
-            change !== null && snapshots.length > 1
-              ? Math.round(change / (snapshots.length - 1))
-              : null,
+          avgDailyGain: (() => {
+            if (change === null || snapshots.length < 2) return null;
+            const spanMs = new Date(snapshots.at(-1)!.takenAt).getTime() - new Date(snapshots[0]!.takenAt).getTime();
+            const spanDays = spanMs / (1000 * 60 * 60 * 24);
+            return spanDays >= 1 ? Math.round(change / spanDays) : null;
+          })(),
           peakCount: peak?.followerCount ?? null,
           peakDate: peak?.takenAt ?? null,
         }

@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useState } from 'react';
 import { formatCount, formatChange } from '@/lib/format';
 
 interface AccountCardProps {
@@ -42,6 +43,7 @@ export function AccountCard({
 }: AccountCardProps) {
   const changePositive = change24h !== null && change24h > 0;
   const changeNegative = change24h !== null && change24h < 0;
+  const [imgError, setImgError] = useState(false);
 
   return (
     <div
@@ -55,13 +57,14 @@ export function AccountCard({
           : 'border-transparent hover:border-cyan-950/10 hover:bg-slate-50'
       }`}
     >
-      {avatarUrl ? (
+      {avatarUrl && !imgError ? (
         <Image
           src={avatarUrl}
           alt={`@${handle} Instagram profile picture`}
           width={40}
           height={40}
           className="rounded-full object-cover"
+          onError={() => setImgError(true)}
         />
       ) : (
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white">
