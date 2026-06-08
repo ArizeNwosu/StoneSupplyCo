@@ -81,18 +81,18 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
             aria-hidden="true"
             className="absolute inset-0 bg-[linear-gradient(rgba(8,47,73,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(8,47,73,0.08)_1px,transparent_1px)] bg-[size:42px_42px]"
           />
-          <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 lg:grid-cols-[minmax(0,1fr)_460px] lg:items-center lg:py-20">
-            <div>
-              <p className="mb-4 inline-flex rounded-full border border-cyan-950/10 bg-white px-4 py-2 text-sm font-black uppercase text-teal-800">
+          <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:py-14 lg:grid-cols-[minmax(0,1fr)_460px] lg:items-center lg:gap-10 lg:py-20">
+            <div className="min-w-0">
+              <p className="mb-4 inline-flex max-w-full rounded-full border border-cyan-950/10 bg-white px-3 py-2 text-xs font-black uppercase leading-5 text-teal-800 sm:px-4 sm:text-sm">
                 {page.eyebrow}
               </p>
-              <h1 className="max-w-3xl text-5xl font-black leading-tight text-slate-950 sm:text-6xl">
+              <h1 className="max-w-3xl text-3xl font-black leading-tight text-slate-950 sm:text-5xl lg:text-6xl">
                 {page.h1}
               </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">
+              <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
                 {page.intro}
               </p>
-              <div className="mt-7 flex flex-wrap gap-3">
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link
                   href={ctaHref}
                   className="inline-flex min-h-12 items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-slate-800"
@@ -109,7 +109,7 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
             </div>
 
             {isUnfollowPage ? (
-              <div className="rounded-lg border border-cyan-950/10 bg-white p-5 shadow-2xl shadow-cyan-950/10">
+              <div className="min-w-0 rounded-lg border border-cyan-950/10 bg-white p-4 shadow-2xl shadow-cyan-950/10 sm:p-5">
                 <p className="text-sm font-black uppercase text-teal-700">
                   No Instagram password
                 </p>
@@ -144,7 +144,7 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
                 </p>
               </div>
             ) : (
-              <div className="rounded-lg border border-cyan-950/10 bg-white p-5 shadow-2xl shadow-cyan-950/10">
+              <div className="min-w-0 rounded-lg border border-cyan-950/10 bg-white p-4 shadow-2xl shadow-cyan-950/10 sm:p-5">
                 <p className="mb-4 text-sm font-black text-slate-950">
                   Look up an Instagram account
                 </p>
@@ -169,9 +169,9 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-16">
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
           <div className="mb-8 max-w-2xl">
-            <h2 className="text-3xl font-black text-slate-950">
+            <h2 className="text-2xl font-black text-slate-950 sm:text-3xl">
               Built for the searches that matter
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
@@ -193,9 +193,9 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
         </section>
 
         <section className="border-y border-cyan-950/10 bg-sky-50">
-          <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 lg:grid-cols-2">
+          <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:py-16 lg:grid-cols-2 lg:gap-10">
             <div>
-              <h2 className="text-3xl font-black text-slate-950">
+              <h2 className="text-2xl font-black text-slate-950 sm:text-3xl">
                 What you can do with it
               </h2>
               <div className="mt-6 space-y-4">
@@ -216,7 +216,7 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
             </div>
 
             <div>
-              <h2 className="text-3xl font-black text-slate-950">
+              <h2 className="text-2xl font-black text-slate-950 sm:text-3xl">
                 How it works
               </h2>
               <ol className="mt-6 space-y-4">
@@ -240,8 +240,8 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
           </div>
         </section>
 
-        <section className="mx-auto max-w-4xl px-4 py-16">
-          <h2 className="text-center text-3xl font-black text-slate-950">
+        <section className="mx-auto max-w-4xl px-4 py-12 sm:py-16">
+          <h2 className="text-center text-2xl font-black text-slate-950 sm:text-3xl">
             Questions
           </h2>
           <div className="mt-8 space-y-5">

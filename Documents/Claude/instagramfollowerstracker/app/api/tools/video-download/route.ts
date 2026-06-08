@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-// ── Proxy GET — stream video/image from Instagram CDN for same-origin download ──
-export const runtime = 'edge';
+// Allow up to 60 s for video streaming on Vercel Pro
+export const maxDuration = 60;
 
+// ── GET — proxy Instagram CDN video for same-origin download ──────────────────
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const mediaUrl = searchParams.get('url');
@@ -14,36 +15,53 @@ export async function GET(request: Request) {
   let decoded: string;
   try {
     decoded = decodeURIComponent(mediaUrl);
-    new URL(decoded); // validate it's a real URL
+    new URL(decoded); // validate
   } catch {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
   }
 
-  const upstream = await fetch(decoded, {
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-      Referer: 'https://www.instagram.com/',
-      Accept: '*/*',
-    },
-    signal: AbortSignal.timeout(30_000),
-  }).catch(() => null);
+  const cdnHeaders: Record<string, string> = {
+    'User-Agent':
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+    Referer: 'https://www.instagram.com/',
+    Accept: 'video/mp4,video/*,*/*;q=0.8',
+    'Accept-Encoding': 'identity', // ask for un-compressed so we can stream raw bytes
+  };
+
+  const proxy = process.env.PROXY_URL;
+
+  // Try via ScraperAPI proxy first (Instagram CDN blocks direct server IPs)
+  let upstream: Response | null = null;
+  if (proxy) {
+    const proxiedUrl = `${proxy}&url=${encodeURIComponent(decoded)}&keep_headers=true`;
+    upstream = await fetch(proxiedUrl, {
+      headers: cdnHeaders,
+      signal: AbortSignal.timeout(45_000),
+    }).catch(() => null);
+  }
+
+  // Direct fallback (works on some CDN configurations / local dev)
+  if (!upstream?.ok) {
+    upstream = await fetch(decoded, {
+      headers: cdnHeaders,
+      signal: AbortSignal.timeout(30_000),
+    }).catch(() => null);
+  }
 
   if (!upstream?.ok) {
     return NextResponse.json({ error: 'Could not fetch media' }, { status: 502 });
   }
 
-  const contentType = upstream.headers.get('content-type') ?? 'video/mp4';
   const contentLength = upstream.headers.get('content-length');
-
-  const headers: Record<string, string> = {
-    'Content-Type': contentType,
+  const responseHeaders: Record<string, string> = {
+    // Force video/mp4 — CDN sometimes returns application/octet-stream
+    'Content-Type': 'video/mp4',
     'Content-Disposition': 'attachment; filename="instagram-video.mp4"',
     'Cache-Control': 'private, max-age=300',
   };
-  if (contentLength) headers['Content-Length'] = contentLength;
+  if (contentLength) responseHeaders['Content-Length'] = contentLength;
 
-  return new Response(upstream.body, { headers });
+  return new Response(upstream.body, { headers: responseHeaders });
 }
 
 // ── POST — extract video URL from Instagram post ──────────────────────────────

@@ -88,15 +88,15 @@ export default function InstagramVideoDownloaderPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
       <Navbar />
-      <div className="min-h-screen bg-sky-50">
-        <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+      <main className="min-h-screen bg-sky-50">
+        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
 
           {/* Hero */}
-          <div className="mb-10 text-center">
+          <div className="mb-8 text-center sm:mb-10">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">
               Free Tool
             </p>
-            <h1 className="mt-3 text-4xl font-black text-slate-950">
+            <h1 className="mt-3 text-3xl font-black leading-tight text-slate-950 sm:text-4xl">
               Instagram Video Downloader
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-base font-medium text-slate-500">
@@ -106,7 +106,7 @@ export default function InstagramVideoDownloaderPage() {
           </div>
 
           {/* Downloader */}
-          <div className="rounded-2xl border border-cyan-950/10 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-cyan-950/10 bg-white p-4 shadow-sm sm:p-6">
             <VideoDownloaderForm />
           </div>
 
@@ -155,7 +155,7 @@ export default function InstagramVideoDownloaderPage() {
           {/* Tracker CTA */}
           <section className="mt-10 rounded-2xl border border-cyan-950/10 bg-white p-8 text-center shadow-sm">
             <h2 className="text-xl font-black text-slate-950">
-              Also: Track any Instagram account's follower growth
+              Also: Track any Instagram account&apos;s follower growth
             </h2>
             <p className="mx-auto mt-2 max-w-md text-sm font-medium text-slate-500">
               Want to know how fast a creator is growing? Our free follower tracker records
@@ -164,13 +164,13 @@ export default function InstagramVideoDownloaderPage() {
             <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link
                 href="/auth/signup"
-                className="rounded-full bg-cyan-950 px-6 py-2.5 text-sm font-black text-white transition-colors hover:bg-cyan-800"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-950 px-6 py-2.5 text-sm font-black text-white transition-colors hover:bg-cyan-800"
               >
                 Start Tracking Free
               </Link>
               <Link
                 href="/"
-                className="text-sm font-bold text-cyan-700 hover:underline"
+                className="inline-flex min-h-11 items-center justify-center text-sm font-bold text-cyan-700 hover:underline"
               >
                 See how it works →
               </Link>
@@ -217,7 +217,7 @@ export default function InstagramVideoDownloaderPage() {
           </section>
 
         </div>
-      </div>
+      </main>
       <Footer />
     </>
   );

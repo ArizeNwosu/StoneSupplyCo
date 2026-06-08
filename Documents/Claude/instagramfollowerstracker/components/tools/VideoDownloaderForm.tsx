@@ -41,18 +41,46 @@ function Spinner() {
 }
 
 function DownloadModal({ result, onClose }: { result: Result; onClose: () => void }) {
+  const [dlState, setDlState] = useState<'idle' | 'loading' | 'error'>('idle');
+
+  async function handleDownload() {
+    setDlState('loading');
+    try {
+      const res = await fetch(proxyUrl(result.videoUrl));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const contentType = res.headers.get('content-type') ?? '';
+      if (!contentType.startsWith('video/') && !contentType.startsWith('application/octet')) {
+        throw new Error('Not a video response');
+      }
+
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = `instagram-${result.shortcode}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 5_000);
+      setDlState('idle');
+    } catch {
+      setDlState('error');
+    }
+  }
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/60 px-3 py-3 sm:items-center sm:px-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+      <div className="relative max-h-[calc(100dvh-24px)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <p className="text-sm font-black text-slate-900">Video Ready to Download</p>
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-4 sm:px-5">
+          <p className="text-sm font-black text-slate-900">Video ready to download</p>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
             aria-label="Close"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -62,35 +90,61 @@ function DownloadModal({ result, onClose }: { result: Result; onClose: () => voi
         </div>
 
         {/* Video preview */}
-        <div className="px-5 pt-4">
+        <div className="px-4 pt-4 sm:px-5">
           <video
             src={result.videoUrl}
             controls
             playsInline
-            className="w-full rounded-xl bg-slate-950"
-            style={{ maxHeight: '320px' }}
+            className="aspect-video max-h-[42dvh] w-full rounded-xl bg-slate-950 object-contain sm:max-h-80"
           />
         </div>
 
         {/* Caption */}
         {result.caption && (
-          <p className="mx-5 mt-3 line-clamp-2 text-xs font-medium text-slate-500 leading-relaxed">
+          <p className="mx-4 mt-3 line-clamp-3 text-xs font-medium leading-relaxed text-slate-500 sm:mx-5 sm:line-clamp-2">
             {result.caption}
           </p>
         )}
 
         {/* Actions */}
-        <div className="flex flex-col gap-2 px-5 py-4">
-          <a
-            href={proxyUrl(result.videoUrl)}
-            download={`instagram-${result.shortcode}.mp4`}
-            className="flex items-center justify-center gap-2 rounded-xl bg-cyan-950 px-5 py-3 text-sm font-black text-white transition-colors hover:bg-cyan-800"
+        <div className="flex flex-col gap-2 px-4 py-4 sm:px-5">
+          <button
+            onClick={handleDownload}
+            disabled={dlState === 'loading'}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-cyan-950 px-5 py-3 text-sm font-black text-white transition-colors hover:bg-cyan-800 disabled:opacity-60"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Download MP4
-          </a>
+            {dlState === 'loading' ? (
+              <>
+                <Spinner />
+                Preparing download…
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download MP4
+              </>
+            )}
+          </button>
+
+          {/* Fallback shown only after proxy error */}
+          {dlState === 'error' && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-medium text-amber-800">
+              Proxy download failed.{' '}
+              <a
+                href={result.videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-black underline"
+                onClick={() => setDlState('idle')}
+              >
+                Open video directly →
+              </a>
+              {' '}then right-click the video and choose Save As.
+            </div>
+          )}
+
           <a
             href={result.postUrl}
             target="_blank"
@@ -102,8 +156,8 @@ function DownloadModal({ result, onClose }: { result: Result; onClose: () => voi
         </div>
 
         {/* CTA */}
-        <div className="mx-5 mb-5 rounded-xl border border-cyan-500/20 bg-cyan-50 px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
+        <div className="mx-4 mb-4 rounded-xl border border-cyan-500/20 bg-cyan-50 px-4 py-3 sm:mx-5 sm:mb-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-black text-slate-900">Track this account&apos;s followers</p>
               <p className="mt-0.5 text-xs font-medium text-slate-500">Daily growth charts, free.</p>
@@ -111,7 +165,7 @@ function DownloadModal({ result, onClose }: { result: Result; onClose: () => voi
             <Link
               href="/auth/signup"
               onClick={onClose}
-              className="flex-shrink-0 rounded-full bg-cyan-950 px-4 py-2 text-xs font-black text-white transition-colors hover:bg-cyan-800"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-cyan-950 px-4 py-2 text-xs font-black text-white transition-colors hover:bg-cyan-800"
             >
               Start Free →
             </Link>
@@ -165,18 +219,18 @@ export function VideoDownloaderForm() {
       )}
 
       {/* Input form */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 md:flex-row">
         <input
           type="text"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="Paste Instagram video URL — e.g. https://www.instagram.com/p/ABC123/"
-          className="flex-1 rounded-xl border border-cyan-950/15 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+          className="min-h-12 min-w-0 flex-1 rounded-xl border border-cyan-950/15 bg-white px-4 py-3 text-base font-medium text-slate-800 shadow-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 md:text-sm"
         />
         <button
           type="submit"
           disabled={loading || !url.trim()}
-          className="flex items-center justify-center gap-2 rounded-xl bg-cyan-950 px-6 py-3 text-sm font-black text-white transition-colors hover:bg-cyan-800 disabled:opacity-50"
+          className="flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-950 px-6 py-3 text-sm font-black text-white transition-colors hover:bg-cyan-800 disabled:opacity-50"
         >
           {loading && <Spinner />}
           {loading ? 'Fetching…' : 'Download Video'}
@@ -192,16 +246,16 @@ export function VideoDownloaderForm() {
 
       {/* Re-open result button (after modal is closed) */}
       {result && !modalOpen && (
-        <div className="mt-4 flex items-center gap-3 rounded-xl border border-cyan-950/10 bg-white px-4 py-3">
+        <div className="mt-4 flex flex-col gap-3 rounded-xl border border-cyan-950/10 bg-white px-4 py-3 sm:flex-row sm:items-center">
           <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-cyan-950">
             <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <p className="flex-1 text-sm font-medium text-slate-700">Video found. Ready to download.</p>
+          <p className="min-w-0 flex-1 text-sm font-medium text-slate-700">Video found. Ready to download.</p>
           <button
             onClick={() => setModalOpen(true)}
-            className="rounded-full bg-cyan-950 px-4 py-2 text-xs font-black text-white transition-colors hover:bg-cyan-800"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-950 px-4 py-2 text-xs font-black text-white transition-colors hover:bg-cyan-800"
           >
             Download →
           </button>
@@ -219,7 +273,7 @@ export function VideoDownloaderForm() {
           </div>
           <Link
             href="/auth/signup"
-            className="flex-shrink-0 rounded-full bg-cyan-950 px-5 py-2.5 text-sm font-black text-white transition-colors hover:bg-cyan-800"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-cyan-950 px-5 py-2.5 text-sm font-black text-white transition-colors hover:bg-cyan-800"
           >
             Start Tracking Free →
           </Link>

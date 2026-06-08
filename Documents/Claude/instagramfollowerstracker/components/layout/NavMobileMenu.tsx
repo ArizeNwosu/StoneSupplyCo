@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
 interface NavMobileMenuProps {
   isSignedIn: boolean;
@@ -11,12 +10,6 @@ interface NavMobileMenuProps {
 
 export function NavMobileMenu({ isSignedIn, isApp }: NavMobileMenuProps) {
   const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-
-  // Close on navigation
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
 
   // Prevent body scroll when open
   useEffect(() => {
@@ -35,7 +28,7 @@ export function NavMobileMenu({ isSignedIn, isApp }: NavMobileMenuProps) {
     <div className="sm:hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-cyan-950/10 bg-slate-50 text-slate-700 transition hover:bg-slate-100"
+        className="flex h-11 w-11 items-center justify-center rounded-full border border-cyan-950/10 bg-slate-50 text-slate-700 transition hover:bg-slate-100"
         aria-label={open ? 'Close menu' : 'Open menu'}
         aria-expanded={open}
       >
@@ -66,6 +59,7 @@ export function NavMobileMenu({ isSignedIn, isApp }: NavMobileMenuProps) {
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={() => setOpen(false)}
                   className="flex min-h-11 items-center rounded-xl px-3 text-base font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
                 >
                   {link.label}
@@ -77,6 +71,7 @@ export function NavMobileMenu({ isSignedIn, isApp }: NavMobileMenuProps) {
               {isApp || isSignedIn ? (
                 <Link
                   href="/dashboard/settings"
+                  onClick={() => setOpen(false)}
                   className="flex min-h-11 items-center rounded-xl px-3 text-base font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
                 >
                   Settings
@@ -84,6 +79,7 @@ export function NavMobileMenu({ isSignedIn, isApp }: NavMobileMenuProps) {
               ) : (
                 <Link
                   href="/auth/signin"
+                  onClick={() => setOpen(false)}
                   className="flex min-h-11 items-center rounded-xl px-3 text-base font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
                 >
                   Log in

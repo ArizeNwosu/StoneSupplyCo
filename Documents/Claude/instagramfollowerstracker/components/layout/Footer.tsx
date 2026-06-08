@@ -14,7 +14,7 @@ export function Footer({ topAccounts = [], className = 'mt-24' }: FooterProps) {
         <div className="mb-10 grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
           <div>
             <div className="mb-3 inline-flex rounded-full bg-white px-3 py-2">
-              <Logo height={24} />
+              <Logo height={24} wordmarkClassName="block" />
             </div>
             <p className="max-w-xl text-sm leading-6 text-slate-300">
               Passwordless Instagram follower tracking for public accounts,

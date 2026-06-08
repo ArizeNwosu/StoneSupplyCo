@@ -14,7 +14,7 @@ export async function Navbar({ mode = 'public' }: NavbarProps) {
 
   return (
     <nav className="sticky top-0 z-40 border-b border-cyan-950/10 bg-white/90 backdrop-blur-xl relative">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:px-4">
         <Link href="/" className="shrink-0">
           <Logo height={40} />
         </Link>
@@ -47,7 +47,7 @@ export async function Navbar({ mode = 'public' }: NavbarProps) {
           {/* Primary CTA — always visible */}
           <Link
             href="/dashboard"
-            className="inline-flex min-h-9 items-center justify-center rounded-full bg-slate-950 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-cyan-950/15 transition hover:-translate-y-0.5 hover:bg-slate-800 sm:min-h-11 sm:px-5"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-950 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-cyan-950/15 transition hover:-translate-y-0.5 hover:bg-slate-800 sm:px-5"
           >
             {isApp || isSignedIn ? 'Dashboard' : 'Start free'}
           </Link>

@@ -2,11 +2,12 @@ import Image from 'next/image';
 
 interface LogoProps {
   height?: number;
+  wordmarkClassName?: string;
 }
 
-export function Logo({ height = 32 }: LogoProps) {
+export function Logo({ height = 32, wordmarkClassName = 'hidden sm:block' }: LogoProps) {
   return (
-    <span className="inline-flex items-center gap-2" aria-label="Instagram Followers Tracker">
+    <span className="inline-flex min-w-0 items-center gap-2" aria-label="Instagram Followers Tracker">
       <Image
         src="/site-icon.png"
         alt=""
@@ -16,6 +17,7 @@ export function Logo({ height = 32 }: LogoProps) {
         priority
       />
       <svg
+        className={wordmarkClassName}
         viewBox="0 0 430 60"
         style={{ height: `${height}px`, width: 'auto' }}
         aria-hidden="true"
