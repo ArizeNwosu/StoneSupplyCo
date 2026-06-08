@@ -240,6 +240,33 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
           </div>
         </section>
 
+        {page.tools && page.tools.length > 0 && (
+          <section className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
+            <h2 className="mb-6 text-2xl font-black text-slate-950 sm:text-3xl">
+              Free tools
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {page.tools.map((tool) => (
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  className="group flex flex-col rounded-xl border border-cyan-950/10 bg-white p-5 transition-all hover:border-cyan-500/30 hover:shadow-md"
+                >
+                  <p className="text-sm font-black text-slate-900 transition-colors group-hover:text-cyan-700">
+                    {tool.title}
+                  </p>
+                  <p className="mt-1.5 text-sm font-medium leading-relaxed text-slate-500">
+                    {tool.description}
+                  </p>
+                  <p className="mt-3 text-xs font-black text-cyan-700">
+                    Try it free →
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="mx-auto max-w-4xl px-4 py-12 sm:py-16">
           <h2 className="text-center text-2xl font-black text-slate-950 sm:text-3xl">
             Questions

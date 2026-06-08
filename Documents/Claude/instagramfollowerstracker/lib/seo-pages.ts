@@ -14,6 +14,7 @@ export interface SeoPageConfig {
   proofPoints: string[];
   useCases: { title: string; description: string }[];
   workflow: { title: string; description: string }[];
+  tools?: { title: string; description: string; href: string }[];
   faq: { question: string; answer: string }[];
 }
 
@@ -610,11 +611,48 @@ export const SEO_PAGES: SeoPageConfig[] = [
         description: 'Upgrade when you need more accounts and agency features.',
       },
     ],
+    tools: [
+      {
+        title: 'Instagram Follower Count Checker',
+        description: 'Check the live follower count for any public account instantly.',
+        href: '/instagram-follower-count',
+      },
+      {
+        title: 'Instagram Growth Tracker',
+        description: 'Track how any public account grows over time with daily charts.',
+        href: '/instagram-growth-tracker',
+      },
+      {
+        title: 'Instagram Unfollow Tracker',
+        description: 'Find out who unfollowed you using your official Instagram data export.',
+        href: '/instagram-unfollow-tracker',
+      },
+      {
+        title: 'Fake Follower Checker',
+        description: 'Score any public account for fake followers and bot activity.',
+        href: '/instagram-fake-follower-checker',
+      },
+      {
+        title: 'Instagram Video Downloader',
+        description: 'Download any public Instagram video or Reel as an MP4 — free, no login.',
+        href: '/instagram-video-downloader',
+      },
+    ],
     faq: [
       {
         question: 'What Instagram tracking tools are included?',
         answer:
           'The product includes public follower tracking, growth charts, export-based owned-account unfollow detection, report links, widgets, and API access by plan.',
+      },
+      {
+        question: 'Is this for brands?',
+        answer:
+          'Yes. Brands use it to monitor competitor accounts, track campaign targets, and report follower growth to stakeholders without needing access to Instagram Insights on accounts they do not own.',
+      },
+      {
+        question: 'Is this for solo creators?',
+        answer:
+          'Yes. Solo creators use it to track their own public growth, watch competitors, find who unfollowed them after posts, and share clean follower charts with sponsors or brand partners.',
       },
       {
         question: 'Is this for agencies?',
