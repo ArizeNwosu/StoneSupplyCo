@@ -108,6 +108,30 @@ import instagramUnfollowerAppFree from './posts/instagram-unfollower-app-free';
 import trackInstagramFollowersAnonymously from './posts/track-instagram-followers-anonymously';
 import whoStoppedFollowingMeInstagram from './posts/who-stopped-following-me-instagram';
 
+// New posts — batch 4 (22 high-value keyword posts)
+import snoopreportInstagramTracker from './posts/snoopreport-instagram-tracker';
+import instagramUnfollowers from './posts/instagram-unfollowers';
+import instagramFollowersUnfollowersApp from './posts/instagram-followers-unfollowers-app';
+import mostInstagramFollowers from './posts/most-instagram-followers';
+import highestInstagramFollowers from './posts/highest-instagram-followers';
+import instagramRealTimeFollowerCount from './posts/instagram-real-time-follower-count';
+import topInstagramFollowersInWorld from './posts/top-instagram-followers-in-world';
+import cristianoRonaldoInstagramFollowers from './posts/cristiano-ronaldo-instagram-followers';
+import messiInstagramFollowers from './posts/messi-instagram-followers';
+import notjustanalyticsReview from './posts/notjustanalytics-review';
+import igfollowerAppReview from './posts/igfollower-app-review';
+import howToSpotFakeInstagramFollowers from './posts/how-to-spot-fake-instagram-followers';
+import instagramTrackerTool from './posts/instagram-tracker-tool';
+import realVsFakeInstagramFollowers from './posts/real-vs-fake-instagram-followers';
+import instagramFollowersFreeApp from './posts/instagram-followers-free-app';
+import instagramMarketingFollowerGrowth from './posts/instagram-marketing-follower-growth';
+import whatIsAnInstagramInfluencer from './posts/what-is-an-instagram-influencer';
+import freeIgFollowersHowTheyWork from './posts/free-ig-followers-how-they-work';
+import howToGetInstagramFollowers from './posts/how-to-get-instagram-followers';
+import buyInstagramFollowersRisks from './posts/buy-instagram-followers-risks';
+import instagramAdvertisingAndFollowerGrowth from './posts/instagram-advertising-and-follower-growth';
+import instagramAccountHackedFollowerLoss from './posts/instagram-account-hacked-follower-loss';
+
 export const ALL_POSTS: BlogPost[] = [
   // Original 19
   instagramFollowersTracker,
@@ -216,6 +240,29 @@ export const ALL_POSTS: BlogPost[] = [
   instagramUnfollowerAppFree,
   trackInstagramFollowersAnonymously,
   whoStoppedFollowingMeInstagram,
+  // New batch 4 — 22 high-value keyword posts
+  snoopreportInstagramTracker,
+  instagramUnfollowers,
+  instagramFollowersUnfollowersApp,
+  mostInstagramFollowers,
+  highestInstagramFollowers,
+  instagramRealTimeFollowerCount,
+  topInstagramFollowersInWorld,
+  cristianoRonaldoInstagramFollowers,
+  messiInstagramFollowers,
+  notjustanalyticsReview,
+  igfollowerAppReview,
+  howToSpotFakeInstagramFollowers,
+  instagramTrackerTool,
+  realVsFakeInstagramFollowers,
+  instagramFollowersFreeApp,
+  instagramMarketingFollowerGrowth,
+  whatIsAnInstagramInfluencer,
+  freeIgFollowersHowTheyWork,
+  howToGetInstagramFollowers,
+  buyInstagramFollowersRisks,
+  instagramAdvertisingAndFollowerGrowth,
+  instagramAccountHackedFollowerLoss,
 ];
 
 export function getPost(slug: string): BlogPost | undefined {
