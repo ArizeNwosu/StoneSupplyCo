@@ -50,6 +50,11 @@ export async function parseMultipleInstagramFiles(files: File[]): Promise<Parsed
         ...(extracted.followingJson ? parsePeopleJson(extracted.followingJson, 'following') : []),
         ...(extracted.followingHtml ? parsePeopleHtml(extracted.followingHtml, 'following') : [])
       );
+      allRecentlyUnfollowed.push(
+        ...(extracted.recentlyUnfollowedHtml
+          ? parseRecentlyUnfollowedHtml(extracted.recentlyUnfollowedHtml)
+          : [])
+      );
       continue;
     }
 
@@ -241,6 +246,7 @@ function extractInstagramFilesFromZip(buffer: Buffer): {
   followersHtml: string[];
   followingJson?: string;
   followingHtml?: string;
+  recentlyUnfollowedHtml?: string;
 } {
   const eocdOffset = findEndOfCentralDirectory(buffer);
   const entryCount = buffer.readUInt16LE(eocdOffset + 10);
@@ -251,6 +257,7 @@ function extractInstagramFilesFromZip(buffer: Buffer): {
     followersHtml: string[];
     followingJson?: string;
     followingHtml?: string;
+    recentlyUnfollowedHtml?: string;
   } = { followersJson: [], followersHtml: [] };
 
   let offset = centralDirectoryOffset;
@@ -271,13 +278,16 @@ function extractInstagramFilesFromZip(buffer: Buffer): {
     const isFollowersHtml = /(^|\/)followers_?\d*\.html$/.test(name);
     const isFollowingJson = !result.followingJson && /(^|\/)following\.json$/.test(name);
     const isFollowingHtml = !result.followingHtml && /(^|\/)following\.html$/.test(name);
+    const isRecentlyUnfollowedHtml =
+      !result.recentlyUnfollowedHtml && /(^|\/)recently_unfollowed_profiles\.html$/.test(name);
 
-    if (isFollowersJson || isFollowersHtml || isFollowingJson || isFollowingHtml) {
+    if (isFollowersJson || isFollowersHtml || isFollowingJson || isFollowingHtml || isRecentlyUnfollowedHtml) {
       const text = readZipEntryText(buffer, localHeaderOffset, compressedSize, compressionMethod);
       if (isFollowersJson) result.followersJson.push(text);
       else if (isFollowersHtml) result.followersHtml.push(text);
       else if (isFollowingJson) result.followingJson = text;
       else if (isFollowingHtml) result.followingHtml = text;
+      else if (isRecentlyUnfollowedHtml) result.recentlyUnfollowedHtml = text;
     }
 
     offset = nameStart + fileNameLength + extraLength + commentLength;
@@ -291,7 +301,7 @@ function extractInstagramFilesFromZip(buffer: Buffer): {
 
   if (!hasData) {
     throw new Error(
-      'No followers/following files found in the ZIP. Extract the ZIP and drag the 3 files from connections/followers_and_following/ instead.'
+      'No followers/following files found in the ZIP. Extract the ZIP and upload the small followers_and_following folder files instead.'
     );
   }
   return result;

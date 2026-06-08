@@ -63,11 +63,11 @@ export const SEO_PAGES: SeoPageConfig[] = [
     workflow: [
       {
         title: 'Export your Instagram data',
-        description: 'Use Accounts Center to request follower data in JSON format.',
+        description: 'Use Accounts Center to request follower data in HTML or JSON format.',
       },
       {
         title: 'Upload or connect Drive',
-        description: 'Upload the ZIP once or set Instagram to send scheduled exports to Google Drive.',
+        description: 'Upload the small followers_and_following files once or set Instagram to send scheduled exports to Google Drive.',
       },
       {
         title: 'Review follower changes',
@@ -132,7 +132,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
     workflow: [
       {
         title: 'Choose export mode',
-        description: 'Upload a ZIP manually or set Instagram to export daily to Google Drive.',
+        description: 'Upload the small followers_and_following files manually or set Instagram to export daily to Google Drive.',
       },
       {
         title: 'Save follower snapshots',
@@ -176,7 +176,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
     ],
     proofPoints: [
       'Uses Instagram Accounts Center exports',
-      'Works with ZIP or followers JSON files',
+      'Works with HTML or JSON follower files',
       'Google Drive sync option',
       'CSV exports on Pro',
     ],
@@ -197,11 +197,11 @@ export const SEO_PAGES: SeoPageConfig[] = [
     workflow: [
       {
         title: 'Request your export',
-        description: 'Open Instagram Accounts Center and choose follower data in JSON format.',
+        description: 'Open Instagram Accounts Center and choose follower data in HTML or JSON format.',
       },
       {
         title: 'Create a baseline',
-        description: 'Upload the ZIP to save the first follower-list snapshot.',
+        description: 'Upload the small followers_and_following files to save the first follower-list snapshot.',
       },
       {
         title: 'Compare the next export',
@@ -266,7 +266,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
       },
       {
         title: 'Upload or sync',
-        description: 'Choose a one-time ZIP upload or recurring Google Drive exports.',
+        description: 'Choose a one-time small-file upload or recurring Google Drive exports.',
       },
       {
         title: 'Review diffs',

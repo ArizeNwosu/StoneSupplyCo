@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { PLAN_LIMITS } from '@/lib/limits';
+import { buildRelationshipIntelligence } from '@/lib/relationship-intelligence';
 
 export const runtime = 'nodejs';
 
@@ -79,9 +80,10 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Ghost following: accounts you follow that don't follow you back
-  const latestFollowerHandles = new Set(latest.followers.map((f) => f.handle));
-  const ghostFollowing = latest.following.filter((f) => !latestFollowerHandles.has(f.handle));
+  const relationship = buildRelationshipIntelligence({
+    followers: latest.followers.map((f) => ({ handle: f.handle, displayName: f.displayName ?? undefined })),
+    following: latest.following.map((f) => ({ handle: f.handle, displayName: f.displayName ?? undefined })),
+  });
 
   return NextResponse.json({
     uploadId: latest.id,
@@ -92,8 +94,17 @@ export async function GET(req: NextRequest) {
     recentlyUnfollowed: isPro ? youUnfollowed : [],
     recentlyUnfollowedCount: youUnfollowed.length,
     ghostFollowing: isPro
-      ? ghostFollowing.map((f) => ({ handle: f.handle, displayName: f.displayName ?? undefined }))
+      ? relationship.notFollowingBack.map((f) => ({ handle: f.handle, displayName: f.displayName ?? undefined }))
       : [],
-    ghostFollowingCount: ghostFollowing.length,
+    ghostFollowingCount: relationship.notFollowingBackCount,
+    fansNotFollowed: isPro
+      ? relationship.fansNotFollowed.map((f) => ({ handle: f.handle, displayName: f.displayName ?? undefined }))
+      : [],
+    fansNotFollowedCount: relationship.fansNotFollowedCount,
+    mutualCount: relationship.mutualCount,
+    followRatio: relationship.followRatio,
+    relationshipHealthScore: relationship.healthScore,
+    relationshipHealthLabel: relationship.healthLabel,
+    relationshipInsights: relationship.insights,
   });
 }

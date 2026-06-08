@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { PLAN_LIMITS } from '@/lib/limits';
 import { parseMultipleInstagramFiles, diffExports, type ExportData } from '@/lib/export-parser';
+import { buildRelationshipIntelligence } from '@/lib/relationship-intelligence';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
   const totalSize = files.reduce((sum, f) => sum + f.size, 0);
   if (totalSize > MAX_TOTAL_BYTES) {
     return NextResponse.json(
-      { error: 'Files too large (50 MB total max). Extract the ZIP and upload the 3 HTML files directly.' },
+      { error: 'Files too large (50 MB total max). Upload only the small followers_and_following HTML or JSON files, not media.' },
       { status: 413 }
     );
   }
@@ -115,7 +116,7 @@ export async function POST(req: NextRequest) {
 
   if (parsed.followers.length === 0 && parsed.following.length === 0) {
     return NextResponse.json(
-      { error: 'No followers or following data found. Make sure you uploaded followers_1.html and/or following.html.' },
+      { error: 'No followers or following data found. Upload followers_1 and following files in HTML or JSON format.' },
       { status: 400 }
     );
   }
@@ -183,9 +184,10 @@ export async function POST(req: NextRequest) {
     };
   }
 
-  // Ghost following: accounts you follow that don't follow you back
-  const followerHandles = new Set(parsed.followers.map((f) => f.handle));
-  const ghostFollowing = parsed.following.filter((f) => !followerHandles.has(f.handle));
+  const relationship = buildRelationshipIntelligence({
+    followers: parsed.followers,
+    following: parsed.following,
+  });
 
   return NextResponse.json({
     uploadId: newExport.id,
@@ -197,9 +199,18 @@ export async function POST(req: NextRequest) {
     recentlyUnfollowed: isPro ? recentlyUnfollowed : [],
     recentlyUnfollowedCount: recentlyUnfollowed.length,
     ghostFollowing: isPro
-      ? ghostFollowing.map((f) => ({ handle: f.handle, displayName: f.displayName ?? undefined }))
+      ? relationship.notFollowingBack.map((f) => ({ handle: f.handle, displayName: f.displayName ?? undefined }))
       : [],
-    ghostFollowingCount: ghostFollowing.length,
+    ghostFollowingCount: relationship.notFollowingBackCount,
+    fansNotFollowed: isPro
+      ? relationship.fansNotFollowed.map((f) => ({ handle: f.handle, displayName: f.displayName ?? undefined }))
+      : [],
+    fansNotFollowedCount: relationship.fansNotFollowedCount,
+    mutualCount: relationship.mutualCount,
+    followRatio: relationship.followRatio,
+    relationshipHealthScore: relationship.healthScore,
+    relationshipHealthLabel: relationship.healthLabel,
+    relationshipInsights: relationship.insights,
   });
 }
 

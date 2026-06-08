@@ -27,6 +27,13 @@ interface UploadResult {
   recentlyUnfollowedCount: number;
   ghostFollowing: Person[];
   ghostFollowingCount: number;
+  fansNotFollowed?: Person[];
+  fansNotFollowedCount?: number;
+  mutualCount?: number;
+  followRatio?: number | null;
+  relationshipHealthScore?: number;
+  relationshipHealthLabel?: string;
+  relationshipInsights?: string[];
 }
 
 interface UnfollowAccount {
@@ -101,13 +108,13 @@ const PHONE_DEVICE_STEPS = [
   },
   {
     icon: '📄',
-    title: 'Choose JSON format',
-    body: 'Tap "Format" and set it to JSON (not HTML), then tap "Save". Next tap "Start export" — Instagram may ask for your password. Enter it and tap "Continue". Instagram will email you a download link (a few minutes up to 48 hours).',
+    title: 'Choose HTML or JSON',
+    body: 'Set "Format" to HTML or JSON, then tap "Save". Next tap "Start export" — Instagram may ask for your password. Instagram will email you a download link.',
   },
   {
     icon: '📧',
     title: 'Download the ZIP',
-    body: 'Instagram will email you when the download is ready. Open the email, download the ZIP file to your phone or computer, then come back here and upload it.',
+    body: 'When the download is ready, unzip it and upload only the small followers_and_following folder files. Do not upload photos, videos, or the full media folder.',
   },
 ];
 
@@ -119,13 +126,13 @@ const DESKTOP_DEVICE_STEPS = [
   },
   {
     icon: '📄',
-    title: 'Choose JSON format',
-    body: 'Click "Format" and set it to JSON (not HTML), then click "Save" → click "Start export". You may be prompted to re-enter your password. Instagram will then email you a download link within minutes (up to 48 hours).',
+    title: 'Choose HTML or JSON',
+    body: 'Click "Format" and choose HTML or JSON, then click "Save" and "Start export". Instagram will email you a download link within minutes, sometimes up to 48 hours.',
   },
   {
     icon: '📧',
     title: 'Download the ZIP',
-    body: 'Instagram will email you when the download is ready. Open the email, download the ZIP file, then come back here and upload it.',
+    body: 'When the download is ready, unzip it and upload only the small followers_and_following folder files. Do not upload photos, videos, or the full media folder.',
   },
 ];
 
@@ -139,8 +146,8 @@ const PHONE_DRIVE_STEPS = [
   },
   {
     icon: '📄',
-    title: 'Choose Date Range & JSON format',
-    body: 'Tap "Date range" → check "All time" → tap "Save". Tap "Format" and set it to JSON (not HTML), then tap "Save" → tap "Start export". You may be prompted to re-enter your password. Instagram will begin transferring your data to Google Drive and will email you within minutes (up to 48 hours).',
+    title: 'Choose Date Range & format',
+    body: 'Tap "Date range" → check "All time" → tap "Save". Tap "Format" and choose HTML or JSON, then tap "Save" → tap "Start export". Instagram will begin transferring your data to Google Drive.',
   },
 ];
 
@@ -152,8 +159,8 @@ const DESKTOP_DRIVE_STEPS = [
   },
   {
     icon: '📄',
-    title: 'Choose Date Range & JSON format',
-    body: 'Click "Date range" → check "All time" → click "Save". Click "Format" and set it to JSON (not HTML), then click "Save" → click "Start export". You may be prompted to re-enter your password. Instagram will begin transferring your data to Google Drive and will email you within minutes (up to 48 hours).',
+    title: 'Choose Date Range & format',
+    body: 'Click "Date range" → check "All time" → click "Save". Click "Format" and choose HTML or JSON, then click "Save" → click "Start export". Instagram will begin transferring your data to Google Drive.',
   },
 ];
 
@@ -256,6 +263,13 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
                 recentlyUnfollowedCount: 0,
                 ghostFollowing: [],
                 ghostFollowingCount: 0,
+                fansNotFollowed: [],
+                fansNotFollowedCount: 0,
+                mutualCount: 0,
+                followRatio: null,
+                relationshipHealthScore: undefined,
+                relationshipHealthLabel: undefined,
+                relationshipInsights: [],
               });
               setStage('results');
             } else {
@@ -756,9 +770,9 @@ function BranchStage({
 }
 
 const TARGET_FILES = [
-  { name: 'followers_1.html', desc: 'your followers list' },
-  { name: 'following.html', desc: 'who you follow' },
-  { name: 'recently_unfollowed_profiles.html', desc: 'recent unfollows' },
+  { key: 'followers', label: 'Followers file', desc: 'followers_*.html or followers_*.json', required: true },
+  { key: 'following', label: 'Following file', desc: 'following.html or following.json', required: true },
+  { key: 'recently', label: 'Recently unfollowed', desc: 'recently_unfollowed_profiles.html, optional', required: false },
 ];
 
 // Instagram ZIP filename format: instagram-{username}-YYYY-MM-DD-{hash}.zip
@@ -791,9 +805,10 @@ function UploadStage({
 }) {
   const [dragging, setDragging] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const folderRef = useRef<HTMLInputElement>(null);
 
   const syncFileNames = (fileList: FileList | null) => {
-    setSelectedFiles(fileList ? Array.from(fileList).map((f) => f.name) : []);
+    setSelectedFiles(fileList ? Array.from(fileList).map((f) => f.webkitRelativePath || f.name) : []);
     // Auto-detect handle from ZIP filename; only override if not already known
     if (fileList) {
       const zip = Array.from(fileList).find((f) => f.name.toLowerCase().endsWith('.zip'));
@@ -816,9 +831,16 @@ function UploadStage({
     syncFileNames(dt.files);
   };
 
-  const knownNames = new Set(TARGET_FILES.map((f) => f.name));
-  const recognizedSelected = selectedFiles.filter((n) => knownNames.has(n));
-  const unrecognizedSelected = selectedFiles.filter((n) => !knownNames.has(n));
+  const selectedBaseNames = selectedFiles.map((name) => name.split('/').at(-1) ?? name);
+  const hasFollowers = selectedBaseNames.some((name) => /^followers_?\d*\.(html|json)$/i.test(name));
+  const hasFollowing = selectedBaseNames.some((name) => /^following\.(html|json)$/i.test(name));
+  const hasRecently = selectedBaseNames.some((name) => /^recently_unfollowed_profiles\.html$/i.test(name));
+  const recognizedSelected = selectedFiles.filter((name) =>
+    /^followers_?\d*\.(html|json)$/i.test(name.split('/').at(-1) ?? name) ||
+    /^following\.(html|json)$/i.test(name.split('/').at(-1) ?? name) ||
+    /^recently_unfollowed_profiles\.html$/i.test(name.split('/').at(-1) ?? name)
+  );
+  const unrecognizedSelected = selectedFiles.filter((name) => !recognizedSelected.includes(name));
 
   return (
     <div className="space-y-5">
@@ -832,13 +854,13 @@ function UploadStage({
 
       {/* Instructions */}
       <div className="rounded-xl border border-cyan-950/10 bg-slate-50 p-4">
-        <p className="text-xs font-black uppercase tracking-wide text-slate-500 mb-3">How to get your files</p>
+        <p className="text-xs font-black uppercase tracking-wide text-slate-500 mb-3">Upload the small follower folder</p>
         <ol className="space-y-2">
           {[
             'Unzip the file Instagram emailed you',
-            <>Open the <code className="bg-white border border-slate-200 rounded px-1 text-xs">connections</code> folder</>,
-            <>Open the <code className="bg-white border border-slate-200 rounded px-1 text-xs">followers_and_following</code> folder</>,
-            'Drag all 3 files below (in any order)',
+            <>Open <code className="bg-white border border-slate-200 rounded px-1 text-xs">connections/followers_and_following</code></>,
+            'Upload that small folder, or select the files inside it',
+            'HTML and JSON both work. Photos, videos, messages, and media are not needed.',
           ].map((step, i) => (
             <li key={i} className="flex gap-2.5 text-xs text-slate-600 font-medium">
               <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-cyan-950 text-white font-black text-[9px]">{i + 1}</span>
@@ -848,18 +870,38 @@ function UploadStage({
         </ol>
         <div className="mt-3 space-y-1">
           {TARGET_FILES.map((f) => {
-            const selected = selectedFiles.includes(f.name);
+            const selected =
+              f.key === 'followers' ? hasFollowers :
+              f.key === 'following' ? hasFollowing :
+              hasRecently;
             return (
-              <div key={f.name} className="flex items-center gap-2">
+              <div key={f.key} className="flex items-center gap-2">
                 <span className={`text-xs font-bold ${selected ? 'text-green-600' : 'text-slate-400'}`}>
                   {selected ? '✓' : '○'}
                 </span>
-                <code className={`text-xs ${selected ? 'text-slate-800' : 'text-slate-500'}`}>{f.name}</code>
-                <span className="text-xs text-slate-400">— {f.desc}</span>
+                <span className={`text-xs font-bold ${selected ? 'text-slate-800' : 'text-slate-500'}`}>{f.label}</span>
+                <span className="text-xs text-slate-400">— {f.desc}{f.required ? '' : ''}</span>
               </div>
             );
           })}
         </div>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => folderRef.current?.click()}
+          className="rounded-full border border-cyan-950/15 bg-white px-4 py-2.5 text-sm font-black text-slate-700 transition hover:border-slate-400 hover:text-slate-950"
+        >
+          Select followers_and_following folder
+        </button>
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          className="rounded-full border border-cyan-950/15 bg-white px-4 py-2.5 text-sm font-black text-slate-700 transition hover:border-slate-400 hover:text-slate-950"
+        >
+          Select files instead
+        </button>
       </div>
 
       {/* Drop zone */}
@@ -878,8 +920,8 @@ function UploadStage({
         <div className="text-3xl">{selectedFiles.length > 0 ? '✅' : '📂'}</div>
         {selectedFiles.length === 0 ? (
           <div>
-            <p className="text-sm font-bold text-slate-700">Drop your 3 files here</p>
-            <p className="text-xs text-slate-400">or click to browse — select all at once</p>
+            <p className="text-sm font-bold text-slate-700">Drop follower files here</p>
+            <p className="text-xs text-slate-400">HTML or JSON accepted. The recently-unfollowed file is optional.</p>
           </div>
         ) : (
           <div className="w-full text-left space-y-1">
@@ -899,6 +941,19 @@ function UploadStage({
           accept=".zip,.json,.html,application/zip,application/x-zip-compressed,application/json,text/html"
           className="absolute inset-0 cursor-pointer opacity-0"
           onChange={(e) => syncFileNames(e.target.files)}
+        />
+        <input
+          ref={folderRef}
+          type="file"
+          multiple
+          accept=".json,.html,application/json,text/html"
+          className="hidden"
+          onChange={(e) => {
+            if (!fileRef.current) return;
+            fileRef.current.files = e.target.files;
+            syncFileNames(e.target.files);
+          }}
+          {...({ webkitdirectory: '', directory: '' } as Record<string, string>)}
         />
       </div>
 
@@ -960,7 +1015,23 @@ function ResultsStage({
   handle: string | null;
   onUploadAnother: () => void;
 }) {
-  const { diff, followerCount, followingCount, uploadedAt, recentlyUnfollowed, recentlyUnfollowedCount, ghostFollowing, ghostFollowingCount } = result;
+  const {
+    diff,
+    followerCount,
+    followingCount,
+    uploadedAt,
+    recentlyUnfollowed,
+    recentlyUnfollowedCount,
+    ghostFollowing,
+    ghostFollowingCount,
+    fansNotFollowed = [],
+    fansNotFollowedCount = 0,
+    mutualCount = 0,
+    followRatio = null,
+    relationshipHealthScore,
+    relationshipHealthLabel,
+    relationshipInsights = [],
+  } = result;
   const lostCount = diff?.lostCount ?? 0;
   const newCount = diff?.newCount ?? 0;
   const isFirst = diff === null;
@@ -971,12 +1042,14 @@ function ResultsStage({
     (diff?.lostFollowers?.length ?? 0) > 0 ||
     (diff?.newFollowers?.length ?? 0) > 0 ||
     recentlyUnfollowed.length > 0 ||
-    (ghostFollowing?.length ?? 0) > 0;
+    (ghostFollowing?.length ?? 0) > 0 ||
+    fansNotFollowed.length > 0;
   const fc = followerCount ?? 0;
   const fwc = followingCount ?? 0;
   const netTotal = fc - fwc;
   const maxBar = Math.max(fc, fwc, 1);
   const ghostCount = ghostFollowingCount ?? 0;
+  const healthScore = relationshipHealthScore ?? null;
 
   return (
     <div className="space-y-4">
@@ -1043,6 +1116,18 @@ function ResultsStage({
           </div>
         </div>
       </div>
+
+      <RelationshipHealthPanel
+        score={healthScore}
+        label={relationshipHealthLabel}
+        followerCount={fc}
+        followingCount={fwc}
+        mutualCount={mutualCount}
+        ghostCount={ghostCount}
+        fansNotFollowedCount={fansNotFollowedCount}
+        followRatio={followRatio}
+        insights={relationshipInsights}
+      />
 
       {/* ── First upload: baseline card ── */}
       {isFirst && (
@@ -1124,9 +1209,12 @@ function ResultsStage({
               {ghostCount > 0 && (
                 <GhostFollowingSection people={ghostFollowing ?? []} count={ghostCount} />
               )}
+              {fansNotFollowedCount > 0 && (
+                <FansNotFollowedSection people={fansNotFollowed} count={fansNotFollowedCount} />
+              )}
             </div>
           ) : (
-            <PaywallNames lostCount={lostCount} newCount={newCount} unfollowedCount={unfollowedCount} ghostCount={ghostCount} />
+            <PaywallNames lostCount={lostCount} newCount={newCount} unfollowedCount={unfollowedCount} ghostCount={ghostCount} fansNotFollowedCount={fansNotFollowedCount} />
           )}
         </>
       )}
@@ -1147,10 +1235,19 @@ function ResultsStage({
           {ghostCount > 0 && effectiveIsPro && (
             <GhostFollowingSection people={ghostFollowing ?? []} count={ghostCount} />
           )}
+          {fansNotFollowedCount > 0 && effectiveIsPro && (
+            <FansNotFollowedSection people={fansNotFollowed} count={fansNotFollowedCount} />
+          )}
           {ghostCount > 0 && !effectiveIsPro && (
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-sm font-black text-slate-800">{ghostCount.toLocaleString()} accounts don&apos;t follow you back</p>
               <p className="mt-1 text-xs text-slate-500">Upgrade to Pro to see who and clean up your following list.</p>
+            </div>
+          )}
+          {fansNotFollowedCount > 0 && !effectiveIsPro && (
+            <div className="rounded-xl border border-cyan-100 bg-cyan-50 p-4">
+              <p className="text-sm font-black text-cyan-900">{fansNotFollowedCount.toLocaleString()} followers are fans you do not follow back</p>
+              <p className="mt-1 text-xs text-cyan-700">Upgrade to Pro to see the accounts and decide who to engage.</p>
             </div>
           )}
         </div>
@@ -1189,6 +1286,75 @@ function ResultsStage({
       >
         Upload next snapshot →
       </button>
+    </div>
+  );
+}
+
+function RelationshipHealthPanel({
+  score,
+  label,
+  followerCount,
+  followingCount,
+  mutualCount,
+  ghostCount,
+  fansNotFollowedCount,
+  followRatio,
+  insights,
+}: {
+  score: number | null;
+  label?: string;
+  followerCount: number;
+  followingCount: number;
+  mutualCount: number;
+  ghostCount: number;
+  fansNotFollowedCount: number;
+  followRatio: number | null;
+  insights: string[];
+}) {
+  return (
+    <div className="rounded-2xl border border-cyan-950/10 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-wide text-cyan-700">Relationship health</p>
+          <h4 className="mt-1 text-xl font-black text-slate-950">
+            {score === null ? 'Snapshot intelligence' : `${score}/100 ${label ?? 'score'}`}
+          </h4>
+          <p className="mt-1 text-xs font-semibold text-slate-500">
+            Based on followers, following, mutuals, and cleanup opportunities.
+          </p>
+        </div>
+        <div className="rounded-full bg-slate-950 px-4 py-2 text-sm font-black text-white">
+          {followRatio === null ? 'No ratio' : `${followRatio.toFixed(1)}x following ratio`}
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <MiniMetric label="Mutuals" value={mutualCount} />
+        <MiniMetric label="Not following back" value={ghostCount} />
+        <MiniMetric label="Fans not followed" value={fansNotFollowedCount} />
+        <MiniMetric label="Net audience" value={followerCount - followingCount} signed />
+      </div>
+
+      {insights.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {insights.map((insight) => (
+            <p key={insight} className="rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold leading-5 text-slate-600">
+              {insight}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MiniMetric({ label, value, signed = false }: { label: string; value: number; signed?: boolean }) {
+  return (
+    <div className="rounded-lg border border-cyan-950/10 bg-slate-50 p-3">
+      <p className="text-lg font-black text-slate-950">
+        {signed && value > 0 ? '+' : ''}{value.toLocaleString()}
+      </p>
+      <p className="mt-1 text-[10px] font-black uppercase leading-tight text-slate-400">{label}</p>
     </div>
   );
 }
@@ -1368,18 +1534,64 @@ function GhostFollowingSection({ people, count }: { people: Person[]; count: num
   );
 }
 
+function FansNotFollowedSection({ people, count }: { people: Person[]; count: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? people : people.slice(0, 5);
+  return (
+    <div className="rounded-xl border border-cyan-100 bg-cyan-50 p-4">
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-sm font-semibold text-cyan-900">Fans you do not follow back</p>
+        <span className="text-xs font-bold text-cyan-600">{count.toLocaleString()}</span>
+      </div>
+      <p className="mb-3 text-xs text-cyan-700">
+        These followers already chose you. They can be good candidates for engagement, replies, or relationship building.
+      </p>
+      {people.length > 0 && (
+        <>
+          <ul className="space-y-1.5">
+            {shown.map((p) => (
+              <li key={p.handle} className="text-xs text-slate-700">
+                <a
+                  href={`https://instagram.com/${p.handle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  @{p.handle}
+                </a>
+                {p.displayName && <span className="ml-1 text-slate-400">{p.displayName}</span>}
+              </li>
+            ))}
+          </ul>
+          {count > 5 && (
+            <button
+              type="button"
+              onClick={() => setExpanded((e) => !e)}
+              className="mt-2 text-xs text-cyan-700 transition hover:text-cyan-900"
+            >
+              {expanded ? 'Show less' : `Show all ${count.toLocaleString()}`}
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function PaywallNames({
   lostCount,
   newCount,
   unfollowedCount = 0,
   ghostCount = 0,
+  fansNotFollowedCount = 0,
 }: {
   lostCount: number;
   newCount: number;
   unfollowedCount?: number;
   ghostCount?: number;
+  fansNotFollowedCount?: number;
 }) {
-  const total = lostCount + newCount + unfollowedCount + ghostCount;
+  const total = lostCount + newCount + unfollowedCount + ghostCount + fansNotFollowedCount;
   return (
     <div className="relative overflow-hidden rounded-2xl border border-cyan-950/10">
       {/* Blurred preview */}
@@ -1405,6 +1617,14 @@ function PaywallNames({
             <p className="mb-2 mt-3 text-xs font-bold text-slate-600">Not following back ({ghostCount})</p>
             {Array.from({ length: Math.min(ghostCount, 2) }).map((_, i) => (
               <p key={i} className="mb-1 text-xs text-slate-700">@{'█'.repeat(8 + (i % 3))}</p>
+            ))}
+          </>
+        )}
+        {fansNotFollowedCount > 0 && (
+          <>
+            <p className="mb-2 mt-3 text-xs font-bold text-cyan-700">Fans not followed ({fansNotFollowedCount})</p>
+            {Array.from({ length: Math.min(fansNotFollowedCount, 2) }).map((_, i) => (
+              <p key={i} className="mb-1 text-xs text-slate-700">@{'█'.repeat(7 + (i % 4))}</p>
             ))}
           </>
         )}

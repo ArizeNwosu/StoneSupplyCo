@@ -118,7 +118,7 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
                 </h2>
                 <div className="mt-5 space-y-3">
                   {[
-                    'Upload the official Instagram export ZIP',
+                    'Upload the small HTML or JSON follower files',
                     'Connect Google Drive for scheduled exports',
                     'Compare new and missing followers over time',
                   ].map((item, index) => (
