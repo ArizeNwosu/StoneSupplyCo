@@ -250,3 +250,11 @@ enum AlertType {
   SNAPSHOT_MILESTONE
   WEEKLY_SUMMARY
 }
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  email     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}

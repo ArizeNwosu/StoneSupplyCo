@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Logo } from '@/components/layout/Logo';
+import { PasswordInput } from '@/components/auth/PasswordInput';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -101,18 +102,20 @@ export default function SignInPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="mb-1 block text-sm font-semibold text-slate-700">
-                Password
-              </label>
-              <input
+              <div className="mb-1 flex items-center justify-between">
+                <label htmlFor="password" className="text-sm font-semibold text-slate-700">
+                  Password
+                </label>
+                <Link href="/auth/forgot-password" className="text-xs font-semibold text-cyan-700 hover:text-cyan-900">
+                  Forgot password?
+                </Link>
+              </div>
+              <PasswordInput
                 id="password"
-                type="password"
-                required
-                autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={setPassword}
+                autoComplete="current-password"
                 placeholder="Your password"
-                className="w-full rounded-lg border border-cyan-950/10 px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
               />
             </div>
 

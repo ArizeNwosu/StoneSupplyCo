@@ -64,3 +64,27 @@ export async function sendMilestoneEmail({
     console.error(`[email] Failed to send milestone ${snapshotCount} email to ${to}:`, err);
   }
 }
+
+export async function sendPasswordResetEmail({
+  to,
+  token,
+}: {
+  to: string;
+  token: string;
+}): Promise<void> {
+  const resetUrl = `https://instagramfollowerstracker.com/auth/reset-password?token=${token}`;
+  try {
+    await getResend().emails.send({
+      from: FROM,
+      to,
+      subject: 'Reset your password — Instagram Followers Tracker',
+      html: `
+        <p>You requested a password reset for your Instagram Followers Tracker account.</p>
+        <p><a href="${resetUrl}" style="font-weight:bold">Reset your password →</a></p>
+        <p>This link expires in 1 hour. If you didn't request this, you can ignore this email.</p>
+      `,
+    });
+  } catch (err) {
+    console.error('[email] Failed to send password reset email:', err);
+  }
+}
