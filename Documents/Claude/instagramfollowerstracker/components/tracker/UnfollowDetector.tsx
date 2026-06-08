@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { PLAN_LIMITS } from '@/lib/limits';
+import { FollowerHistoryChart } from '@/components/tracker/FollowerHistoryChart';
 
 interface Person {
   handle: string;
@@ -521,6 +522,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
           <ResultsStage
             result={result}
             isPro={isPro}
+            handle={selectedHandle}
             onUploadAnother={() => {
               setResult(null);
               setError(null);
@@ -938,10 +940,12 @@ function UploadStage({
 function ResultsStage({
   result,
   isPro,
+  handle,
   onUploadAnother,
 }: {
   result: UploadResult;
   isPro: boolean;
+  handle: string | null;
   onUploadAnother: () => void;
 }) {
   const { diff, followerCount, followingCount, uploadedAt, recentlyUnfollowed, recentlyUnfollowedCount, ghostFollowing, ghostFollowingCount } = result;
@@ -1161,6 +1165,9 @@ function ResultsStage({
           </div>
         </div>
       )}
+
+      {/* ── Growth history chart ── */}
+      <FollowerHistoryChart handle={handle} />
 
       {/* ── Upload another ── */}
       <button

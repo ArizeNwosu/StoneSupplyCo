@@ -115,22 +115,41 @@ function parseRecentlyUnfollowedHtml(html: string): ExportPerson[] {
 // ── HTML: followers_1.html / following.html ────────────────────────────────
 // followers_1.html → href="https://www.instagram.com/HANDLE"
 // following.html   → href="https://www.instagram.com/_u/HANDLE"
+// Date appears in the next sibling div: </a></div><div>May 16, 2026 6:17 am</div>
 
 function parsePeopleHtml(html: string, kind: RelationshipKind): ExportPerson[] {
   const people: ExportPerson[] = [];
   const re =
     kind === 'following'
-      ? /href="https:\/\/www\.instagram\.com\/_u\/([a-z0-9._]{1,30})"/gi
-      : /href="https:\/\/www\.instagram\.com\/(?!_u\/)([a-z0-9._]{1,30})"/gi;
+      ? /href="https:\/\/www\.instagram\.com\/_u\/([a-z0-9._]{1,30})"[^>]*>[^<]*<\/a><\/div><div>([^<]*)<\/div>/gi
+      : /href="https:\/\/www\.instagram\.com\/(?!_u\/)([a-z0-9._]{1,30})"[^>]*>[^<]*<\/a><\/div><div>([^<]*)<\/div>/gi;
 
   let match: RegExpExecArray | null;
   while ((match = re.exec(html)) !== null) {
     const handle = match[1]!.toLowerCase();
     if (/^[a-z0-9._]{1,30}$/.test(handle)) {
-      people.push({ handle });
+      const followedAt = parseInstagramHtmlDate(match[2]?.trim() ?? '');
+      people.push({ handle, ...(followedAt ? { followedAt } : {}) });
     }
   }
   return dedupePeople(people);
+}
+
+const MONTH_INDEX: Record<string, number> = {
+  january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+  july: 6, august: 7, september: 8, october: 9, november: 10, december: 11,
+};
+
+function parseInstagramHtmlDate(dateStr: string): Date | undefined {
+  // "May 16, 2026 6:17 am"  or  "May 16, 2026 6:17 pm"
+  const m = dateStr.match(/^(\w+)\s+(\d+),\s+(\d{4})\s+(\d+):(\d+)\s+(am|pm)$/i);
+  if (!m) return undefined;
+  const monthNum = MONTH_INDEX[m[1]!.toLowerCase()];
+  if (monthNum === undefined) return undefined;
+  let h = parseInt(m[4]!, 10);
+  if (m[6]!.toLowerCase() === 'pm' && h !== 12) h += 12;
+  if (m[6]!.toLowerCase() === 'am' && h === 12) h = 0;
+  return new Date(Date.UTC(parseInt(m[3]!, 10), monthNum, parseInt(m[2]!, 10), h, parseInt(m[5]!, 10)));
 }
 
 // ── JSON ───────────────────────────────────────────────────────────────────
