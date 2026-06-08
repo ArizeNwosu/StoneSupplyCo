@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SignOutButton } from '@/components/settings/SignOutButton';
 
 interface SidebarProps {
   children: React.ReactNode;
@@ -8,7 +9,7 @@ export function Sidebar({ children }: SidebarProps) {
   return (
     <aside className="flex h-full w-72 shrink-0 flex-col border-r border-cyan-950/10 bg-white">
       <div className="p-4 flex-1 overflow-y-auto">{children}</div>
-      <div className="border-t border-cyan-950/10 p-4">
+      <div className="border-t border-cyan-950/10 p-4 space-y-1">
         <Link
           href="/dashboard/settings"
           className="flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-950"
@@ -19,6 +20,7 @@ export function Sidebar({ children }: SidebarProps) {
           </svg>
           Settings
         </Link>
+        <SignOutButton sidebar />
       </div>
     </aside>
   );
