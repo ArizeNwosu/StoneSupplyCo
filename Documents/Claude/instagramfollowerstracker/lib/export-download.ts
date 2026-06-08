@@ -70,6 +70,38 @@ export async function buildExportDownload({
   });
 }
 
+const PERSON_COLUMNS = ['username', 'display_name', 'profile_url', 'followed_at'] as const;
+const DIFF_COLUMNS = ['change', 'username', 'display_name', 'profile_url', 'followed_at'] as const;
+
+type PersonRow = Record<typeof PERSON_COLUMNS[number], string | Date | null | undefined>;
+type DiffRow = Record<typeof DIFF_COLUMNS[number], string | Date | null | undefined>;
+
+function personRow(person: {
+  handle: string;
+  displayName: string | null;
+  followedAt: Date | null;
+}): PersonRow {
+  return {
+    username: person.handle,
+    display_name: person.displayName,
+    profile_url: `https://www.instagram.com/${person.handle}/`,
+    followed_at: person.followedAt,
+  };
+}
+
+function diffRow(
+  change: 'unfollowed_you' | 'new_follower',
+  person: { handle: string; displayName?: string; followedAt?: Date }
+): DiffRow {
+  return {
+    change,
+    username: person.handle,
+    display_name: person.displayName ?? null,
+    profile_url: `https://www.instagram.com/${person.handle}/`,
+    followed_at: person.followedAt ?? null,
+  };
+}
+
 function getPayload(
   dataExport: {
     uploadedAt: Date;
@@ -84,7 +116,7 @@ function getPayload(
 ): { columns: string[]; rows: CsvRow[]; meta: Record<string, unknown> } {
   if (type === 'following') {
     return {
-      columns: ['handle', 'displayName', 'followedAt'],
+      columns: [...PERSON_COLUMNS],
       rows: dataExport.following.map(personRow),
       meta: { type, uploadedAt: dataExport.uploadedAt },
     };
@@ -93,47 +125,35 @@ function getPayload(
   if (type === 'diff') {
     if (!previousExport) {
       return {
-        columns: ['changeType', 'handle', 'displayName'],
+        columns: [...DIFF_COLUMNS],
         rows: [],
-        meta: {
-          type,
-          uploadedAt: dataExport.uploadedAt,
-          previousUploadedAt: null,
-        },
+        meta: { type, uploadedAt: dataExport.uploadedAt, previousUploadedAt: null },
       };
     }
 
     const previous: ExportData = {
-      followers: previousExport.followers.map((person) => ({
-        handle: person.handle,
-        displayName: person.displayName ?? undefined,
-        followedAt: person.followedAt ?? undefined,
+      followers: previousExport.followers.map((p) => ({
+        handle: p.handle,
+        displayName: p.displayName ?? undefined,
+        followedAt: p.followedAt ?? undefined,
       })),
       following: [],
     };
     const current: ExportData = {
-      followers: dataExport.followers.map((person) => ({
-        handle: person.handle,
-        displayName: person.displayName ?? undefined,
-        followedAt: person.followedAt ?? undefined,
+      followers: dataExport.followers.map((p) => ({
+        handle: p.handle,
+        displayName: p.displayName ?? undefined,
+        followedAt: p.followedAt ?? undefined,
       })),
       following: [],
     };
     const diff = diffExports(previous, current);
 
     return {
-      columns: ['changeType', 'handle', 'displayName'],
+      columns: [...DIFF_COLUMNS],
       rows: [
-        ...diff.lostFollowers.map((person) => ({
-          changeType: 'lost',
-          handle: person.handle,
-          displayName: person.displayName,
-        })),
-        ...diff.newFollowers.map((person) => ({
-          changeType: 'new',
-          handle: person.handle,
-          displayName: person.displayName,
-        })),
+        ...diff.lostFollowers.map((p) => diffRow('unfollowed_you', p)),
+        ...diff.newFollowers.map((p) => diffRow('new_follower', p)),
       ],
       meta: {
         type,
@@ -143,21 +163,10 @@ function getPayload(
     };
   }
 
+  // followers
   return {
-    columns: ['handle', 'displayName', 'followedAt'],
+    columns: [...PERSON_COLUMNS],
     rows: dataExport.followers.map(personRow),
     meta: { type, uploadedAt: dataExport.uploadedAt },
-  };
-}
-
-function personRow(person: {
-  handle: string;
-  displayName: string | null;
-  followedAt: Date | null;
-}): CsvRow {
-  return {
-    handle: person.handle,
-    displayName: person.displayName,
-    followedAt: person.followedAt,
   };
 }
