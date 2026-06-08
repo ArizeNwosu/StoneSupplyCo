@@ -13,7 +13,7 @@ interface LookupResult {
 
 type State = 'idle' | 'loading' | 'found' | 'not-found' | 'error';
 
-export function HandleSearch() {
+export function HandleSearch({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
   const [input, setInput] = useState('');
   const [state, setState] = useState<State>('idle');
   const [result, setResult] = useState<LookupResult | null>(null);
@@ -49,7 +49,7 @@ export function HandleSearch() {
     if (handle) {
       sessionStorage.setItem('pending_handle', handle);
     }
-    router.push('/auth/signup');
+    router.push(isLoggedIn ? '/dashboard' : '/auth/signup');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -117,7 +117,7 @@ export function HandleSearch() {
       {state === 'not-found' && result && (
         <div className="mt-4 flex flex-col gap-4 rounded-[28px] border border-cyan-950/10 bg-white p-5 shadow-xl shadow-cyan-950/10 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-600">
-            <span className="font-medium">@{result.handle}</span> is ready to track. Use browser capture after signup to start the first snapshot.
+            <span className="font-medium">@{result.handle}</span> is ready to track. Add it to your dashboard and we&apos;ll fetch the follower count automatically.
           </p>
           <button
             type="button"

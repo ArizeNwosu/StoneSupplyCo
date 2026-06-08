@@ -148,7 +148,7 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
                 <p className="mb-4 text-sm font-black text-slate-950">
                   Look up an Instagram account
                 </p>
-                <HandleSearch />
+                <HandleSearch isLoggedIn={!!session?.user} />
               </div>
             )}
           </div>

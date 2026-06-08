@@ -26,7 +26,7 @@ const faqItems = [
   {
     question: 'How do I track Instagram follower growth for free?',
     answer:
-      'Create a free account, add a public Instagram handle you want to watch, and use browser capture to save the first follower-count snapshot. The dashboard builds growth history as new snapshots are captured.',
+      'Create a free account, add a public Instagram handle you want to watch, and the tracker fetches the first follower-count snapshot automatically. The dashboard builds growth history as new daily snapshots are collected.',
   },
   {
     question: 'Can I track who unfollowed me on Instagram?',
@@ -217,7 +217,7 @@ export default async function HomePage() {
                 gaps, and relationship cleanup opportunities for your own account.
               </p>
               <div className="mt-8">
-                <HandleSearch />
+                <HandleSearch isLoggedIn={!!session?.user} />
               </div>
               <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-600">
                 <span className="rounded-full bg-white px-4 py-2 shadow-sm">Public account pages</span>
