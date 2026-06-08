@@ -8,6 +8,11 @@ export interface WaybackSnapshot {
   followerCount: number | null;
 }
 
+// Instagram only embedded edge_followed_by counts in HTML from roughly 2015–2020.
+// Querying outside this window wastes time on archives that will always return null.
+const WAYBACK_EMBED_FROM = '20150101';
+const WAYBACK_EMBED_CUTOFF = new Date('2021-01-01');
+
 export async function getWaybackSnapshots(
   handle: string,
   limit = 120,
@@ -15,12 +20,12 @@ export async function getWaybackSnapshots(
   deadlineMs?: number  // stop early and return partial results instead of timing out
 ): Promise<WaybackSnapshot[]> {
   const url = `https://instagram.com/${handle}/`;
-  const toParam = to
-    ? `&to=${to.toISOString().slice(0, 10).replace(/-/g, '')}`
-    : '';
+  // Cap upper bound at 2021-01-01 — after that Instagram uses CSR and archives have no count
+  const effectiveTo = to && to < WAYBACK_EMBED_CUTOFF ? to : WAYBACK_EMBED_CUTOFF;
+  const toParam = `&to=${effectiveTo.toISOString().slice(0, 10).replace(/-/g, '')}`;
   // collapse=timestamp:6 collapses to one result per YYYYMM (monthly) — keeps result count
-  // manageable (~120 for a full 10-year history) instead of hundreds of daily entries
-  const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&fl=timestamp,statuscode&filter=statuscode:200&collapse=timestamp:6&limit=${limit}${toParam}`;
+  // manageable (~72 for the 2015–2021 window) instead of hundreds of daily entries
+  const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&fl=timestamp,statuscode&filter=statuscode:200&collapse=timestamp:6&limit=${limit}&from=${WAYBACK_EMBED_FROM}${toParam}`;
 
   let rows: string[][];
   try {
