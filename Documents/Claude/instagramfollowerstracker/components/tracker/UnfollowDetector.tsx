@@ -1253,27 +1253,13 @@ function ResultsStage({
         </div>
       )}
 
-      {/* ── CSV exports (Pro) ── */}
-      {effectiveIsPro && !isFirst && (
-        <div className="border-t border-cyan-950/10 pt-3 space-y-2">
-          <p className="text-xs font-bold text-slate-400">Export:</p>
-          <div className="flex flex-wrap gap-2">
-          {[
-            { href: downloadHref(result.uploadId, 'followers'), label: 'Followers CSV' },
-            ...(followingCount ? [{ href: downloadHref(result.uploadId, 'following'), label: 'Following CSV' }] : []),
-            { href: downloadHref(result.uploadId, 'diff'), label: 'Changes CSV' },
-          ].map(({ href, label }) => (
-            <a
-              key={label}
-              href={href}
-              className="inline-flex items-center rounded-full border border-cyan-950/10 px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:border-slate-400 hover:text-slate-950"
-            >
-              {label}
-            </a>
-          ))}
-          </div>
-        </div>
-      )}
+      {/* ── CSV exports ── */}
+      <ExportSection
+        uploadId={result.uploadId}
+        isPro={effectiveIsPro}
+        hasFollowing={!!followingCount}
+        hasDiff={!isFirst}
+      />
 
       {/* ── Growth history chart ── */}
       <FollowerHistoryChart handle={handle} />
@@ -1705,6 +1691,106 @@ function DiffSection({
         >
           {expanded ? 'Show less' : `Show all ${people.length}`}
         </button>
+      )}
+    </div>
+  );
+}
+
+function ExportSection({
+  uploadId,
+  isPro,
+  hasFollowing,
+  hasDiff,
+}: {
+  uploadId: string;
+  isPro: boolean;
+  hasFollowing: boolean;
+  hasDiff: boolean;
+}) {
+  const exports = [
+    {
+      type: 'followers' as const,
+      icon: '👥',
+      label: 'Followers list',
+      desc: 'Every account that follows you, as CSV',
+      available: true,
+    },
+    {
+      type: 'following' as const,
+      icon: '➡️',
+      label: 'Following list',
+      desc: 'Every account you follow, as CSV',
+      available: hasFollowing,
+    },
+    {
+      type: 'diff' as const,
+      icon: '📊',
+      label: 'Changes report',
+      desc: 'Who followed and unfollowed since last upload',
+      available: hasDiff,
+    },
+  ].filter((e) => e.available);
+
+  return (
+    <div className="rounded-2xl border border-cyan-950/10 bg-white overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3 border-b border-cyan-950/10 bg-slate-50 px-5 py-3">
+        <div className="flex items-center gap-2">
+          <span className="text-base">⬇️</span>
+          <p className="text-sm font-black text-slate-950">Export your data</p>
+        </div>
+        <span className="rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-black text-teal-800">PRO</span>
+      </div>
+
+      {isPro ? (
+        <div className="p-4 space-y-2">
+          <p className="text-xs text-slate-500 mb-3">
+            Download your follower data as CSV — import into Excel, Sheets, or any analytics tool.
+          </p>
+          {exports.map(({ type, icon, label, desc }) => (
+            <a
+              key={type}
+              href={downloadHref(uploadId, type)}
+              className="flex items-center gap-3 rounded-xl border border-cyan-950/10 bg-slate-50 px-4 py-3 transition hover:border-slate-300 hover:bg-white group"
+            >
+              <span className="text-xl shrink-0">{icon}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-black text-slate-950">{label}</p>
+                <p className="text-xs text-slate-500">{desc}</p>
+              </div>
+              <span className="text-xs font-bold text-teal-700 group-hover:text-teal-600 shrink-0">
+                CSV ↓
+              </span>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div className="p-5">
+          <p className="text-sm text-slate-600 mb-4">
+            Export any snapshot as a CSV file — import into Excel, Google Sheets, or your own analytics.
+          </p>
+          <div className="space-y-2 mb-5">
+            {exports.map(({ icon, label, desc }) => (
+              <div key={label} className="flex items-center gap-3 rounded-xl border border-cyan-950/10 bg-slate-50 px-4 py-3 opacity-50">
+                <span className="text-xl shrink-0">{icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black text-slate-950">{label}</p>
+                  <p className="text-xs text-slate-500">{desc}</p>
+                </div>
+                <span className="text-xs font-bold text-slate-300 shrink-0">🔒</span>
+              </div>
+            ))}
+          </div>
+          <Link
+            href="/pricing"
+            className="flex items-center justify-center gap-2 w-full rounded-full bg-slate-950 px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-slate-800"
+          >
+            Unlock CSV exports — Upgrade to Pro
+          </Link>
+          <p className="mt-2.5 text-center text-xs text-slate-400">
+            Also unlocks full unfollower names, ghost following list, and multi-account tracking.
+          </p>
+        </div>
       )}
     </div>
   );
