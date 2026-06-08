@@ -10,15 +10,17 @@ export interface WaybackSnapshot {
 
 export async function getWaybackSnapshots(
   handle: string,
-  limit = 50,
-  to?: Date   // optional upper bound — omit to get ALL available history
+  limit = 120,
+  to?: Date,        // optional upper bound — omit to get ALL available history
+  deadlineMs?: number  // stop early and return partial results instead of timing out
 ): Promise<WaybackSnapshot[]> {
   const url = `https://instagram.com/${handle}/`;
   const toParam = to
     ? `&to=${to.toISOString().slice(0, 10).replace(/-/g, '')}`
     : '';
-  // No `from` filter — fetch the full archive so backfill goes back as far as Wayback has data
-  const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&fl=timestamp,statuscode&filter=statuscode:200&limit=${limit}${toParam}`;
+  // collapse=timestamp:6 collapses to one result per YYYYMM (monthly) — keeps result count
+  // manageable (~120 for a full 10-year history) instead of hundreds of daily entries
+  const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&fl=timestamp,statuscode&filter=statuscode:200&collapse=timestamp:6&limit=${limit}${toParam}`;
 
   let rows: string[][];
   try {
@@ -39,6 +41,10 @@ export async function getWaybackSnapshots(
   const snapshots: WaybackSnapshot[] = [];
   for (const [timestamp] of rows.slice(1)) {
     if (!timestamp) continue;
+    if (deadlineMs && Date.now() >= deadlineMs) {
+      console.warn(`[wayback] Deadline reached — returning ${snapshots.length} snapshots for @${handle}`);
+      break;
+    }
     const archivedUrl = `https://web.archive.org/web/${timestamp}if_/https://www.instagram.com/${handle}/`;
     const followerCount = await extractFollowerCountFromArchive(archivedUrl);
     if (followerCount !== null) {
@@ -103,7 +109,8 @@ export async function backfillTrackedAccount(
     existing.map((s) => s.takenAt.toISOString().slice(0, 10))
   );
 
-  const waybackSnaps = await getWaybackSnapshots(handle, maxSnapshots, trackedSince);
+  // Give ourselves 240s — leaves ~60s for DB writes within the 300s Vercel function limit
+  const waybackSnaps = await getWaybackSnapshots(handle, maxSnapshots, trackedSince, Date.now() + 240_000);
 
   const newSnapshots: Array<{
     trackedAccountId: string;
