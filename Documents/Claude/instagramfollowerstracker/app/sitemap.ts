@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
 import { SEO_PAGES } from '@/lib/seo-pages';
 import { ALL_POSTS } from '@/lib/blog';
+import { SEO_ACCOUNT_PAGES } from '@/lib/seo-account-pages';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +44,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
+  const seoAccountPages: MetadataRoute.Sitemap = SEO_ACCOUNT_PAGES.map((page) => ({
+    url: `${base}/${page.slug}/${page.username}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.82,
+  }));
+
   const publicAccounts = await prisma.publicAccount
     .findMany({
       select: { handle: true, lastChecked: true },
@@ -56,5 +64,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...blogPages, ...keywordPages, ...accountPages];
+  return [...staticPages, ...blogPages, ...keywordPages, ...seoAccountPages, ...accountPages];
 }

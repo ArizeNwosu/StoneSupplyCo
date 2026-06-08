@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { fetchInstagramProfile, fetchInstagramProfilesBatch } from '@/lib/scraper';
 import { sendMilestoneEmail } from '@/lib/email';
+import { ensureSeoPublicAccounts } from '@/lib/seo-public-accounts';
 
 export type SnapshotScope = 'all' | 'tracked' | 'public';
 
@@ -63,6 +64,7 @@ export async function runDailySnapshot(
   }
 
   if ((scope === 'all' || scope === 'public') && Date.now() < deadline) {
+    await ensureSeoPublicAccounts();
     await snapshotPublicAccounts({
       stats: publicStats,
       dayStart,

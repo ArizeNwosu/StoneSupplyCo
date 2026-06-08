@@ -6,6 +6,7 @@ import { PLAN_LIMITS, CHART_UNLOCK_THRESHOLD } from '@/lib/limits';
 import { parseHandle, isValidHandle } from '@/lib/handles';
 import { sendMilestoneEmail } from '@/lib/email';
 import { parseFollowerCount } from '@/lib/counts';
+import { ensureSeoPublicAccountByHandle } from '@/lib/seo-public-accounts';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -125,6 +126,29 @@ export async function POST(req: NextRequest) {
   let snapshotCount = 0;
   let firstFollowerCount: number | null = null;
 
+  await ensureSeoPublicAccountByHandle(handle).catch((err) => {
+    console.warn(`[accounts] Could not ensure SEO public account for @${handle}:`, err);
+  });
+
+  const seeded = await seedTrackedAccountFromPublicHistory(account.id, handle).catch((err) => {
+    console.warn(`[accounts] Could not seed @${handle} from public history:`, err);
+    return null;
+  });
+
+  if (seeded) {
+    snapshotCount = seeded.snapshotCount;
+    firstFollowerCount = seeded.latestFollowerCount;
+    await prisma.trackedAccount.update({
+      where: { id: account.id },
+      data: {
+        snapshotCount,
+        ...(seeded.lastChecked ? { lastChecked: seeded.lastChecked } : {}),
+        displayName: seeded.displayName ?? undefined,
+        avatarUrl: seeded.avatarUrl ?? undefined,
+      },
+    });
+  }
+
   // Take first snapshot immediately. Import dynamically to keep scraper server-only.
   try {
     const { fetchInstagramProfile } = await import('@/lib/scraper');
@@ -132,15 +156,41 @@ export async function POST(req: NextRequest) {
     const followerCount = profile.followerCount ?? manualFollowerCount;
 
     if (followerCount !== null) {
-      await prisma.snapshot.create({
-        data: {
+      const now = new Date();
+      const dayStart = startOfUtcDay(now);
+      const dayEnd = addDays(dayStart, 1);
+      const existingToday = await prisma.snapshot.findFirst({
+        where: {
           trackedAccountId: account.id,
-          followerCount,
-          followingCount: profile.followingCount ?? undefined,
-          postCount: profile.postCount ?? undefined,
+          takenAt: { gte: dayStart, lt: dayEnd },
         },
+        select: { id: true },
       });
-      snapshotCount = 1;
+
+      if (existingToday) {
+        await prisma.snapshot.update({
+          where: { id: existingToday.id },
+          data: {
+            followerCount,
+            followingCount: profile.followingCount ?? undefined,
+            postCount: profile.postCount ?? undefined,
+          },
+        });
+      } else {
+        await prisma.snapshot.create({
+          data: {
+            trackedAccountId: account.id,
+            followerCount,
+            followingCount: profile.followingCount ?? undefined,
+            postCount: profile.postCount ?? undefined,
+            takenAt: dayStart,
+          },
+        });
+      }
+
+      snapshotCount = await prisma.snapshot.count({
+        where: { trackedAccountId: account.id },
+      });
       firstFollowerCount = followerCount;
     }
 
@@ -182,4 +232,76 @@ export async function POST(req: NextRequest) {
     },
     { status: 200 }
   );
+}
+
+async function seedTrackedAccountFromPublicHistory(
+  trackedAccountId: string,
+  handle: string
+) {
+  const publicAccount = await prisma.publicAccount.findUnique({
+    where: { handle },
+    include: {
+      snapshots: {
+        orderBy: { takenAt: 'asc' },
+        select: {
+          takenAt: true,
+          followerCount: true,
+          followingCount: true,
+          postCount: true,
+        },
+      },
+    },
+  });
+
+  if (!publicAccount) return null;
+
+  const snapshots =
+    publicAccount.snapshots.length > 0
+      ? publicAccount.snapshots
+      : publicAccount.followerCount !== null
+        ? [
+            {
+              takenAt: publicAccount.lastChecked ?? publicAccount.createdAt,
+              followerCount: publicAccount.followerCount,
+              followingCount: publicAccount.followingCount,
+              postCount: publicAccount.postCount,
+            },
+          ]
+        : [];
+
+  if (snapshots.length > 0) {
+    await prisma.snapshot.createMany({
+      data: snapshots.map((snapshot) => ({
+        trackedAccountId,
+        takenAt: snapshot.takenAt,
+        followerCount: snapshot.followerCount,
+        followingCount: snapshot.followingCount ?? undefined,
+        postCount: snapshot.postCount ?? undefined,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  const snapshotCount = await prisma.snapshot.count({
+    where: { trackedAccountId },
+  });
+  const latest = snapshots.at(-1);
+
+  return {
+    snapshotCount,
+    latestFollowerCount: latest?.followerCount ?? null,
+    lastChecked: publicAccount.lastChecked,
+    displayName: publicAccount.displayName,
+    avatarUrl: publicAccount.avatarUrl,
+  };
+}
+
+function startOfUtcDay(date: Date): Date {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
+}
+
+function addDays(date: Date, days: number): Date {
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
