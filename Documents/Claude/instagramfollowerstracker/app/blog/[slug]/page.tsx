@@ -41,7 +41,12 @@ export async function generateMetadata({
   };
 }
 
-function renderSection(section: Section, idx: number) {
+interface TocItem {
+  id: string;
+  text: string;
+}
+
+function renderSection(section: Section, idx: number, headingId?: string) {
   switch (section.type) {
     case 'p':
       return (
@@ -51,7 +56,11 @@ function renderSection(section: Section, idx: number) {
       );
     case 'h2':
       return (
-        <h2 key={idx} className="text-xl font-black text-slate-950 pt-4">
+        <h2
+          key={idx}
+          id={headingId}
+          className="scroll-mt-24 pt-4 text-xl font-black text-slate-950"
+        >
           {section.text}
         </h2>
       );
@@ -149,6 +158,66 @@ function renderSection(section: Section, idx: number) {
     default:
       return null;
   }
+}
+
+function buildTableOfContents(sections: Section[]): {
+  items: TocItem[];
+  idsByIndex: Map<number, string>;
+} {
+  const seen = new Map<string, number>();
+  const idsByIndex = new Map<number, string>();
+  const items: TocItem[] = [];
+
+  sections.forEach((section, index) => {
+    if (section.type !== 'h2') return;
+
+    const baseId = slugifyHeading(section.text);
+    const count = seen.get(baseId) ?? 0;
+    seen.set(baseId, count + 1);
+
+    const id = count === 0 ? baseId : `${baseId}-${count + 1}`;
+    idsByIndex.set(index, id);
+    items.push({ id, text: section.text });
+  });
+
+  return { items, idsByIndex };
+}
+
+function slugifyHeading(text: string) {
+  const slug = text
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return slug || 'section';
+}
+
+function TableOfContents({ items }: { items: TocItem[] }) {
+  if (items.length === 0) return null;
+
+  return (
+    <nav
+      aria-label="Table of contents"
+      className="mb-8 rounded-lg border border-cyan-950/10 bg-slate-50 p-4"
+    >
+      <h2 className="text-sm font-black uppercase tracking-[0.14em] text-slate-500">
+        Table of Contents
+      </h2>
+      <ol className="mt-3 grid gap-2 sm:grid-cols-2">
+        {items.map((item) => (
+          <li key={item.id}>
+            <a
+              href={`#${item.id}`}
+              className="block rounded-md px-3 py-2 text-sm font-bold leading-snug text-slate-700 transition hover:bg-white hover:text-cyan-700"
+            >
+              {item.text}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
 }
 
 function FAQSection({ faqs }: { faqs: FAQ[] }) {
@@ -296,6 +365,7 @@ export default async function BlogPostPage({
   const { slug } = await params;
   const post = getPost(slug);
   if (!post) notFound();
+  const tableOfContents = buildTableOfContents(post.sections);
 
   const articleJsonLd = {
     '@context': 'https://schema.org',
@@ -386,8 +456,11 @@ export default async function BlogPostPage({
 
         {/* Article content */}
         <article className="rounded-xl border border-cyan-950/10 bg-white p-6 shadow-sm sm:p-8">
+          <TableOfContents items={tableOfContents.items} />
           <div className="space-y-5">
-            {post.sections.map((section, idx) => renderSection(section, idx))}
+            {post.sections.map((section, idx) =>
+              renderSection(section, idx, tableOfContents.idsByIndex.get(idx))
+            )}
           </div>
         </article>
 
