@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { ReportLinksList } from '@/components/tracker/ReportLinksList';
 import { ApiKeyManager } from '@/components/tracker/ApiKeyManager';
 import { ManageSubscriptionButton } from '@/components/settings/ManageSubscriptionButton';
+import { SignOutButton } from '@/components/settings/SignOutButton';
 import { CheckoutButton } from '@/components/pricing/CheckoutButton';
 
 export const metadata: Metadata = {
@@ -114,7 +115,8 @@ export default async function SettingsPage() {
         {/* Account info */}
         <div className="rounded-lg border border-cyan-950/10 bg-white p-6 shadow-sm">
           <h2 className="text-sm font-semibold text-slate-950 mb-3">Account</h2>
-          <p className="text-sm text-slate-600">{user.email}</p>
+          <p className="text-sm text-slate-600 mb-4">{user.email}</p>
+          <SignOutButton />
         </div>
 
         {showDiagnostics && (
