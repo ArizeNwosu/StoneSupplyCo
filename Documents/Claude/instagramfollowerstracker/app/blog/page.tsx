@@ -5,16 +5,16 @@ import { Footer } from '@/components/layout/Footer';
 import { ALL_POSTS } from '@/lib/blog';
 
 export const metadata: Metadata = {
-  title: 'Instagram Follower Tracker Blog — Growth Tips, Tools & Guides',
+  title: 'Instagram Follower Tracker Blog - Free Tools, Unfollow Guides & Growth Tips',
   description:
-    'Expert guides on tracking Instagram followers, detecting fake followers, monitoring growth, and using the best Instagram tracking tools. Free resources for creators and brands.',
+    'Guides for Instagram followers tracker tools, free unfollow tracking without login, follow-back cleanup, public account growth monitoring, and safer export-based reports.',
   alternates: {
     canonical: 'https://instagramfollowerstracker.com/blog',
   },
   openGraph: {
-    title: 'Instagram Follower Tracker Blog — Growth Tips, Tools & Guides',
+    title: 'Instagram Follower Tracker Blog - Free Tools, Unfollow Guides & Growth Tips',
     description:
-      'Expert guides on tracking Instagram followers, detecting fake followers, monitoring growth, and using the best Instagram tracking tools.',
+      'Guides for Instagram followers tracker tools, free unfollow tracking without login, follow-back cleanup, and public account growth monitoring.',
     url: 'https://instagramfollowerstracker.com/blog',
     type: 'website',
   },
@@ -52,8 +52,9 @@ export default function BlogPage() {
             Instagram Follower Tracker Blog
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base font-medium text-slate-500">
-            Expert guides on tracking Instagram growth, detecting fake followers,
-            and using the best tools to monitor any public account.
+            Expert guides on free Instagram follower tracker tools, unfollow
+            tracking without login, follow-back cleanup, and public account growth
+            monitoring.
           </p>
         </div>
 

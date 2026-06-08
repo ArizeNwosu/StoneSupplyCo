@@ -15,6 +15,9 @@ import instagramFollowerTrackerOnline from './posts/instagram-follower-tracker-o
 import instagramGrowthTrackerForInfluencers from './posts/instagram-growth-tracker-for-influencers';
 import howToGainInstagramFollowers from './posts/how-to-gain-instagram-followers';
 import instagramFollowerTrackerReddit from './posts/instagram-follower-tracker-reddit';
+import freeInstagramUnfollowTracker from './posts/free-instagram-unfollow-tracker';
+import instagramFollowBackTracker from './posts/instagram-follow-back-tracker';
+import instagramFollowerTrackerThatWorks from './posts/instagram-follower-tracker-that-works';
 
 export const ALL_POSTS: BlogPost[] = [
   instagramFollowersTracker,
@@ -33,6 +36,9 @@ export const ALL_POSTS: BlogPost[] = [
   instagramGrowthTrackerForInfluencers,
   howToGainInstagramFollowers,
   instagramFollowerTrackerReddit,
+  freeInstagramUnfollowTracker,
+  instagramFollowBackTracker,
+  instagramFollowerTrackerThatWorks,
 ];
 
 export function getPost(slug: string): BlogPost | undefined {

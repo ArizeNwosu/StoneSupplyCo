@@ -188,8 +188,40 @@ function FAQSection({ faqs }: { faqs: FAQ[] }) {
   );
 }
 
+const toolLinks = [
+  {
+    href: '/',
+    label: 'Instagram followers tracker',
+    description: 'Track public follower counts, daily snapshots, and growth trends.',
+  },
+  {
+    href: '/instagram-unfollow-tracker',
+    label: 'Instagram unfollow tracker',
+    description: 'Compare official exports to find new and missing followers.',
+  },
+  {
+    href: '/instagram-follower-tracker-online-free',
+    label: 'Free online follower tracker',
+    description: 'Use the web tracker without downloading an app.',
+  },
+  {
+    href: '/instagram-tracking-tools',
+    label: 'Instagram tracking tools',
+    description: 'See the full set of follower, export, and reporting tools.',
+  },
+];
+
 function RelatedPosts({ currentSlug }: { currentSlug: string }) {
-  const related = ALL_POSTS.filter((p) => p.slug !== currentSlug).slice(0, 4);
+  const current = getPost(currentSlug);
+  const related = ALL_POSTS
+    .filter((p) => p.slug !== currentSlug)
+    .map((post) => ({
+      post,
+      score: relatedScore(current, post),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4)
+    .map(({ post }) => post);
   if (related.length === 0) return null;
 
   return (
@@ -215,6 +247,45 @@ function RelatedPosts({ currentSlug }: { currentSlug: string }) {
       </div>
     </section>
   );
+}
+
+function ToolLinks() {
+  return (
+    <section className="mt-10 rounded-xl border border-cyan-950/10 bg-white p-6 shadow-sm">
+      <h2 className="text-sm font-black uppercase tracking-[0.15em] text-slate-400">
+        Popular Instagram Tracking Tools
+      </h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {toolLinks.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="rounded-lg border border-cyan-950/10 bg-slate-50 p-4 transition hover:border-cyan-500/30 hover:bg-white"
+          >
+            <p className="text-sm font-black text-slate-950">{item.label}</p>
+            <p className="mt-1 text-xs font-medium leading-5 text-slate-500">
+              {item.description}
+            </p>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function relatedScore(current: ReturnType<typeof getPost>, candidate: (typeof ALL_POSTS)[number]) {
+  if (!current) return 0;
+  const currentKeywords = new Set(current.keywords.map((keyword) => keyword.toLowerCase()));
+  const sharedKeywords = candidate.keywords.filter((keyword) =>
+    currentKeywords.has(keyword.toLowerCase())
+  ).length;
+  const categoryScore = current.category === candidate.category ? 3 : 0;
+  const titleTerms = new Set(current.title.toLowerCase().split(/\W+/).filter(Boolean));
+  const sharedTitleTerms = candidate.title
+    .toLowerCase()
+    .split(/\W+/)
+    .filter((term) => titleTerms.has(term)).length;
+  return sharedKeywords * 4 + categoryScore + sharedTitleTerms;
 }
 
 export default async function BlogPostPage({
@@ -325,6 +396,9 @@ export default async function BlogPostPage({
 
         {/* Related posts */}
         <RelatedPosts currentSlug={slug} />
+
+        {/* Tool links */}
+        <ToolLinks />
 
         {/* Bottom CTA */}
         <div className="mt-10 rounded-xl border border-cyan-200 bg-white p-8 text-center shadow-sm">

@@ -11,9 +11,9 @@ import { ALL_POSTS } from '@/lib/blog';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Instagram Followers Tracker - Track Public Accounts Free',
+  title: 'Instagram Followers Tracker - Free Online Tracker Without Login',
   description:
-    'Track follower counts, growth history, and public Instagram account trends for competitors, creators, brands, and clients. No login required for public stats.',
+    'Track Instagram follower counts, growth history, public account trends, and export-based unfollow reports. Free online tracker with no password sharing.',
   alternates: { canonical: 'https://instagramfollowerstracker.com' },
 };
 
@@ -156,9 +156,9 @@ const reviews = [
 
 const featuredBlogSlugs = [
   'instagram-followers-tracker',
-  'instagram-unfollow-tracker',
-  'track-instagram-follower-growth',
-  'track-someones-instagram-followers',
+  'free-instagram-unfollow-tracker',
+  'instagram-follower-tracker-that-works',
+  'instagram-follow-back-tracker',
 ];
 
 export default async function HomePage() {
@@ -213,7 +213,8 @@ export default async function HomePage() {
               <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-700 sm:text-xl">
                 Track public Instagram accounts your native Insights cannot show you:
                 competitors, creators, brands, clients, and campaign targets.
-                Own-account unfollower analysis uses official Instagram exports.
+                Use the no-login export workflow to find unfollowers, follow-back
+                gaps, and relationship cleanup opportunities for your own account.
               </p>
               <div className="mt-8">
                 <HandleSearch />
@@ -221,7 +222,8 @@ export default async function HomePage() {
               <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-600">
                 <span className="rounded-full bg-white px-4 py-2 shadow-sm">Public account pages</span>
                 <span className="rounded-full bg-white px-4 py-2 shadow-sm">Instant first snapshot</span>
-                <span className="rounded-full bg-white px-4 py-2 shadow-sm">Competitor watchlists</span>
+                <span className="rounded-full bg-white px-4 py-2 shadow-sm">Free online tracker</span>
+                <span className="rounded-full bg-white px-4 py-2 shadow-sm">Unfollow tracker without login</span>
               </div>
             </div>
 
