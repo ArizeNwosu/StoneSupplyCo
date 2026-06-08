@@ -207,10 +207,10 @@ export default async function HomePage() {
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 Safe follower tracking, no Instagram password
               </p>
-              <h1 className="max-w-3xl text-5xl font-black leading-[1.02] text-slate-950 sm:text-6xl lg:text-7xl">
+              <h1 className="max-w-3xl text-4xl font-black leading-[1.02] text-slate-950 sm:text-5xl lg:text-7xl">
                 Instagram Followers Tracker
               </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-700 sm:text-xl">
+              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-700 sm:mt-6 sm:text-lg sm:leading-8">
                 Track public Instagram accounts your native Insights cannot show you:
                 competitors, creators, brands, clients, and campaign targets.
                 Use the no-login export workflow to find unfollowers, follow-back
@@ -462,7 +462,7 @@ export default async function HomePage() {
                 Made for people who need answers, not another risky app.
               </h2>
             </div>
-            <div className="mt-10 grid gap-4 md:grid-cols-3">
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               {reviews.map((review) => (
                 <figure key={review.name} className="rounded-lg border border-rose-200 bg-white p-5">
                   <blockquote className="text-lg font-black leading-7 text-slate-950">

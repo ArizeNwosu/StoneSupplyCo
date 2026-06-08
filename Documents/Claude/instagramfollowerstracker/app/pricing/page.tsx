@@ -95,7 +95,7 @@ export default function PricingPage() {
             <p className="mx-auto mb-4 inline-flex rounded-full border border-cyan-950/10 bg-white px-4 py-2 text-sm font-black uppercase text-teal-800">
               Pricing
             </p>
-            <h1 className="text-5xl font-black leading-tight text-slate-950 sm:text-6xl">
+            <h1 className="text-3xl font-black leading-tight text-slate-950 sm:text-5xl md:text-6xl">
               Start safe. Scale when tracking gets serious.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">

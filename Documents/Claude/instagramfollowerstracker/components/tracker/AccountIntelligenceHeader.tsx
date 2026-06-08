@@ -48,7 +48,7 @@ export function AccountIntelligenceHeader({
 
   return (
     <section className="animate-rise-in overflow-hidden rounded-lg border border-cyan-950/10 bg-white shadow-xl shadow-cyan-950/10">
-      <div className="border-b border-cyan-950/10 bg-gradient-to-r from-white via-teal-50 to-sky-50 p-5">
+      <div className="border-b border-cyan-950/10 bg-gradient-to-r from-white via-teal-50 to-sky-50 p-4 sm:p-5">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex min-w-0 gap-4">
             {avatarUrl && !imgError ? (
@@ -67,7 +67,7 @@ export function AccountIntelligenceHeader({
             )}
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="truncate text-3xl font-black text-slate-950">@{handle}</h2>
+                <h2 className="truncate text-xl font-black text-slate-950 sm:text-2xl md:text-3xl">@{handle}</h2>
                 <span className={`rounded-full px-2.5 py-1 text-xs font-black ${status.className}`}>
                   {status.label}
                 </span>
@@ -84,7 +84,7 @@ export function AccountIntelligenceHeader({
         </div>
       </div>
 
-      <div className="grid gap-0 divide-y divide-cyan-950/10 md:grid-cols-4 md:divide-x md:divide-y-0">
+      <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-cyan-950/10 md:grid-cols-4 md:divide-y-0">
         <HeaderStat label="Followers" value={current !== null ? formatCount(current) : 'Pending'} detail="Latest captured count" />
         <HeaderStat label="Snapshots" value={String(snapshotCount)} detail={firstSnapshot ? `Since ${new Date(firstSnapshot.takenAt).toLocaleDateString()}` : 'Waiting for first capture'} />
         <HeaderStat label="Last captured" value={lastChecked ? new Date(lastChecked).toLocaleDateString() : 'Pending'} detail={lastChecked ? new Date(lastChecked).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'Capture queued'} />

@@ -75,6 +75,7 @@ export default function DashboardPage() {
   const [backfillLoading, setBackfillLoading] = useState(false);
   const [backfillMsg, setBackfillMsg] = useState<string | null>(null);
   const [backfillingIds, setBackfillingIds] = useState<Set<string>>(new Set());
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const fetchAccounts = useCallback(async () => {
     const res = await fetch('/api/accounts');
@@ -244,9 +245,9 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Sidebar>
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)}>
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-sm font-black text-slate-950">
+          <h1 className="hidden text-sm font-black text-slate-950 md:block">
             Tracked Accounts
           </h1>
           <Button size="sm" onClick={() => setShowAddModal(true)}>
@@ -278,7 +279,31 @@ export default function DashboardPage() {
         )}
       </Sidebar>
 
-      <main className="flex-1 overflow-y-auto bg-sky-50 p-6">
+      <main className="flex-1 overflow-y-auto bg-sky-50 p-4 sm:p-6">
+        {/* Mobile top bar — opens sidebar and shows selected account */}
+        <div className="mb-4 flex items-center gap-3 md:hidden">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="flex shrink-0 items-center gap-2 rounded-full border border-cyan-950/10 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm active:bg-slate-50"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            Accounts
+          </button>
+          {selected && (
+            <span className="truncate text-sm font-bold text-slate-500">
+              @{selected.handle}
+            </span>
+          )}
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="ml-auto shrink-0 rounded-full bg-cyan-950 px-3 py-2 text-xs font-black text-white"
+          >
+            + Add
+          </button>
+        </div>
+
         {loading ? (
           <DashboardLoadingPanel />
         ) : accounts.length === 0 ? (

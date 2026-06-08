@@ -1156,10 +1156,10 @@ function ResultsStage({
               { label: 'New Followers', value: newCount, bg: 'bg-green-50', border: 'border-green-100', num: 'text-green-600', sub: 'text-green-400', icon: '↑' },
               { label: 'You Unfollowed', value: unfollowedCount, bg: 'bg-amber-50', border: 'border-amber-100', num: 'text-amber-600', sub: 'text-amber-400', icon: '→' },
             ].map(({ label, value, bg, border, num, sub, icon }) => (
-              <div key={label} className={`rounded-xl border p-3 ${bg} ${border}`}>
+              <div key={label} className={`rounded-xl border p-2.5 sm:p-3 ${bg} ${border}`}>
                 <p className={`text-[10px] font-black uppercase tracking-wide ${sub} mb-1`}>{icon}</p>
-                <p className={`text-2xl font-black tabular-nums leading-none ${num}`}>{value}</p>
-                <p className={`text-[10px] font-bold mt-1.5 leading-tight ${num} opacity-70`}>{label}</p>
+                <p className={`text-xl font-black tabular-nums leading-none sm:text-2xl ${num}`}>{value}</p>
+                <p className={`text-[9px] font-bold mt-1.5 leading-tight sm:text-[10px] ${num} opacity-70`}>{label}</p>
               </div>
             ))}
           </div>
