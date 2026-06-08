@@ -54,7 +54,7 @@ export async function parseMultipleInstagramFiles(files: File[]): Promise<Parsed
     }
 
     const text = buffer.toString('utf8');
-    const role = detectRole(lowerName, text);
+    const role = detectRole(lowerName);
 
     if (role === 'recently_unfollowed') {
       allRecentlyUnfollowed.push(...parseRecentlyUnfollowedHtml(text));
@@ -89,7 +89,7 @@ export async function parseInstagramUpload(file: File): Promise<ExportData> {
 
 // ── Role detection ─────────────────────────────────────────────────────────
 
-function detectRole(lowerName: string, _text: string): 'followers' | 'following' | 'recently_unfollowed' {
+function detectRole(lowerName: string): 'followers' | 'following' | 'recently_unfollowed' {
   if (/recently.unfollowed/.test(lowerName)) return 'recently_unfollowed';
   // "following" but NOT "followers"
   if (/\bfollowing\b/.test(lowerName) && !/\bfollowers\b/.test(lowerName)) return 'following';

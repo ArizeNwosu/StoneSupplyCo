@@ -150,7 +150,7 @@ function renderSection(section: Section, idx: number) {
   }
 }
 
-function FAQSection({ faqs, postTitle }: { faqs: FAQ[]; postTitle: string }) {
+function FAQSection({ faqs }: { faqs: FAQ[] }) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -320,7 +320,7 @@ export default async function BlogPostPage({
         </article>
 
         {/* FAQ */}
-        <FAQSection faqs={post.faqs} postTitle={post.title} />
+        <FAQSection faqs={post.faqs} />
 
         {/* Related posts */}
         <RelatedPosts currentSlug={slug} />

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { fetchInstagramProfile, fetchInstagramProfilesBatch, sleep } from '@/lib/scraper';
+import { fetchInstagramProfile, fetchInstagramProfilesBatch } from '@/lib/scraper';
 import { sendMilestoneEmail } from '@/lib/email';
 
 export type SnapshotScope = 'all' | 'tracked' | 'public';
@@ -35,8 +35,6 @@ export interface SnapshotRunResult {
 const DEFAULT_TRACKED_LIMIT = 25;
 const DEFAULT_PUBLIC_LIMIT = 10;
 const DEFAULT_MAX_RUNTIME_MS = 240_000;
-const DEFAULT_DELAY_MS = 2000;
-const DEFAULT_DELAY_JITTER_MS = 3000;
 
 export async function runDailySnapshot(
   options: SnapshotRunOptions = {}
@@ -227,11 +225,11 @@ async function snapshotPublicAccounts({
     take: limit,
   });
 
-  for (const account of accounts) {
-    if (Date.now() >= deadline) break;
-    stats.processed++;
+  if (accounts.length === 0) return;
 
-    try {
+  const due: typeof accounts = [];
+  for (const account of accounts) {
+    if (!force) {
       const existing = await prisma.publicSnapshot.findFirst({
         where: {
           publicAccountId: account.id,
@@ -240,16 +238,41 @@ async function snapshotPublicAccounts({
         select: { id: true },
       });
 
-      if (existing && !force) {
+      if (existing) {
         stats.skipped++;
         continue;
       }
+    }
 
-      const profile = await fetchInstagramProfile(account.handle);
+    due.push(account);
+  }
+
+  if (due.length === 0) return;
+  stats.processed += due.length;
+
+  const profiles = await fetchInstagramProfilesBatch(due.map((account) => account.handle));
+
+  for (const account of due) {
+    if (Date.now() >= deadline) break;
+
+    try {
+      let profile = profiles.get(account.handle.toLowerCase());
+      if (!profile || profile.followerCount === null) {
+        profile = await fetchInstagramProfile(account.handle);
+      }
+
       if (profile.followerCount === null) {
         stats.noData++;
         continue;
       }
+
+      const existing = await prisma.publicSnapshot.findFirst({
+        where: {
+          publicAccountId: account.id,
+          takenAt: { gte: dayStart, lt: dayEnd },
+        },
+        select: { id: true },
+      });
 
       await prisma.publicSnapshot.upsert({
         where: {
@@ -290,8 +313,6 @@ async function snapshotPublicAccounts({
       } else {
         stats.created++;
       }
-
-      await politeDelay(deadline);
     } catch (err) {
       stats.failed++;
       console.error(`[snapshot] Public @${account.handle} failed:`, err);
@@ -377,18 +398,4 @@ function createStats(): SnapshotRunStats {
     failed: 0,
     remainingDue: 0,
   };
-}
-
-async function politeDelay(deadline: number) {
-  const baseDelay = parseInt(
-    process.env.SNAPSHOT_DELAY_MS ?? `${DEFAULT_DELAY_MS}`,
-    10
-  );
-  const jitter = parseInt(
-    process.env.SNAPSHOT_DELAY_JITTER_MS ?? `${DEFAULT_DELAY_JITTER_MS}`,
-    10
-  );
-  const delay = Math.max(0, baseDelay) + Math.random() * Math.max(0, jitter);
-  if (Date.now() + delay >= deadline) return;
-  await sleep(delay);
 }

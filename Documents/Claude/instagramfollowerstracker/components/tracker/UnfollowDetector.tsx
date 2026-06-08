@@ -1312,27 +1312,6 @@ function GoogleDrivePanel() {
   );
 }
 
-function StatCard({
-  value,
-  label,
-  color,
-}: {
-  value: number;
-  label: string;
-  color: 'red' | 'green';
-}) {
-  const bg = color === 'red' ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100';
-  const text = color === 'red' ? 'text-red-700' : 'text-green-700';
-  const num = color === 'red' ? 'text-red-600' : 'text-green-600';
-
-  return (
-    <div className={`rounded-xl border p-4 text-center ${bg}`}>
-      <p className={`text-3xl font-black ${num}`}>{value}</p>
-      <p className={`mt-1 text-xs font-semibold ${text}`}>{label}</p>
-    </div>
-  );
-}
-
 function GhostFollowingSection({ people, count }: { people: Person[]; count: number }) {
   const [expanded, setExpanded] = useState(false);
   const shown = expanded ? people : people.slice(0, 5);
@@ -1501,8 +1480,4 @@ function DiffSection({
 
 function downloadHref(exportId: string, type: 'followers' | 'following' | 'diff'): string {
   return `/api/exports/${exportId}/download?type=${type}&format=csv`;
-}
-
-function formatCount(count: number | null): string {
-  return typeof count === 'number' ? count.toLocaleString() : '0';
 }
