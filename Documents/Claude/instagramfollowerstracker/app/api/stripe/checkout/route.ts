@@ -4,6 +4,7 @@ import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { getStripePriceId } from '@/lib/stripe-prices';
+import type Stripe from 'stripe';
 
 export const runtime = 'nodejs';
 
@@ -44,21 +45,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: user.stripeCustomerId,
-      return_url: `${appUrl}/dashboard/settings`,
-    });
+    try {
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: user.stripeCustomerId,
+        return_url: `${appUrl}/dashboard/settings`,
+      });
 
-    return NextResponse.json({ url: portalSession.url });
+      return NextResponse.json({ url: portalSession.url });
+    } catch (err) {
+      console.error('[checkout] Failed to create portal session:', formatStripeError(err));
+      return NextResponse.json(
+        { error: 'Could not open billing portal. Check Stripe customer configuration.' },
+        { status: 500 }
+      );
+    }
   }
 
   // Get or create Stripe customer
   let customerId = user.stripeCustomerId;
   if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: user.email ?? undefined,
-      metadata: { userId: user.id },
-    });
+    let customer: Stripe.Customer;
+    try {
+      customer = await stripe.customers.create({
+        email: user.email ?? undefined,
+        metadata: { userId: user.id },
+      });
+    } catch (err) {
+      console.error('[checkout] Failed to create Stripe customer:', formatStripeError(err));
+      return NextResponse.json(
+        { error: 'Could not create Stripe customer. Check STRIPE_SECRET_KEY.' },
+        { status: 500 }
+      );
+    }
     customerId = customer.id;
     await prisma.user.update({
       where: { id: user.id },
@@ -74,22 +92,43 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Stripe price is not configured' }, { status: 500 });
   }
 
-  const checkoutSession = await stripe.checkout.sessions.create({
-    customer: customerId,
-    mode: 'subscription',
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/dashboard?upgraded=1&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${appUrl}/pricing`,
-    allow_promotion_codes: true,
-    customer_update: {
-      address: 'auto',
-      name: 'auto',
-    },
-    metadata: { userId: user.id, plan, interval },
-    subscription_data: {
+  let checkoutSession: Stripe.Checkout.Session;
+  try {
+    checkoutSession = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${appUrl}/dashboard?upgraded=1&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/pricing`,
+      allow_promotion_codes: true,
+      customer_update: {
+        address: 'auto',
+        name: 'auto',
+      },
       metadata: { userId: user.id, plan, interval },
-    },
-  });
+      subscription_data: {
+        metadata: { userId: user.id, plan, interval },
+      },
+    });
+  } catch (err) {
+    const stripeError = formatStripeError(err);
+    console.error('[checkout] Failed to create checkout session:', {
+      ...stripeError,
+      plan,
+      interval,
+      priceId,
+    });
+
+    const message =
+      stripeError.code === 'resource_missing'
+        ? `Stripe price not found for ${plan} ${interval}. Check that the Vercel price ID exists in the same Stripe mode as STRIPE_SECRET_KEY.`
+        : 'Could not create Stripe checkout session.';
+
+    return NextResponse.json(
+      { error: message },
+      { status: stripeError.code === 'resource_missing' ? 400 : stripeError.statusCode ?? 500 }
+    );
+  }
 
   if (!checkoutSession.url) {
     console.error('[checkout] Stripe returned null URL for session', checkoutSession.id);
@@ -97,4 +136,22 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ url: checkoutSession.url });
+}
+
+function formatStripeError(err: unknown) {
+  const maybeStripeError = err as {
+    type?: string;
+    code?: string;
+    message?: string;
+    statusCode?: number;
+    requestId?: string;
+  };
+
+  return {
+    type: maybeStripeError.type,
+    code: maybeStripeError.code,
+    message: maybeStripeError.message ?? (err instanceof Error ? err.message : 'Unknown Stripe error'),
+    statusCode: maybeStripeError.statusCode,
+    requestId: maybeStripeError.requestId,
+  };
 }

@@ -31,12 +31,12 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
         window.location.href = '/auth/signin';
         return;
       }
-      const data = (await res.json()) as { url?: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
       if (data.url) {
         window.location.href = data.url;
       } else {
         setLoading(false);
-        setError(data.error ?? 'Something went wrong. Please try again.');
+        setError(data.error ?? `Checkout failed (${res.status}). Please try again.`);
       }
     } catch {
       setLoading(false);
