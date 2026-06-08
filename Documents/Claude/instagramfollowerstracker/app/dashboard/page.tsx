@@ -12,6 +12,9 @@ import { ShareReportButton } from '@/components/tracker/ShareReportButton';
 import { AuthenticityBadge } from '@/components/tracker/AuthenticityBadge';
 import { PatternAlerts } from '@/components/tracker/PatternAlerts';
 import { AutomaticTrackingPanel } from '@/components/tracker/AutomaticTrackingPanel';
+import { AccountIntelligenceHeader } from '@/components/tracker/AccountIntelligenceHeader';
+import { AccountComparisonPanel } from '@/components/tracker/AccountComparisonPanel';
+import { ActivityFeed } from '@/components/tracker/ActivityFeed';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { UpgradeModal } from '@/components/tracker/UpgradeModal';
@@ -71,6 +74,20 @@ export default function DashboardPage() {
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [backfillLoading, setBackfillLoading] = useState(false);
   const [backfillMsg, setBackfillMsg] = useState<string | null>(null);
+  const [backfillingIds, setBackfillingIds] = useState<Set<string>>(new Set());
+
+  const startBackfill = useCallback((id: string) => {
+    setBackfillingIds((prev) => new Set([...prev, id]));
+    fetch(`/api/accounts/${id}/backfill`, { method: 'POST' })
+      .then(async () => {
+        setBackfillingIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
+        await fetchAccounts();
+        await fetchSnapshots(id);
+      })
+      .catch(() => {
+        setBackfillingIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
+      });
+  }, [fetchAccounts, fetchSnapshots]);
 
   const fetchAccounts = useCallback(async () => {
     const res = await fetch('/api/accounts');
@@ -113,14 +130,12 @@ export default function DashboardPage() {
       return { error: data.error ?? 'Something went wrong' };
     }
     // Fire Wayback backfill in the background — don't block the UI
-    if (data.id) {
-      fetch(`/api/accounts/${data.id}/backfill`, { method: 'POST' }).catch(() => {});
-    }
+    if (data.id) startBackfill(data.id);
     await fetchAccounts();
     if (data.id) setSelectedId(data.id);
     setShowAddModal(false);
     return {};
-  }, [fetchAccounts]);
+  }, [fetchAccounts, startBackfill]);
 
   useEffect(() => {
     const pending = sessionStorage.getItem('pending_handle');
@@ -155,22 +170,23 @@ export default function DashboardPage() {
           })
           .catch(() => {});
         // Backfill runs in parallel for historical data
-        fetch(`/api/accounts/${a.id}/backfill`, { method: 'POST' }).catch(() => {});
+        startBackfill(a.id);
       });
-  }, [loading, accounts, fetchAccounts, fetchSnapshots]);
+  }, [loading, accounts, fetchAccounts, fetchSnapshots, startBackfill]);
 
-  // Poll while waiting for first snapshot (every 5s) or while building chart (every 60s)
+  // Poll while waiting for first snapshot (5s), backfilling (15s), or building chart (60s)
   useEffect(() => {
     const selected = accounts.find((a) => a.id === selectedId);
     if (!selected || selected.chartReady) return;
 
-    const interval = selected.snapshotCount === 0 ? 5000 : 60_000;
+    const isBackfilling = selectedId ? backfillingIds.has(selectedId) : false;
+    const interval = selected.snapshotCount === 0 ? 5000 : isBackfilling ? 15_000 : 60_000;
     const timer = setInterval(() => {
       fetchAccounts();
       if (selectedId) fetchSnapshots(selectedId);
     }, interval);
     return () => clearInterval(timer);
-  }, [selectedId, accounts, fetchAccounts, fetchSnapshots]);
+  }, [selectedId, accounts, backfillingIds, fetchAccounts, fetchSnapshots]);
 
   const handleRefresh = useCallback(async (id: string) => {
     setRefreshLoading(true);
@@ -183,8 +199,10 @@ export default function DashboardPage() {
   const handleBackfill = useCallback(async (id: string) => {
     setBackfillLoading(true);
     setBackfillMsg(null);
+    setBackfillingIds((prev) => new Set([...prev, id]));
     const res = await fetch(`/api/accounts/${id}/backfill`, { method: 'POST' });
     const data = (await res.json().catch(() => ({}))) as { inserted?: number };
+    setBackfillingIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
     await fetchAccounts();
     await fetchSnapshots(id);
     setBackfillLoading(false);
@@ -209,6 +227,8 @@ export default function DashboardPage() {
   };
 
   const selected = accounts.find((a) => a.id === selectedId);
+  const daysTracked = snapshotData ? calculateDaysTracked(snapshotData.snapshots) : null;
+  const volatilityScore = snapshotData ? calculateVolatility(snapshotData.snapshots) : null;
 
   return (
     <>
@@ -252,59 +272,32 @@ export default function DashboardPage() {
         ) : accounts.length === 0 ? (
           <EmptyState onAdd={() => setShowAddModal(true)} />
         ) : (
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="mx-auto max-w-6xl space-y-6">
             {selected && snapshotData ? (
               <>
                 <PatternAlerts />
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-black text-slate-950">
-                      @{selected.handle}
-                    </h2>
-                    {selected.displayName && (
-                      <p className="text-sm font-semibold text-slate-500">{selected.displayName}</p>
-                    )}
-                    <div className="mt-2">
-                      {snapshotData.authenticityScore ? (
-                        <AuthenticityBadge
-                          score={snapshotData.authenticityScore.score}
-                          label={snapshotData.authenticityScore.label}
-                          signals={snapshotData.authenticityScore.signals}
-                        />
-                      ) : snapshotData.snapshotCount >= 1 ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-950/10 bg-white px-2.5 py-1 text-xs font-bold text-slate-400">
-                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-300" />
-                          Analyzing · {snapshotData.snapshotCount}/5 snapshots
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2 shrink-0">
-                    <ShareReportButton accountId={selected.id} />
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleRefresh(selected.id)}
-                        disabled={refreshLoading || backfillLoading}
-                        className="text-xs font-bold text-slate-500 hover:text-slate-950 disabled:opacity-40 transition-colors"
-                        title="Re-fetch current follower count and update profile photo"
-                      >
-                        {refreshLoading ? 'Refreshing…' : '↻ Refresh'}
-                      </button>
-                      <span className="text-slate-300">·</span>
-                      <button
-                        onClick={() => handleBackfill(selected.id)}
-                        disabled={refreshLoading || backfillLoading}
-                        className="text-xs font-bold text-slate-500 hover:text-slate-950 disabled:opacity-40 transition-colors"
-                        title="Load historical follower counts from the Wayback Machine"
-                      >
-                        {backfillLoading ? 'Loading history…' : '📅 Load history'}
-                      </button>
-                    </div>
-                    {backfillMsg && (
-                      <p className="text-xs font-semibold text-teal-600">{backfillMsg}</p>
-                    )}
-                  </div>
-                </div>
+                <AccountIntelligenceHeader
+                  handle={selected.handle}
+                  displayName={selected.displayName}
+                  avatarUrl={selected.avatarUrl}
+                  current={snapshotData.stats?.current ?? selected.latestCount}
+                  change24h={selected.change24h}
+                  change7d={snapshotData.stats?.change7d ?? null}
+                  change30d={snapshotData.stats?.change30d ?? null}
+                  snapshotCount={snapshotData.snapshotCount}
+                  lastChecked={selected.lastChecked}
+                  snapshots={snapshotData.snapshots}
+                  actions={
+                    <DashboardActions
+                      accountId={selected.id}
+                      refreshLoading={refreshLoading}
+                      backfillLoading={backfillLoading}
+                      backfillMsg={backfillMsg}
+                      onRefresh={handleRefresh}
+                      onBackfill={handleBackfill}
+                    />
+                  }
+                />
                 {snapshotData.chartReady && snapshotData.stats ? (
                   <>
                     <MetricsRow
@@ -313,15 +306,51 @@ export default function DashboardPage() {
                       change7d={snapshotData.stats.change7d}
                       change30d={snapshotData.stats.change30d}
                       avgDailyGain={snapshotData.stats.avgDailyGain}
+                      peakCount={snapshotData.stats.peakCount}
+                      daysTracked={daysTracked}
+                      volatilityScore={volatilityScore}
                     />
-                    <div className="rounded-lg border border-cyan-950/10 bg-white p-6 shadow-xl shadow-cyan-950/10">
-                      <h3 className="mb-4 text-sm font-black text-slate-700">
-                        Follower Count History
-                      </h3>
-                      <FollowerChart
-                        snapshots={snapshotData.snapshots}
-                        handle={selected.handle}
-                      />
+                    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+                      <section className="rounded-lg border border-cyan-950/10 bg-white p-5 shadow-xl shadow-cyan-950/10">
+                        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                          <div>
+                            <p className="text-xs font-black uppercase tracking-[0.14em] text-teal-700">
+                              Growth graph
+                            </p>
+                            <h3 className="mt-1 text-lg font-black text-slate-950">
+                              Follower count history
+                            </h3>
+                          </div>
+                          {snapshotData.authenticityScore ? (
+                            <AuthenticityBadge
+                              score={snapshotData.authenticityScore.score}
+                              label={snapshotData.authenticityScore.label}
+                              signals={snapshotData.authenticityScore.signals}
+                            />
+                          ) : snapshotData.snapshotCount >= 1 ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-950/10 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-400">
+                              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-300" />
+                              Analyzing · {snapshotData.snapshotCount}/5 snapshots
+                            </span>
+                          ) : null}
+                        </div>
+                        <FollowerChart
+                          snapshots={snapshotData.snapshots}
+                          handle={selected.handle}
+                        />
+                      </section>
+                      <div className="space-y-6">
+                        <ActivityFeed
+                          handle={selected.handle}
+                          snapshots={snapshotData.snapshots}
+                          lastChecked={selected.lastChecked}
+                        />
+                        <AccountComparisonPanel
+                          accounts={accounts}
+                          selectedId={selectedId}
+                          onSelect={setSelectedId}
+                        />
+                      </div>
                     </div>
                   </>
                 ) : (
@@ -330,6 +359,7 @@ export default function DashboardPage() {
                     snapshotCount={snapshotData.snapshotCount}
                     latestCount={selected.latestCount}
                     lastChecked={selected.lastChecked}
+                    isBackfilling={backfillingIds.has(selected.id)}
                   />
                 )}
                 <AutomaticTrackingPanel
@@ -400,4 +430,71 @@ function DashboardLoadingPanel({ handle }: { handle?: string }) {
       </div>
     </div>
   );
+}
+
+function DashboardActions({
+  accountId,
+  refreshLoading,
+  backfillLoading,
+  backfillMsg,
+  onRefresh,
+  onBackfill,
+}: {
+  accountId: string;
+  refreshLoading: boolean;
+  backfillLoading: boolean;
+  backfillMsg: string | null;
+  onRefresh: (id: string) => void;
+  onBackfill: (id: string) => void;
+}) {
+  return (
+    <div className="flex flex-col items-start gap-2 sm:items-end">
+      <ShareReportButton accountId={accountId} />
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => onRefresh(accountId)}
+          disabled={refreshLoading || backfillLoading}
+          loading={refreshLoading}
+          title="Re-fetch current follower count and update profile photo"
+        >
+          Refresh
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onBackfill(accountId)}
+          disabled={refreshLoading || backfillLoading}
+          loading={backfillLoading}
+          title="Load historical follower counts from the Wayback Machine"
+        >
+          Load history
+        </Button>
+      </div>
+      {backfillMsg && (
+        <p className="text-xs font-semibold text-teal-700">{backfillMsg}</p>
+      )}
+    </div>
+  );
+}
+
+function calculateDaysTracked(snapshots: SnapshotPoint[]) {
+  if (snapshots.length === 0) return 0;
+  if (snapshots.length === 1) return 1;
+  const first = new Date(snapshots[0]!.takenAt).getTime();
+  const last = new Date(snapshots.at(-1)!.takenAt).getTime();
+  return Math.max(1, Math.round((last - first) / (1000 * 60 * 60 * 24)) + 1);
+}
+
+function calculateVolatility(snapshots: SnapshotPoint[]) {
+  if (snapshots.length < 3) return null;
+  const deltas = snapshots.slice(1).map((snapshot, index) => {
+    const previous = snapshots[index];
+    return previous ? Math.abs(snapshot.followerCount - previous.followerCount) : 0;
+  });
+  const current = snapshots.at(-1)?.followerCount ?? 0;
+  if (current <= 0) return null;
+  const averageSwing = deltas.reduce((sum, delta) => sum + delta, 0) / deltas.length;
+  return Math.min(100, Math.round((averageSwing / current) * 1000));
 }

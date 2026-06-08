@@ -8,6 +8,7 @@ interface SnapshotProgressProps {
   snapshotCount: number;
   latestCount: number | null;
   lastChecked: string | Date | null;
+  isBackfilling?: boolean;
 }
 
 function hoursUntilNextSnapshot(lastChecked: string | Date | null): number {
@@ -22,6 +23,7 @@ export function SnapshotProgress({
   snapshotCount,
   latestCount,
   lastChecked,
+  isBackfilling = false,
 }: SnapshotProgressProps) {
   const count = snapshotCount ?? 0;
   const isCapturing = count === 0;
@@ -77,8 +79,19 @@ export function SnapshotProgress({
               {count} snapshot{count !== 1 ? 's' : ''} collected
             </h3>
             <p className="text-sm text-slate-500">
-              Next snapshot in ~{hoursLeft}h. Historical data is being loaded in the background.
+              Next snapshot in ~{hoursLeft}h.
             </p>
+            {isBackfilling && (
+              <div className="mt-3 flex items-center gap-2">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-500" />
+                </span>
+                <p className="text-sm font-semibold text-teal-700">
+                  Loading historical data from archive.org — this can take a few minutes…
+                </p>
+              </div>
+            )}
           </>
         )}
       </div>
