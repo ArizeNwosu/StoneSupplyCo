@@ -35,6 +35,7 @@ const plans = [
     name: 'Pro' as const,
     planKey: 'PRO' as const,
     price: PLAN_PRICES.PRO.monthly,
+    annualTotal: PLAN_PRICES.PRO.annual * 12,
     priceLabel: `$${PLAN_PRICES.PRO.monthly}`,
     period: 'per month',
     annualNote: `or $${PLAN_PRICES.PRO.annual}/mo billed annually`,
@@ -56,6 +57,7 @@ const plans = [
     name: 'Agency' as const,
     planKey: 'AGENCY' as const,
     price: PLAN_PRICES.AGENCY.monthly,
+    annualTotal: PLAN_PRICES.AGENCY.annual * 12,
     priceLabel: `$${PLAN_PRICES.AGENCY.monthly}`,
     period: 'per month',
     annualNote: `or $${PLAN_PRICES.AGENCY.annual}/mo billed annually`,
@@ -145,17 +147,26 @@ export default function PricingPage() {
                   {plan.cta}
                 </Link>
               ) : (
-                <CheckoutButton
-                  plan={plan.planKey}
-                  interval="monthly"
-                  className={`mb-8 block w-full rounded-full py-3 text-center text-sm font-black transition ${
-                    plan.highlight
-                      ? 'bg-slate-950 text-white hover:-translate-y-0.5 hover:bg-slate-800'
-                      : 'bg-slate-100 text-slate-950 hover:bg-slate-200'
-                  }`}
-                >
-                  {plan.cta}
-                </CheckoutButton>
+                <div className="mb-8 space-y-2">
+                  <CheckoutButton
+                    plan={plan.planKey}
+                    interval="monthly"
+                    className={`block w-full rounded-full py-3 text-center text-sm font-black transition ${
+                      plan.highlight
+                        ? 'bg-slate-950 text-white hover:-translate-y-0.5 hover:bg-slate-800'
+                        : 'bg-slate-100 text-slate-950 hover:bg-slate-200'
+                    }`}
+                  >
+                    {plan.cta}
+                  </CheckoutButton>
+                  <CheckoutButton
+                    plan={plan.planKey}
+                    interval="annual"
+                    className="block w-full rounded-full border border-cyan-950/10 bg-white py-3 text-center text-sm font-black text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50"
+                  >
+                    Pay annually — ${plan.annualTotal} / year
+                  </CheckoutButton>
+                </div>
               )}
 
               <ul className="space-y-3">

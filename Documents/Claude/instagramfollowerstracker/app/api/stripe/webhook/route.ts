@@ -2,27 +2,79 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
 import type Stripe from 'stripe';
+import { planFromStripePriceId, type StripeBillingPlan } from '@/lib/stripe-prices';
 
 export const runtime = 'nodejs';
 
-async function setPlan(userId: string, plan: 'PRO' | 'AGENCY', subId: string) {
+async function setPlan({
+  userId,
+  customerId,
+  plan,
+  subId,
+}: {
+  userId: string;
+  customerId?: string | null;
+  plan: StripeBillingPlan;
+  subId: string;
+}) {
   const result = await prisma.user.updateMany({
     where: { id: userId },
-    data: { plan, stripeSubId: subId },
+    data: {
+      plan,
+      stripeSubId: subId,
+      ...(customerId ? { stripeCustomerId: customerId } : {}),
+    },
   });
   if (result.count === 0) {
     console.warn('[webhook] setPlan: no user found for userId', userId);
   }
 }
 
-async function clearPlan(customerId: string) {
+async function clearPlan({
+  customerId,
+  subId,
+}: {
+  customerId?: string | null;
+  subId?: string | null;
+}) {
+  if (!customerId && !subId) {
+    console.warn('[webhook] clearPlan called without customerId or subId');
+    return;
+  }
+
   const result = await prisma.user.updateMany({
-    where: { stripeCustomerId: customerId },
+    where: customerId ? { stripeCustomerId: customerId } : { stripeSubId: subId! },
     data: { plan: 'FREE', stripeSubId: null },
   });
   if (result.count === 0) {
-    console.warn('[webhook] clearPlan: no user found for customerId', customerId);
+    console.warn('[webhook] clearPlan: no user found', { customerId, subId });
   }
+}
+
+async function findUserIdForSubscription(sub: Stripe.Subscription) {
+  const metadataUserId = sub.metadata?.userId;
+  if (metadataUserId) return metadataUserId;
+
+  const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { stripeSubId: sub.id },
+        { stripeCustomerId: customerId },
+      ],
+    },
+    select: { id: true },
+  });
+
+  return user?.id ?? null;
+}
+
+function planFromSubscription(sub: Stripe.Subscription) {
+  const metadataPlan = sub.metadata?.plan as StripeBillingPlan | undefined;
+  if (metadataPlan === 'PRO' || metadataPlan === 'AGENCY') return metadataPlan;
+
+  const firstPrice = sub.items.data[0]?.price.id;
+  return planFromStripePriceId(firstPrice);
 }
 
 export async function POST(req: NextRequest) {
@@ -50,10 +102,13 @@ export async function POST(req: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
-        const plan = session.metadata?.plan as 'PRO' | 'AGENCY' | undefined;
+        const plan = session.metadata?.plan as StripeBillingPlan | undefined;
         const subId = typeof session.subscription === 'string'
           ? session.subscription
           : session.subscription?.id;
+        const customerId = typeof session.customer === 'string'
+          ? session.customer
+          : session.customer?.id;
         if (!userId || !plan || !subId) {
           console.error('[webhook] checkout.session.completed missing metadata', {
             sessionId: session.id,
@@ -63,31 +118,34 @@ export async function POST(req: NextRequest) {
           });
           break;
         }
-        await setPlan(userId, plan, subId);
+        await setPlan({ userId, customerId, plan, subId });
         break;
       }
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription;
         const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
-        await clearPlan(customerId);
+        await clearPlan({ customerId, subId: sub.id });
         break;
       }
       case 'customer.subscription.updated': {
         const sub = event.data.object as Stripe.Subscription;
         const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
-        if (sub.status === 'active') {
-          const userId = sub.metadata?.userId;
-          const plan = sub.metadata?.plan as 'PRO' | 'AGENCY' | undefined;
+        if (sub.status === 'active' || sub.status === 'trialing') {
+          const userId = await findUserIdForSubscription(sub);
+          const plan = planFromSubscription(sub);
           if (userId && plan) {
-            await setPlan(userId, plan, sub.id);
+            await setPlan({ userId, customerId, plan, subId: sub.id });
           } else {
             console.warn('[webhook] subscription.updated active but missing metadata', {
               subId: sub.id,
             });
           }
-        } else if (sub.status === 'past_due' || sub.status === 'unpaid') {
-          // Payment failed — downgrade to FREE until payment resolves
-          await clearPlan(customerId);
+        } else if (
+          sub.status === 'canceled' ||
+          sub.status === 'unpaid' ||
+          sub.status === 'incomplete_expired'
+        ) {
+          await clearPlan({ customerId, subId: sub.id });
         } else {
           console.warn('[webhook] subscription.updated unhandled status', {
             status: sub.status,

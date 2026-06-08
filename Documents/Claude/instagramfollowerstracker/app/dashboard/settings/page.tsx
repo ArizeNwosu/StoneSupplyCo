@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { ReportLinksList } from '@/components/tracker/ReportLinksList';
 import { ApiKeyManager } from '@/components/tracker/ApiKeyManager';
 import { ManageSubscriptionButton } from '@/components/settings/ManageSubscriptionButton';
+import { CheckoutButton } from '@/components/pricing/CheckoutButton';
 
 export const metadata: Metadata = {
   title: 'Settings',
@@ -42,7 +43,7 @@ export default async function SettingsPage() {
             <p>
               Accounts:{' '}
               <span className="font-semibold text-slate-950">
-                {user._count.trackedAccounts} / {limits.maxAccounts}
+                {user._count.trackedAccounts} / {limits.maxAccounts ?? 'Unlimited'}
               </span>
             </p>
             <p>
@@ -67,8 +68,17 @@ export default async function SettingsPage() {
             </Link>
           )}
           {user.plan !== 'FREE' && (
-            <div className="mt-4">
+            <div className="mt-4 flex flex-wrap items-center gap-3">
               <ManageSubscriptionButton />
+              {user.plan === 'PRO' && (
+                <CheckoutButton
+                  plan="AGENCY"
+                  interval="monthly"
+                  className="inline-flex min-h-10 items-center rounded-full bg-slate-950 px-4 text-sm font-bold text-white transition hover:bg-slate-800"
+                >
+                  Upgrade to Agency
+                </CheckoutButton>
+              )}
             </div>
           )}
         </div>

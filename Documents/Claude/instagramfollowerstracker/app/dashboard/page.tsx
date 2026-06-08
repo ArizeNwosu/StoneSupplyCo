@@ -76,19 +76,6 @@ export default function DashboardPage() {
   const [backfillMsg, setBackfillMsg] = useState<string | null>(null);
   const [backfillingIds, setBackfillingIds] = useState<Set<string>>(new Set());
 
-  const startBackfill = useCallback((id: string) => {
-    setBackfillingIds((prev) => new Set([...prev, id]));
-    fetch(`/api/accounts/${id}/backfill`, { method: 'POST' })
-      .then(async () => {
-        setBackfillingIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
-        await fetchAccounts();
-        await fetchSnapshots(id);
-      })
-      .catch(() => {
-        setBackfillingIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
-      });
-  }, [fetchAccounts, fetchSnapshots]);
-
   const fetchAccounts = useCallback(async () => {
     const res = await fetch('/api/accounts');
     if (res.ok) {
@@ -105,6 +92,27 @@ export default function DashboardPage() {
       setSnapshotData((await res.json()) as SnapshotData);
     }
   }, []);
+
+  const startBackfill = useCallback((id: string) => {
+    setBackfillingIds((prev) => new Set([...prev, id]));
+    fetch(`/api/accounts/${id}/backfill`, { method: 'POST' })
+      .then(async () => {
+        setBackfillingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        await fetchAccounts();
+        await fetchSnapshots(id);
+      })
+      .catch(() => {
+        setBackfillingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      });
+  }, [fetchAccounts, fetchSnapshots]);
 
   const fetchPlan = useCallback(async () => {
     const res = await fetch('/api/me');
@@ -142,17 +150,21 @@ export default function DashboardPage() {
     if (pending) sessionStorage.removeItem('pending_handle');
 
     // Await initial fetch so handleAdd's refresh doesn't get overwritten by a stale response
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void fetchAccounts().then(() => {
-      if (pending) handleAdd(pending).catch(() => {}); // handleAdd calls fetchAccounts internally
-    });
-    void fetchPlan();
+    const timer = window.setTimeout(() => {
+      void fetchAccounts().then(() => {
+        if (pending) handleAdd(pending).catch(() => {}); // handleAdd calls fetchAccounts internally
+      });
+      void fetchPlan();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [fetchAccounts, fetchPlan, handleAdd]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (selectedId) void fetchSnapshots(selectedId);
-    setBackfillMsg(null);
+    const timer = window.setTimeout(() => {
+      if (selectedId) void fetchSnapshots(selectedId);
+      setBackfillMsg(null);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [selectedId, fetchSnapshots]);
 
   // On first load: for accounts with no snapshots, fire a live refresh then backfill

@@ -3,7 +3,9 @@ import { z } from 'zod';
 import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import { STRIPE_PRICE_IDS } from '@/lib/stripe-prices';
+import { getStripePriceId } from '@/lib/stripe-prices';
+
+export const runtime = 'nodejs';
 
 const CheckoutSchema = z.object({
   plan: z.enum(['PRO', 'AGENCY']),
@@ -32,11 +34,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://instagramfollowerstracker.com';
+
   if (user.plan !== 'FREE') {
-    return NextResponse.json(
-      { error: 'Already subscribed', redirect: '/dashboard/settings' },
-      { status: 409 }
-    );
+    if (!user.stripeCustomerId) {
+      return NextResponse.json(
+        { error: 'Billing customer missing. Contact support to adjust this subscription.' },
+        { status: 409 }
+      );
+    }
+
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: user.stripeCustomerId,
+      return_url: `${appUrl}/dashboard/settings`,
+    });
+
+    return NextResponse.json({ url: portalSession.url });
   }
 
   // Get or create Stripe customer
@@ -53,22 +66,28 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const priceId =
-    interval === 'annual'
-      ? STRIPE_PRICE_IDS[plan].annual
-      : STRIPE_PRICE_IDS[plan].monthly;
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://instagramfollowerstracker.com';
+  let priceId: string;
+  try {
+    priceId = getStripePriceId(plan, interval);
+  } catch (err) {
+    console.error('[checkout] Missing Stripe price id:', err);
+    return NextResponse.json({ error: 'Stripe price is not configured' }, { status: 500 });
+  }
 
   const checkoutSession = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/dashboard?upgraded=1`,
+    success_url: `${appUrl}/dashboard?upgraded=1&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/pricing`,
-    metadata: { userId: user.id, plan },
+    allow_promotion_codes: true,
+    customer_update: {
+      address: 'auto',
+      name: 'auto',
+    },
+    metadata: { userId: user.id, plan, interval },
     subscription_data: {
-      metadata: { userId: user.id, plan },
+      metadata: { userId: user.id, plan, interval },
     },
   });
 
