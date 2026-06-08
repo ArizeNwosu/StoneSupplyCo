@@ -20,13 +20,13 @@ export async function POST(
 
   const account = await prisma.trackedAccount.findFirst({
     where: { id, userId: session.user.id },
-    select: { id: true, handle: true },
+    select: { id: true, handle: true, createdAt: true },
   });
 
   if (!account) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const result = await backfillTrackedAccount(account.id, account.handle);
+  const result = await backfillTrackedAccount(account.id, account.handle, 365, account.createdAt);
   return NextResponse.json({ ok: true, ...result });
 }

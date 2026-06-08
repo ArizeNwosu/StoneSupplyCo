@@ -10,10 +10,15 @@ export interface WaybackSnapshot {
 
 export async function getWaybackSnapshots(
   handle: string,
-  limit = 50
+  limit = 50,
+  to?: Date   // optional upper bound — omit to get ALL available history
 ): Promise<WaybackSnapshot[]> {
   const url = `https://instagram.com/${handle}/`;
-  const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&fl=timestamp,statuscode&filter=statuscode:200&limit=${limit}&from=20200101`;
+  const toParam = to
+    ? `&to=${to.toISOString().slice(0, 10).replace(/-/g, '')}`
+    : '';
+  // No `from` filter — fetch the full archive so backfill goes back as far as Wayback has data
+  const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&fl=timestamp,statuscode&filter=statuscode:200&limit=${limit}${toParam}`;
 
   let rows: string[][];
   try {
@@ -86,7 +91,9 @@ export interface BackfillTrackedResult {
 export async function backfillTrackedAccount(
   trackedAccountId: string,
   handle: string,
-  maxSnapshots = 365
+  maxSnapshots = 365,
+  // Only fetch archives up to when we started tracking — cron handles everything after
+  trackedSince?: Date
 ): Promise<BackfillTrackedResult> {
   const existing = await prisma.snapshot.findMany({
     where: { trackedAccountId },
@@ -96,7 +103,7 @@ export async function backfillTrackedAccount(
     existing.map((s) => s.takenAt.toISOString().slice(0, 10))
   );
 
-  const waybackSnaps = await getWaybackSnapshots(handle, maxSnapshots);
+  const waybackSnaps = await getWaybackSnapshots(handle, maxSnapshots, trackedSince);
 
   const newSnapshots: Array<{
     trackedAccountId: string;

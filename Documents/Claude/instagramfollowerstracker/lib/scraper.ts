@@ -260,7 +260,7 @@ async function fetchApifyProfile(handle: string): Promise<{
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ usernames: [handle] }),
-      signal: AbortSignal.timeout(55_000),
+      signal: AbortSignal.timeout(45_000),
     }
   );
   const contentType = res.headers.get('content-type');

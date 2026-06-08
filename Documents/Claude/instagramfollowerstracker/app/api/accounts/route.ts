@@ -148,7 +148,9 @@ export async function POST(req: NextRequest) {
       where: { id: account.id },
       data: {
         snapshotCount,
-        lastChecked: new Date(),
+        // Only mark as checked when we actually stored a snapshot.
+        // Leaving lastChecked null lets the cron pick it up the next day.
+        ...(snapshotCount > 0 ? { lastChecked: new Date() } : {}),
         displayName: profile.displayName ?? undefined,
         avatarUrl: profile.avatarUrl ?? undefined,
         isPublic: !profile.isPrivate,
