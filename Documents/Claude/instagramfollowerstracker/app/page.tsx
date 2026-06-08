@@ -6,6 +6,7 @@ import { HandleSearch } from '@/components/home/HandleSearch';
 import { prisma } from '@/lib/prisma';
 import { formatCount } from '@/lib/format';
 import { auth } from '@/lib/auth';
+import { ALL_POSTS } from '@/lib/blog';
 
 export const dynamic = 'force-dynamic';
 
@@ -153,6 +154,13 @@ const reviews = [
   },
 ];
 
+const featuredBlogSlugs = [
+  'instagram-followers-tracker',
+  'instagram-unfollow-tracker',
+  'track-instagram-follower-growth',
+  'track-someones-instagram-followers',
+];
+
 export default async function HomePage() {
   const [session, topAccounts] = await Promise.all([
     auth(),
@@ -168,6 +176,9 @@ export default async function HomePage() {
 
   const ctaHref = session?.user ? '/dashboard' : '/auth/signup';
   const ctaLabel = session?.user ? 'Go to Dashboard' : 'Start tracking free';
+  const featuredPosts = featuredBlogSlugs
+    .map((slug) => ALL_POSTS.find((post) => post.slug === slug))
+    .filter((post): post is (typeof ALL_POSTS)[number] => post !== undefined);
 
   return (
     <>
@@ -390,6 +401,54 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+
+        <section className="bg-white py-16 sm:py-20">
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-black uppercase text-cyan-700">
+                  Tracking guides
+                </p>
+                <h2 className="mt-3 text-4xl font-black text-slate-950">
+                  Learn the safe way to track Instagram followers.
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
+                  These guides explain public account monitoring, growth history,
+                  and export-based unfollower checks without risky login sharing.
+                </p>
+              </div>
+              <Link
+                href="/blog"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-cyan-950/10 px-5 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+              >
+                View all guides
+              </Link>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {featuredPosts.map((post) => (
+                <Link
+                  key={post.slug}
+                  href={`/blog/${post.slug}`}
+                  className="group flex min-h-56 flex-col rounded-lg border border-cyan-950/10 bg-slate-50 p-5 transition hover:-translate-y-1 hover:border-teal-300 hover:bg-white hover:shadow-xl hover:shadow-cyan-950/10"
+                >
+                  <p className="text-xs font-black uppercase text-teal-700">
+                    {post.category}
+                  </p>
+                  <h3 className="mt-3 text-lg font-black leading-snug text-slate-950 group-hover:text-teal-700">
+                    {post.title}
+                  </h3>
+                  <p className="mt-3 flex-1 text-sm font-semibold leading-6 text-slate-500">
+                    {post.description}
+                  </p>
+                  <span className="mt-4 text-sm font-black text-cyan-700">
+                    Read guide
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
 
         <section className="bg-rose-50 py-16 sm:py-20">
           <div className="mx-auto max-w-7xl px-4">

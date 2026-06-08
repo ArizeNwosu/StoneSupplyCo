@@ -103,14 +103,14 @@ export default function BlogPage() {
         {/* CTA */}
         <div className="mt-8 rounded-xl border border-cyan-950/10 bg-white p-8 text-center shadow-sm">
           <h2 className="text-xl font-black text-slate-950">
-            Start Tracking Instagram Followers — Free
+            Start Tracking Public Instagram Accounts
           </h2>
           <p className="mt-2 text-sm font-medium text-slate-500">
-            Daily snapshots, growth charts, and authenticity scores for any public account.
-            No Instagram login required.
+            Daily public follower snapshots, growth charts, and authenticity
+            scores. No Instagram login required.
           </p>
           <Link
-            href="/signup"
+            href="/auth/signup"
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-cyan-950 px-6 py-2.5 text-sm font-black text-white hover:bg-cyan-800 transition-colors"
           >
             Start Tracking Free

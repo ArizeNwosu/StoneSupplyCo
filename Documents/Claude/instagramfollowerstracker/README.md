@@ -31,6 +31,10 @@ direct/proxy Instagram fetch flow first.
 
 The daily cron route is `/api/cron/snapshot` and is configured in `vercel.json`.
 
+The protected diagnostics page is `/dashboard/diagnostics`. In production, set
+`DIAGNOSTICS_EMAILS=you@example.com` so only owner accounts can view collector
+health, queue counts, and environment status.
+
 ### Verification
 
 ```bash

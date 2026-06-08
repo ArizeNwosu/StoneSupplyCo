@@ -132,13 +132,14 @@ function renderSection(section: Section, idx: number) {
       return (
         <div key={idx} className="rounded-xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-white p-6 text-center">
           <p className="text-sm font-black text-slate-950">
-            Track any Instagram account for free — no login required
+            Track public Instagram accounts for free
           </p>
           <p className="mt-1 text-xs font-medium text-slate-500">
-            Daily snapshots, growth charts, and authenticity scores
+            Daily follower snapshots, growth charts, and authenticity scores.
+            No Instagram login required.
           </p>
           <Link
-            href="/signup"
+            href="/auth/signup"
             className="mt-3 inline-flex items-center gap-2 rounded-full bg-cyan-950 px-5 py-2 text-sm font-black text-white hover:bg-cyan-800 transition-colors"
           >
             Start Tracking Free →
@@ -328,13 +329,13 @@ export default async function BlogPostPage({
         {/* Bottom CTA */}
         <div className="mt-10 rounded-xl border border-cyan-200 bg-white p-8 text-center shadow-sm">
           <h2 className="text-xl font-black text-slate-950">
-            Ready to Start Tracking Instagram Followers?
+            Ready to Track Public Instagram Followers?
           </h2>
           <p className="mt-2 text-sm font-medium text-slate-500">
-            Free forever for one account. No Instagram login. No credit card.
+            Free for one public account. No Instagram login. No credit card.
           </p>
           <Link
-            href="/signup"
+            href="/auth/signup"
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-cyan-950 px-6 py-2.5 text-sm font-black text-white hover:bg-cyan-800 transition-colors"
           >
             Start Tracking Free →

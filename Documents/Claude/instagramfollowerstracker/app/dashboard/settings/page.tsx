@@ -25,6 +25,7 @@ export default async function SettingsPage() {
   if (!user) return null;
 
   const limits = PLAN_LIMITS[user.plan];
+  const showDiagnostics = canViewDiagnostics(user.email);
 
   return (
     <main className="flex-1 overflow-y-auto bg-sky-50 p-6">
@@ -105,7 +106,37 @@ export default async function SettingsPage() {
           <h2 className="text-sm font-semibold text-slate-950 mb-3">Account</h2>
           <p className="text-sm text-slate-600">{user.email}</p>
         </div>
+
+        {showDiagnostics && (
+          <div className="rounded-lg border border-cyan-950/10 bg-white p-6 shadow-sm">
+            <h2 className="text-sm font-semibold text-slate-950 mb-1">
+              Diagnostics
+            </h2>
+            <p className="text-xs text-slate-500 mb-4">
+              Check Apify, cron, and latest snapshot status for the automated
+              collector.
+            </p>
+            <Link
+              href="/dashboard/diagnostics"
+              className="inline-flex min-h-10 items-center rounded-full border border-cyan-950/10 px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+            >
+              Open diagnostics
+            </Link>
+          </div>
+        )}
       </div>
     </main>
   );
+}
+
+function canViewDiagnostics(email?: string | null) {
+  if (process.env.NODE_ENV !== 'production') return true;
+  if (!email) return false;
+
+  const allowedEmails = (process.env.DIAGNOSTICS_EMAILS ?? '')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+
+  return allowedEmails.includes(email.toLowerCase());
 }
