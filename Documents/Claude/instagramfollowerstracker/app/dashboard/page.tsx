@@ -68,6 +68,9 @@ export default function DashboardPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userPlan, setUserPlan] = useState<'FREE' | 'PRO' | 'AGENCY'>('FREE');
+  const [refreshLoading, setRefreshLoading] = useState(false);
+  const [backfillLoading, setBackfillLoading] = useState(false);
+  const [backfillMsg, setBackfillMsg] = useState<string | null>(null);
 
   const fetchAccounts = useCallback(async () => {
     const res = await fetch('/api/accounts');
@@ -134,6 +137,7 @@ export default function DashboardPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (selectedId) void fetchSnapshots(selectedId);
+    setBackfillMsg(null);
   }, [selectedId, fetchSnapshots]);
 
   // On first load: for accounts with no snapshots, fire a live refresh then backfill
@@ -167,6 +171,32 @@ export default function DashboardPage() {
     }, interval);
     return () => clearInterval(timer);
   }, [selectedId, accounts, fetchAccounts, fetchSnapshots]);
+
+  const handleRefresh = useCallback(async (id: string) => {
+    setRefreshLoading(true);
+    await fetch(`/api/accounts/${id}/refresh`, { method: 'POST' });
+    await fetchAccounts();
+    await fetchSnapshots(id);
+    setRefreshLoading(false);
+  }, [fetchAccounts, fetchSnapshots]);
+
+  const handleBackfill = useCallback(async (id: string) => {
+    setBackfillLoading(true);
+    setBackfillMsg(null);
+    const res = await fetch(`/api/accounts/${id}/backfill`, { method: 'POST' });
+    const data = (await res.json().catch(() => ({}))) as { inserted?: number };
+    await fetchAccounts();
+    await fetchSnapshots(id);
+    setBackfillLoading(false);
+    setBackfillMsg(
+      data.inserted !== undefined
+        ? data.inserted > 0
+          ? `Added ${data.inserted} historical snapshot${data.inserted !== 1 ? 's' : ''}`
+          : 'No new historical data found'
+        : null
+    );
+    setTimeout(() => setBackfillMsg(null), 5000);
+  }, [fetchAccounts, fetchSnapshots]);
 
   const handleDelete = async (id: string) => {
     await fetch(`/api/accounts/${id}`, { method: 'DELETE' });
@@ -226,7 +256,7 @@ export default function DashboardPage() {
             {selected && snapshotData ? (
               <>
                 <PatternAlerts />
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-black text-slate-950">
                       @{selected.handle}
@@ -249,7 +279,31 @@ export default function DashboardPage() {
                       ) : null}
                     </div>
                   </div>
-                  <ShareReportButton accountId={selected.id} />
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <ShareReportButton accountId={selected.id} />
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleRefresh(selected.id)}
+                        disabled={refreshLoading || backfillLoading}
+                        className="text-xs font-bold text-slate-500 hover:text-slate-950 disabled:opacity-40 transition-colors"
+                        title="Re-fetch current follower count and update profile photo"
+                      >
+                        {refreshLoading ? 'Refreshing…' : '↻ Refresh'}
+                      </button>
+                      <span className="text-slate-300">·</span>
+                      <button
+                        onClick={() => handleBackfill(selected.id)}
+                        disabled={refreshLoading || backfillLoading}
+                        className="text-xs font-bold text-slate-500 hover:text-slate-950 disabled:opacity-40 transition-colors"
+                        title="Load historical follower counts from the Wayback Machine"
+                      >
+                        {backfillLoading ? 'Loading history…' : '📅 Load history'}
+                      </button>
+                    </div>
+                    {backfillMsg && (
+                      <p className="text-xs font-semibold text-teal-600">{backfillMsg}</p>
+                    )}
+                  </div>
                 </div>
                 {snapshotData.chartReady && snapshotData.stats ? (
                   <>
