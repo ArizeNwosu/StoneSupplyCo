@@ -46,15 +46,28 @@ function DownloadModal({ result, onClose }: { result: Result; onClose: () => voi
   async function handleDownload() {
     setDlState('loading');
     try {
-      const res = await fetch(proxyUrl(result.videoUrl));
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // Try direct CDN fetch first — Instagram CDN sends CORS headers to browsers
+      // and this avoids server-proxy binary streaming issues entirely
+      let blob: Blob | null = null;
 
-      const contentType = res.headers.get('content-type') ?? '';
-      if (!contentType.startsWith('video/') && !contentType.startsWith('application/octet')) {
-        throw new Error('Not a video response');
+      try {
+        const direct = await fetch(result.videoUrl);
+        if (direct.ok) blob = await direct.blob();
+      } catch {
+        // CORS blocked or network error — fall through to server proxy
       }
 
-      const blob = await res.blob();
+      // Server proxy fallback
+      if (!blob) {
+        const proxied = await fetch(proxyUrl(result.videoUrl));
+        if (!proxied.ok) throw new Error(`HTTP ${proxied.status}`);
+        const ct = proxied.headers.get('content-type') ?? '';
+        if (!ct.startsWith('video/') && !ct.startsWith('application/octet')) {
+          throw new Error('Not a video response');
+        }
+        blob = await proxied.blob();
+      }
+
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = objectUrl;
