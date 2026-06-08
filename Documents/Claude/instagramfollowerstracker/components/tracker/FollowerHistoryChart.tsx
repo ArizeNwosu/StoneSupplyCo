@@ -41,17 +41,37 @@ export function FollowerHistoryChart({ handle }: Props) {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      const formatMonth = (iso: string) => {
+      // Detect yearly vs monthly bucketing from join trend dates
+      // Yearly buckets have date strings like "2016-01-01" where month/day are always 01
+      const isYearly =
+        data.hasJoinData &&
+        joinTrend.length > 1 &&
+        joinTrend.every((p) => p.date.endsWith('-01-01'));
+
+      const formatLabel = (iso: string) => {
         const d = new Date(iso);
+        if (isYearly) return String(d.getUTCFullYear());
+        return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+      };
+
+      // Upload snapshots always use month+year label so they can overlay on yearly chart
+      const formatUploadLabel = (iso: string) => {
+        const d = new Date(iso);
+        if (isYearly) return String(d.getUTCFullYear());
         return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' });
       };
 
       // Use label-indexed data (labels array drives x-axis, data[i] maps to labels[i])
-      // Merge and sort all month labels first
-      const allMonths = new Set<string>();
-      if (data.hasJoinData) joinTrend.forEach((p) => allMonths.add(formatMonth(p.date)));
-      if (hasUploadTrend) uploadSnapshots.filter((s) => s.followerCount !== null).forEach((s) => allMonths.add(formatMonth(s.date)));
-      const labels = [...allMonths].sort((a, b) => new Date('1 ' + a).getTime() - new Date('1 ' + b).getTime());
+      // Merge and sort all labels first
+      const allLabels = new Set<string>();
+      if (data.hasJoinData) joinTrend.forEach((p) => allLabels.add(formatLabel(p.date)));
+      if (hasUploadTrend) uploadSnapshots.filter((s) => s.followerCount !== null).forEach((s) => allLabels.add(formatUploadLabel(s.date)));
+      const labels = [...allLabels].sort((a, b) => {
+        // Yearly labels are plain numbers; monthly labels are "Jan '16" format
+        const aTime = isYearly ? parseInt(a) : new Date('1 ' + a).getTime();
+        const bTime = isYearly ? parseInt(b) : new Date('1 ' + b).getTime();
+        return aTime - bTime;
+      });
 
       const labelIndex = new Map(labels.map((l, i) => [l, i]));
 
@@ -60,7 +80,7 @@ export function FollowerHistoryChart({ handle }: Props) {
       if (data.hasJoinData) {
         const joinData: (number | null)[] = Array(labels.length).fill(null);
         joinTrend.forEach((p) => {
-          const idx = labelIndex.get(formatMonth(p.date));
+          const idx = labelIndex.get(formatLabel(p.date));
           if (idx !== undefined) joinData[idx] = p.cumulative;
         });
         datasets.push({
@@ -80,7 +100,7 @@ export function FollowerHistoryChart({ handle }: Props) {
       if (hasUploadTrend) {
         const uploadData: (number | null)[] = Array(labels.length).fill(null);
         uploadSnapshots.filter((s) => s.followerCount !== null).forEach((s) => {
-          const idx = labelIndex.get(formatMonth(s.date));
+          const idx = labelIndex.get(formatUploadLabel(s.date));
           if (idx !== undefined) uploadData[idx] = s.followerCount as number;
         });
         datasets.push({
@@ -159,7 +179,11 @@ export function FollowerHistoryChart({ handle }: Props) {
 
   const oldestJoin = joinTrend[0]?.date;
   const newestJoin = joinTrend[joinTrend.length - 1]?.date;
-  const months = joinTrend.length;
+  const isYearlyHeader =
+    joinTrend.length > 1 && joinTrend.every((p) => p.date.endsWith('-01-01'));
+  const spanLabel = isYearlyHeader
+    ? `${joinTrend.length}yr`
+    : `${joinTrend.length}mo`;
 
   return (
     <div className="rounded-xl border border-cyan-950/10 bg-white p-4">
@@ -167,10 +191,10 @@ export function FollowerHistoryChart({ handle }: Props) {
         <p className="text-xs font-black uppercase tracking-wider text-slate-400">Follower growth history</p>
         {data.hasJoinData && oldestJoin && newestJoin && (
           <span className="text-xs text-slate-400">
-            {new Date(oldestJoin).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })}
+            {new Date(oldestJoin).toLocaleDateString('en-US', { year: 'numeric', timeZone: 'UTC' })}
             {' → '}
-            {new Date(newestJoin).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })}
-            {' · '}{months}mo
+            {new Date(newestJoin).toLocaleDateString('en-US', { year: 'numeric', timeZone: 'UTC' })}
+            {' · '}{spanLabel}
           </span>
         )}
       </div>

@@ -63,21 +63,33 @@ export async function GET(req: NextRequest) {
   let joinTrend: FollowerHistoryPoint[] = [];
 
   if (latestWithDates && latestWithDates.followers.length > 0) {
-    // Bucket by month (YYYY-MM)
+    const dates = latestWithDates.followers
+      .map((f) => f.followedAt)
+      .filter((d): d is Date => d !== null);
+
+    const minYear = Math.min(...dates.map((d) => d.getUTCFullYear()));
+    const maxYear = Math.max(...dates.map((d) => d.getUTCFullYear()));
+    const spanYears = maxYear - minYear;
+
+    // Use yearly buckets for spans > 3 years so chart stays readable
+    const useYearly = spanYears > 3;
+
     const buckets = new Map<string, number>();
-    for (const { followedAt } of latestWithDates.followers) {
-      if (!followedAt) continue;
-      const key = `${followedAt.getUTCFullYear()}-${String(followedAt.getUTCMonth() + 1).padStart(2, '0')}`;
+    for (const d of dates) {
+      const key = useYearly
+        ? `${d.getUTCFullYear()}`
+        : `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
       buckets.set(key, (buckets.get(key) ?? 0) + 1);
     }
 
-    // Sort months and compute cumulative
     let cumulative = 0;
     joinTrend = [...buckets.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, count]) => {
+      .map(([bucket, count]) => {
         cumulative += count;
-        return { date: `${month}-01`, cumulative };
+        // Normalise to ISO date string (yearly → Jan 1, monthly → 1st of month)
+        const date = useYearly ? `${bucket}-01-01` : `${bucket}-01`;
+        return { date, cumulative };
       });
   }
 
