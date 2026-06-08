@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { fetchInstagramProfile, fetchInstagramProfilesBatch } from '@/lib/scraper';
 import { sendMilestoneEmail } from '@/lib/email';
-import { ensureSeoPublicAccounts } from '@/lib/seo-public-accounts';
+import { ensureSeoPublicAccounts, savePublicSnapshotForHandle } from '@/lib/seo-public-accounts';
 
 export type SnapshotScope = 'all' | 'tracked' | 'public';
 
@@ -181,6 +181,19 @@ async function snapshotTrackedAccounts({
           postCount: resolved.postCount ?? undefined,
         },
       });
+
+      if (!resolved.isPrivate) {
+        await savePublicSnapshotForHandle({
+          handle: account.handle,
+          followerCount: resolved.followerCount,
+          followingCount: resolved.followingCount,
+          postCount: resolved.postCount,
+          displayName: resolved.displayName,
+          avatarUrl: resolved.avatarUrl,
+          bio: resolved.bio,
+          takenAt: dayStart,
+        });
+      }
 
       const snapshotCount = await prisma.snapshot.count({ where: { trackedAccountId: account.id } });
 

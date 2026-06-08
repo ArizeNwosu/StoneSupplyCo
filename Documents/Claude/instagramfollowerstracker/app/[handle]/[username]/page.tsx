@@ -7,6 +7,7 @@ import { PublicChart } from '@/components/tracker/PublicChart';
 import { formatChange, formatCount } from '@/lib/format';
 import { prisma } from '@/lib/prisma';
 import { getPublicHistorySnapshots } from '@/lib/public-history';
+import { getPublicSeoIndexStatus } from '@/lib/public-seo-quality';
 import { SEO_ACCOUNT_PAGES, getSeoAccountPage } from '@/lib/seo-account-pages';
 import { ensureSeoPublicAccount } from '@/lib/seo-public-accounts';
 
@@ -38,9 +39,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const account = await prisma.publicAccount
     .findUnique({
       where: { handle: page.username },
-      select: { followerCount: true, lastChecked: true },
+      include: { _count: { select: { snapshots: true } } },
     })
     .catch(() => null);
+  const status = getPublicSeoIndexStatus({
+    handle: page.username,
+    followerCount: account?.followerCount ?? null,
+    displayName: account?.displayName ?? page.displayName,
+    avatarUrl: account?.avatarUrl ?? null,
+    bio: account?.bio ?? null,
+    snapshotCount: account?._count.snapshots ?? 0,
+  });
   const current = account?.followerCount ? formatCount(account.followerCount) : 'public';
   const url = `https://instagramfollowerstracker.com/${page.slug}/${page.username}`;
 
@@ -56,6 +65,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       'instagram follower count history',
     ],
     alternates: { canonical: url },
+    robots: status.indexable
+      ? { index: true, follow: true }
+      : { index: false, follow: true },
     openGraph: {
       title: `${page.displayName} Instagram Follower Count - @${page.username}`,
       description: page.description,

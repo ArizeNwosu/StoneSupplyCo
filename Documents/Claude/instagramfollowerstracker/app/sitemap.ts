@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { SEO_PAGES } from '@/lib/seo-pages';
 import { ALL_POSTS } from '@/lib/blog';
 import { SEO_ACCOUNT_PAGES } from '@/lib/seo-account-pages';
+import { getPublicSeoIndexStatus } from '@/lib/public-seo-quality';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,25 +45,46 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
-  const seoAccountPages: MetadataRoute.Sitemap = SEO_ACCOUNT_PAGES.map((page) => ({
-    url: `${base}/${page.slug}/${page.username}`,
-    lastModified: new Date(),
-    changeFrequency: 'daily' as const,
-    priority: 0.82,
-  }));
-
   const publicAccounts = await prisma.publicAccount
     .findMany({
-      select: { handle: true, lastChecked: true },
+      include: { _count: { select: { snapshots: true } } },
     })
-    .catch(() => [] as { handle: string; lastChecked: Date | null }[]);
+    .catch(() => []);
 
-  const accountPages: MetadataRoute.Sitemap = publicAccounts.map((a) => ({
-    url: `${base}/${a.handle}`,
-    lastModified: a.lastChecked ?? new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.6,
-  }));
+  const qualityByHandle = new Map(
+    publicAccounts.map((account) => [
+      account.handle,
+      {
+        account,
+        status: getPublicSeoIndexStatus({
+          handle: account.handle,
+          followerCount: account.followerCount,
+          displayName: account.displayName,
+          avatarUrl: account.avatarUrl,
+          bio: account.bio,
+          snapshotCount: account._count.snapshots,
+        }),
+      },
+    ])
+  );
+
+  const seoAccountPages: MetadataRoute.Sitemap = SEO_ACCOUNT_PAGES
+    .filter((page) => qualityByHandle.get(page.username)?.status.sitemapEligible)
+    .map((page) => ({
+      url: `${base}/${page.slug}/${page.username}`,
+      lastModified: qualityByHandle.get(page.username)?.account.lastChecked ?? new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.82,
+    }));
+
+  const accountPages: MetadataRoute.Sitemap = publicAccounts
+    .filter((account) => qualityByHandle.get(account.handle)?.status.sitemapEligible)
+    .map((account) => ({
+      url: `${base}/instagram-follower-count/${account.handle}`,
+      lastModified: account.lastChecked ?? new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.65,
+    }));
 
   return [...staticPages, ...blogPages, ...keywordPages, ...seoAccountPages, ...accountPages];
 }

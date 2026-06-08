@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { formatCount, formatChange } from '@/lib/format';
 import { parseHandle, isValidHandle } from '@/lib/handles';
 import { getPublicHistorySnapshots } from '@/lib/public-history';
+import { getPublicSeoIndexStatus } from '@/lib/public-seo-quality';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { PublicChart } from '@/components/tracker/PublicChart';
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const account = await prisma.publicAccount.findUnique({
     where: { handle: normalizedHandle },
-    select: { displayName: true, followerCount: true },
+    include: { _count: { select: { snapshots: true } } },
   });
 
   if (!account) {
@@ -32,18 +33,30 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const count = account.followerCount ? formatCount(account.followerCount) : 'Unknown';
   const name = account.displayName ?? `@${normalizedHandle}`;
+  const canonical = `https://instagramfollowerstracker.com/instagram-follower-count/${normalizedHandle}`;
+  const status = getPublicSeoIndexStatus({
+    handle: normalizedHandle,
+    followerCount: account.followerCount,
+    displayName: account.displayName,
+    avatarUrl: account.avatarUrl,
+    bio: account.bio,
+    snapshotCount: account._count.snapshots,
+  });
 
   return {
     title: `@${normalizedHandle} Instagram Followers — Live Count & Growth History`,
     description: `Track @${normalizedHandle}'s Instagram follower count over time. Currently ${count} followers. See full growth history, daily changes, and trends.`,
     alternates: {
-      canonical: `https://instagramfollowerstracker.com/${normalizedHandle}`,
+      canonical,
     },
+    robots: status.indexable
+      ? { index: true, follow: true }
+      : { index: false, follow: true },
     openGraph: {
       title: `@${normalizedHandle} Instagram Followers — ${count}`,
       description: `${name} has ${count} Instagram followers. Track their growth history and daily changes.`,
       type: 'profile',
-      url: `https://instagramfollowerstracker.com/${normalizedHandle}`,
+      url: canonical,
     },
   };
 }
@@ -92,6 +105,7 @@ export default async function HandlePage({ params }: PageProps) {
     change30d !== null && snapshots.length > 1
       ? Math.round(change30d / (snapshots.length - 1))
       : null;
+  const canonical = `https://instagramfollowerstracker.com/instagram-follower-count/${normalizedHandle}`;
 
   // Similar accounts — others with high follower counts excluding this one
   const similar = await prisma.publicAccount
@@ -112,7 +126,7 @@ export default async function HandlePage({ params }: PageProps) {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
     name: `@${normalizedHandle} Instagram Profile`,
-    url: `https://instagramfollowerstracker.com/${normalizedHandle}`,
+    url: canonical,
     mainEntity: {
       '@type': 'Person',
       name: account.displayName ?? `@${normalizedHandle}`,
@@ -126,7 +140,7 @@ export default async function HandlePage({ params }: PageProps) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://instagramfollowerstracker.com' },
-      { '@type': 'ListItem', position: 2, name: `@${normalizedHandle}`, item: `https://instagramfollowerstracker.com/${normalizedHandle}` },
+      { '@type': 'ListItem', position: 2, name: `@${normalizedHandle}`, item: canonical },
     ],
   };
 

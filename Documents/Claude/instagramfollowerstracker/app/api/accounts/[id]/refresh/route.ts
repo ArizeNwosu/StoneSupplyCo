@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { savePublicSnapshotForHandle } from '@/lib/seo-public-accounts';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -32,11 +33,13 @@ export async function POST(
     return NextResponse.json({ ok: false, error: 'Could not fetch profile' }, { status: 200 });
   }
 
+  const takenAt = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z');
+
   await prisma.snapshot.upsert({
     where: {
       trackedAccountId_takenAt: {
         trackedAccountId: account.id,
-        takenAt: new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z'),
+        takenAt,
       },
     },
     create: {
@@ -44,12 +47,29 @@ export async function POST(
       followerCount: profile.followerCount,
       followingCount: profile.followingCount ?? undefined,
       postCount: profile.postCount ?? undefined,
-      takenAt: new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z'),
+      takenAt,
     },
     update: {
       followerCount: profile.followerCount,
+      followingCount: profile.followingCount ?? undefined,
+      postCount: profile.postCount ?? undefined,
     },
   });
+
+  if (!profile.isPrivate) {
+    await savePublicSnapshotForHandle({
+      handle: account.handle,
+      followerCount: profile.followerCount,
+      followingCount: profile.followingCount,
+      postCount: profile.postCount,
+      displayName: profile.displayName,
+      avatarUrl: profile.avatarUrl,
+      bio: profile.bio,
+      takenAt,
+    }).catch((err) => {
+      console.warn(`[refresh] Could not save public snapshot for @${account.handle}:`, err);
+    });
+  }
 
   const total = await prisma.snapshot.count({ where: { trackedAccountId: account.id } });
   await prisma.trackedAccount.update({

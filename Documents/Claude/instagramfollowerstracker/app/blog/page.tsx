@@ -5,16 +5,16 @@ import { Footer } from '@/components/layout/Footer';
 import { ALL_POSTS } from '@/lib/blog';
 
 export const metadata: Metadata = {
-  title: 'Instagram Follower Tracker Blog - Free Tools, Unfollow Guides & Growth Tips',
+  title: 'Instagram Follower Tracker Blog - Growth Tips, Unfollow Guides & Analytics',
   description:
-    'Guides for Instagram followers tracker tools, free unfollow tracking without login, follow-back cleanup, public account growth monitoring, and safer export-based reports.',
+    'Expert guides on Instagram follower tracking, unfollow detection, competitor analysis, engagement rate, fake follower detection, influencer vetting, and organic growth strategies — all free.',
   alternates: {
     canonical: 'https://instagramfollowerstracker.com/blog',
   },
   openGraph: {
-    title: 'Instagram Follower Tracker Blog - Free Tools, Unfollow Guides & Growth Tips',
+    title: 'Instagram Follower Tracker Blog - Growth Tips, Unfollow Guides & Analytics',
     description:
-      'Guides for Instagram followers tracker tools, free unfollow tracking without login, follow-back cleanup, and public account growth monitoring.',
+      'Expert guides on Instagram follower tracking, unfollow detection, competitor analysis, engagement rate, fake follower detection, and organic growth strategies.',
     url: 'https://instagramfollowerstracker.com/blog',
     type: 'website',
   },
@@ -52,9 +52,9 @@ export default function BlogPage() {
             Instagram Follower Tracker Blog
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base font-medium text-slate-500">
-            Expert guides on free Instagram follower tracker tools, unfollow
-            tracking without login, follow-back cleanup, and public account growth
-            monitoring.
+            Expert guides on Instagram follower tracking, unfollow detection,
+            competitor analysis, fake follower checking, influencer vetting,
+            engagement rate, and organic growth strategies — all free.
           </p>
         </div>
 

@@ -6,7 +6,10 @@ import { PLAN_LIMITS, CHART_UNLOCK_THRESHOLD } from '@/lib/limits';
 import { parseHandle, isValidHandle } from '@/lib/handles';
 import { sendMilestoneEmail } from '@/lib/email';
 import { parseFollowerCount } from '@/lib/counts';
-import { ensureSeoPublicAccountByHandle } from '@/lib/seo-public-accounts';
+import {
+  ensurePublicAccountForHandle,
+  savePublicSnapshotForHandle,
+} from '@/lib/seo-public-accounts';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -126,8 +129,8 @@ export async function POST(req: NextRequest) {
   let snapshotCount = 0;
   let firstFollowerCount: number | null = null;
 
-  await ensureSeoPublicAccountByHandle(handle).catch((err) => {
-    console.warn(`[accounts] Could not ensure SEO public account for @${handle}:`, err);
+  await ensurePublicAccountForHandle({ handle }).catch((err) => {
+    console.warn(`[accounts] Could not ensure public account for @${handle}:`, err);
   });
 
   const seeded = await seedTrackedAccountFromPublicHistory(account.id, handle).catch((err) => {
@@ -192,6 +195,21 @@ export async function POST(req: NextRequest) {
         where: { trackedAccountId: account.id },
       });
       firstFollowerCount = followerCount;
+
+      if (!profile.isPrivate) {
+        await savePublicSnapshotForHandle({
+          handle,
+          followerCount,
+          followingCount: profile.followingCount,
+          postCount: profile.postCount,
+          displayName: profile.displayName,
+          avatarUrl: profile.avatarUrl,
+          bio: profile.bio,
+          takenAt: dayStart,
+        }).catch((err) => {
+          console.warn(`[accounts] Could not save public snapshot for @${handle}:`, err);
+        });
+      }
     }
 
     const updatedAccount = await prisma.trackedAccount.update({
@@ -211,7 +229,7 @@ export async function POST(req: NextRequest) {
 
     // Milestone 1 email: worker checks count===1 never fires because
     // snapshotCount is already 1 by the time cron runs, so send it here.
-    if (firstFollowerCount !== null && updatedAccount.user.email) {
+    if (firstFollowerCount !== null && updatedAccount.user.email && snapshotCount === 1) {
       await sendMilestoneEmail({
         to: updatedAccount.user.email,
         handle,
