@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { getPost, getAllSlugs, ALL_POSTS } from '@/lib/blog';
@@ -51,7 +52,7 @@ function renderSection(section: Section, idx: number, headingId?: string) {
     case 'p':
       return (
         <p key={idx} className="text-slate-700 leading-relaxed font-medium">
-          {section.text}
+          <RichText text={section.text} />
         </p>
       );
     case 'h2':
@@ -76,7 +77,7 @@ function renderSection(section: Section, idx: number, headingId?: string) {
           {section.items.map((item, i) => (
             <li key={i} className="flex gap-2 text-slate-700 font-medium leading-relaxed">
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-500" />
-              <span>{item}</span>
+              <span><RichText text={item} /></span>
             </li>
           ))}
         </ul>
@@ -87,7 +88,7 @@ function renderSection(section: Section, idx: number, headingId?: string) {
           {section.items.map((item, i) => (
             <li key={i} className="flex gap-3 text-slate-700 font-medium leading-relaxed">
               <span className="shrink-0 font-black text-cyan-600">{i + 1}.</span>
-              <span>{item}</span>
+              <span><RichText text={item} /></span>
             </li>
           ))}
         </ol>
@@ -97,7 +98,7 @@ function renderSection(section: Section, idx: number, headingId?: string) {
         <div key={idx} className="rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-3">
           <p className="text-sm font-bold text-cyan-800">
             <span className="mr-1">💡</span>
-            {section.text}
+            <RichText text={section.text} />
           </p>
         </div>
       );
@@ -106,7 +107,7 @@ function renderSection(section: Section, idx: number, headingId?: string) {
         <div key={idx} className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
           <p className="text-sm font-bold text-amber-800">
             <span className="mr-1">⚠️</span>
-            {section.text}
+            <RichText text={section.text} />
           </p>
         </div>
       );
@@ -128,7 +129,7 @@ function renderSection(section: Section, idx: number, headingId?: string) {
                 <tr key={ri}>
                   {row.map((cell, ci) => (
                     <td key={ci} className="py-2.5 pr-4 font-medium text-slate-700 align-top">
-                      {cell}
+                      <RichText text={cell} />
                     </td>
                   ))}
                 </tr>
@@ -158,6 +159,67 @@ function renderSection(section: Section, idx: number, headingId?: string) {
     default:
       return null;
   }
+}
+
+function RichText({ text }: { text: string }) {
+  return <>{renderRichText(text)}</>;
+}
+
+function renderRichText(text: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const anchorPattern = /<a\s+href="([^"]+)">([\s\S]*?)<\/a>/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = anchorPattern.exec(text)) !== null) {
+    const raw = match[0];
+    const href = match[1];
+    const label = match[2];
+    const start = match.index;
+
+    if (start > lastIndex) {
+      nodes.push(text.slice(lastIndex, start));
+    }
+
+    if (href && label && isSafeInternalHref(href) && !containsHtml(label)) {
+      nodes.push(
+        <Link
+          key={`${href}-${start}`}
+          href={href}
+          className="font-black text-cyan-700 underline decoration-cyan-200 underline-offset-4 transition hover:text-cyan-950 hover:decoration-cyan-500"
+        >
+          {label}
+        </Link>
+      );
+    } else {
+      nodes.push(raw);
+    }
+
+    lastIndex = start + raw.length;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+
+  return nodes;
+}
+
+function isSafeInternalHref(href: string) {
+  return (
+    href.startsWith('/') &&
+    !href.startsWith('//') &&
+    !href.includes('\\') &&
+    !/[\s<>]/.test(href)
+  );
+}
+
+function containsHtml(value: string) {
+  return /<[^>]+>/.test(value);
+}
+
+function stripAnchorMarkup(text: string) {
+  return text.replace(/<a\s+href="[^"]+">([\s\S]*?)<\/a>/g, '$1');
 }
 
 function buildTableOfContents(sections: Section[]): {
@@ -229,7 +291,7 @@ function FAQSection({ faqs }: { faqs: FAQ[] }) {
       name: faq.question,
       acceptedAnswer: {
         '@type': 'Answer',
-        text: faq.answer,
+        text: stripAnchorMarkup(faq.answer),
       },
     })),
   };
@@ -248,7 +310,7 @@ function FAQSection({ faqs }: { faqs: FAQ[] }) {
           <div key={i} className={i === 0 ? '' : 'pt-5'}>
             <h3 className="text-sm font-black text-slate-900">{faq.question}</h3>
             <p className="mt-1.5 text-sm font-medium text-slate-600 leading-relaxed">
-              {faq.answer}
+              <RichText text={faq.answer} />
             </p>
           </div>
         ))}
