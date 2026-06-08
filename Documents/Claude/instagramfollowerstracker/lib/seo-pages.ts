@@ -637,6 +637,16 @@ export const SEO_PAGES: SeoPageConfig[] = [
         description: 'Download any public Instagram video or Reel as an MP4 — free, no login.',
         href: '/instagram-video-downloader',
       },
+      {
+        title: 'Instagram Reels Downloader',
+        description: 'Save any public Reel as a full-quality MP4 — no watermark, no login.',
+        href: '/instagram-reels-downloader',
+      },
+      {
+        title: 'Instagram Story Downloader',
+        description: 'Save public stories before they expire and view them anonymously.',
+        href: '/instagram-story-downloader',
+      },
     ],
     faq: [
       {

@@ -108,8 +108,10 @@ import instagramUnfollowerAppFree from './posts/instagram-unfollower-app-free';
 import trackInstagramFollowersAnonymously from './posts/track-instagram-followers-anonymously';
 import whoStoppedFollowingMeInstagram from './posts/who-stopped-following-me-instagram';
 
-// Video downloader tool post
+// Video/Reels/Story downloader posts
 import instagramVideoDownload from './posts/instagram-video-download';
+import howToDownloadInstagramReels from './posts/how-to-download-instagram-reels';
+import howToSaveInstagramStories from './posts/how-to-save-instagram-stories';
 
 // New posts — batch 4 (22 high-value keyword posts)
 import snoopreportInstagramTracker from './posts/snoopreport-instagram-tracker';
@@ -245,6 +247,8 @@ export const ALL_POSTS: BlogPost[] = [
   whoStoppedFollowingMeInstagram,
   // Video downloader tool post
   instagramVideoDownload,
+  howToDownloadInstagramReels,
+  howToSaveInstagramStories,
   // New batch 4 — 22 high-value keyword posts
   snoopreportInstagramTracker,
   instagramUnfollowers,

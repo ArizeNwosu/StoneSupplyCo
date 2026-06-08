@@ -5,9 +5,9 @@ import { Footer } from '@/components/layout/Footer';
 import { VideoDownloaderForm } from '@/components/tools/VideoDownloaderForm';
 
 export const metadata: Metadata = {
-  title: 'Instagram Video Downloader — Free, No Login Required',
+  title: 'Instagram Video Downloader — Free Insta Video & Reel Saver',
   description:
-    'Download any public Instagram video, Reel, or IGTV for free. Paste the post URL and save the MP4 directly — no account, no app, no login required.',
+    'Free Instagram video downloader — save any public Instagram video, Reel, or IGTV as MP4. Also works as an insta downloader for videos, reels, and IGTV. No login, no app required.',
   alternates: {
     canonical: 'https://instagramfollowerstracker.com/instagram-video-downloader',
   },
@@ -100,8 +100,8 @@ export default function InstagramVideoDownloaderPage() {
               Instagram Video Downloader
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-base font-medium text-slate-500">
-              Download any public Instagram video, Reel, or IGTV as an MP4 — free,
-              no login required.
+              Free insta downloader — save any public Instagram video, Reel, or IGTV
+              as an MP4. No login, no app, no watermark.
             </p>
           </div>
 
@@ -192,8 +192,43 @@ export default function InstagramVideoDownloaderPage() {
             </div>
           </section>
 
+          {/* Keyword coverage note */}
+          <section className="mt-10 rounded-xl border border-cyan-950/10 bg-white p-5">
+            <h2 className="text-sm font-black text-slate-900">
+              Also known as: insta downloader, instagram saver, instavideo download
+            </h2>
+            <p className="mt-2 text-sm font-medium text-slate-500 leading-relaxed">
+              This tool goes by many names — insta video downloader, instagram video saver,
+              instavideo download, ins video download, instavideodownload. Whatever you call it,
+              it does one thing: saves any public Instagram video as an MP4 to your device,
+              free, with no login required.
+            </p>
+          </section>
+
+          {/* More downloader tools */}
+          <section className="mt-10">
+            <h2 className="mb-4 text-base font-black text-slate-950">More download tools</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(
+                [
+                  ['/instagram-reels-downloader', 'Instagram Reels Downloader', 'Dedicated downloader for Instagram Reels — full quality, no watermark.'],
+                  ['/instagram-story-downloader', 'Instagram Story Downloader', 'Save public stories before they expire and view them anonymously.'],
+                ] as [string, string, string][]
+              ).map(([href, title, desc]) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="group flex flex-col rounded-xl border border-cyan-950/10 bg-white p-4 transition-all hover:border-cyan-500/30 hover:shadow-md"
+                >
+                  <p className="text-sm font-black text-slate-900 group-hover:text-cyan-700 transition-colors">{title}</p>
+                  <p className="mt-1 text-xs font-medium text-slate-500">{desc}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+
           {/* Related tools */}
-          <section className="mt-12">
+          <section className="mt-6">
             <h2 className="mb-4 text-base font-black text-slate-950">More free Instagram tools</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {(
