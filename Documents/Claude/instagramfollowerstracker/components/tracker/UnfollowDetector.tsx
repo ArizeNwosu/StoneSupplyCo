@@ -1148,9 +1148,8 @@ function ResultsStage({
       )}
 
       {/* ── Diff: KPI cards + chart + lists ── */}
-      {!isFirst && (
-        <>
-          {/* 3 KPI cards */}
+      <>
+          {/* 3 KPI cards — always shown; zeroes on first upload */}
           <div className="grid grid-cols-3 gap-2.5">
             {[
               { label: 'Unfollowed You', value: lostCount, bg: 'bg-red-50', border: 'border-red-100', num: 'text-red-600', sub: 'text-red-400', icon: '↓' },
@@ -1217,41 +1216,51 @@ function ResultsStage({
             <PaywallNames lostCount={lostCount} newCount={newCount} unfollowedCount={unfollowedCount} ghostCount={ghostCount} fansNotFollowedCount={fansNotFollowedCount} />
           )}
         </>
-      )}
 
-      {/* ── First upload: recently unfollowed + ghost following ── */}
+      {/* ── First upload notice (replaces detail lists until 2nd upload) ── */}
       {isFirst && (
-        <div className="space-y-3">
-          {unfollowedCount > 0 && (
-            effectiveIsPro && recentlyUnfollowed.length > 0
-              ? <YouUnfollowedSection people={recentlyUnfollowed} />
-              : (
-                <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
-                  <p className="text-sm font-black text-amber-800">You recently unfollowed {unfollowedCount} {unfollowedCount === 1 ? 'account' : 'accounts'}</p>
-                  {!effectiveIsPro && <p className="mt-1 text-xs text-amber-600">Upgrade to Pro to see who</p>}
-                </div>
-              )
-          )}
-          {ghostCount > 0 && effectiveIsPro && (
-            <GhostFollowingSection people={ghostFollowing ?? []} count={ghostCount} />
-          )}
-          {fansNotFollowedCount > 0 && effectiveIsPro && (
-            <FansNotFollowedSection people={fansNotFollowed} count={fansNotFollowedCount} />
-          )}
-          {ghostCount > 0 && !effectiveIsPro && (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-black text-slate-800">{ghostCount.toLocaleString()} accounts don&apos;t follow you back</p>
-              <p className="mt-1 text-xs text-slate-500">Upgrade to Pro to see who and clean up your following list.</p>
-            </div>
-          )}
-          {fansNotFollowedCount > 0 && !effectiveIsPro && (
-            <div className="rounded-xl border border-cyan-100 bg-cyan-50 p-4">
-              <p className="text-sm font-black text-cyan-900">{fansNotFollowedCount.toLocaleString()} followers are fans you do not follow back</p>
-              <p className="mt-1 text-xs text-cyan-700">Upgrade to Pro to see the accounts and decide who to engage.</p>
-            </div>
-          )}
+        <div className="rounded-xl border border-cyan-950/10 bg-slate-50 px-4 py-3 flex items-start gap-3">
+          <span className="text-base mt-0.5">📂</span>
+          <div>
+            <p className="text-sm font-black text-slate-950">This is your baseline snapshot</p>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Upload your export again in a few days and we&apos;ll show you exactly who followed and unfollowed you in between.
+            </p>
+          </div>
         </div>
       )}
+
+      {/* ── Recently unfollowed + ghost following (available from first upload) ── */}
+      <div className="space-y-3">
+        {unfollowedCount > 0 && (
+          effectiveIsPro && recentlyUnfollowed.length > 0
+            ? <YouUnfollowedSection people={recentlyUnfollowed} />
+            : (
+              <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
+                <p className="text-sm font-black text-amber-800">You recently unfollowed {unfollowedCount} {unfollowedCount === 1 ? 'account' : 'accounts'}</p>
+                {!effectiveIsPro && <p className="mt-1 text-xs text-amber-600">Upgrade to Pro to see who</p>}
+              </div>
+            )
+        )}
+        {ghostCount > 0 && effectiveIsPro && (
+          <GhostFollowingSection people={ghostFollowing ?? []} count={ghostCount} />
+        )}
+        {fansNotFollowedCount > 0 && effectiveIsPro && (
+          <FansNotFollowedSection people={fansNotFollowed} count={fansNotFollowedCount} />
+        )}
+        {ghostCount > 0 && !effectiveIsPro && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-black text-slate-800">{ghostCount.toLocaleString()} accounts don&apos;t follow you back</p>
+            <p className="mt-1 text-xs text-slate-500">Upgrade to Pro to see who and clean up your following list.</p>
+          </div>
+        )}
+        {fansNotFollowedCount > 0 && !effectiveIsPro && (
+          <div className="rounded-xl border border-cyan-100 bg-cyan-50 p-4">
+            <p className="text-sm font-black text-cyan-900">{fansNotFollowedCount.toLocaleString()} followers are fans you do not follow back</p>
+            <p className="mt-1 text-xs text-cyan-700">Upgrade to Pro to see the accounts and decide who to engage.</p>
+          </div>
+        )}
+      </div>
 
       {/* ── CSV exports ── */}
       <ExportSection
