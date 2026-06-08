@@ -754,6 +754,13 @@ const TARGET_FILES = [
   { name: 'recently_unfollowed_profiles.html', desc: 'recent unfollows' },
 ];
 
+// Instagram ZIP filename format: instagram-{username}-YYYY-MM-DD-{hash}.zip
+// Usernames can't contain hyphens so the date pattern is an unambiguous boundary.
+function detectHandleFromZipName(filename: string): string | null {
+  const m = filename.match(/^instagram-([a-z0-9._]{1,30})-\d{4}-\d{2}-\d{2}-[a-z0-9]+\.zip$/i);
+  return m ? m[1]!.toLowerCase() : null;
+}
+
 function UploadStage({
   fileRef,
   uploading,
@@ -780,6 +787,14 @@ function UploadStage({
 
   const syncFileNames = (fileList: FileList | null) => {
     setSelectedFiles(fileList ? Array.from(fileList).map((f) => f.name) : []);
+    // Auto-detect handle from ZIP filename; only override if not already known
+    if (fileList) {
+      const zip = Array.from(fileList).find((f) => f.name.toLowerCase().endsWith('.zip'));
+      if (zip) {
+        const detected = detectHandleFromZipName(zip.name);
+        if (detected) onHandleChange(detected);
+      }
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -800,23 +815,13 @@ function UploadStage({
 
   return (
     <div className="space-y-5">
-      {/* Handle input */}
-      <div>
-        <label className="text-xs font-black uppercase tracking-wide text-slate-500">Your Instagram username</label>
-        <div className="mt-1.5 flex items-center gap-1.5 rounded-xl border border-cyan-950/15 bg-slate-50 px-3 py-2.5">
-          <span className="text-sm font-semibold text-slate-400">@</span>
-          <input
-            type="text"
-            value={handle}
-            onChange={(e) => onHandleChange(e.target.value.replace(/^@/, '').toLowerCase().replace(/[^a-z0-9._]/g, ''))}
-            placeholder="yourhandle"
-            className="flex-1 bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-300"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-          />
+      {/* Detected account badge */}
+      {handle && (
+        <div className="flex items-center gap-1.5 rounded-xl border border-cyan-950/10 bg-slate-50 px-3 py-2">
+          <span className="text-xs text-slate-400">Uploading for</span>
+          <span className="text-xs font-black text-slate-800">@{handle}</span>
         </div>
-      </div>
+      )}
 
       {/* Instructions */}
       <div className="rounded-xl border border-cyan-950/10 bg-slate-50 p-4">
