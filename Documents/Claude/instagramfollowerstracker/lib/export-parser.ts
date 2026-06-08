@@ -119,10 +119,11 @@ function parseRecentlyUnfollowedHtml(html: string): ExportPerson[] {
 
 function parsePeopleHtml(html: string, kind: RelationshipKind): ExportPerson[] {
   const people: ExportPerson[] = [];
+  // \s* between elements allows for whitespace / newlines in Instagram's export HTML
   const re =
     kind === 'following'
-      ? /href="https:\/\/www\.instagram\.com\/_u\/([a-z0-9._]{1,30})"[^>]*>[^<]*<\/a><\/div><div>([^<]*)<\/div>/gi
-      : /href="https:\/\/www\.instagram\.com\/(?!_u\/)([a-z0-9._]{1,30})"[^>]*>[^<]*<\/a><\/div><div>([^<]*)<\/div>/gi;
+      ? /href="https:\/\/www\.instagram\.com\/_u\/([a-z0-9._]{1,30})"[^>]*>[^<]*<\/a>\s*<\/div>\s*<div[^>]*>\s*([^<]+?)\s*<\/div>/gi
+      : /href="https:\/\/www\.instagram\.com\/(?!_u\/)([a-z0-9._]{1,30})"[^>]*>[^<]*<\/a>\s*<\/div>\s*<div[^>]*>\s*([^<]+?)\s*<\/div>/gi;
 
   let match: RegExpExecArray | null;
   while ((match = re.exec(html)) !== null) {
