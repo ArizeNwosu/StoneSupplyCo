@@ -70,11 +70,21 @@ export async function buildExportDownload({
   });
 }
 
-const PERSON_COLUMNS = ['username', 'display_name', 'profile_url', 'followed_at'] as const;
-const DIFF_COLUMNS = ['change', 'username', 'display_name', 'profile_url', 'followed_at'] as const;
+const PERSON_COLUMNS = ['username', 'display_name', 'profile_url', 'follow_date', 'follow_time'] as const;
+const DIFF_COLUMNS = ['change', 'username', 'display_name', 'profile_url', 'follow_date', 'follow_time'] as const;
 
-type PersonRow = Record<typeof PERSON_COLUMNS[number], string | Date | null | undefined>;
-type DiffRow = Record<typeof DIFF_COLUMNS[number], string | Date | null | undefined>;
+type PersonRow = Record<typeof PERSON_COLUMNS[number], string | null | undefined>;
+type DiffRow = Record<typeof DIFF_COLUMNS[number], string | null | undefined>;
+
+function followDate(d: Date | null | undefined): string | null {
+  if (!d || d.getTime() === 0) return null;
+  return d.toISOString().slice(0, 10);
+}
+
+function followTime(d: Date | null | undefined): string | null {
+  if (!d || d.getTime() === 0) return null;
+  return d.toISOString().slice(11, 19);
+}
 
 function personRow(person: {
   handle: string;
@@ -85,7 +95,8 @@ function personRow(person: {
     username: person.handle,
     display_name: person.displayName,
     profile_url: `https://www.instagram.com/${person.handle}/`,
-    followed_at: person.followedAt,
+    follow_date: followDate(person.followedAt),
+    follow_time: followTime(person.followedAt),
   };
 }
 
@@ -98,7 +109,8 @@ function diffRow(
     username: person.handle,
     display_name: person.displayName ?? null,
     profile_url: `https://www.instagram.com/${person.handle}/`,
-    followed_at: person.followedAt ?? null,
+    follow_date: followDate(person.followedAt),
+    follow_time: followTime(person.followedAt),
   };
 }
 

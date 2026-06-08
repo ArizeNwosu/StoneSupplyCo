@@ -210,7 +210,7 @@ function parseRelationshipEntries(entries: unknown[]): ExportPerson[] {
         handle,
         displayName: title || undefined,
         followedAt:
-          typeof entryObj.timestamp === 'number'
+          typeof entryObj.timestamp === 'number' && entryObj.timestamp > 0
             ? new Date(entryObj.timestamp * 1000)
             : undefined,
       });
