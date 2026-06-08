@@ -30,7 +30,7 @@ interface UploadResult {
 }
 
 interface UnfollowAccount {
-  handle: string;
+  handle: string | null;
   lastUploadAt: string;
   followerCount: number | null;
 }
@@ -192,8 +192,11 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
           if (accountsData.length > 0) {
             const firstHandle = accountsData[0]!.handle;
             setSelectedHandle(firstHandle);
-            setUploadHandle(firstHandle);
-            const res = await fetch(`/api/exports/latest?handle=${encodeURIComponent(firstHandle)}`);
+            setUploadHandle(firstHandle ?? '');
+            const url = firstHandle
+              ? `/api/exports/latest?handle=${encodeURIComponent(firstHandle)}`
+              : '/api/exports/latest';
+            const res = await fetch(url);
             if (res.ok) {
               const data = (await res.json()) as UploadResult | null;
               if (data) {
@@ -273,13 +276,16 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
     }
   }, []);
 
-  const switchAccount = useCallback(async (handle: string) => {
+  const switchAccount = useCallback(async (handle: string | null) => {
     if (handle === selectedHandle && stage === 'results') return;
     setSelectedHandle(handle);
-    setUploadHandle(handle);
+    setUploadHandle(handle ?? '');
     setLoadingExisting(true);
     try {
-      const res = await fetch(`/api/exports/latest?handle=${encodeURIComponent(handle)}`);
+      const url = handle
+        ? `/api/exports/latest?handle=${encodeURIComponent(handle)}`
+        : '/api/exports/latest';
+      const res = await fetch(url);
       if (res.ok) {
         const data = (await res.json()) as UploadResult | null;
         if (data) {
@@ -326,13 +332,14 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
       } else {
         setResult(data);
         if (fileRef.current) fileRef.current.value = '';
-        if (normalizedHandle) {
-          setSelectedHandle(normalizedHandle);
-        }
-        // Refresh accounts list
+        // Refresh accounts list then set selected handle to the newly uploaded account
         const accountsRes = await fetch('/api/exports/accounts');
         if (accountsRes.ok) {
-          setUnfollowAccounts((await accountsRes.json()) as UnfollowAccount[]);
+          const refreshed = (await accountsRes.json()) as UnfollowAccount[];
+          setUnfollowAccounts(refreshed);
+          // Select the uploaded handle (or null if no handle was detected)
+          const uploadedHandle = normalizedHandle || null;
+          setSelectedHandle(uploadedHandle);
         }
         setStage('results');
       }
@@ -363,7 +370,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
         <div className="flex items-center gap-1 overflow-x-auto border-b border-cyan-950/10 bg-slate-50/50 px-4 py-2">
           {unfollowAccounts.map((a) => (
             <button
-              key={a.handle}
+              key={a.handle ?? '__unscoped__'}
               type="button"
               onClick={() => void switchAccount(a.handle)}
               className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-bold transition ${
@@ -372,7 +379,7 @@ export function UnfollowDetector({ userPlan }: UnfollowDetectorProps) {
                   : 'text-slate-500 hover:bg-slate-200 hover:text-slate-900'
               }`}
             >
-              @{a.handle}
+              {a.handle ? `@${a.handle}` : 'My account'}
             </button>
           ))}
           {canAddMore && (
