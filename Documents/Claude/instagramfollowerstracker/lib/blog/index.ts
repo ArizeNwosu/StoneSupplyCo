@@ -150,6 +150,13 @@ import recentFollowersInstagram from './posts/recent-followers-instagram';
 import igFollowing from './posts/ig-following';
 import howToSeeRecentFollowersOnInstagram from './posts/how-to-see-recent-followers-on-instagram';
 import instagramRecentlyFollowedList from './posts/instagram-recently-followed-list';
+// Keyword cluster: analytics / fake followers / growth / unfollow free / celebrity
+import instagramFollowerTrackerAnalytics from './posts/instagram-follower-tracker-analytics';
+import followersTracker from './posts/followers-tracker';
+import fakeFollowersInstagramCheck from './posts/fake-followers-instagram-check';
+import instagramFollowersGrowth from './posts/instagram-followers-growth';
+import instagramUnfollowTrackerOnlineFree from './posts/instagram-unfollow-tracker-online-free';
+import instagramFollowerTrackerCelebrity from './posts/instagram-follower-tracker-celebrity';
 
 export const ALL_POSTS: BlogPost[] = [
   // Original 19
@@ -300,6 +307,13 @@ export const ALL_POSTS: BlogPost[] = [
   igFollowing,
   howToSeeRecentFollowersOnInstagram,
   instagramRecentlyFollowedList,
+  // Keyword cluster: analytics / fake followers / growth / unfollow free / celebrity
+  instagramFollowerTrackerAnalytics,
+  followersTracker,
+  fakeFollowersInstagramCheck,
+  instagramFollowersGrowth,
+  instagramUnfollowTrackerOnlineFree,
+  instagramFollowerTrackerCelebrity,
 ];
 
 export function getPost(slug: string): BlogPost | undefined {
