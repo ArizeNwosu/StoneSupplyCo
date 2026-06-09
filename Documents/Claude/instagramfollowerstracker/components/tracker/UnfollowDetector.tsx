@@ -1196,10 +1196,10 @@ function ResultsStage({
           {/* Detail lists */}
           {effectiveIsPro ? (
             <div className="space-y-3">
-              {diff!.lostFollowers.length > 0 && (
+              {(diff?.lostFollowers?.length ?? 0) > 0 && (
                 <DiffSection title="Unfollowed you" people={diff!.lostFollowers} emptyText="" variant="lost" />
               )}
-              {diff!.newFollowers.length > 0 && (
+              {(diff?.newFollowers?.length ?? 0) > 0 && (
                 <DiffSection title="New followers" people={diff!.newFollowers} emptyText="" variant="new" />
               )}
               {recentlyUnfollowed.length > 0 && (
