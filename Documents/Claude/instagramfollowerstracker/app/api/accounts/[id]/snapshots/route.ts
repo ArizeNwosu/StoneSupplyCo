@@ -29,7 +29,7 @@ export async function GET(
   const snapshots = await prisma.snapshot.findMany({
     where: { trackedAccountId: id },
     orderBy: { takenAt: 'asc' },
-    select: { takenAt: true, followerCount: true },
+    select: { takenAt: true, followerCount: true, followingCount: true, postCount: true },
   });
 
   // Use actual snapshot count — more reliable than the cached field

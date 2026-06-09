@@ -42,6 +42,7 @@ interface AuthenticityResult {
   score: number;
   label: 'authentic' | 'suspicious' | 'likely_fake';
   signals: string[];
+  fakePctRange?: { min: number; max: number };
 }
 
 interface SnapshotData {
@@ -363,6 +364,7 @@ export default function DashboardPage() {
                               score={snapshotData.authenticityScore.score}
                               label={snapshotData.authenticityScore.label}
                               signals={snapshotData.authenticityScore.signals}
+                              fakePctRange={snapshotData.authenticityScore.fakePctRange}
                             />
                           ) : snapshotData.snapshotCount >= 1 ? (
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-950/10 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-400">

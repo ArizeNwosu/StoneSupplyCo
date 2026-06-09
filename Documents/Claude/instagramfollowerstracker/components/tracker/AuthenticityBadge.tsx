@@ -2,9 +2,10 @@ interface AuthenticityBadgeProps {
   score: number;
   label: 'authentic' | 'suspicious' | 'likely_fake';
   signals: string[];
+  fakePctRange?: { min: number; max: number };
 }
 
-export function AuthenticityBadge({ score, label, signals }: AuthenticityBadgeProps) {
+export function AuthenticityBadge({ score, label, signals, fakePctRange }: AuthenticityBadgeProps) {
   const config = {
     authentic: {
       bg: 'bg-green-50',
@@ -36,6 +37,11 @@ export function AuthenticityBadge({ score, label, signals }: AuthenticityBadgePr
       >
         <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
         {config.display} · {score}/100
+        {fakePctRange && (
+          <span className="opacity-70">
+            · Est. {fakePctRange.min === 0 ? `<${fakePctRange.max}` : `${fakePctRange.min}–${fakePctRange.max}`}% fake
+          </span>
+        )}
       </div>
       {/* Tooltip on hover */}
       <div className="absolute top-full left-0 mt-2 hidden group-hover:block z-50 w-64">
