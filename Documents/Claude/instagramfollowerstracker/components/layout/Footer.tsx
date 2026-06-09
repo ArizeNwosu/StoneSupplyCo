@@ -44,6 +44,7 @@ const NAV = [
     heading: 'Legal',
     links: [
       { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Data Deletion', href: '/data-deletion' },
       { label: 'Terms of Service', href: '/terms' },
       { label: 'FAQ', href: '/faq' },
       { label: 'Sign In', href: '/auth/signin' },
@@ -128,6 +129,7 @@ export function Footer({ topAccounts = [], className = 'mt-24' }: FooterProps) {
           </p>
           <div className="flex flex-wrap gap-4 text-xs text-slate-500">
             <Link href="/privacy" className="transition hover:text-white">Privacy Policy</Link>
+            <Link href="/data-deletion" className="transition hover:text-white">Data Deletion</Link>
             <Link href="/terms" className="transition hover:text-white">Terms of Service</Link>
             <Link href="/faq" className="transition hover:text-white">FAQ</Link>
             <Link href="/pricing" className="transition hover:text-white">Pricing</Link>
