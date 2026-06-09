@@ -104,17 +104,17 @@ const PHONE_DEVICE_STEPS = [
   {
     icon: '✅',
     title: 'Export to device',
-    body: 'Tap "Export to device" → check "Date range" → tap "All time" then "Save".',
+    body: 'Tap "Export to device" → tap "Data to export" → select "Connections (followers and following)" only → tap "Save". Avoid selecting all data — it creates a much larger ZIP file and takes longer to prepare. Then tap "Date range" → tap "All time" → tap "Save".',
   },
   {
     icon: '📄',
-    title: 'Choose HTML or JSON',
-    body: 'Set "Format" to HTML or JSON, then tap "Save". Next tap "Start export" — Instagram may ask for your password. Instagram will email you a download link.',
+    title: 'Choose JSON format',
+    body: 'Tap "Format" → select "JSON" → tap "Save". Then tap "Start export" — Instagram may ask for your password. Instagram will email you a download link when it\'s ready.',
   },
   {
     icon: '📧',
-    title: 'Download the ZIP',
-    body: 'When the download is ready, unzip it and upload only the small followers_and_following folder files. Do not upload photos, videos, or the full media folder.',
+    title: 'Upload the ZIP',
+    body: 'When the email arrives, download the ZIP file and upload it directly here — no need to unzip. Or unzip it and upload only the small connections/followers_and_following folder.',
   },
 ];
 
@@ -122,17 +122,17 @@ const DESKTOP_DEVICE_STEPS = [
   {
     icon: '✅',
     title: 'Export to device',
-    body: 'Select the account you want to track and click "Export to device". Then click "Date range" → check "All time" → click "Save".',
+    body: 'Select your account and click "Export to device". Click "Data to export" → choose "Connections (followers and following)" only → click "Save". Avoid selecting all data — it creates a much larger ZIP file and takes longer to prepare. Then click "Date range" → check "All time" → click "Save".',
   },
   {
     icon: '📄',
-    title: 'Choose HTML or JSON',
-    body: 'Click "Format" and choose HTML or JSON, then click "Save" and "Start export". Instagram will email you a download link within minutes, sometimes up to 48 hours.',
+    title: 'Choose JSON format',
+    body: 'Click "Format" → select "JSON" → click "Save" → click "Start export". Instagram will email you a download link within minutes, sometimes up to 48 hours.',
   },
   {
     icon: '📧',
-    title: 'Download the ZIP',
-    body: 'When the download is ready, unzip it and upload only the small followers_and_following folder files. Do not upload photos, videos, or the full media folder.',
+    title: 'Upload the ZIP',
+    body: 'When the email arrives, download the ZIP file and upload it directly here — no need to unzip. Or unzip it and upload only the small connections/followers_and_following folder.',
   },
 ];
 
@@ -147,7 +147,7 @@ const PHONE_DRIVE_STEPS = [
   {
     icon: '📄',
     title: 'Choose Date Range & format',
-    body: 'Tap "Date range" → check "All time" → tap "Save". Tap "Format" and choose HTML or JSON, then tap "Save" → tap "Start export". Instagram will begin transferring your data to Google Drive.',
+    body: 'Tap "Date range" → check "All time" → tap "Save". Tap "Format" → select "JSON" → tap "Save" → tap "Start export". Instagram will begin transferring your data to Google Drive.',
   },
 ];
 
@@ -160,7 +160,7 @@ const DESKTOP_DRIVE_STEPS = [
   {
     icon: '📄',
     title: 'Choose Date Range & format',
-    body: 'Click "Date range" → check "All time" → click "Save". Click "Format" and choose HTML or JSON, then click "Save" → click "Start export". Instagram will begin transferring your data to Google Drive.',
+    body: 'Click "Date range" → check "All time" → click "Save". Click "Format" → select "JSON" → click "Save" → click "Start export". Instagram will begin transferring your data to Google Drive.',
   },
 ];
 
@@ -770,8 +770,8 @@ function BranchStage({
 }
 
 const TARGET_FILES = [
-  { key: 'followers', label: 'Followers file', desc: 'followers_*.html or followers_*.json', required: true },
-  { key: 'following', label: 'Following file', desc: 'following.html or following.json', required: true },
+  { key: 'followers', label: 'Followers file', desc: 'followers_1.json (inside ZIP or standalone)', required: true },
+  { key: 'following', label: 'Following file', desc: 'following.json (inside ZIP or standalone)', required: true },
   { key: 'recently', label: 'Recently unfollowed', desc: 'recently_unfollowed_profiles.html, optional', required: false },
 ];
 
@@ -832,8 +832,9 @@ function UploadStage({
   };
 
   const selectedBaseNames = selectedFiles.map((name) => name.split('/').at(-1) ?? name);
-  const hasFollowers = selectedBaseNames.some((name) => /^followers_?\d*\.(html|json)$/i.test(name));
-  const hasFollowing = selectedBaseNames.some((name) => /^following\.(html|json)$/i.test(name));
+  const hasZip = selectedBaseNames.some((name) => /\.zip$/i.test(name));
+  const hasFollowers = hasZip || selectedBaseNames.some((name) => /^followers_?\d*\.(html|json)$/i.test(name));
+  const hasFollowing = hasZip || selectedBaseNames.some((name) => /^following\.(html|json)$/i.test(name));
   const hasRecently = selectedBaseNames.some((name) => /^recently_unfollowed_profiles\.html$/i.test(name));
   const recognizedSelected = selectedFiles.filter((name) =>
     /^followers_?\d*\.(html|json)$/i.test(name.split('/').at(-1) ?? name) ||
@@ -854,13 +855,13 @@ function UploadStage({
 
       {/* Instructions */}
       <div className="rounded-xl border border-cyan-950/10 bg-slate-50 p-4">
-        <p className="text-xs font-black uppercase tracking-wide text-slate-500 mb-3">Upload the small follower folder</p>
+        <p className="text-xs font-black uppercase tracking-wide text-slate-500 mb-3">Upload your Instagram connections export</p>
         <ol className="space-y-2">
           {[
-            'Unzip the file Instagram emailed you',
-            <>Open <code className="bg-white border border-slate-200 rounded px-1 text-xs">connections/followers_and_following</code></>,
-            'Upload that small folder, or select the files inside it',
-            'HTML and JSON both work. Photos, videos, messages, and media are not needed.',
+            'Download the ZIP file from the link Instagram emailed you',
+            'Upload the ZIP directly here — no unzipping needed',
+            <>Or unzip it and upload the <code className="bg-white border border-slate-200 rounded px-1 text-xs">connections/followers_and_following</code> folder instead</>,
+            'Photos, videos, and messages are not needed and will be ignored.',
           ].map((step, i) => (
             <li key={i} className="flex gap-2.5 text-xs text-slate-600 font-medium">
               <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-cyan-950 text-white font-black text-[9px]">{i + 1}</span>
@@ -921,7 +922,7 @@ function UploadStage({
         {selectedFiles.length === 0 ? (
           <div>
             <p className="text-sm font-bold text-slate-700">Drop follower files here</p>
-            <p className="text-xs text-slate-400">HTML or JSON accepted. The recently-unfollowed file is optional.</p>
+            <p className="text-xs text-slate-400">ZIP, JSON, or HTML accepted. The recently-unfollowed file is optional.</p>
           </div>
         ) : (
           <div className="w-full text-left space-y-1">
