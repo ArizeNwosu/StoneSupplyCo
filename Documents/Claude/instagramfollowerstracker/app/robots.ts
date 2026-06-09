@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/dashboard', '/api/', '/settings'],
       },
     ],
-    sitemap: 'https://instagramfollowerstracker.com/sitemap.xml',
+    sitemap: 'https://www.instagramfollowerstracker.com/sitemap.xml',
   };
 }
