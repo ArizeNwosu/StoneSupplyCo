@@ -71,6 +71,7 @@ export default function DashboardPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [initialAddInProgress, setInitialAddInProgress] = useState(false);
   const [userPlan, setUserPlan] = useState<'FREE' | 'PRO' | 'AGENCY'>('FREE');
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [backfillLoading, setBackfillLoading] = useState(false);
@@ -149,12 +150,18 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const pending = sessionStorage.getItem('pending_handle');
-    if (pending) sessionStorage.removeItem('pending_handle');
+    if (pending) {
+      sessionStorage.removeItem('pending_handle');
+      setInitialAddInProgress(true);
+    }
 
     // Await initial fetch so handleAdd's refresh doesn't get overwritten by a stale response
     const timer = window.setTimeout(() => {
-      void fetchAccounts().then(() => {
-        if (pending) handleAdd(pending).catch(() => {}); // handleAdd calls fetchAccounts internally
+      void fetchAccounts().then(async () => {
+        if (pending) {
+          try { await handleAdd(pending); } catch { /* ignore */ }
+        }
+        setInitialAddInProgress(false);
       });
       void fetchPlan();
     }, 0);
@@ -305,7 +312,7 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {loading ? (
+        {loading || initialAddInProgress ? (
           <DashboardLoadingPanel />
         ) : accounts.length === 0 ? (
           <EmptyState onAdd={() => setShowAddModal(true)} />

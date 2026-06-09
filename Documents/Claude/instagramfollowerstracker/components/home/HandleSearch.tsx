@@ -117,7 +117,7 @@ export function HandleSearch({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
       {state === 'not-found' && result && (
         <div className="mt-4 flex flex-col gap-4 rounded-[28px] border border-cyan-950/10 bg-white p-5 shadow-xl shadow-cyan-950/10 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-600">
-            <span className="font-medium">@{result.handle}</span> is ready to track. Add it to your dashboard and we&apos;ll fetch the follower count automatically.
+            <span className="font-medium">@{result.handle}</span>{' '}is ready to track. Add it to your dashboard and we&apos;ll fetch the follower count automatically.
           </p>
           <button
             type="button"

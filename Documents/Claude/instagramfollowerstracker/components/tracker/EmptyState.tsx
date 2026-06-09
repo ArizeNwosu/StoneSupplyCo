@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 
 interface EmptyStateProps {
@@ -8,11 +9,7 @@ export function EmptyState({ onAdd }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
       <div className="mb-6">
-        <svg viewBox="0 0 48 48" width="48" height="48" fill="none" aria-hidden="true">
-          <rect width="48" height="48" rx="8" fill="#ecfeff" />
-          <path d="M14 34 L24 14 L34 34" stroke="#0f766e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M17 28 L31 28" stroke="#fb7185" strokeWidth="2.5" strokeLinecap="round" />
-        </svg>
+        <Image src="/site-icon.png" alt="" width={48} height={48} priority />
       </div>
       <h2 className="mb-2 text-xl font-black text-slate-950">
         No accounts tracked yet
