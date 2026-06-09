@@ -434,37 +434,132 @@ export default function DashboardPage() {
   );
 }
 
+function Shimmer({ className }: { className: string }) {
+  return (
+    <div className={`relative overflow-hidden rounded-lg bg-slate-100 ${className}`}>
+      <div className="animate-shimmer absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+    </div>
+  );
+}
+
 function DashboardLoadingPanel({ handle }: { handle?: string }) {
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">
-            Loading tracker
-          </p>
-          <h2 className="mt-2 text-2xl font-black text-slate-950">
-            {handle ? `@${handle}` : 'Preparing dashboard'}
-          </h2>
-          <p className="mt-1 text-sm font-semibold text-slate-500">
-            Fetching account history and follower snapshots.
-          </p>
-        </div>
-        <div className="h-10 w-32 animate-pulse rounded-full bg-slate-200" />
+    <div className="mx-auto max-w-6xl space-y-5 animate-[rise-in_0.3s_ease-out]">
+
+      {/* Status bar */}
+      <div className="flex items-center gap-2.5 rounded-xl border border-cyan-500/20 bg-cyan-50 px-4 py-3">
+        <span className="relative flex h-2.5 w-2.5 shrink-0">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-500 opacity-60" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-cyan-500" />
+        </span>
+        <p className="text-sm font-bold text-cyan-900">
+          {handle
+            ? `Taking first snapshot of @${handle} — this usually takes a few seconds…`
+            : 'Loading your dashboard…'}
+        </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Header skeleton — mirrors AccountIntelligenceHeader */}
+      <div className="rounded-2xl border border-cyan-950/10 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
+            <Shimmer className="h-16 w-16 shrink-0 rounded-full" />
+            <div className="space-y-2.5">
+              {/* Handle */}
+              <Shimmer className="h-5 w-32 rounded-full" />
+              {/* Follower count */}
+              <Shimmer className="h-8 w-24 rounded-lg" />
+              {/* Stat chips */}
+              <div className="flex gap-2">
+                <Shimmer className="h-5 w-16 rounded-full" />
+                <Shimmer className="h-5 w-16 rounded-full" />
+                <Shimmer className="h-5 w-16 rounded-full" />
+              </div>
+            </div>
+          </div>
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            <Shimmer className="h-9 w-20 rounded-full" />
+            <Shimmer className="h-9 w-28 rounded-full" />
+          </div>
+        </div>
+
+        {/* Stats strip */}
+        <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-cyan-950/10 bg-slate-100 md:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex flex-col gap-2 bg-white p-4">
+              <Shimmer className="h-3 w-16 rounded-full" />
+              <Shimmer className="h-6 w-20 rounded-md" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Metrics row skeleton */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="h-24 animate-pulse rounded-lg border border-cyan-950/10 bg-white shadow-sm"
-          />
+          <div key={i} className="rounded-xl border border-cyan-950/10 bg-white p-4 shadow-sm">
+            <Shimmer className="mb-2 h-3 w-16 rounded-full" />
+            <Shimmer className="h-7 w-24 rounded-md" />
+          </div>
         ))}
       </div>
 
-      <div className="rounded-lg border border-cyan-950/10 bg-white p-6 shadow-xl shadow-cyan-950/10">
-        <div className="mb-5 h-4 w-44 animate-pulse rounded-full bg-slate-200" />
-        <div className="h-80 animate-pulse rounded-lg bg-cyan-50" />
+      {/* Chart skeleton */}
+      <div className="rounded-xl border border-cyan-950/10 bg-white p-5 shadow-xl shadow-cyan-950/10">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="space-y-2">
+            <Shimmer className="h-3 w-24 rounded-full" />
+            <Shimmer className="h-5 w-40 rounded-md" />
+          </div>
+          <Shimmer className="h-7 w-24 rounded-full" />
+        </div>
+
+        {/* Chart area with fake axis lines */}
+        <div className="relative h-72 overflow-hidden rounded-xl bg-slate-50">
+          {/* Horizontal grid lines */}
+          {[20, 40, 60, 80].map((pct) => (
+            <div
+              key={pct}
+              className="absolute inset-x-0 border-t border-slate-100"
+              style={{ top: `${pct}%` }}
+            />
+          ))}
+          {/* Fake chart bars that shimmer */}
+          <div className="absolute inset-x-6 bottom-6 flex items-end justify-between gap-1">
+            {[55, 70, 45, 80, 60, 75, 50, 85, 65, 90, 70, 80].map((h, i) => (
+              <div
+                key={i}
+                className="relative flex-1 overflow-hidden rounded-t bg-slate-100"
+                style={{ height: `${h}%` }}
+              >
+                <div className="animate-shimmer absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+              </div>
+            ))}
+          </div>
+          {/* Overlay message */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md">
+              <svg className="h-5 w-5 animate-spin text-cyan-600" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            </div>
+            <p className="text-xs font-bold text-slate-400">
+              {handle ? `Collecting @${handle}'s follower data…` : 'Building your chart…'}
+            </p>
+          </div>
+        </div>
+
+        {/* X-axis labels skeleton */}
+        <div className="mt-3 flex justify-between px-1">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Shimmer key={i} className="h-3 w-10 rounded-full" />
+          ))}
+        </div>
       </div>
+
     </div>
   );
 }
