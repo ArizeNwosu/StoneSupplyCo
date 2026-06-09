@@ -112,6 +112,14 @@ import whoStoppedFollowingMeInstagram from './posts/who-stopped-following-me-ins
 import instagramVideoDownload from './posts/instagram-video-download';
 import howToDownloadInstagramReels from './posts/how-to-download-instagram-reels';
 import howToSaveInstagramStories from './posts/how-to-save-instagram-stories';
+import instagramVideoDownloaderOnline from './posts/instagram-video-downloader-online';
+import bestInstagramVideoDownloaderApps from './posts/best-instagram-video-downloader-apps';
+import saveInstagramVideoToIphoneCameraRoll from './posts/save-instagram-video-to-iphone-camera-roll';
+import privateInstagramVideoDownloader from './posts/private-instagram-video-downloader';
+import instagramPostPhotoDownloader from './posts/instagram-post-photo-downloader';
+import instagramToMp4Converter from './posts/instagram-to-mp4-converter';
+import instagramVideoDownloadWithoutWatermark from './posts/instagram-video-download-without-watermark';
+import instagramDownloaderAlternatives from './posts/instagram-downloader-alternatives';
 
 // New posts — batch 4 (22 high-value keyword posts)
 import snoopreportInstagramTracker from './posts/snoopreport-instagram-tracker';
@@ -136,6 +144,12 @@ import howToGetInstagramFollowers from './posts/how-to-get-instagram-followers';
 import buyInstagramFollowersRisks from './posts/buy-instagram-followers-risks';
 import instagramAdvertisingAndFollowerGrowth from './posts/instagram-advertising-and-follower-growth';
 import instagramAccountHackedFollowerLoss from './posts/instagram-account-hacked-follower-loss';
+// Keyword cluster: recently followed / ig following / recent followers
+import recentlyFollowedInstagram from './posts/recently-followed-instagram';
+import recentFollowersInstagram from './posts/recent-followers-instagram';
+import igFollowing from './posts/ig-following';
+import howToSeeRecentFollowersOnInstagram from './posts/how-to-see-recent-followers-on-instagram';
+import instagramRecentlyFollowedList from './posts/instagram-recently-followed-list';
 
 export const ALL_POSTS: BlogPost[] = [
   // Original 19
@@ -249,6 +263,14 @@ export const ALL_POSTS: BlogPost[] = [
   instagramVideoDownload,
   howToDownloadInstagramReels,
   howToSaveInstagramStories,
+  instagramVideoDownloaderOnline,
+  bestInstagramVideoDownloaderApps,
+  saveInstagramVideoToIphoneCameraRoll,
+  privateInstagramVideoDownloader,
+  instagramPostPhotoDownloader,
+  instagramToMp4Converter,
+  instagramVideoDownloadWithoutWatermark,
+  instagramDownloaderAlternatives,
   // New batch 4 — 22 high-value keyword posts
   snoopreportInstagramTracker,
   instagramUnfollowers,
@@ -272,6 +294,12 @@ export const ALL_POSTS: BlogPost[] = [
   buyInstagramFollowersRisks,
   instagramAdvertisingAndFollowerGrowth,
   instagramAccountHackedFollowerLoss,
+  // Keyword cluster: recently followed / ig following / recent followers
+  recentlyFollowedInstagram,
+  recentFollowersInstagram,
+  igFollowing,
+  howToSeeRecentFollowersOnInstagram,
+  instagramRecentlyFollowedList,
 ];
 
 export function getPost(slug: string): BlogPost | undefined {

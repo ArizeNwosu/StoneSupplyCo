@@ -5,16 +5,26 @@ import { Footer } from '@/components/layout/Footer';
 import { ALL_POSTS } from '@/lib/blog';
 
 export const metadata: Metadata = {
-  title: 'Instagram Follower Tracker Blog - Growth Tips, Unfollow Guides & Analytics',
+  title: 'Instagram Tools Blog - Follower Tracking, IG Following, Unfollow & Growth Guides',
   description:
-    'Expert guides on Instagram follower tracking, unfollow detection, competitor analysis, engagement rate, fake follower detection, influencer vetting, and organic growth strategies — all free.',
+    'Expert guides on Instagram follower tracking, IG following lists, recently followed accounts, recent followers, unfollow detection, video downloading, Reels downloads, and growth analytics.',
+  keywords: [
+    'instagram followers tracker',
+    'ig following',
+    'recently followed instagram',
+    'instagram recently followed',
+    'recent followers instagram',
+    'instagram unfollow tracker',
+    'instagram following list',
+    'instagram growth',
+  ],
   alternates: {
     canonical: 'https://instagramfollowerstracker.com/blog',
   },
   openGraph: {
-    title: 'Instagram Follower Tracker Blog - Growth Tips, Unfollow Guides & Analytics',
+    title: 'Instagram Tools Blog - IG Following, Tracking, Unfollow & Growth Guides',
     description:
-      'Expert guides on Instagram follower tracking, unfollow detection, competitor analysis, engagement rate, fake follower detection, and organic growth strategies.',
+      'Guides on Instagram follower tracking, IG following lists, recently followed accounts, unfollow detection, video downloading, and Instagram growth analytics.',
     url: 'https://instagramfollowerstracker.com/blog',
     type: 'website',
   },
@@ -49,12 +59,13 @@ export default function BlogPage() {
             Resource Library
           </p>
           <h1 className="mt-3 text-4xl font-black text-slate-950">
-            Instagram Follower Tracker Blog
+            Instagram Tools Blog
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base font-medium text-slate-500">
-            Expert guides on Instagram follower tracking, unfollow detection,
-            competitor analysis, fake follower checking, influencer vetting,
-            engagement rate, and organic growth strategies — all free.
+            Expert guides on Instagram follower tracking, IG following lists,
+            recently followed accounts, recent followers, unfollow detection,
+            public account growth, video downloading, Reels downloads, story
+            savers, and Instagram growth analytics.
           </p>
         </div>
 
