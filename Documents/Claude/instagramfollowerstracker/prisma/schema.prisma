@@ -34,6 +34,8 @@ model User {
   reportLinks      ReportLink[]
   sessions         Session[]
   trackedAccounts  TrackedAccount[]
+  stalkerSubs      StalkerSubscription[]
+  stalkerEvents    StalkerEvent[]
 }
 
 model TrackedAccount {
@@ -54,6 +56,8 @@ model TrackedAccount {
   alerts            Alert[]
   reportLinks       ReportLink[]
   snapshots         Snapshot[]
+  stalkerSubs       StalkerSubscription[]
+  stalkerProfile    StalkerProfile?
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, handle])
@@ -257,4 +261,92 @@ model PasswordResetToken {
   email     String
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+enum StalkerFrequency {
+  DAILY
+  SIX_HOUR
+  HOURLY
+}
+
+enum StalkerSource {
+  STRIPE
+  PRO_INCLUDED
+}
+
+enum StalkerSignal {
+  BIO_CHANGED
+  LINK_CHANGED
+  AVATAR_CHANGED
+  NEW_POST
+  POST_DELETED
+  NEW_FOLLOW
+  WENT_PRIVATE
+  DISPLAY_NAME_CHANGED
+  USERNAME_CHANGED
+  VERIFIED_CHANGED
+  CATEGORY_CHANGED
+  PRONOUNS_CHANGED
+}
+
+// One row per user+account pairing. Stores subscription metadata.
+model StalkerSubscription {
+  id               String           @id @default(cuid())
+  userId           String
+  trackedAccountId String
+  frequency        StalkerFrequency @default(DAILY)
+  source           StalkerSource    @default(STRIPE)
+  stripePriceId    String?
+  stripeSubId      String?
+  active           Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackedAccount   TrackedAccount   @relation(fields: [trackedAccountId], references: [id], onDelete: Cascade)
+  events           StalkerEvent[]
+
+  @@unique([userId, trackedAccountId])
+  @@index([active, frequency])
+}
+
+// One row per TrackedAccount — stores last-known state for diffing.
+// Shared across all subscribers for the same account.
+model StalkerProfile {
+  id               String         @id @default(cuid())
+  trackedAccountId String         @unique
+  instagramUserId  String?
+  username         String?
+  displayName      String?
+  bio              String?
+  externalUrl      String?
+  avatarUrl        String?
+  postCount        Int?
+  highlightCount   Int?
+  isVerified       Boolean        @default(false)
+  category         String?
+  pronouns         String[]
+  recentFollowing  String[]
+  isPrivate        Boolean        @default(false)
+  scrapedAt        DateTime       @default(now())
+
+  trackedAccount   TrackedAccount @relation(fields: [trackedAccountId], references: [id], onDelete: Cascade)
+}
+
+// One row per detected change, per subscriber. Powers the in-app feed.
+model StalkerEvent {
+  id              String              @id @default(cuid())
+  stalkerSubId    String
+  userId          String
+  signal          StalkerSignal
+  oldValue        String?
+  newValue        String?
+  read            Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+
+  stalkerSub      StalkerSubscription @relation(fields: [stalkerSubId], references: [id], onDelete: Cascade)
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+  @@index([stalkerSubId, createdAt])
 }
