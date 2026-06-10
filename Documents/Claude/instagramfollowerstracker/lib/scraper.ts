@@ -7,6 +7,12 @@ export interface InstagramProfileData {
   postCount: number | null;
   displayName: string | null;
   bio: string | null;
+  externalUrl: string | null;     // ← new
+  highlightCount: number | null;  // ← new
+  isVerified: boolean;            // ← new
+  category: string | null;        // ← new (e.g. "Musician/Band")
+  pronouns: string[];             // ← new (e.g. ["she/her"])
+  instagramUserId: string | null; // ← new (numeric pk — stable across username changes)
   avatarUrl: string | null;
   isPrivate: boolean;
   fetchedAt: Date;
@@ -98,6 +104,12 @@ interface IgUser {
   media_count?: number;
   full_name?: string;
   biography?: string;
+  external_url?: string;           // ← new
+  highlight_reel_count?: number;   // ← new
+  is_verified?: boolean;           // ← new
+  category?: string;               // ← new
+  pronouns?: string[];             // ← new (Instagram returns this as an array)
+  pk?: string | number;            // ← new (numeric Instagram user ID)
   profile_pic_url_hd?: string;
   profile_pic_url?: string;
   is_private?: boolean;
@@ -110,10 +122,15 @@ function profileFromUser(handle: string, user: IgUser): InstagramProfileData {
     handle,
     followerCount: user.edge_followed_by?.count ?? user.follower_count ?? null,
     followingCount: user.edge_follow?.count ?? user.following_count ?? null,
-    postCount:
-      user.edge_owner_to_timeline_media?.count ?? user.media_count ?? null,
+    postCount: user.edge_owner_to_timeline_media?.count ?? user.media_count ?? null,
     displayName: user.full_name ?? null,
     bio: user.biography ?? null,
+    externalUrl: user.external_url ?? null,
+    highlightCount: user.highlight_reel_count ?? null,
+    isVerified: user.is_verified ?? false,
+    category: user.category ?? null,
+    pronouns: user.pronouns ?? [],
+    instagramUserId: user.pk != null ? String(user.pk) : null,
     avatarUrl: user.profile_pic_url_hd ?? user.profile_pic_url ?? null,
     isPrivate: user.is_private ?? false,
     fetchedAt: new Date(),
@@ -178,6 +195,12 @@ function profileFromApify(handle: string, item: ApifyProfile): InstagramProfileD
     ]),
     displayName: firstString(item, ['fullName', 'full_name', 'name']),
     bio: firstString(item, ['biography', 'bio']),
+    externalUrl: firstString(item, ['externalUrl', 'external_url', 'websiteUrl', 'website']),
+    highlightCount: firstNumber(item, ['highlightReelCount', 'highlight_reel_count']),
+    isVerified: Boolean(item['isVerified'] ?? item['is_verified'] ?? false),
+    category: firstString(item, ['category', 'businessCategory', 'business_category']),
+    pronouns: Array.isArray(item['pronouns']) ? (item['pronouns'] as string[]) : [],
+    instagramUserId: firstString(item, ['pk', 'id', 'userId', 'user_id']),
     avatarUrl: firstString(item, [
       'profilePicUrlHD',
       'profilePicUrl',
@@ -198,6 +221,12 @@ function emptyProfile(handle: string): InstagramProfileData {
     postCount: null,
     displayName: null,
     bio: null,
+    externalUrl: null,
+    highlightCount: null,
+    isVerified: false,
+    category: null,
+    pronouns: [],
+    instagramUserId: null,
     avatarUrl: null,
     isPrivate: false,
     fetchedAt: new Date(),
@@ -562,4 +591,34 @@ export async function debugInstagramProfileFetch(
     attempts,
     env: debugEnv(),
   };
+}
+
+/**
+ * Returns the top-50 most recently followed account handles for a public account.
+ * Instagram shows the following list in reverse-chronological order.
+ * Returns an empty array if the list is hidden or the request fails.
+ */
+export async function fetchFollowingList(handle: string): Promise<string[]> {
+  try {
+    const profileUrl = `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`;
+    const profileRes = await igFetch(profileUrl, { timeoutMs: 15_000 });
+    if (!profileRes.ok) return [];
+
+    const profileJson = await profileRes.json() as { data?: { user?: { id?: string; pk?: string | number } } };
+    const user = profileJson?.data?.user;
+    const userId = user?.id ?? (user?.pk != null ? String(user.pk) : undefined);
+    if (!userId) return [];
+
+    await sleep(1000 + Math.random() * 1000);
+
+    const followingUrl = `https://i.instagram.com/api/v1/friendships/${userId}/following/?count=50`;
+    const followingRes = await igFetch(followingUrl, { timeoutMs: 15_000 });
+    if (!followingRes.ok) return [];
+
+    const followingJson = await followingRes.json() as { users?: Array<{ username?: string }> };
+    const users = followingJson?.users ?? [];
+    return users.map((u) => u.username ?? '').filter(Boolean).slice(0, 50);
+  } catch {
+    return [];
+  }
 }
