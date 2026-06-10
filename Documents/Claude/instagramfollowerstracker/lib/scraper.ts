@@ -199,8 +199,12 @@ function profileFromApify(handle: string, item: ApifyProfile): InstagramProfileD
     highlightCount: firstNumber(item, ['highlightReelCount', 'highlight_reel_count']),
     isVerified: Boolean(item['isVerified'] ?? item['is_verified'] ?? false),
     category: firstString(item, ['category', 'businessCategory', 'business_category']),
-    pronouns: Array.isArray(item['pronouns']) ? (item['pronouns'] as string[]) : [],
-    instagramUserId: firstString(item, ['pk', 'id', 'userId', 'user_id']),
+    pronouns: Array.isArray(item['pronouns'])
+      ? (item['pronouns'] as unknown[]).flatMap((p) =>
+          typeof p === 'string' && p.length > 0 ? [p] : []
+        )
+      : [],
+    instagramUserId: firstString(item, ['pk', 'userId', 'user_id']),
     avatarUrl: firstString(item, [
       'profilePicUrlHD',
       'profilePicUrl',
@@ -601,24 +605,24 @@ export async function debugInstagramProfileFetch(
 export async function fetchFollowingList(handle: string): Promise<string[]> {
   try {
     const profileUrl = `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`;
-    const profileRes = await igFetch(profileUrl, { timeoutMs: 15_000 });
+    const profileRes = await igFetch(profileUrl, { timeoutMs: 15_000, includeSession: false, keepHeaders: true });
     if (!profileRes.ok) return [];
 
-    const profileJson = await profileRes.json() as { data?: { user?: { id?: string; pk?: string | number } } };
-    const user = profileJson?.data?.user;
-    const userId = user?.id ?? (user?.pk != null ? String(user.pk) : undefined);
+    const profileJson = await profileRes.json() as { data?: { user?: { id?: string } } };
+    const userId = profileJson?.data?.user?.id;
     if (!userId) return [];
 
-    await sleep(1000 + Math.random() * 1000);
+    await sleep(2000 + Math.random() * 3000);
 
     const followingUrl = `https://i.instagram.com/api/v1/friendships/${userId}/following/?count=50`;
-    const followingRes = await igFetch(followingUrl, { timeoutMs: 15_000 });
+    const followingRes = await igFetch(followingUrl, { timeoutMs: 15_000, includeSession: false, keepHeaders: true });
     if (!followingRes.ok) return [];
 
     const followingJson = await followingRes.json() as { users?: Array<{ username?: string }> };
     const users = followingJson?.users ?? [];
     return users.map((u) => u.username ?? '').filter(Boolean).slice(0, 50);
-  } catch {
+  } catch (err) {
+    console.error(`[scraper:following] failed for @${handle}:`, err);
     return [];
   }
 }
