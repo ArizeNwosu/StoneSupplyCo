@@ -3,6 +3,8 @@ import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
 import type Stripe from 'stripe';
 import { planFromStripePriceId, type StripeBillingPlan } from '@/lib/stripe-prices';
+import { stalkerFrequencyFromPriceId } from '@/lib/stalker-prices';
+import type { StalkerFrequency } from '@prisma/client';
 
 export const runtime = 'nodejs';
 
@@ -102,28 +104,82 @@ export async function POST(req: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
-        const plan = session.metadata?.plan as StripeBillingPlan | undefined;
+        const type = session.metadata?.type;
         const subId = typeof session.subscription === 'string'
           ? session.subscription
           : session.subscription?.id;
         const customerId = typeof session.customer === 'string'
           ? session.customer
           : session.customer?.id;
-        if (!userId || !plan || !subId) {
-          console.error('[webhook] checkout.session.completed missing metadata', {
-            sessionId: session.id,
-            userId,
-            plan,
-            subId,
-          });
+
+        if (!userId || !subId) {
+          console.error('[webhook] checkout.session.completed missing metadata', { sessionId: session.id });
           break;
         }
-        await setPlan({ userId, customerId, plan, subId });
+
+        if (type === 'STALKER') {
+          const trackedAccountId = session.metadata?.trackedAccountId;
+          const frequency = session.metadata?.frequency as StalkerFrequency | undefined;
+          if (!trackedAccountId || !frequency) {
+            console.error('[webhook] stalker checkout missing trackedAccountId or frequency');
+            break;
+          }
+
+          let stripePriceId: string | null = null;
+          try {
+            const stripeSub = await stripe.subscriptions.retrieve(subId);
+            stripePriceId = stripeSub.items.data[0]?.price.id ?? null;
+          } catch { /* ignore */ }
+
+          // stalkerFrequencyFromPriceId is available if needed for future lookups
+          void stalkerFrequencyFromPriceId;
+
+          await prisma.stalkerSubscription.upsert({
+            where: { userId_trackedAccountId: { userId, trackedAccountId } },
+            create: {
+              userId,
+              trackedAccountId,
+              frequency,
+              source: 'STRIPE',
+              stripeSubId: subId,
+              stripePriceId,
+              active: true,
+            },
+            update: {
+              frequency,
+              stripeSubId: subId,
+              stripePriceId,
+              active: true,
+            },
+          });
+          if (customerId) {
+            await prisma.user.update({ where: { id: userId }, data: { stripeCustomerId: customerId } });
+          }
+        } else {
+          const plan = session.metadata?.plan as StripeBillingPlan | undefined;
+          if (!plan) {
+            console.error('[webhook] checkout.session.completed missing plan for non-stalker', { sessionId: session.id });
+            break;
+          }
+          await setPlan({ userId, customerId, plan, subId });
+        }
         break;
       }
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription;
         const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+
+        const stalkerSub = await prisma.stalkerSubscription.findFirst({
+          where: { stripeSubId: sub.id },
+        });
+        if (stalkerSub) {
+          await prisma.stalkerSubscription.update({
+            where: { id: stalkerSub.id },
+            data: { active: false },
+          });
+          break;
+        }
+
         await clearPlan({ customerId, subId: sub.id });
         break;
       }
