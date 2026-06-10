@@ -258,7 +258,7 @@ export default function DashboardPage() {
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)}>
         <div className="flex items-center justify-between mb-4">
           <h1 className="hidden text-sm font-black text-slate-950 md:block">
-            Tracked Accounts
+            Tracked Accounts ✓
           </h1>
           <Button size="sm" onClick={() => setShowAddModal(true)}>
             + Add
