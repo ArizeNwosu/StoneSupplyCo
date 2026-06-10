@@ -46,7 +46,16 @@ export function StalkerModePanel({
     }
   };
 
-  if (sub === undefined) return null; // loading — no flash
+  if (sub === undefined) {
+    return (
+      <div className="rounded-xl border border-cyan-950/10 bg-white p-5 shadow-sm animate-pulse">
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 rounded-full bg-slate-100" />
+          <div className="h-4 w-28 rounded-full bg-slate-100" />
+        </div>
+      </div>
+    );
+  }
 
   if (!sub) {
     return <StalkerUpgradeCard trackedAccountId={trackedAccountId} handle={handle} />;

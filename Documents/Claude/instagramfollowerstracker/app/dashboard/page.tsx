@@ -321,6 +321,13 @@ export default function DashboardPage() {
           <EmptyState onAdd={() => setShowAddModal(true)} />
         ) : (
           <div className="mx-auto max-w-6xl space-y-6">
+            {selected && (
+              <StalkerModePanel
+                trackedAccountId={selected.id}
+                handle={selected.handle}
+              />
+            )}
+
             {selected && snapshotData ? (
               <>
                 <PatternAlerts />
@@ -345,10 +352,6 @@ export default function DashboardPage() {
                       onBackfill={handleBackfill}
                     />
                   }
-                />
-                <StalkerModePanel
-                  trackedAccountId={selected.id}
-                  handle={selected.handle}
                 />
                 {snapshotData.chartReady && snapshotData.stats ? (
                   <>
