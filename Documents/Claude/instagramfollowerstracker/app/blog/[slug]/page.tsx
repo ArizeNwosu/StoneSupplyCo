@@ -7,6 +7,61 @@ import { Footer } from '@/components/layout/Footer';
 import { getPost, getAllSlugs, ALL_POSTS } from '@/lib/blog';
 import type { Section, FAQ } from '@/lib/blog/types';
 
+interface CtaConfig {
+  heading: string;
+  body: string;
+  button: string;
+  href: string;
+}
+
+const UNFOLLOW_SLUGS = new Set([
+  'instagram-unfollow-tracker',
+  'free-instagram-unfollow-tracker',
+  'instagram-unfollow-tracker-online-free',
+  'instagram-unfollowers',
+  'instagram-unfollower-app-free',
+  'instagram-follow-unfollow-tracker',
+  'how-to-see-who-unfollowed-you-instagram',
+  'who-stopped-following-me-instagram',
+  'instagram-mass-unfollow-detector',
+  'instagram-followers-unfollowers-app',
+]);
+
+const FAKE_FOLLOWER_SLUGS = new Set([
+  'instagram-fake-follower-checker',
+  'fake-followers-instagram-check',
+  'how-to-spot-fake-instagram-followers',
+  'instagram-bot-follower-detector',
+  'real-vs-fake-instagram-followers',
+]);
+
+const DEFAULT_CTA: CtaConfig = {
+  heading: 'Track public Instagram accounts for free',
+  body: 'Daily follower snapshots, growth charts, and authenticity scores. No Instagram login required.',
+  button: 'Start Tracking Free →',
+  href: '/auth/signup',
+};
+
+const UNFOLLOW_CTA: CtaConfig = {
+  heading: 'See exactly who unfollowed you on Instagram',
+  body: 'Upload your Instagram data export and instantly reveal who stopped following you. No app, no login, completely free.',
+  button: 'Check Who Unfollowed Me →',
+  href: '/auth/signup',
+};
+
+const FAKE_FOLLOWER_CTA: CtaConfig = {
+  heading: 'Check any Instagram account for fake followers',
+  body: 'Our authenticity score analyzes follower patterns and flags suspicious growth. Paste any public handle — free, instant, no login.',
+  button: 'Run a Fake Follower Check →',
+  href: '/auth/signup',
+};
+
+function getCta(slug: string): CtaConfig {
+  if (UNFOLLOW_SLUGS.has(slug)) return UNFOLLOW_CTA;
+  if (FAKE_FOLLOWER_SLUGS.has(slug)) return FAKE_FOLLOWER_CTA;
+  return DEFAULT_CTA;
+}
+
 export function generateStaticParams() {
   return getAllSlugs().map((slug) => ({ slug }));
 }
@@ -47,7 +102,7 @@ interface TocItem {
   text: string;
 }
 
-function renderSection(section: Section, idx: number, headingId?: string) {
+function renderSection(section: Section, idx: number, ctaConfig: CtaConfig, headingId?: string) {
   switch (section.type) {
     case 'p':
       return (
@@ -142,17 +197,16 @@ function renderSection(section: Section, idx: number, headingId?: string) {
       return (
         <div key={idx} className="rounded-xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-white p-6 text-center">
           <p className="text-sm font-black text-slate-950">
-            Track public Instagram accounts for free
+            {ctaConfig.heading}
           </p>
           <p className="mt-1 text-xs font-medium text-slate-500">
-            Daily follower snapshots, growth charts, and authenticity scores.
-            No Instagram login required.
+            {ctaConfig.body}
           </p>
           <Link
-            href="/auth/signup"
+            href={ctaConfig.href}
             className="mt-3 inline-flex items-center gap-2 rounded-full bg-cyan-950 px-5 py-2 text-sm font-black text-white hover:bg-cyan-800 transition-colors"
           >
-            Start Tracking Free →
+            {ctaConfig.button}
           </Link>
         </div>
       );
@@ -428,6 +482,7 @@ export default async function BlogPostPage({
   const post = getPost(slug);
   if (!post) notFound();
   const tableOfContents = buildTableOfContents(post.sections);
+  const ctaConfig = getCta(slug);
 
   const articleJsonLd = {
     '@context': 'https://schema.org',
@@ -521,7 +576,7 @@ export default async function BlogPostPage({
           <TableOfContents items={tableOfContents.items} />
           <div className="space-y-5">
             {post.sections.map((section, idx) =>
-              renderSection(section, idx, tableOfContents.idsByIndex.get(idx))
+              renderSection(section, idx, ctaConfig, tableOfContents.idsByIndex.get(idx))
             )}
           </div>
         </article>
@@ -538,16 +593,16 @@ export default async function BlogPostPage({
         {/* Bottom CTA */}
         <div className="mt-10 rounded-xl border border-cyan-200 bg-white p-8 text-center shadow-sm">
           <h2 className="text-xl font-black text-slate-950">
-            Ready to Track Public Instagram Followers?
+            {ctaConfig.heading}
           </h2>
           <p className="mt-2 text-sm font-medium text-slate-500">
-            Free for one public account. No Instagram login. No credit card.
+            {ctaConfig.body}
           </p>
           <Link
-            href="/auth/signup"
+            href={ctaConfig.href}
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-cyan-950 px-6 py-2.5 text-sm font-black text-white hover:bg-cyan-800 transition-colors"
           >
-            Start Tracking Free →
+            {ctaConfig.button}
           </Link>
         </div>
       </div>
