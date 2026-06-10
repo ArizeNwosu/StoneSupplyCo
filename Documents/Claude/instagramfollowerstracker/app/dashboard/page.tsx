@@ -346,6 +346,10 @@ export default function DashboardPage() {
                     />
                   }
                 />
+                <StalkerModePanel
+                  trackedAccountId={selected.id}
+                  handle={selected.handle}
+                />
                 {snapshotData.chartReady && snapshotData.stats ? (
                   <>
                     <MetricsRow
@@ -420,13 +424,6 @@ export default function DashboardPage() {
             ) : selected ? (
               <DashboardLoadingPanel handle={selected.handle} />
             ) : null}
-
-            {selected && (
-              <StalkerModePanel
-                trackedAccountId={selected.id}
-                handle={selected.handle}
-              />
-            )}
 
             {/* Unfollow Detector is always visible — independent of which account is selected */}
             <UnfollowDetector userPlan={userPlan} />
