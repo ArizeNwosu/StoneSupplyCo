@@ -19,6 +19,8 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { UpgradeModal } from '@/components/tracker/UpgradeModal';
 import { UnfollowDetector } from '@/components/tracker/UnfollowDetector';
+import { StalkerModePanel } from '@/components/tracker/StalkerModePanel';
+import { NotificationBell } from '@/components/layout/NotificationBell';
 
 interface Account {
   id: string;
@@ -310,6 +312,7 @@ export default function DashboardPage() {
           >
             + Add
           </button>
+          <NotificationBell />
         </div>
 
         {loading || initialAddInProgress ? (
@@ -417,6 +420,13 @@ export default function DashboardPage() {
             ) : selected ? (
               <DashboardLoadingPanel handle={selected.handle} />
             ) : null}
+
+            {selected && (
+              <StalkerModePanel
+                trackedAccountId={selected.id}
+                handle={selected.handle}
+              />
+            )}
 
             {/* Unfollow Detector is always visible — independent of which account is selected */}
             <UnfollowDetector userPlan={userPlan} />
