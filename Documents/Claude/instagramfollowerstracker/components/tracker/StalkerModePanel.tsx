@@ -48,10 +48,11 @@ export function StalkerModePanel({
 
   if (sub === undefined) {
     return (
-      <div className="rounded-xl border border-cyan-950/10 bg-white p-5 shadow-sm animate-pulse">
+      <div className="rounded-xl border border-cyan-950/10 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded-full bg-slate-100" />
-          <div className="h-4 w-28 rounded-full bg-slate-100" />
+          <span className="text-lg">👁</span>
+          <p className="text-sm font-black text-slate-950">Stalker Mode</p>
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-slate-500" />
         </div>
       </div>
     );

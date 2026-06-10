@@ -290,11 +290,12 @@ export default function DashboardPage() {
       </Sidebar>
 
       <main className="flex-1 overflow-y-auto bg-sky-50 p-4 sm:p-6">
-        {/* Mobile top bar — opens sidebar and shows selected account */}
-        <div className="mb-4 flex items-center gap-3 md:hidden">
+        {/* Top bar — mobile: shows sidebar toggle + account name; desktop: shows notification bell */}
+        <div className="mb-4 flex items-center gap-3">
+          {/* Mobile-only controls */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="flex shrink-0 items-center gap-2 rounded-full border border-cyan-950/10 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm active:bg-slate-50"
+            className="flex shrink-0 items-center gap-2 rounded-full border border-cyan-950/10 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm active:bg-slate-50 md:hidden"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -302,17 +303,20 @@ export default function DashboardPage() {
             Accounts
           </button>
           {selected && (
-            <span className="truncate text-sm font-bold text-slate-500">
+            <span className="truncate text-sm font-bold text-slate-500 md:hidden">
               @{selected.handle}
             </span>
           )}
           <button
             onClick={() => setShowAddModal(true)}
-            className="ml-auto shrink-0 rounded-full bg-cyan-950 px-3 py-2 text-xs font-black text-white"
+            className="shrink-0 rounded-full bg-cyan-950 px-3 py-2 text-xs font-black text-white md:hidden"
           >
             + Add
           </button>
-          <NotificationBell />
+          {/* Notification bell — visible on all screen sizes */}
+          <div className="ml-auto">
+            <NotificationBell />
+          </div>
         </div>
 
         {loading || initialAddInProgress ? (
