@@ -25,17 +25,16 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const fetchUnread = async () => {
-    const res = await fetch('/api/stalker/events?limit=10');
-    if (!res.ok) return;
-    const data = await res.json() as { unreadCount: number; events: StalkerEvent[] };
-    setUnread(data.unreadCount ?? 0);
-    setEvents(data.events ?? []);
-  };
-
   useEffect(() => {
-    void fetchUnread();
-    const interval = setInterval(fetchUnread, 60_000);
+    const doFetch = async () => {
+      const res = await fetch('/api/stalker/events?limit=10');
+      if (!res.ok) return;
+      const data = await res.json() as { unreadCount: number; events: StalkerEvent[] };
+      setUnread(data.unreadCount ?? 0);
+      setEvents(data.events ?? []);
+    };
+    void doFetch();
+    const interval = setInterval(doFetch, 60_000);
     return () => clearInterval(interval);
   }, []);
 
@@ -49,11 +48,14 @@ export function NotificationBell() {
   }, []);
 
   const handleOpen = async () => {
-    setOpen((v) => !v);
-    if (!open && unread > 0) {
-      await fetch('/api/stalker/events/read-all', { method: 'POST' });
-      setUnread(0);
-      setEvents((prev) => prev.map((e) => ({ ...e, read: true })));
+    const willOpen = !open;
+    setOpen(willOpen);
+    if (willOpen && unread > 0) {
+      const res = await fetch('/api/stalker/events/read-all', { method: 'POST' });
+      if (res.ok) {
+        setUnread(0);
+        setEvents((prev) => prev.map((e) => ({ ...e, read: true })));
+      }
     }
   };
 
@@ -90,7 +92,7 @@ export function NotificationBell() {
                     <p className="text-xs font-bold text-slate-800">@{e.handle}</p>
                     <p className="text-xs text-slate-500">
                       {e.signal.replace(/_/g, ' ').toLowerCase()}
-                      {e.newValue && ` → ${e.signal === 'NEW_FOLLOW' ? '@' : ''}${e.newValue.slice(0, 30)}`}
+                      {e.newValue && ` → ${e.signal === 'NEW_FOLLOW' ? '@' : ''}${e.newValue.length > 30 ? e.newValue.slice(0, 30) + '…' : e.newValue}`}
                     </p>
                     <p className="text-[11px] text-slate-400">
                       {new Date(e.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
