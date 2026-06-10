@@ -19,6 +19,10 @@ export async function DELETE(
   });
   if (!sub) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
+  if (sub.source === 'PRO_INCLUDED') {
+    return NextResponse.json({ error: 'Cannot cancel a plan-included subscription' }, { status: 403 });
+  }
+
   if (sub.stripeSubId) {
     try {
       await stripe.subscriptions.cancel(sub.stripeSubId);

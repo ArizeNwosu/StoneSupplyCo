@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const trackedAccountId = searchParams.get('trackedAccountId');
   const unreadOnly = searchParams.get('unread') === '1';
-  const limit = Math.min(parseInt(searchParams.get('limit') ?? '20', 10), 50);
+  const limit = Math.min(Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10) || 20), 50);
 
   const events = await prisma.stalkerEvent.findMany({
     where: {

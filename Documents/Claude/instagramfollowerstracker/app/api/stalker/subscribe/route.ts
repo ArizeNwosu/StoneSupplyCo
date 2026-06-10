@@ -24,15 +24,17 @@ export async function POST(req: NextRequest) {
 
   const { trackedAccountId, frequency } = parsed.data;
 
-  const account = await prisma.trackedAccount.findFirst({
-    where: { id: trackedAccountId, userId: session.user.id },
-    select: { id: true, handle: true },
-  });
+  const [account, existing] = await Promise.all([
+    prisma.trackedAccount.findFirst({
+      where: { id: trackedAccountId, userId: session.user.id },
+      select: { id: true, handle: true },
+    }),
+    prisma.stalkerSubscription.findUnique({
+      where: { userId_trackedAccountId: { userId: session.user.id, trackedAccountId } },
+    }),
+  ]);
   if (!account) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
 
-  const existing = await prisma.stalkerSubscription.findUnique({
-    where: { userId_trackedAccountId: { userId: session.user.id, trackedAccountId } },
-  });
   if (existing?.active) {
     return NextResponse.json({ error: 'Stalker Mode already active for this account' }, { status: 409 });
   }

@@ -3,7 +3,6 @@ import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
 import type Stripe from 'stripe';
 import { planFromStripePriceId, type StripeBillingPlan } from '@/lib/stripe-prices';
-import { stalkerFrequencyFromPriceId } from '@/lib/stalker-prices';
 import type { StalkerFrequency } from '@prisma/client';
 
 export const runtime = 'nodejs';
@@ -183,6 +182,24 @@ export async function POST(req: NextRequest) {
       case 'customer.subscription.updated': {
         const sub = event.data.object as Stripe.Subscription;
         const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+
+        const stalkerSubForUpdate = await prisma.stalkerSubscription.findFirst({
+          where: { stripeSubId: sub.id },
+        });
+        if (stalkerSubForUpdate) {
+          if (
+            sub.status === 'canceled' ||
+            sub.status === 'unpaid' ||
+            sub.status === 'incomplete_expired'
+          ) {
+            await prisma.stalkerSubscription.update({
+              where: { id: stalkerSubForUpdate.id },
+              data: { active: false },
+            });
+          }
+          break;
+        }
+
         if (sub.status === 'active' || sub.status === 'trialing') {
           const userId = await findUserIdForSubscription(sub);
           const plan = planFromSubscription(sub);
