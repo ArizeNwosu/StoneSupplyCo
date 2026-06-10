@@ -126,6 +126,21 @@ export async function POST(req: NextRequest) {
     data: { userId: user.id, handle },
   });
 
+  // Auto-enroll Pro/Agency users in DAILY Stalker Mode at no extra charge
+  if (user.plan === 'PRO' || user.plan === 'AGENCY') {
+    await prisma.stalkerSubscription.upsert({
+      where: { userId_trackedAccountId: { userId: user.id, trackedAccountId: account.id } },
+      create: {
+        userId: user.id,
+        trackedAccountId: account.id,
+        frequency: 'DAILY',
+        source: 'PRO_INCLUDED',
+        active: true,
+      },
+      update: { active: true },
+    });
+  }
+
   let snapshotCount = 0;
   let firstFollowerCount: number | null = null;
 
