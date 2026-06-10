@@ -27,7 +27,7 @@ export function StalkerModePanel({
 
   useEffect(() => {
     fetch('/api/stalker')
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((data: StalkerSub[]) => {
         const match = data.find((s) => s.trackedAccountId === trackedAccountId);
         setSub(match ?? null);
@@ -38,9 +38,12 @@ export function StalkerModePanel({
   const cancel = async () => {
     if (!sub) return;
     setCancelling(true);
-    await fetch(`/api/stalker/${sub.id}`, { method: 'DELETE' });
-    setSub(null);
-    setCancelling(false);
+    try {
+      const res = await fetch(`/api/stalker/${sub.id}`, { method: 'DELETE' });
+      if (res.ok) setSub(null);
+    } finally {
+      setCancelling(false);
+    }
   };
 
   if (sub === undefined) return null; // loading — no flash

@@ -19,9 +19,11 @@ export function StalkerUpgradeCard({
 }) {
   const [selected, setSelected] = useState<StalkerFrequency>('DAILY');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const subscribe = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch('/api/stalker/subscribe', {
         method: 'POST',
@@ -29,7 +31,13 @@ export function StalkerUpgradeCard({
         body: JSON.stringify({ trackedAccountId, frequency: selected }),
       });
       const data = await res.json() as { url?: string; error?: string };
+      if (!res.ok || data.error) {
+        setError(data.error ?? 'Something went wrong. Please try again.');
+        return;
+      }
       if (data.url) window.location.href = data.url;
+    } catch {
+      setError('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -74,6 +82,10 @@ export function StalkerUpgradeCard({
         <p className="mb-3 rounded-lg bg-teal-50 px-3 py-2 text-xs font-medium text-teal-700">
           💡 Daily is enough for 99% of cases — most bio and follow changes stay up for hours or days.
         </p>
+      )}
+
+      {error && (
+        <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">{error}</p>
       )}
 
       <button
