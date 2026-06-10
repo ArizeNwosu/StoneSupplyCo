@@ -17,6 +17,9 @@ interface StalkerEventFeedProps {
   className?: string;
 }
 
+const EVENT_PAGE_LIMIT = 20;
+const DIFF_PREVIEW_MAX_LEN = 40;
+
 const SIGNAL_META: Record<string, { icon: string; label: string }> = {
   BIO_CHANGED:          { icon: '📝', label: 'Bio changed' },
   LINK_CHANGED:         { icon: '🔗', label: 'Link changed' },
@@ -49,33 +52,28 @@ function truncate(s: string | null | undefined, max: number): string {
 
 export function StalkerEventFeed({ trackedAccountId, className }: StalkerEventFeedProps) {
   const [events, setEvents] = useState<StalkerEvent[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  async function fetchEvents() {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ limit: '20' });
-      if (trackedAccountId) params.set('trackedAccountId', trackedAccountId);
-      const res = await fetch(`/api/stalker/events?${params}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      setEvents(data.events);
-      setUnreadCount(data.unreadCount);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const unreadCount = events.filter(e => !e.read).length;
 
   useEffect(() => {
-    fetchEvents();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    let cancelled = false;
+    setLoading(true);
+    const params = new URLSearchParams({ limit: String(EVENT_PAGE_LIMIT) });
+    if (trackedAccountId) params.set('trackedAccountId', trackedAccountId);
+    fetch(`/api/stalker/events?${params}`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (!cancelled && data) setEvents(data.events);
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [trackedAccountId]);
 
   async function markAllRead() {
-    await fetch('/api/stalker/events/read-all', { method: 'POST' });
+    const res = await fetch('/api/stalker/events/read-all', { method: 'POST' });
+    if (!res.ok) return;
     setEvents(prev => prev.map(e => ({ ...e, read: true })));
-    setUnreadCount(0);
   }
 
   return (
@@ -134,10 +132,10 @@ export function StalkerEventFeed({ trackedAccountId, className }: StalkerEventFe
                   {hasValues && (
                     <div className="text-xs text-gray-500 mt-0.5">
                       {event.oldValue !== null && event.oldValue !== '' && (
-                        <p>was: {truncate(event.oldValue, 40)}</p>
+                        <p>was: {truncate(event.oldValue, DIFF_PREVIEW_MAX_LEN)}</p>
                       )}
                       {event.newValue !== null && event.newValue !== '' && (
-                        <p>now: {truncate(event.newValue, 40)}</p>
+                        <p>now: {truncate(event.newValue, DIFF_PREVIEW_MAX_LEN)}</p>
                       )}
                     </div>
                   )}
