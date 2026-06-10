@@ -24,15 +24,22 @@ export function StalkerModePanel({
 }) {
   const [sub, setSub] = useState<StalkerSub | null | undefined>(undefined); // undefined = loading
   const [cancelling, setCancelling] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/stalker')
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((r) => {
+        if (r.ok) return r.json();
+        return r.text().then(text => { throw new Error(`${r.status}: ${text.slice(0, 100)}`); });
+      })
       .then((data: StalkerSub[]) => {
         const match = data.find((s) => s.trackedAccountId === trackedAccountId);
         setSub(match ?? null);
       })
-      .catch(() => setSub(null));
+      .catch((err: unknown) => {
+        setApiError(err instanceof Error ? err.message : String(err));
+        setSub(null);
+      });
   }, [trackedAccountId]);
 
   const cancel = async () => {
@@ -59,7 +66,17 @@ export function StalkerModePanel({
   }
 
   if (!sub) {
-    return <StalkerUpgradeCard trackedAccountId={trackedAccountId} handle={handle} />;
+    return (
+      <>
+        {apiError && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-mono text-red-700">
+            <p className="font-bold mb-1">Stalker Mode API error (share this with support):</p>
+            <p>{apiError}</p>
+          </div>
+        )}
+        <StalkerUpgradeCard trackedAccountId={trackedAccountId} handle={handle} />
+      </>
+    );
   }
 
   return (
