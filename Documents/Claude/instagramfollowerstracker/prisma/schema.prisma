@@ -315,8 +315,8 @@ model StalkerSubscription {
 model StalkerProfile {
   id               String         @id @default(cuid())
   trackedAccountId String         @unique
-  instagramUserId  String?
-  username         String?
+  instagramUserId  String?        // numeric pk — locks identity across username changes
+  username         String?        // last known handle — for USERNAME_CHANGED detection
   displayName      String?
   bio              String?
   externalUrl      String?
@@ -325,12 +325,14 @@ model StalkerProfile {
   highlightCount   Int?
   isVerified       Boolean        @default(false)
   category         String?
-  pronouns         String[]
-  recentFollowing  String[]
+  pronouns         String[]       // e.g. ["she/her"] — max ~3 entries
+  recentFollowing  String[]       // top-50 most recently followed handles
   isPrivate        Boolean        @default(false)
   scrapedAt        DateTime       @default(now())
 
   trackedAccount   TrackedAccount @relation(fields: [trackedAccountId], references: [id], onDelete: Cascade)
+
+  @@index([instagramUserId])
 }
 
 // One row per detected change, per subscriber. Powers the in-app feed.
