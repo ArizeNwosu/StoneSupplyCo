@@ -131,9 +131,6 @@ export async function POST(req: NextRequest) {
             stripePriceId = stripeSub.items.data[0]?.price.id ?? null;
           } catch { /* ignore */ }
 
-          // stalkerFrequencyFromPriceId is available if needed for future lookups
-          void stalkerFrequencyFromPriceId;
-
           await prisma.stalkerSubscription.upsert({
             where: { userId_trackedAccountId: { userId, trackedAccountId } },
             create: {
