@@ -83,26 +83,28 @@ export function diffStalkerProfiles(
     changes.push({ signal: 'CATEGORY_CHANGED', oldValue: prev.category, newValue: next.category });
   }
 
-  const prevPronouns = prev.pronouns.join(',');
-  const nextPronouns = next.pronouns.join(',');
+  const prevPronouns = [...prev.pronouns].sort().join(',');
+  const nextPronouns = [...next.pronouns].sort().join(',');
   if (prevPronouns !== nextPronouns) {
     changes.push({ signal: 'PRONOUNS_CHANGED', oldValue: prevPronouns || null, newValue: nextPronouns || null });
   }
 
-  const prevPostCount = prev.postCount ?? 0;
-  const nextPostCount = next.postCount ?? 0;
-  if (nextPostCount > prevPostCount) {
-    changes.push({
-      signal: 'NEW_POST',
-      oldValue: String(prevPostCount),
-      newValue: String(nextPostCount),
-    });
-  } else if (prevPostCount - nextPostCount >= BULK_DELETE_THRESHOLD) {
-    changes.push({
-      signal: 'POST_DELETED',
-      oldValue: String(prevPostCount),
-      newValue: String(nextPostCount),
-    });
+  // Skip post-count diffing if either side is null — a null scrape result is
+  // indistinguishable from zero posts and would fire false POST_DELETED alerts.
+  if (prev.postCount !== null && next.postCount !== null) {
+    if (next.postCount > prev.postCount) {
+      changes.push({
+        signal: 'NEW_POST',
+        oldValue: String(prev.postCount),
+        newValue: String(next.postCount),
+      });
+    } else if (prev.postCount - next.postCount >= BULK_DELETE_THRESHOLD) {
+      changes.push({
+        signal: 'POST_DELETED',
+        oldValue: String(prev.postCount),
+        newValue: String(next.postCount),
+      });
+    }
   }
 
   const prevSet = new Set(prev.recentFollowing);
@@ -135,7 +137,9 @@ export function formatStalkerChange(change: StalkerChange, accountHandle: string
     case 'WENT_PRIVATE':
       return `@${accountHandle} switched to a private account`;
     case 'DISPLAY_NAME_CHANGED':
-      return `@${accountHandle} changed their display name to "${change.newValue}"`;
+      return change.newValue
+        ? `@${accountHandle} changed their display name to "${change.newValue}"`
+        : `@${accountHandle} removed their display name`;
     case 'USERNAME_CHANGED':
       return `@${change.oldValue} changed their username to @${change.newValue}. Blocked? Who cares, we do the stalking for you.`;
     case 'VERIFIED_CHANGED':
@@ -150,5 +154,9 @@ export function formatStalkerChange(change: StalkerChange, accountHandle: string
       return change.newValue
         ? `@${accountHandle} updated their pronouns to ${change.newValue}`
         : `@${accountHandle} removed their pronouns`;
+    default: {
+      const _exhaustive: never = change.signal;
+      return `@${accountHandle} activity detected`;
+    }
   }
 }
