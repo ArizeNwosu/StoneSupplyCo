@@ -4,9 +4,9 @@
 import type { StalkerFrequency } from '@prisma/client';
 
 export const STALKER_PRICE_IDS: Record<StalkerFrequency, string> = {
-  DAILY:    process.env.STRIPE_PRICE_STALKER_DAILY    ?? 'price_stalker_daily',
-  SIX_HOUR: process.env.STRIPE_PRICE_STALKER_SIX_HOUR ?? 'price_stalker_six_hour',
-  HOURLY:   process.env.STRIPE_PRICE_STALKER_HOURLY   ?? 'price_stalker_hourly',
+  DAILY:    process.env.STRIPE_PRICE_STALKER_DAILY    || 'price_stalker_daily',
+  SIX_HOUR: process.env.STRIPE_PRICE_STALKER_SIX_HOUR || 'price_stalker_six_hour',
+  HOURLY:   process.env.STRIPE_PRICE_STALKER_HOURLY   || 'price_stalker_hourly',
 };
 
 export const STALKER_PRICES_USD: Record<StalkerFrequency, number> = {

@@ -54,6 +54,7 @@ export async function runStalkerScrape(options: StalkerRunOptions = {}): Promise
     LEFT JOIN "StalkerProfile" sp ON sp."trackedAccountId" = ta.id
     WHERE ss.active = true
     GROUP BY ta.id, ta.handle, sp."scrapedAt"
+    ORDER BY sp."scrapedAt" ASC NULLS FIRST
     LIMIT ${maxAccounts}
   `;
 
@@ -131,29 +132,32 @@ export async function runStalkerScrape(options: StalkerRunOptions = {}): Promise
 
       const changes = diffStalkerProfiles(prevState, nextState);
 
-      await prisma.stalkerProfile.update({
-        where: { trackedAccountId: row.trackedAccountId },
-        data: {
-          ...(profile.instagramUserId && !existing.instagramUserId
-            ? { instagramUserId: profile.instagramUserId }
-            : {}),
-          username: nextState.username,
-          displayName: nextState.displayName,
-          bio: nextState.bio,
-          externalUrl: nextState.externalUrl,
-          avatarUrl: nextState.avatarUrl,
-          postCount: nextState.postCount,
-          highlightCount: nextState.highlightCount,
-          isVerified: nextState.isVerified,
-          category: nextState.category,
-          pronouns: nextState.pronouns,
-          recentFollowing: nextState.recentFollowing,
-          isPrivate: nextState.isPrivate,
-          scrapedAt: new Date(),
-        },
-      });
+      const profileUpdateData = {
+        ...(profile.instagramUserId && !existing.instagramUserId
+          ? { instagramUserId: profile.instagramUserId }
+          : {}),
+        username: nextState.username,
+        displayName: nextState.displayName,
+        bio: nextState.bio,
+        externalUrl: nextState.externalUrl,
+        avatarUrl: nextState.avatarUrl,
+        postCount: nextState.postCount,
+        highlightCount: nextState.highlightCount,
+        isVerified: nextState.isVerified,
+        category: nextState.category,
+        pronouns: nextState.pronouns,
+        recentFollowing: nextState.recentFollowing,
+        isPrivate: nextState.isPrivate,
+        scrapedAt: new Date(),
+      };
 
-      if (changes.length === 0) continue;
+      if (changes.length === 0) {
+        await prisma.stalkerProfile.update({
+          where: { trackedAccountId: row.trackedAccountId },
+          data: profileUpdateData,
+        });
+        continue;
+      }
 
       stats.changed++;
 
@@ -172,7 +176,15 @@ export async function runStalkerScrape(options: StalkerRunOptions = {}): Promise
         }))
       );
 
-      await prisma.stalkerEvent.createMany({ data: eventRows });
+      // Profile update and event creation are atomic — crash between them
+      // would advance the baseline without recording what changed.
+      await prisma.$transaction([
+        prisma.stalkerProfile.update({
+          where: { trackedAccountId: row.trackedAccountId },
+          data: profileUpdateData,
+        }),
+        prisma.stalkerEvent.createMany({ data: eventRows }),
+      ]);
       stats.eventsCreated += eventRows.length;
 
       for (const sub of subs) {
