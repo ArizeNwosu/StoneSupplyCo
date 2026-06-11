@@ -80,6 +80,7 @@ export default function DashboardPage() {
   const [backfillMsg, setBackfillMsg] = useState<string | null>(null);
   const [backfillingIds, setBackfillingIds] = useState<Set<string>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showStalkerModal, setShowStalkerModal] = useState(false);
 
   const fetchAccounts = useCallback(async () => {
     const res = await fetch('/api/accounts');
@@ -325,13 +326,6 @@ export default function DashboardPage() {
           <EmptyState onAdd={() => setShowAddModal(true)} />
         ) : (
           <div className="mx-auto max-w-6xl space-y-6">
-            {selected && (
-              <StalkerModePanel
-                trackedAccountId={selected.id}
-                handle={selected.handle}
-              />
-            )}
-
             {selected && snapshotData ? (
               <>
                 <PatternAlerts />
@@ -354,6 +348,7 @@ export default function DashboardPage() {
                       backfillMsg={backfillMsg}
                       onRefresh={handleRefresh}
                       onBackfill={handleBackfill}
+                      onStalker={() => setShowStalkerModal(true)}
                     />
                   }
                 />
@@ -453,6 +448,18 @@ export default function DashboardPage() {
         open={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
       />
+
+      {selected && (
+        <Modal
+          open={showStalkerModal}
+          onClose={() => setShowStalkerModal(false)}
+        >
+          <StalkerModePanel
+            trackedAccountId={selected.id}
+            handle={selected.handle}
+          />
+        </Modal>
+      )}
     </>
   );
 }
@@ -594,6 +601,7 @@ function DashboardActions({
   backfillMsg,
   onRefresh,
   onBackfill,
+  onStalker,
 }: {
   accountId: string;
   refreshLoading: boolean;
@@ -601,6 +609,7 @@ function DashboardActions({
   backfillMsg: string | null;
   onRefresh: (id: string) => void;
   onBackfill: (id: string) => void;
+  onStalker: () => void;
 }) {
   return (
     <div className="flex flex-col items-start gap-2 sm:items-end">
@@ -618,13 +627,20 @@ function DashboardActions({
         </Button>
         <Button
           size="sm"
-          variant="ghost"
+          variant="outline"
           onClick={() => onBackfill(accountId)}
           disabled={refreshLoading || backfillLoading}
           loading={backfillLoading}
           title="Load historical follower counts from the Wayback Machine"
         >
           Load history
+        </Button>
+        <Button
+          size="sm"
+          variant="primary"
+          onClick={onStalker}
+        >
+          👁 Stalker Mode
         </Button>
       </div>
       {backfillMsg && (

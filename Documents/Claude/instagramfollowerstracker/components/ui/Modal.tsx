@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 interface ModalProps {
   open: boolean;
   onClose: () => void;
-  title: string;
+  title?: string;
   children: React.ReactNode;
 }
 
@@ -28,7 +28,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
         aria-hidden="true"
       />
       <div className="relative z-10 w-full max-w-md rounded-lg border border-cyan-950/10 bg-white p-4 shadow-xl shadow-slate-950/10 sm:p-6">
-        <h2 className="mb-4 text-lg font-semibold text-slate-950">{title}</h2>
+        {title && <h2 className="mb-4 text-lg font-semibold text-slate-950">{title}</h2>}
         {children}
       </div>
     </div>
