@@ -49,7 +49,9 @@ export function StalkerUpgradeCard({
         <span className="text-lg">👁</span>
         <div>
           <p className="text-sm font-black text-slate-950">Stalker Mode</p>
-          <p className="text-xs text-slate-500">Get alerted when @{handle} posts, follows someone, or changes their bio</p>
+          <p className="text-xs text-slate-500">
+            Get alerted when @{handle} posts, deletes posts, follows someone, changes their bio, profile photo, display name, username, link, category, pronouns, gains or loses their verified badge, or goes private.
+          </p>
         </div>
       </div>
 
@@ -91,7 +93,7 @@ export function StalkerUpgradeCard({
       <button
         onClick={subscribe}
         disabled={loading}
-        className="w-full rounded-full bg-cyan-950 py-2.5 text-sm font-black text-white transition hover:bg-cyan-800 disabled:opacity-60"
+        className="w-full rounded-full bg-slate-950 py-2.5 text-sm font-black text-white transition hover:bg-slate-800 disabled:opacity-60"
       >
         {loading ? 'Redirecting…' : 'Activate Stalker Mode'}
       </button>
