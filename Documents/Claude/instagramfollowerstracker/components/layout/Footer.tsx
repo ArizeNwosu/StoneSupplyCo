@@ -47,6 +47,7 @@ const NAV = [
       { label: 'Data Deletion', href: '/data-deletion' },
       { label: 'Terms of Service', href: '/terms' },
       { label: 'FAQ', href: '/faq' },
+      { label: 'Contact Us', href: '/contact' },
       { label: 'Sign In', href: '/auth/signin' },
       { label: 'Sign Up', href: '/auth/signup' },
     ],
@@ -132,6 +133,7 @@ export function Footer({ topAccounts = [], className = 'mt-24' }: FooterProps) {
             <Link href="/data-deletion" className="transition hover:text-white">Data Deletion</Link>
             <Link href="/terms" className="transition hover:text-white">Terms of Service</Link>
             <Link href="/faq" className="transition hover:text-white">FAQ</Link>
+            <Link href="/contact" className="transition hover:text-white">Contact Us</Link>
             <Link href="/pricing" className="transition hover:text-white">Pricing</Link>
           </div>
         </div>
