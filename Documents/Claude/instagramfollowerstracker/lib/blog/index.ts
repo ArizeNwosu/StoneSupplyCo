@@ -150,6 +150,9 @@ import recentFollowersInstagram from './posts/recent-followers-instagram';
 import igFollowing from './posts/ig-following';
 import howToSeeRecentFollowersOnInstagram from './posts/how-to-see-recent-followers-on-instagram';
 import instagramRecentlyFollowedList from './posts/instagram-recently-followed-list';
+// Keyword cluster: follower count history / followers history
+import instagramFollowersHistory from './posts/instagram-followers-history';
+import instagramFollowerCountTrackerHistory from './posts/instagram-follower-count-tracker-history';
 // Keyword cluster: analytics / fake followers / growth / unfollow free / celebrity
 import instagramFollowerTrackerAnalytics from './posts/instagram-follower-tracker-analytics';
 import followersTracker from './posts/followers-tracker';
@@ -308,6 +311,8 @@ export const ALL_POSTS: BlogPost[] = [
   howToSeeRecentFollowersOnInstagram,
   instagramRecentlyFollowedList,
   // Keyword cluster: analytics / fake followers / growth / unfollow free / celebrity
+  instagramFollowersHistory,
+  instagramFollowerCountTrackerHistory,
   instagramFollowerTrackerAnalytics,
   followersTracker,
   fakeFollowersInstagramCheck,
