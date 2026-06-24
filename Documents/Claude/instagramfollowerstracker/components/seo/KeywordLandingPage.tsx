@@ -37,13 +37,13 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://www.instagramfollowerstracker.com',
+        item: 'https://instagramfollowerstracker.com',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: page.title,
-        item: `https://www.instagramfollowerstracker.com/${page.slug}`,
+        item: `https://instagramfollowerstracker.com/${page.slug}`,
       },
     ],
   };
@@ -54,7 +54,7 @@ export async function KeywordLandingPage({ page }: KeywordLandingPageProps) {
     name: 'Instagram Followers Tracker',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
-    url: `https://www.instagramfollowerstracker.com/${page.slug}`,
+    url: `https://instagramfollowerstracker.com/${page.slug}`,
     description: page.description,
     offers: {
       '@type': 'Offer',

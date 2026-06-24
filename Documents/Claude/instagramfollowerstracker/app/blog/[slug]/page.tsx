@@ -75,7 +75,7 @@ export async function generateMetadata({
   const post = getPost(slug);
   if (!post) return {};
 
-  const url = `https://www.instagramfollowerstracker.com/blog/${slug}`;
+  const url = `https://instagramfollowerstracker.com/blog/${slug}`;
   return {
     title: `${post.title} | Instagram Followers Tracker`,
     description: post.description,
@@ -494,16 +494,16 @@ export default async function BlogPostPage({
     author: {
       '@type': 'Organization',
       name: 'InstagramFollowersTracker.com',
-      url: 'https://www.instagramfollowerstracker.com',
+      url: 'https://instagramfollowerstracker.com',
     },
     publisher: {
       '@type': 'Organization',
       name: 'InstagramFollowersTracker.com',
-      url: 'https://www.instagramfollowerstracker.com',
+      url: 'https://instagramfollowerstracker.com',
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://www.instagramfollowerstracker.com/blog/${slug}`,
+      '@id': `https://instagramfollowerstracker.com/blog/${slug}`,
     },
   };
 

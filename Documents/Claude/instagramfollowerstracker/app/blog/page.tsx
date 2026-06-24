@@ -19,13 +19,13 @@ export const metadata: Metadata = {
     'instagram growth',
   ],
   alternates: {
-    canonical: 'https://www.instagramfollowerstracker.com/blog',
+    canonical: 'https://instagramfollowerstracker.com/blog',
   },
   openGraph: {
     title: 'Instagram Tools Blog - IG Following, Tracking, Unfollow & Growth Guides',
     description:
       'Guides on Instagram follower tracking, IG following lists, recently followed accounts, unfollow detection, video downloading, and Instagram growth analytics.',
-    url: 'https://www.instagramfollowerstracker.com/blog',
+    url: 'https://instagramfollowerstracker.com/blog',
     type: 'website',
   },
 };

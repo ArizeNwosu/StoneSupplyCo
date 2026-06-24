@@ -6,7 +6,7 @@ import { Footer } from '@/components/layout/Footer';
 export const metadata: Metadata = {
   title: 'Terms of Service — Instagram Followers Tracker',
   description: 'Terms of service for instagramfollowerstracker.com — acceptable use, plan limits, and disclaimers.',
-  alternates: { canonical: 'https://www.instagramfollowerstracker.com/terms' },
+  alternates: { canonical: 'https://instagramfollowerstracker.com/terms' },
 };
 
 const sections = [

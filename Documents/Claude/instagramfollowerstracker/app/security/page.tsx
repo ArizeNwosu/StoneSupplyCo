@@ -5,7 +5,7 @@ import { Footer } from '@/components/layout/Footer';
 export const metadata: Metadata = {
   title: 'Security — Instagram Followers Tracker',
   description: 'Report security vulnerabilities to instagramfollowerstracker.com.',
-  alternates: { canonical: 'https://www.instagramfollowerstracker.com/security' },
+  alternates: { canonical: 'https://instagramfollowerstracker.com/security' },
 };
 
 export default function SecurityPage() {

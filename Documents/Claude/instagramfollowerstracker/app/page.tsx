@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: 'Instagram Followers Tracker - Free Online Tracker Without Login',
   description:
     'Track Instagram follower counts, growth history, public account trends, and export-based unfollow reports. Free online tracker with no password sharing.',
-  alternates: { canonical: 'https://www.instagramfollowerstracker.com' },
+  alternates: { canonical: 'https://instagramfollowerstracker.com' },
 };
 
 const faqItems = [

@@ -751,7 +751,7 @@ export function getSeoPage(slug: string): SeoPageConfig {
 
 export function getSeoPageMetadata(slug: string): Metadata {
   const page = getSeoPage(slug);
-  const url = `https://www.instagramfollowerstracker.com/${page.slug}`;
+  const url = `https://instagramfollowerstracker.com/${page.slug}`;
 
   return {
     title: page.metaTitle,

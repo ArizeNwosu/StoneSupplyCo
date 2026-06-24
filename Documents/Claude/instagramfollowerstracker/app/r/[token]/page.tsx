@@ -156,7 +156,7 @@ export default async function ReportPage(
           {' · '}
           Powered by{' '}
           <a
-            href="https://www.instagramfollowerstracker.com"
+            href="https://instagramfollowerstracker.com"
             className="font-semibold text-cyan-700 hover:text-cyan-900"
           >
             instagramfollowerstracker.com

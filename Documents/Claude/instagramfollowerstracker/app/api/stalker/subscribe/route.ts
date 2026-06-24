@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   });
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.instagramfollowerstracker.com';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://instagramfollowerstracker.com';
 
   let customerId = user.stripeCustomerId;
   if (!customerId) {

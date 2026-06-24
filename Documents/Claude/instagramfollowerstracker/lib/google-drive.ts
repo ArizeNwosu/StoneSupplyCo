@@ -3,7 +3,7 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_DRIVE_API = 'https://www.googleapis.com/drive/v3';
 
 function redirectUri() {
-  const base = process.env.NEXTAUTH_URL ?? 'https://www.instagramfollowerstracker.com';
+  const base = process.env.NEXTAUTH_URL ?? 'https://instagramfollowerstracker.com';
   return `${base}/api/drive/callback`;
 }
 

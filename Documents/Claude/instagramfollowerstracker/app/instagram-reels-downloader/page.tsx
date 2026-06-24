@@ -9,13 +9,13 @@ export const metadata: Metadata = {
   description:
     'Download any public Instagram Reel as an MP4 for free. Paste the Reel URL and save the video directly to your device — no account, no app, no login required.',
   alternates: {
-    canonical: 'https://www.instagramfollowerstracker.com/instagram-reels-downloader',
+    canonical: 'https://instagramfollowerstracker.com/instagram-reels-downloader',
   },
   openGraph: {
     title: 'Instagram Reels Downloader — Free, No Login Required',
     description:
       'Download Instagram Reels instantly. Paste the Reel URL, get the MP4 — free, no login required.',
-    url: 'https://www.instagramfollowerstracker.com/instagram-reels-downloader',
+    url: 'https://instagramfollowerstracker.com/instagram-reels-downloader',
     type: 'website',
   },
   twitter: {

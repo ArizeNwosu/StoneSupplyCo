@@ -6,7 +6,7 @@ import { Footer } from '@/components/layout/Footer';
 export const metadata: Metadata = {
   title: 'Contact Us | Instagram Followers Tracker',
   description: 'Get in touch with the Instagram Followers Tracker team. We reply within 24 hours.',
-  alternates: { canonical: 'https://www.instagramfollowerstracker.com/contact' },
+  alternates: { canonical: 'https://instagramfollowerstracker.com/contact' },
 };
 
 export default function ContactPage() {

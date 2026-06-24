@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Data Deletion Instructions - Instagram Followers Tracker',
   description:
     'How to request deletion of your Instagram Followers Tracker account data, uploaded Instagram exports, tracked accounts, and related records.',
-  alternates: { canonical: 'https://www.instagramfollowerstracker.com/data-deletion' },
+  alternates: { canonical: 'https://instagramfollowerstracker.com/data-deletion' },
 };
 
 const deletionSteps = [

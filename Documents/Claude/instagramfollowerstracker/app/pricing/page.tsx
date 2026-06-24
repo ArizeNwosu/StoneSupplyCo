@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Pricing',
   description:
     'Instagram Followers Tracker pricing. Free plan includes 1 account. Pro plan adds 10 accounts, unfollow detection, and email alerts.',
-  alternates: { canonical: 'https://www.instagramfollowerstracker.com/pricing' },
+  alternates: { canonical: 'https://instagramfollowerstracker.com/pricing' },
 };
 
 const plans = [
