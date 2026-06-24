@@ -32,25 +32,25 @@ export async function sendMilestoneEmail({
       <p>Your tracker is live. We just took the first follower snapshot for <strong>@${handle}</strong>.</p>
       <p>Current followers: <strong>${countStr}</strong></p>
       <p>Check back in a few days — your chart unlocks after 7 snapshots.</p>
-      <p><a href="https://instagramfollowerstracker.com/dashboard">View dashboard →</a></p>
+      <p><a href="https://www.instagramfollowerstracker.com/dashboard">View dashboard →</a></p>
     `,
     3: `
       <p>We've taken 3 snapshots for <strong>@${handle}</strong> so far.</p>
       <p>Current followers: <strong>${countStr}</strong></p>
       <p>4 more snapshots until your growth chart unlocks.</p>
-      <p><a href="https://instagramfollowerstracker.com/dashboard">View dashboard →</a></p>
+      <p><a href="https://www.instagramfollowerstracker.com/dashboard">View dashboard →</a></p>
     `,
     7: `
       <p>Your growth chart for <strong>@${handle}</strong> is ready.</p>
       <p>Current followers: <strong>${countStr}</strong></p>
       <p>Head to your dashboard to see the trend.</p>
-      <p><a href="https://instagramfollowerstracker.com/dashboard">View chart →</a></p>
+      <p><a href="https://www.instagramfollowerstracker.com/dashboard">View chart →</a></p>
     `,
     30: `
       <p>You've been tracking <strong>@${handle}</strong> for 30 days.</p>
       <p>Current followers: <strong>${countStr}</strong></p>
       <p>Log in to see the full month of growth data.</p>
-      <p><a href="https://instagramfollowerstracker.com/dashboard">View 30-day history →</a></p>
+      <p><a href="https://www.instagramfollowerstracker.com/dashboard">View 30-day history →</a></p>
     `,
   };
 
@@ -72,7 +72,7 @@ export async function sendPasswordResetEmail({
   to: string;
   token: string;
 }): Promise<void> {
-  const resetUrl = `https://instagramfollowerstracker.com/auth/reset-password?token=${token}`;
+  const resetUrl = `https://www.instagramfollowerstracker.com/auth/reset-password?token=${token}`;
   try {
     await getResend().emails.send({
       from: FROM,

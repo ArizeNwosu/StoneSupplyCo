@@ -6,7 +6,7 @@ import { Footer } from '@/components/layout/Footer';
 export const metadata: Metadata = {
   title: 'FAQ — Instagram Followers Tracker',
   description: 'Answers to the most common questions about tracking Instagram followers, unfollower detection, privacy, and pricing.',
-  alternates: { canonical: 'https://instagramfollowerstracker.com/faq' },
+  alternates: { canonical: 'https://www.instagramfollowerstracker.com/faq' },
 };
 
 const faqSchema = {

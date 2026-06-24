@@ -111,7 +111,7 @@ export default async function WidgetPage({
         )}
       </div>
       <a
-        href="https://instagramfollowerstracker.com"
+        href="https://www.instagramfollowerstracker.com"
         target="_blank"
         rel="noopener noreferrer"
         style={{

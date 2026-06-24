@@ -6,7 +6,7 @@ import { Footer } from '@/components/layout/Footer';
 export const metadata: Metadata = {
   title: 'Privacy Policy — Instagram Followers Tracker',
   description: 'Privacy policy for instagramfollowerstracker.com — what data we collect, how we use it, and your rights.',
-  alternates: { canonical: 'https://instagramfollowerstracker.com/privacy' },
+  alternates: { canonical: 'https://www.instagramfollowerstracker.com/privacy' },
 };
 
 const sections = [

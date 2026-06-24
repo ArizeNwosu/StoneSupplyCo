@@ -11,7 +11,7 @@ function getResend() {
 }
 
 const FROM = process.env.EMAIL_FROM ?? 'noreply@instagramfollowerstracker.com';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://instagramfollowerstracker.com';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.instagramfollowerstracker.com';
 
 export async function sendStalkerAlertEmail({
   to,

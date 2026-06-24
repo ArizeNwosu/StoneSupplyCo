@@ -6,7 +6,7 @@ import { Footer } from '@/components/layout/Footer';
 export const metadata: Metadata = {
   title: 'Developer Documentation — Instagram Followers Tracker',
   description: 'API and data portability documentation for instagramfollowerstracker.com.',
-  alternates: { canonical: 'https://instagramfollowerstracker.com/developers' },
+  alternates: { canonical: 'https://www.instagramfollowerstracker.com/developers' },
 };
 
 const sections = [
@@ -20,7 +20,7 @@ const sections = [
   },
   {
     title: 'Webhook endpoint',
-    body: `Our data portability receiver endpoint is:\n\nhttps://instagramfollowerstracker.com/api/eyi/webhook\n\nThis endpoint accepts HTTP POST requests containing Instagram data exports in JSON format. All incoming requests are verified using HMAC-SHA256 signature validation against the x-hub-signature-256 header before any data is processed. Requests that fail signature verification are rejected with HTTP 401.`,
+    body: `Our data portability receiver endpoint is:\n\nhttps://www.instagramfollowerstracker.com/api/eyi/webhook\n\nThis endpoint accepts HTTP POST requests containing Instagram data exports in JSON format. All incoming requests are verified using HMAC-SHA256 signature validation against the x-hub-signature-256 header before any data is processed. Requests that fail signature verification are rejected with HTTP 401.`,
   },
   {
     title: 'Data received',
@@ -28,7 +28,7 @@ const sections = [
   },
   {
     title: 'OAuth flow',
-    body: `Users initiate the connection via Meta's standard OAuth 2.0 dialog requesting the instagram_data_portability scope. The authorisation callback endpoint is:\n\nhttps://instagramfollowerstracker.com/api/eyi/callback\n\nUpon successful authorisation, we store the user's Meta user ID to associate future webhook deliveries with their account. We do not store the OAuth access token beyond the duration needed to retrieve the Meta user ID.`,
+    body: `Users initiate the connection via Meta's standard OAuth 2.0 dialog requesting the instagram_data_portability scope. The authorisation callback endpoint is:\n\nhttps://www.instagramfollowerstracker.com/api/eyi/callback\n\nUpon successful authorisation, we store the user's Meta user ID to associate future webhook deliveries with their account. We do not store the OAuth access token beyond the duration needed to retrieve the Meta user ID.`,
   },
   {
     title: 'Data handling and storage',

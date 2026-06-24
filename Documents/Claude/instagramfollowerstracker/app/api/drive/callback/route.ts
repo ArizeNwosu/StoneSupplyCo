@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-const BASE_URL = process.env.NEXTAUTH_URL ?? 'https://instagramfollowerstracker.com';
+const BASE_URL = process.env.NEXTAUTH_URL ?? 'https://www.instagramfollowerstracker.com';
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code');

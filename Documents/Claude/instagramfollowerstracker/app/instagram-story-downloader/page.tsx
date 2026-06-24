@@ -9,13 +9,13 @@ export const metadata: Metadata = {
   description:
     'Download Instagram stories and view public stories anonymously. Paste a story URL to save it as MP4 — free, no login, no account required.',
   alternates: {
-    canonical: 'https://instagramfollowerstracker.com/instagram-story-downloader',
+    canonical: 'https://www.instagramfollowerstracker.com/instagram-story-downloader',
   },
   openGraph: {
     title: 'Instagram Story Downloader & Anonymous Story Viewer — Free',
     description:
       'Save Instagram stories and view them anonymously. Free, no login required.',
-    url: 'https://instagramfollowerstracker.com/instagram-story-downloader',
+    url: 'https://www.instagramfollowerstracker.com/instagram-story-downloader',
     type: 'website',
   },
   twitter: {
