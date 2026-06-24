@@ -497,7 +497,7 @@ export const SEO_PAGES: SeoPageConfig[] = [
     eyebrow: 'Public follower count history',
     h1: 'Instagram Follower Count Tracker',
     intro:
-      'Save public Instagram follower counts over time so you can answer what changed, when it changed, and how fast another account is growing.',
+      'Save public Instagram follower counts over time so you can answer what changed, when it changed, and how fast another account is growing. This tool only reads publicly visible follower counts — no Instagram login or credentials are required or stored.',
     primaryCta: 'Track follower count',
     secondaryCta: 'See pricing',
     keywordCluster: [

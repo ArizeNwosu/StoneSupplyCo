@@ -228,6 +228,10 @@ const post: BlogPost = {
       text: 'The best time to start is right now. Every day you wait is a data point you cannot get back. Add the accounts you care about to our <a href="/instagram-follower-tracker-online-free">free online Instagram follower tracker</a> today, and the history you build going forward becomes a permanent, queryable record of every account\'s growth trajectory.',
     },
     {
+      type: 'tip',
+      text: 'The only way to build a historical record starting today is to add the account to our <a href="/instagram-follower-count-tracker">Instagram Follower Count Tracker</a>. Instagram itself shows no history — snapshots begin from the moment you start tracking.',
+    },
+    {
       type: 'cta',
     },
   ],

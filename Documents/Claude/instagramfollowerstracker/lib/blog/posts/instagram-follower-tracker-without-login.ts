@@ -71,6 +71,53 @@ const post: BlogPost = {
     },
     {
       type: 'h2',
+      text: 'The Hidden Privacy Risks of Logging Into Third-Party Instagram Apps',
+    },
+    {
+      type: 'p',
+      text: 'When you grant a third-party app your Instagram login, you hand it an authentication token — a key that lets it act as you. Most apps store that token on their servers. If those servers are breached, your account can be accessed, posted from, or sold without your knowledge.',
+    },
+    {
+      type: 'ul',
+      items: [
+        "Credential harvesting: your username and password stored in plaintext on unknown servers",
+        "Token-based takeovers: apps can post, follow, or DM on your behalf using your session token",
+        "Instagram TOS violations: third-party login access violates Instagram's platform policy, risking account suspension",
+        "No audit trail: you cannot see what the app did with your account after you connected it",
+      ],
+    },
+    {
+      type: 'h2',
+      text: 'How Safe Instagram Follower Tracking Actually Works',
+    },
+    {
+      type: 'p',
+      text: "A no-login tracker reads only what is already publicly visible. When you visit any Instagram profile in a browser without being logged in, you can see the follower count, following count, and post count. That is the only data we read — no authentication token, no write access, no stored credentials.",
+    },
+    {
+      type: 'table',
+      headers: ['', 'Login-Required Apps', 'No-Login Tracker'],
+      rows: [
+        ['Data access', 'Full account access via token', 'Public profile data only'],
+        ['Risk level', 'High — token stored on third-party servers', 'None — no credentials involved'],
+        ['What it can do', 'Post, follow, DM on your behalf', 'Read public follower counts only'],
+        ['Instagram TOS', 'Violates platform policy', 'Compliant — reads public data'],
+        ['Account risk', 'Suspension possible', 'No risk to your account'],
+      ],
+    },
+    {
+      type: 'h3',
+      text: 'What We Read vs. What We Never Touch',
+    },
+    {
+      type: 'ul',
+      items: [
+        'We read: public follower count, public following count, public post count, display name',
+        'We never access: DMs, Stories, login credentials, private posts, contact info, device identifiers, or authentication tokens',
+      ],
+    },
+    {
+      type: 'h2',
       text: 'What a Safe, No-Login Tracker Can Actually Do',
     },
     {
@@ -176,6 +223,31 @@ const post: BlogPost = {
       question: 'Will Instagram know I\'m tracking their account?',
       answer:
         'Our tracker reads public profile pages, which Instagram treats the same as any other web visitor viewing a profile. There is no notification, alert, or log that any particular account is being tracked.',
+    },
+    {
+      question: 'Is it safe to use an Instagram tracker without logging in?',
+      answer:
+        'Yes. A tracker that does not require login can only read publicly visible data — the same information anyone can see by visiting an Instagram profile in a browser. It has no access to your account, DMs, or private posts. No credentials are stored or transmitted.',
+    },
+    {
+      question: 'Can a no-login tracker see private Instagram accounts?',
+      answer:
+        'No. Without authentication, any tracker is limited to public profiles only. If an account is set to private, its follower count and posts are not visible to unauthenticated requests.',
+    },
+    {
+      question: 'Why do some Instagram tracker apps require login?',
+      answer:
+        'Apps that require login typically want to access your followers list, following list, or DMs — data Instagram does not expose publicly. Granting login access gives those apps permission to read and sometimes write to your account.',
+    },
+    {
+      question: 'Does tracking an Instagram account notify them?',
+      answer:
+        'No. Reading a public follower count is equivalent to visiting a profile in a browser. The account owner receives no notification.',
+    },
+    {
+      question: 'Is tracking public Instagram follower counts legal?',
+      answer:
+        'Viewing publicly available data is generally legal. Our tracker only reads counts that Instagram itself displays to any visitor — no scraping of private data, no bypass of authentication.',
     },
   ],
 };

@@ -100,6 +100,10 @@ const post: BlogPost = {
       text: 'For a broader competitor analysis framework, see our <a href="/instagram-competitor-analysis">Instagram competitor analysis</a> guide. For understanding what drives sudden follower gains, see our <a href="/instagram-follower-spike-tracker">follower spike tracker</a>. For all tracking options, see our <a href="/instagram-tracking-tools">Instagram tracking tools</a> page. Our <a href="/instagram-unfollow-tracker">unfollow tracker</a> also works for competitor accounts.',
     },
     {
+      type: 'tip',
+      text: 'Add up to 10 competitor handles to our <a href="/instagram-follower-count-tracker">Instagram Follower Count Tracker</a> to monitor daily follower changes side by side. No login required.',
+    },
+    {
       type: 'cta',
     },
   ],

@@ -2,9 +2,9 @@ import type { BlogPost } from '../types';
 
 const post: BlogPost = {
   slug: 'recent-followers-instagram',
-  title: 'Recent Followers on Instagram: How to See Who Just Followed You',
+  title: 'Instagram Follower History: Track Changes Over Time | Instagram Followers Tracker',
   h1: 'Recent Followers on Instagram',
-  description: 'Find out how to see your most recent followers on Instagram, track new followers over time, and get notified when specific accounts follow you.',
+  description: "View any Instagram account's full follower count history over time. No login, no password, no app needed. Track growth trends on public accounts free.",
   publishedAt: '2026-06-09',
   updatedAt: '2026-06-09',
   category: 'How-To',

@@ -68,6 +68,20 @@ const faqSchema = {
   })),
 };
 
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Instagram Followers Tracker',
+  url: 'https://instagramfollowerstracker.com',
+  logo: 'https://instagramfollowerstracker.com/logo.png',
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer support',
+    email: 'support@instagramfollowerstracker.com',
+  },
+  sameAs: [],
+};
+
 const proofStats = [
   { value: '0', label: 'Instagram passwords requested' },
   { value: 'Browser', label: 'First snapshot capture' },
@@ -187,6 +201,10 @@ export default async function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
       />
 
       <main>

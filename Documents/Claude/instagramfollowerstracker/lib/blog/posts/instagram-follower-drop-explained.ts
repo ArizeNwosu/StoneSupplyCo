@@ -125,6 +125,10 @@ const post: BlogPost = {
       text: 'A follower drop that improves your engagement rate is almost always a bot purge — and that is a good thing. Fewer fake followers means your engagement rate more accurately reflects your real audience size.',
     },
     {
+      type: 'tip',
+      text: 'The best way to catch a follower drop the moment it happens is to set up daily tracking. Our <a href="/instagram-follower-count-tracker">Instagram Follower Count Tracker</a> stores a snapshot every day so you can pinpoint exactly when a drop started.',
+    },
+    {
       type: 'cta',
     },
   ],
