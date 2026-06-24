@@ -20,9 +20,12 @@ export interface PublicSeoQualityInput {
   avatarUrl?: string | null;
   bio?: string | null;
   snapshotCount: number;
+  lastUpdatedAt?: Date | null;
+  now?: Date;
 }
 
 export function getPublicSeoIndexStatus(account: PublicSeoQualityInput) {
+  const now = account.now ?? new Date();
   const handle = account.handle.toLowerCase().replace(/^@/, '');
   const hasFollowerCount = account.followerCount !== null;
   const hasProfileSignal = Boolean(account.displayName || account.avatarUrl || account.bio);
@@ -31,18 +34,25 @@ export function getPublicSeoIndexStatus(account: PublicSeoQualityInput) {
     !RESERVED_PUBLIC_HANDLES.has(handle) &&
     !handle.startsWith('.') &&
     !handle.endsWith('.');
+  const ageInDays = account.lastUpdatedAt
+    ? Math.floor((now.getTime() - account.lastUpdatedAt.getTime()) / 86_400_000)
+    : Number.POSITIVE_INFINITY;
+  const hasRecentData = ageInDays <= 30;
+  const hasFreshSitemapData = ageInDays <= 14;
 
   const indexable =
     account.snapshotCount >= 3 &&
     hasFollowerCount &&
     hasCleanHandle &&
-    hasProfileSignal;
+    hasProfileSignal &&
+    hasRecentData;
 
   const sitemapEligible =
     account.snapshotCount >= 7 &&
     hasFollowerCount &&
     hasCleanHandle &&
-    hasProfileSignal;
+    hasProfileSignal &&
+    hasFreshSitemapData;
 
   return {
     indexable,
@@ -50,6 +60,9 @@ export function getPublicSeoIndexStatus(account: PublicSeoQualityInput) {
     hasFollowerCount,
     hasProfileSignal,
     hasCleanHandle,
+    hasRecentData,
+    hasFreshSitemapData,
+    ageInDays,
     snapshotCount: account.snapshotCount,
   };
 }

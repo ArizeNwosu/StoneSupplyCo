@@ -113,7 +113,7 @@ export function Footer({ topAccounts = [], className = 'mt-24' }: FooterProps) {
               {topAccounts.slice(0, 100).map((a) => (
                 <Link
                   key={a.handle}
-                  href={`/${a.handle}`}
+                  href={`/instagram-follower-count/${a.handle}`}
                   className="text-xs text-slate-500 transition hover:text-white"
                 >
                   @{a.handle}

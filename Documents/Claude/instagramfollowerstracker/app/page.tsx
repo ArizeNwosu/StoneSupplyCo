@@ -380,7 +380,7 @@ export default async function HomePage() {
                 {topAccounts.slice(0, 8).map((account) => (
                   <Link
                     key={account.handle}
-                    href={`/${account.handle}`}
+                    href={`/instagram-follower-count/${account.handle}`}
                     className="group rounded-lg border border-cyan-950/10 bg-slate-50 p-4 transition hover:-translate-y-1 hover:border-teal-300 hover:bg-white hover:shadow-xl hover:shadow-cyan-950/10"
                   >
                     <div className="flex items-center justify-between gap-3">

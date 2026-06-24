@@ -2,13 +2,13 @@ import type { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
 import { SEO_PAGES } from '@/lib/seo-pages';
 import { ALL_POSTS } from '@/lib/blog';
-import { SEO_ACCOUNT_PAGES } from '@/lib/seo-account-pages';
 import { getPublicSeoIndexStatus } from '@/lib/public-seo-quality';
+import { SITE_URL, publicAccountUrl } from '@/lib/site-url';
 
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = 'https://instagramfollowerstracker.com';
+  const base = SITE_URL;
 
   const staticPages: MetadataRoute.Sitemap = [
     {
@@ -71,6 +71,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.85,
     },
+    {
+      url: `${base}/instagram-follower-count`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
   ];
 
   const blogPages: MetadataRoute.Sitemap = ALL_POSTS.map((post) => ({
@@ -105,28 +111,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           avatarUrl: account.avatarUrl,
           bio: account.bio,
           snapshotCount: account._count.snapshots,
+          lastUpdatedAt: account.lastChecked,
         }),
       },
     ])
   );
 
-  const seoAccountPages: MetadataRoute.Sitemap = SEO_ACCOUNT_PAGES
-    .filter((page) => qualityByHandle.get(page.username)?.status.sitemapEligible)
-    .map((page) => ({
-      url: `${base}/${page.slug}/${page.username}`,
-      lastModified: qualityByHandle.get(page.username)?.account.lastChecked ?? new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.82,
-    }));
-
   const accountPages: MetadataRoute.Sitemap = publicAccounts
     .filter((account) => qualityByHandle.get(account.handle)?.status.sitemapEligible)
     .map((account) => ({
-      url: `${base}/instagram-follower-count/${account.handle}`,
+      url: publicAccountUrl(account.handle),
       lastModified: account.lastChecked ?? new Date(),
       changeFrequency: 'daily' as const,
-      priority: 0.65,
+      priority: 0.75,
     }));
 
-  return [...staticPages, ...blogPages, ...keywordPages, ...seoAccountPages, ...accountPages];
+  return [...staticPages, ...blogPages, ...keywordPages, ...accountPages];
 }

@@ -7,13 +7,16 @@ import { PublicChart } from '@/components/tracker/PublicChart';
 import { formatChange, formatCount } from '@/lib/format';
 import { parseHandle, isValidHandle } from '@/lib/handles';
 import { prisma } from '@/lib/prisma';
-import { getPublicHistorySnapshots } from '@/lib/public-history';
+import {
+  getPublicHistorySnapshots,
+  type PublicHistorySnapshot,
+} from '@/lib/public-history';
 import { getPublicSeoIndexStatus } from '@/lib/public-seo-quality';
-import { ensurePublicAccountForHandle } from '@/lib/seo-public-accounts';
+import { publicAccountUrl, SITE_URL } from '@/lib/site-url';
 
 export const dynamic = 'force-dynamic';
 
-const LEARN_MORE_LINKS: Array<{ label: string; href: string }> = [
+const LEARN_MORE_LINKS = [
   { label: 'Instagram follower count history', href: '/blog/instagram-follower-count-history' },
   { label: 'Track Instagram follower growth', href: '/blog/track-instagram-follower-growth' },
   { label: 'Instagram followers tracker', href: '/blog/instagram-followers-tracker' },
@@ -26,40 +29,54 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { username } = await params;
   const handle = parseHandle(username);
-  if (!isValidHandle(handle)) return { title: 'Instagram follower count' };
+  if (!isValidHandle(handle)) {
+    return { title: 'Instagram follower count', robots: { index: false, follow: true } };
+  }
 
   const account = await prisma.publicAccount
     .findUnique({
       where: { handle },
-      include: { _count: { select: { snapshots: true } } },
+      include: {
+        _count: { select: { snapshots: true } },
+        snapshots: {
+          orderBy: { takenAt: 'desc' },
+          take: 1,
+          select: { takenAt: true },
+        },
+      },
     })
     .catch(() => null);
 
+  if (!account) {
+    return { title: 'Account not found', robots: { index: false, follow: true } };
+  }
+
+  const lastUpdatedAt = account.snapshots[0]?.takenAt ?? account.lastChecked;
   const status = getPublicSeoIndexStatus({
     handle,
-    followerCount: account?.followerCount ?? null,
-    displayName: account?.displayName ?? null,
-    avatarUrl: account?.avatarUrl ?? null,
-    bio: account?.bio ?? null,
-    snapshotCount: account?._count.snapshots ?? 0,
+    followerCount: account.followerCount,
+    displayName: account.displayName,
+    avatarUrl: account.avatarUrl,
+    bio: account.bio,
+    snapshotCount: account._count.snapshots,
+    lastUpdatedAt,
   });
-
-  const displayName = account?.displayName ?? `@${handle}`;
-  const count = account?.followerCount ? formatCount(account.followerCount) : 'public';
-  const canonical = `https://instagramfollowerstracker.com/instagram-follower-count/${handle}`;
+  const displayName = account.displayName ?? `@${handle}`;
+  const count = account.followerCount ? formatCount(account.followerCount) : 'public';
+  const canonical = publicAccountUrl(handle);
 
   return {
-    title: `${displayName} Instagram Follower Count - @${handle}`,
-    description: `Track @${handle}'s Instagram follower count over time. See ${count} follower data, saved snapshots, public growth history, and daily changes.`,
+    title: `${displayName} Instagram Follower Count & Growth History`,
+    description: `Track @${handle}'s Instagram follower count over time. See ${count} followers, daily changes, growth trends, and historical public snapshots.`,
     alternates: { canonical },
     robots: status.indexable
       ? { index: true, follow: true }
       : { index: false, follow: true },
     openGraph: {
-      title: `${displayName} Instagram follower count`,
-      description: `Public follower-count history and growth chart for @${handle}.`,
+      title: `${displayName} Instagram follower count — ${count}`,
+      description: `Public follower-count history, daily changes, and growth trends for @${handle}.`,
       url: canonical,
-      type: 'website',
+      type: 'profile',
     },
   };
 }
@@ -68,8 +85,6 @@ export default async function InstagramFollowerCountPage({ params }: PageProps) 
   const { username } = await params;
   const handle = parseHandle(username);
   if (!isValidHandle(handle)) notFound();
-
-  await ensurePublicAccountForHandle({ handle });
 
   const account = await prisma.publicAccount.findUnique({
     where: { handle },
@@ -103,7 +118,8 @@ export default async function InstagramFollowerCountPage({ params }: PageProps) 
           }
         : null,
   });
-
+  const stats = calculateGrowthStats(snapshots, account.followerCount);
+  const lastUpdatedAt = snapshots.at(-1)?.takenAt ?? account.lastChecked;
   const status = getPublicSeoIndexStatus({
     handle,
     followerCount: account.followerCount,
@@ -111,20 +127,71 @@ export default async function InstagramFollowerCountPage({ params }: PageProps) 
     avatarUrl: account.avatarUrl,
     bio: account.bio,
     snapshotCount: account._count.snapshots,
+    lastUpdatedAt,
   });
-  const current = snapshots.at(-1)?.followerCount ?? account.followerCount;
-  const oldest = snapshots[0]?.followerCount ?? null;
-  const change = current !== null && oldest !== null ? current - oldest : null;
-  const avgDailyGain =
-    change !== null && snapshots.length > 1
-      ? Math.round(change / Math.max(1, snapshots.length - 1))
-      : null;
 
+  const relatedCandidates = await prisma.publicAccount
+    .findMany({
+      where: { handle: { not: handle }, followerCount: { not: null } },
+      orderBy: { followerCount: 'desc' },
+      take: 30,
+      include: { _count: { select: { snapshots: true } } },
+    })
+    .catch(() => []);
+  const relatedAccounts = relatedCandidates
+    .filter((candidate) =>
+      getPublicSeoIndexStatus({
+        handle: candidate.handle,
+        followerCount: candidate.followerCount,
+        displayName: candidate.displayName,
+        avatarUrl: candidate.avatarUrl,
+        bio: candidate.bio,
+        snapshotCount: candidate._count.snapshots,
+        lastUpdatedAt: candidate.lastChecked,
+      }).indexable
+    )
+    .slice(0, 6);
+
+  const canonical = publicAccountUrl(handle);
   const displayName = account.displayName ?? `@${handle}`;
+  const firstSnapshot = snapshots[0];
+  const latestSnapshot = snapshots.at(-1);
+  const profileSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    name: `${displayName} Instagram follower count`,
+    url: canonical,
+    dateModified: lastUpdatedAt?.toISOString(),
+    mainEntity: {
+      '@type': 'Person',
+      name: displayName,
+      identifier: handle,
+      description: account.bio ?? undefined,
+      image: account.avatarUrl ?? undefined,
+      sameAs: `https://www.instagram.com/${handle}/`,
+    },
+  };
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Instagram follower counts',
+        item: `${SITE_URL}/instagram-follower-count`,
+      },
+      { '@type': 'ListItem', position: 3, name: `@${handle}`, item: canonical },
+    ],
+  };
 
   return (
     <>
       <Navbar />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(profileSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+
       <main>
         <section className="relative overflow-hidden border-b border-cyan-950/10 bg-sky-50">
           <div
@@ -132,37 +199,65 @@ export default async function InstagramFollowerCountPage({ params }: PageProps) 
             className="absolute inset-0 bg-[linear-gradient(rgba(8,47,73,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(8,47,73,0.08)_1px,transparent_1px)] bg-[size:42px_42px]"
           />
           <div className="relative mx-auto max-w-7xl px-4 py-10 sm:py-14">
-            <nav className="mb-8 text-sm font-semibold text-slate-500">
+            <nav aria-label="Breadcrumb" className="mb-8 text-sm font-semibold text-slate-500">
               <Link href="/" className="transition hover:text-teal-800">Home</Link>
+              <span className="mx-2">/</span>
+              <Link href="/instagram-follower-count" className="transition hover:text-teal-800">
+                Follower counts
+              </Link>
               <span className="mx-2">/</span>
               <span className="text-slate-950">@{handle}</span>
             </nav>
 
             <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
               <div>
-                <p className="mb-4 inline-flex rounded-full border border-cyan-950/10 bg-white px-3 py-1 text-xs font-black uppercase text-teal-800">
-                  Auto-generated public follower report
-                </p>
+                <div className="mb-5 flex items-center gap-4">
+                  {account.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={account.avatarUrl}
+                      alt={`${displayName} Instagram profile`}
+                      className="h-20 w-20 rounded-full border-4 border-white object-cover shadow-lg"
+                    />
+                  ) : (
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-950 text-3xl font-black text-white">
+                      {handle[0]?.toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-teal-700">
+                      Public follower history
+                    </p>
+                    <p className="mt-1 text-lg font-bold text-slate-600">@{handle}</p>
+                  </div>
+                </div>
                 <h1 className="text-4xl font-black leading-tight text-slate-950 sm:text-6xl">
                   {displayName} Instagram follower count
                 </h1>
-                <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-slate-600">
-                  This page tracks @{handle} with public follower-count snapshots. It becomes
-                  eligible for Google indexing only after enough useful history is collected.
+                {account.bio && (
+                  <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-slate-600">
+                    {account.bio}
+                  </p>
+                )}
+                <p className="mt-4 text-sm font-semibold text-slate-500">
+                  {lastUpdatedAt
+                    ? `Last updated ${formatDate(lastUpdatedAt)}`
+                    : 'Follower history is being collected.'}
                 </p>
               </div>
 
               <div className="rounded-lg border border-cyan-950/10 bg-white p-5 shadow-2xl shadow-cyan-950/10">
-                <div className="grid grid-cols-2 gap-3">
-                  <Metric label="Followers" value={current !== null ? formatCount(current) : 'Queued'} tone="text-teal-700" />
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <Metric label="Followers" value={stats.current !== null ? formatCount(stats.current) : '—'} tone="text-teal-700" />
+                  <Metric label="7-day change" value={formatNullableChange(stats.change7d)} tone={changeTone(stats.change7d)} />
+                  <Metric label="30-day change" value={formatNullableChange(stats.change30d)} tone={changeTone(stats.change30d)} />
+                  <Metric label="30-day growth" value={formatPercent(stats.growth30dPct)} tone={changeTone(stats.growth30dPct)} />
+                  <Metric label="Average / day" value={formatNullableChange(stats.avgDailyGain)} tone={changeTone(stats.avgDailyGain)} />
                   <Metric label="Snapshots" value={String(account._count.snapshots)} tone="text-slate-950" />
-                  <Metric label="Change" value={change !== null ? formatChange(change) : 'Building'} tone={change !== null && change < 0 ? 'text-rose-600' : 'text-emerald-700'} />
-                  <Metric label="Avg / snapshot" value={avgDailyGain !== null ? formatChange(avgDailyGain) : 'Building'} tone="text-slate-950" />
                 </div>
                 {!status.indexable && (
                   <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold leading-5 text-amber-800">
-                    Visible but not indexable yet. Needs 3+ snapshots, a follower count,
-                    and profile signal before Google indexing.
+                    This page is collecting enough recent history to become a useful public result.
                   </p>
                 )}
               </div>
@@ -174,15 +269,13 @@ export default async function InstagramFollowerCountPage({ params }: PageProps) 
           <div className="mx-auto max-w-7xl px-4">
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-sm font-black uppercase text-rose-600">
-                  Growth chart
-                </p>
+                <p className="text-sm font-black uppercase text-rose-600">Growth chart</p>
                 <h2 className="mt-2 text-3xl font-black text-slate-950">
                   @{handle} follower count history
                 </h2>
               </div>
               <p className="text-sm font-semibold text-slate-500">
-                {snapshots.length} chart point{snapshots.length === 1 ? '' : 's'}
+                {snapshots.length} daily point{snapshots.length === 1 ? '' : 's'} shown
               </p>
             </div>
 
@@ -190,13 +283,9 @@ export default async function InstagramFollowerCountPage({ params }: PageProps) 
               {snapshots.length > 0 ? (
                 <PublicChart snapshots={snapshots} handle={handle} />
               ) : (
-                <div className="flex h-64 flex-col items-center justify-center rounded-lg bg-slate-50 px-4 text-center">
-                  <p className="text-sm font-black text-slate-950">
-                    First public snapshot queued
-                  </p>
-                  <p className="mt-2 max-w-md text-sm font-semibold leading-6 text-slate-500">
-                    The page exists, but it will stay out of the sitemap and noindex
-                    until the account has useful follower history.
+                <div className="flex h-64 items-center justify-center rounded-lg bg-slate-50 px-4 text-center">
+                  <p className="text-sm font-semibold text-slate-500">
+                    The first public snapshot has not been collected yet.
                   </p>
                 </div>
               )}
@@ -205,20 +294,46 @@ export default async function InstagramFollowerCountPage({ params }: PageProps) 
         </section>
 
         <section className="bg-sky-50 py-12 sm:py-16">
+          <div className="mx-auto max-w-7xl px-4">
+            <h2 className="text-3xl font-black text-slate-950">Growth highlights</h2>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <Highlight
+                label="Largest daily gain"
+                value={stats.biggestGain ? formatChange(stats.biggestGain.change) : 'Not enough history'}
+                detail={stats.biggestGain ? formatDate(stats.biggestGain.date) : undefined}
+              />
+              <Highlight
+                label="Largest daily loss"
+                value={stats.biggestLoss ? formatChange(stats.biggestLoss.change) : 'No loss recorded'}
+                detail={stats.biggestLoss ? formatDate(stats.biggestLoss.date) : undefined}
+              />
+              <Highlight
+                label="Tracking period"
+                value={stats.trackingDays !== null ? `${stats.trackingDays} days` : 'Building history'}
+                detail={firstSnapshot && latestSnapshot && firstSnapshot !== latestSnapshot
+                  ? `${formatDate(firstSnapshot.takenAt)} to ${formatDate(latestSnapshot.takenAt)}`
+                  : undefined}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-white py-12 sm:py-16">
           <div className="mx-auto grid max-w-7xl gap-6 px-4 lg:grid-cols-[1fr_0.9fr]">
             <article className="rounded-lg border border-cyan-950/10 bg-white p-6 shadow-sm">
               <h2 className="text-2xl font-black text-slate-950">
-                Why this public page exists
+                Understanding @{handle}&apos;s follower growth
               </h2>
               <div className="mt-4 space-y-4 text-sm font-semibold leading-7 text-slate-600">
                 <p>
-                  Public Instagram follower counts are useful when they are saved over time.
-                  A single number is a lookup; a series of snapshots shows momentum, drops,
-                  spikes, and trend direction.
+                  This page records public follower-count snapshots for @{handle}. Comparing
+                  snapshots reveals sustained growth, audience losses, and unusual spikes that a
+                  single live count cannot show.
                 </p>
                 <p>
-                  We never show which user added this account. The page only uses public
-                  profile-level follower data and the daily snapshots saved by the platform.
+                  Counts may differ slightly from Instagram during collection windows. The page
+                  does not expose who follows or unfollows the account, and it does not identify
+                  which user requested tracking.
                 </p>
               </div>
             </article>
@@ -241,25 +356,161 @@ export default async function InstagramFollowerCountPage({ params }: PageProps) 
             </aside>
           </div>
         </section>
+
+        {relatedAccounts.length > 0 && (
+          <section className="bg-sky-50 py-12 sm:py-16">
+            <div className="mx-auto max-w-7xl px-4">
+              <div className="flex items-end justify-between gap-4">
+                <h2 className="text-3xl font-black text-slate-950">Other tracked accounts</h2>
+                <Link href="/instagram-follower-count" className="text-sm font-black text-teal-700 hover:text-teal-900">
+                  Browse all →
+                </Link>
+              </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {relatedAccounts.map((candidate) => (
+                  <Link
+                    key={candidate.handle}
+                    href={`/instagram-follower-count/${candidate.handle}`}
+                    className="rounded-lg border border-cyan-950/10 bg-white p-4 transition hover:-translate-y-1 hover:border-teal-300 hover:shadow-xl hover:shadow-cyan-950/10"
+                  >
+                    <p className="text-sm font-black text-slate-950">
+                      {candidate.displayName ?? `@${candidate.handle}`}
+                    </p>
+                    <div className="mt-2 flex items-center justify-between gap-3">
+                      <p className="truncate text-xs font-semibold text-slate-500">@{candidate.handle}</p>
+                      <p className="shrink-0 text-xs font-black text-teal-700">
+                        {candidate.followerCount !== null ? formatCount(candidate.followerCount) : '—'}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
       </main>
       <Footer />
     </>
   );
 }
 
-function Metric({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone: string;
-}) {
+function calculateGrowthStats(
+  snapshots: PublicHistorySnapshot[],
+  fallbackCurrent: number | null
+) {
+  const latest = snapshots.at(-1);
+  const first = snapshots[0];
+  const current = latest?.followerCount ?? fallbackCurrent;
+  const change7d = changeWithinDays(snapshots, 7);
+  const change30d = changeWithinDays(snapshots, 30);
+  const baseline30d = baselineWithinDays(snapshots, 30);
+  const growth30dPct =
+    change30d !== null && baseline30d
+      ? (change30d / baseline30d) * 100
+      : null;
+  const trackingDays =
+    first && latest && first !== latest
+      ? Math.max(
+          1,
+          Math.round(
+            (latest.takenAt.getTime() - first.takenAt.getTime()) / 86_400_000
+          )
+        )
+      : null;
+  const totalChange =
+    first && latest && first !== latest
+      ? latest.followerCount - first.followerCount
+      : null;
+  const avgDailyGain =
+    totalChange !== null && trackingDays ? Math.round(totalChange / trackingDays) : null;
+
+  let biggestGain: { change: number; date: Date } | null = null;
+  let biggestLoss: { change: number; date: Date } | null = null;
+  for (let index = 1; index < snapshots.length; index += 1) {
+    const currentSnapshot = snapshots[index];
+    const previousSnapshot = snapshots[index - 1];
+    if (!currentSnapshot || !previousSnapshot) continue;
+    const delta = currentSnapshot.followerCount - previousSnapshot.followerCount;
+    if (delta > 0 && (!biggestGain || delta > biggestGain.change)) {
+      biggestGain = { change: delta, date: currentSnapshot.takenAt };
+    }
+    if (delta < 0 && (!biggestLoss || delta < biggestLoss.change)) {
+      biggestLoss = { change: delta, date: currentSnapshot.takenAt };
+    }
+  }
+
+  return {
+    current,
+    change7d,
+    change30d,
+    growth30dPct,
+    avgDailyGain,
+    biggestGain,
+    biggestLoss,
+    trackingDays,
+  };
+}
+
+function baselineWithinDays(snapshots: PublicHistorySnapshot[], days: number) {
+  const latest = snapshots.at(-1);
+  if (!latest || snapshots.length < 2) return null;
+  const cutoff = latest.takenAt.getTime() - days * 86_400_000;
+  const baseline = snapshots.find((snapshot) => snapshot.takenAt.getTime() >= cutoff);
+  return baseline && baseline !== latest ? baseline.followerCount : null;
+}
+
+function changeWithinDays(snapshots: PublicHistorySnapshot[], days: number) {
+  const latest = snapshots.at(-1);
+  const baseline = baselineWithinDays(snapshots, days);
+  return latest && baseline !== null ? latest.followerCount - baseline : null;
+}
+
+function formatNullableChange(value: number | null) {
+  return value === null ? '—' : formatChange(value);
+}
+
+function formatPercent(value: number | null) {
+  if (value === null) return '—';
+  return `${value >= 0 ? '+' : ''}${value.toFixed(value < 10 && value > -10 ? 1 : 0)}%`;
+}
+
+function changeTone(value: number | null) {
+  if (value === null || value === 0) return 'text-slate-950';
+  return value > 0 ? 'text-emerald-700' : 'text-rose-600';
+}
+
+function formatDate(date: Date) {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date);
+}
+
+function Metric({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
     <div className="rounded-lg border border-cyan-950/10 bg-slate-50 p-4">
       <p className={`text-2xl font-black tabular-nums ${tone}`}>{value}</p>
       <p className="mt-1 text-xs font-bold text-slate-500">{label}</p>
+    </div>
+  );
+}
+
+function Highlight({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-cyan-950/10 bg-white p-5 shadow-sm">
+      <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">{label}</p>
+      <p className="mt-2 text-2xl font-black text-slate-950">{value}</p>
+      {detail && <p className="mt-1 text-xs font-semibold text-slate-500">{detail}</p>}
     </div>
   );
 }

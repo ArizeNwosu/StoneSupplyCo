@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { SITE_URL } from '@/lib/site-url';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://instagramfollowerstracker.com'),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'Instagram Followers Tracker - Free Online Growth & Unfollow Tracking',
     template: '%s | Instagram Followers Tracker',

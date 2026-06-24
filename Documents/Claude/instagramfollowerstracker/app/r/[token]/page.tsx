@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { formatCount } from '@/lib/format';
 import { FollowerChart } from '@/components/tracker/FollowerChart';
+import Link from 'next/link';
 
 export async function generateMetadata(
   { params }: { params: Promise<{ token: string }> }
@@ -18,7 +19,7 @@ export async function generateMetadata(
   return {
     title: `@${link.trackedAccount.handle} — Follower Growth Report`,
     description: `Follower growth report for @${link.trackedAccount.handle} on Instagram.`,
-    robots: { index: false, follow: false },
+    robots: { index: false, follow: true },
   };
 }
 
@@ -145,6 +146,14 @@ export default async function ReportPage(
 
         {/* Footer */}
         <p className="text-center text-xs text-slate-500">
+          View the permanent public page for{' '}
+          <Link
+            href={`/instagram-follower-count/${account.handle}`}
+            className="font-semibold text-cyan-700 hover:text-cyan-900"
+          >
+            @{account.handle}
+          </Link>
+          {' · '}
           Powered by{' '}
           <a
             href="https://instagramfollowerstracker.com"
