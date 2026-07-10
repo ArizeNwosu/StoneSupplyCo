@@ -334,6 +334,11 @@ before trusting.
   user. SPLT June 2026 statement ADDED by user (resolves the failed closing-balance extract).
   Next session verifies + re-indexes the newly added files. Remaining trivial read: the one
   dup-pair closing balance that failed to extract.
+- **CB Dec 2023 statement NOW INDEXED (S139, doc pass 2026-07-10).** FOOTED ✓: open $14,226.49
+  + cr $40,545.11 − dr $53,144.16 = close $1,627.44 (ties to Jan 2024 S140 opening — chain
+  confirmed). Key transactions: 12/26 $18,766.58 wire IN (shareholder loan origination); also
+  12/5 + 12/12 + 12/26 transfers totaling ~$36,782 to SGM (intercompany advances, balance-sheet).
+  CB pre-2023 coverage gap remains open (pre-Dec 2023).
 
 ## Layer 3 (SGM 2024 classification) findings
 - 2,022 SGM 2024 transactions classified. **Deposits tie PENNY-PERFECT to $895,754.12** = revenue
@@ -518,48 +523,24 @@ CLEAN (no footing needed): Layer 0 1099-K floors (form-sourced, penny-matched); 
 - STAGED for TJ: ···1400 ad $5,145 (confirm incremental vs as-filed $6,368 ad line); Option B full-
   SGM-TIN routing ($185,036 gross-up, needs Cyberbackpack COGS/fees on SGM) vs Option A (recommended).
 
-## ✅ SGM 2024 −$173,543 WATERFALL — COHERENCE AUDIT COMPLETE (2026-07-10)
-Full audit in LAYER_5_COHERENCE_AUDIT.md. Summary:
-
-**VERDICT: NO MATERIAL DOUBLE-COUNT FOUND. −$173,543 is approximately correct.**
-
-Five items checked, results:
-1. **Returns — CLEAN.** 1099-K IS gross-of-returns. $22,838 Amazon returns is a valid separate
-   contra-revenue deduction. COGS does NOT double-deduct cost of returned goods (inventory method
-   handles this naturally through ending inventory). No triple-count.
-2. **TikTok shipping — SYMMETRIC.** Customer-paid shipping IS inside the $155,295 TikTok gross.
-   Seller net shipping $27,964 is the matching cost. Both sides present. Not one-sided.
-3. **Fees vs COGS vs gross-up — NO OVERLAP.** Platform fees (Amazon $52,007, TikTok $22,343) =
-   selling commissions. COGS = factory wires to Kangdao. Gross-up +$102,772 = pure revenue
-   restatement. Zero overlap.
-4. **Mold $25,000 — CLASSIFICATION FLAG, NOT income-changing.** COGS_MOLD = wire to CHUKWUEZUGO
-   NWOSU (Riz's brother, related party, 12/26/24). Invoice on file. Should be Section 179 capital
-   expense (not COGS) — but income effect identical with S179 election. No double-count.
-5. **Freight — UNDERSTATEMENT (missing from waterfall), NOT double-count.** SGM paid $89,121
-   gross freight; BUT the $42,747 SGM-side intercompany reimbursement from CB is NOW CONTRADICTED
-   by CB's books ($13,067 explicit freight + $16,591 other = $29,658 max). Net SGM freight is
-   between $46,373 and $76,054. This IS missing from the gross-up waterfall — loss is deeper than
-   −$173,543 to that extent. Intercompany reconciliation required before either entity finalizes.
-
-**Three near-offsetting corrections bring the waterfall to ≈ −$172,793 (using SGM-side freight):**
-- COGS ending inventory not deducted: +$54,331 shallower (corrected COGS = $332,468 vs $386,799)
-  (TJ method call: cash method → no adjustment; inventory method → −$57,600 ending inventory)
-- Missing freight: −$46,373 deeper (interco-reconciliation required for exact amount)
-- Operating deductions $182,309 → $189,517 bank-reconstructed: −$7,208 deeper
-- NET: $750 shallower → corrected ≈ −$172,793 (vs prior −$173,543, a 0.4% difference)
-
-**The −$173,543 was a reasonable approximation. Amendment remains FAVORABLE. Does not raise tax.**
-
-**FILING INSTRUMENT:** Use the Amendment Packet (SGM_2024_1120S_Amendment_Packet_FINAL.xlsx),
-not the gross-up model, for the actual 1120-S amendment. Packet uses net-deposits revenue ($560,938)
-and inventory-method COGS ($393,532) → loss −$14,903. Simpler, more defensible. The gross-up model
-served its purpose (income-neutrality proof) and can be retired as the filing approach.
-
-**OPEN before SGM 2024 files (see LAYER_5_COHERENCE_AUDIT.md for full TJ staging):**
-- ⚠️ Freight intercompany reconciliation (SGM $42,747 claim vs CB $29,658 max) — BLOCKING both entities
-- TJ: accounting method (cash vs inventory) for ending inventory
-- TJ: mold $25,000 Section 179 election + Chukwuezugo arm's-length verification
-- TJ: Kangdao mold wire $8,733.33 confirm with factory
+## ⚠️ SGM 2024 −$173,543 WATERFALL — COHERENCE CHECK REQUIRED before trusting (possible double-count)
+The COGS-corrected waterfall shows amended loss −$173,543 (impact −$140,192). COGS correction
+(~$117K, $270,032→$386,799) is LEGITIMATE and confirmed. BUT the fee/return/shipping layer stacked
+on top may DOUBLE-COUNT. A −$173K loss on a ~$752K-GMV, roughly-breakeven business is large enough
+to warrant suspicion — overstating a loss is as diligence-dangerous as understating tax (an analyst
+re-deriving it and finding a double-count discredits the whole package). MUST verify each item is
+counted ONCE on a consistent basis BEFORE this is SGM 2024 final:
+- Is $521,762 gross receipts GROSS-of-returns (it's the 1099-K, so yes) — then the SEPARATE $22,838
+  Amazon returns deduction is only valid if returns aren't ALSO removed elsewhere (e.g. in COGS or
+  net revenue). Risk: returned unit counted 3x (in gross, as returns deduction, and its COGS).
+- Does $386,799 COGS include cost of returned/refunded units? Must be consistent with revenue-side
+  return handling.
+- Is TikTok net shipping $27,964 (seller-paid, deducted) matched by customer-paid shipping INSIDE
+  the gross-up, or is it a one-sided deduction? (One-sided = fine only if shipping isn't in gross.)
+ACTION: coherence/double-count audit of the waterfall (gross receipts, COGS, returns, shipping each
+counted once, consistent basis). Until done, −$173,543 is PROVISIONAL, not the final verdict. The
+FAVORABLE direction is likely real (COGS correction alone deepens loss ~$117K) but the MAGNITUDE is
+suspect.
 
 ## Layer 4 (Cyberbrands 2024 classification) — COMPLETE, clean
 - All 12 months (S140–S151) FOOT to the penny; zero parser corrections (standing-rule gate worked
@@ -575,8 +556,59 @@ served its purpose (income-neutrality proof) and can be retired as the filing ap
 - **⚠️ BNPL double-count risk:** BNPL $9,448.57 may ALREADY be inside the Shopify CB 1099-K/$80,116
   (Affirm/Klarna on Shopify shows in Shopify volume). If so, CB revenue overstated ~$9.4K. Confirm
   before locking CB revenue. Same one-basis discipline as the SGM returns audit.
-- **⚠️ $18,766.58 Feb branch cash withdrawal — purpose UNKNOWN. Diligence red flag** (unexplained
-  ~$19K cash movement = what a forensic accountant circles). Owner must identify + document BEFORE
-  CB return finalizes. Not a session question.
+- **✅ $18,766.58 Feb 2024 branch cash withdrawal — RESOLVED. Shareholder loan repayment (non-deductible).**
+  Origination: 12/26/2023, CB received $18,766.58 IN via wire from Arize Nwosu's Charles Schwab
+  (WT Ats0000052220853, Trn#231226090198). Source = CB Dec 2023 stmt (S139). Repayment: Feb 2024
+  branch withdrawal $18,766.58 OUT (S141). Round-trip matches penny-perfect. NON-TAXABLE both
+  legs — loan proceeds ≠ income; repayment ≠ deduction. Balance-sheet only. Diligence flag CLEARED.
+  CB_2024_Txns row reclassed LOAN_REPAYMENT_SHAREHOLDER; Intercompany row CB-ARIZE-2023-12-LOAN-ROUNDTRIP added.
 - Other CB open items (TJ): Jun SGM Tesla loan $1,300 (CB→SGM terms); reversals (Shopify $1,503.67
   + BNPL $300.24 + TikTok $41.38); 12/30 Traveluro $117.99 personal vs business.
+
+## SGM 2024 coherence audit — RESULT + a bigger finding (TWO FILING MODELS)
+- Coherence audit: NO material double-count. Gross-up model corrected −$173,543 → −$172,793 (0.4%).
+  Returns clean (1099-K gross-of-returns; returns deduction legit; COGS handles returns via inventory
+  method, not a 3rd deduction). TikTok shipping SYMMETRIC. Fees/COGS/gross-up no overlap.
+- **⚠️ TWO COMPETING FILING MODELS FOR SGM 2024 — TJ MUST CHOOSE (this is the real decision):**
+  1. GROSS-UP model (what we proved): revenue $521,762, loss −$172,793. Cures 1099-K matching
+     exposure (reports gross receipts at 1099-K level). Complex.
+  2. NET-DEPOSITS packet (`SGM_2024_1120S_Amendment_Packet_FINAL.xlsx`, the current filing
+     instrument): revenue $560,938, inventory-method COGS $393,532, loss −$14,903. Simpler, BUT may
+     REINTRODUCE the 1099-K matching exposure the whole project exists to cure. ~$158K loss difference.
+  The audit recommended retiring the gross-up as a filing approach — but that recommendation may
+  undo the matching-exposure fix. DO NOT treat this as settled; it's a genuine TJ tradeoff:
+  simplicity vs matching-exposure cure. Decide which model FILES before building anything downstream.
+- **⚠️ FREIGHT missing from gross-up model entirely** (understated loss). Intercompany gap: SGM claims
+  $42,747, CB books $29,658 max → $13,089 unreconciled. Net SGM freight RANGE $46,373–$76,054 →
+  corrected loss RANGE −$172,793 to −$202,474. BLOCKS both entities until intercompany pass resolves.
+- Mold $25K (Chukwuezugo, related party): capitalize + Section 179 (same income effect); verify arm's-
+  length. Kangdao mold wire $8,733.33 — confirm with factory.
+
+## Cyberbrands BNPL — CONFIRMED DOUBLE-COUNT (owner: Affirm/Klarna ran through Shopify)
+- CB BNPL $9,448.57 IS already inside the Shopify CB 1099-K/$80,116 (BNPL ran through Shopify). So the
+  separate BNPL revenue line DOUBLE-COUNTS. CORRECT: CB 2024 revenue $116,561.18 − $9,448.57 =
+  **$107,112.61**. Remove the BNPL line as separate revenue. Still above 1099-K floor $104,678.
+
+## ✅ 2024 CLOSED — Layer 6 intercompany reconciliation COMPLETE
+- **SGM's $42,747 "freight from CB" was a MISCLASSIFICATION** — it had lumped ALL CB→SGM transfers
+  (inventory advances, ads, marketing) into one freight bucket. Real labeled freight reimbursement =
+  **$15,067** (Jan $12,067 + Jun $1,000 + May $2,000). Caught only by forcing both sides to agree.
+- Resolved freight split: SGM net Splitflask freight **$74,053.50** ($89,120.50 gross third-party −
+  $15,067 CB reimb); CB Cyberbackpack freight $15,067. SGM gross $89,120.50 = 9 wires exact.
+- **SGM 2024 amended loss — SINGLE NUMBER (range collapsed):** inventory method −$200,474.50; cash
+  method −$258,074.50. TJ picks method; BOTH favorable, amendment does NOT raise tax.
+- CB 2024 revenue locked **$107,112.61** (post-BNPL), above floor $104,678.41.
+- Double-count check: 30 intercompany lines — 18 PASS, 9 FLAG-TJ (classification judgment calls, not
+  errors), **0 FAIL**. SGM 2024 and CB 2024 are now MUTUALLY CONSISTENT.
+- Per-entity ads clean (no overlap): CB direct $20,276.87; CB→SGM transfers $2,559.41 (balance sheet,
+  separate); SGM bank $6,368.
+- **$8,135.50 intercompany RECEIVABLE/PAYABLE — DOCUMENTED** (SGM-CB-2024-05-FREIGHT-RECEIVABLE in
+  Intercompany tab). SGM books: receivable +$8,135.50 (asset, Due from Cyberbrands). CB books: payable
+  +$8,135.50 (liability, Due to SGM). Background: SGM paid $10,135.50 to Guangzhou Wangbuliao for a CB
+  Cyberbackpack shipment; CB paid $2,000 only. ⚠️ TJ FLAG: Layer 6 SGM net Splitflask freight
+  ($74,053.50) arithmetically INCLUDES this $8,135.50 (because CB hasn't repaid it). If CB deducts
+  $8,135.50 as Cyberbackpack freight, SGM freight must be reduced to $65,918.00 to avoid double-count.
+  TJ must choose one path: (a) SGM absorbed it → SGM deducts $74,053.50, CB deducts $15,067 only; or
+  (b) receivable/payable → SGM deducts $65,918, CB deducts $23,202.50. See FLAG-TJ in Intercompany.
+- TJ intercompany items: $6,000 mgmt/marketing (service vs capital); $2,000 patent share (confirm SGM
+  didn't deduct $3,410 gross); $3,621.41 ads/promo; $550.52 Shopify routing; freight/receivable above.
