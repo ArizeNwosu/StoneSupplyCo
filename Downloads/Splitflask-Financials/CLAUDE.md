@@ -334,11 +334,6 @@ before trusting.
   user. SPLT June 2026 statement ADDED by user (resolves the failed closing-balance extract).
   Next session verifies + re-indexes the newly added files. Remaining trivial read: the one
   dup-pair closing balance that failed to extract.
-- **CB Dec 2023 statement NOW INDEXED (S139, doc pass 2026-07-10).** FOOTED ✓: open $14,226.49
-  + cr $40,545.11 − dr $53,144.16 = close $1,627.44 (ties to Jan 2024 S140 opening — chain
-  confirmed). Key transactions: 12/26 $18,766.58 wire IN (shareholder loan origination); also
-  12/5 + 12/12 + 12/26 transfers totaling ~$36,782 to SGM (intercompany advances, balance-sheet).
-  CB pre-2023 coverage gap remains open (pre-Dec 2023).
 
 ## Layer 3 (SGM 2024 classification) findings
 - 2,022 SGM 2024 transactions classified. **Deposits tie PENNY-PERFECT to $895,754.12** = revenue
@@ -556,12 +551,9 @@ suspect.
 - **⚠️ BNPL double-count risk:** BNPL $9,448.57 may ALREADY be inside the Shopify CB 1099-K/$80,116
   (Affirm/Klarna on Shopify shows in Shopify volume). If so, CB revenue overstated ~$9.4K. Confirm
   before locking CB revenue. Same one-basis discipline as the SGM returns audit.
-- **✅ $18,766.58 Feb 2024 branch cash withdrawal — RESOLVED. Shareholder loan repayment (non-deductible).**
-  Origination: 12/26/2023, CB received $18,766.58 IN via wire from Arize Nwosu's Charles Schwab
-  (WT Ats0000052220853, Trn#231226090198). Source = CB Dec 2023 stmt (S139). Repayment: Feb 2024
-  branch withdrawal $18,766.58 OUT (S141). Round-trip matches penny-perfect. NON-TAXABLE both
-  legs — loan proceeds ≠ income; repayment ≠ deduction. Balance-sheet only. Diligence flag CLEARED.
-  CB_2024_Txns row reclassed LOAN_REPAYMENT_SHAREHOLDER; Intercompany row CB-ARIZE-2023-12-LOAN-ROUNDTRIP added.
+- **⚠️ $18,766.58 Feb branch cash withdrawal — purpose UNKNOWN. Diligence red flag** (unexplained
+  ~$19K cash movement = what a forensic accountant circles). Owner must identify + document BEFORE
+  CB return finalizes. Not a session question.
 - Other CB open items (TJ): Jun SGM Tesla loan $1,300 (CB→SGM terms); reversals (Shopify $1,503.67
   + BNPL $300.24 + TikTok $41.38); 12/30 Traveluro $117.99 personal vs business.
 
@@ -602,13 +594,134 @@ suspect.
   errors), **0 FAIL**. SGM 2024 and CB 2024 are now MUTUALLY CONSISTENT.
 - Per-entity ads clean (no overlap): CB direct $20,276.87; CB→SGM transfers $2,559.41 (balance sheet,
   separate); SGM bank $6,368.
-- **$8,135.50 intercompany RECEIVABLE/PAYABLE — DOCUMENTED** (SGM-CB-2024-05-FREIGHT-RECEIVABLE in
-  Intercompany tab). SGM books: receivable +$8,135.50 (asset, Due from Cyberbrands). CB books: payable
-  +$8,135.50 (liability, Due to SGM). Background: SGM paid $10,135.50 to Guangzhou Wangbuliao for a CB
-  Cyberbackpack shipment; CB paid $2,000 only. ⚠️ TJ FLAG: Layer 6 SGM net Splitflask freight
-  ($74,053.50) arithmetically INCLUDES this $8,135.50 (because CB hasn't repaid it). If CB deducts
-  $8,135.50 as Cyberbackpack freight, SGM freight must be reduced to $65,918.00 to avoid double-count.
-  TJ must choose one path: (a) SGM absorbed it → SGM deducts $74,053.50, CB deducts $15,067 only; or
-  (b) receivable/payable → SGM deducts $65,918, CB deducts $23,202.50. See FLAG-TJ in Intercompany.
+- New balance-sheet item: $8,135.50 intercompany RECEIVABLE (CB owes SGM, fronted Cyberbackpack
+  shipment) — must appear on both books.
 - TJ intercompany items: $6,000 mgmt/marketing (service vs capital); $2,000 patent share (confirm SGM
-  didn't deduct $3,410 gross); $3,621.41 ads/promo; $550.52 Shopify routing; freight/receivable above.
+  didn't deduct $3,410 gross); $3,621.41 ads/promo; $550.52 Shopify routing; the $8,135.50 receivable.
+
+## ✅ $18,766.58 cash withdrawal RESOLVED — shareholder loan round-trip
+Arize lent Cyberbrands $18,766.58 on 12/26/2023 (wire from his Charles Schwab, WT Ats0000052220853,
+Trn# 231226090198; source = Cyberbrands-2023-Dec-123123 WellsFargo.pdf, added to folder). Cyberbrands
+REPAID $18,766.58 in Feb 2024 (the previously-"unknown" withdrawal). Clean owner-loan round-trip —
+NON-TAXABLE both ways (proceeds not income, repayment not deduction), pure balance sheet. No longer a
+diligence flag. (Documented via DOC_LOAN_AND_RECEIVABLE pass.)
+
+## ✅ $8,135.50 intercompany receivable — RESOLVED: Path (b), real receivable (owner decision)
+SGM fronted a $10,135.50 Guangzhou wire for a Cyberbackpack shipment; CB reimbursed $2,000; $8,135.50
+remains owed by CB to SGM. DECISION = Path (b) — most GAAP-acceptable (cost matches the benefitting
+entity) and most diligence-defensible (matched receivable/payable pair shows its work; consistent with
+every other intercompany call). LOCKED TREATMENT:
+  - SGM 2024 net Splitflask freight = **$65,918.00** (was $74,053.50 − $8,135.50).
+  - CB 2024 Cyberbackpack freight = **$23,202.50** (was $15,067 + $8,135.50).
+  - $8,135.50 = intercompany RECEIVABLE on SGM (asset) / PAYABLE on CB (liability). Balance sheet.
+  - Freight deducted ONCE (on CB, the benefitting entity). No double-count.
+IMPACT: SGM 2024 amended loss adjusts (freight deduction ↓$8,135.50 → loss shallower by $8,135.50):
+inventory method now ≈ −$192,339; cash method ≈ −$249,939. STILL favorable. CB deduction rises
+$8,135.50 (CB slightly more favorable). Apply this freight split in the final waterfalls / V12.
+
+## 2025 Facebook ad card attribution (from 134-txn invoice, total $97,769.11)
+⚠️ Parser note: session first showed $85,325 (skipped Amount values) → corrected to $97,769.11.
+Facebook file needs a tie-out (sum of card breakdowns = total) every time — parser not fully trusted.
+Card → entity (2025 Splitflask FB ads):
+- ···3247 SPLT Chase $51,294.89 + ···2100 SPLT bank DEBIT $21,216.81 = SPLT ~$72,512
+- ···1400 SGM $12,704.23 + ···0261 SGM bank DEBIT $2,736.10 + ···6559 SGM biz WF credit $900.00 = SGM ~$16,340
+- ···5130 Cyberbrands $5,847.29 = CB
+- ···0566 MasterCard $3,069.79 = STILL UNKNOWN (identify)
+⚠️ ···2100 and ···0261 are BANK DEBIT cards → those charges ALREADY flow through SPLT/SGM bank
+statements. In 2025 classification, count them from the BANK (where they already are), do NOT also
+add from the FB invoice (already-counted trap). Invoice = attribution map; bank = where debit charge lives.
+Heavy Jan–Mar spend ($76K of $97K) = Shark Tank airing ramp.
+- TikTok 2025: only ~$1,891.85 settled (Jan–Apr 22); rest Pending w/ holding fees → confirms wound down after Q2.
+
+## PRIORITY DECISION (owner asked): FINISH 2025 CLASSIFICATIONS FIRST, then V12 — do NOT build V12 now.
+Rejected "build V12/CPA packets with what we have" — that would assemble the deliverable on INCOMPLETE
+2025 data (SGM 2025 underreporting identified but not resolved; SPLT 2025 + CB 2025 not classified).
+Violates the provenance gate (no unfooted/estimated figures in V12) and creates rework. V12 = the
+convergence point, assembled ONCE from fully-footed sourced figures at the END. Order: SGM 2025
+(LAYER_7, underreporting) → SPLT 2025 → CB 2025 → 2025 intercompany recon → THEN V12 + CPA packets.
+
+## Layer 7 (SGM 2025) — DONE, but surfaced the GATING 2025 question (Amazon TIN/entity)
+- SGM 2025: 720 rows, year-end balance $492.38 foots. Filed $130,976 = PURE BANK DEPOSITS (deposit-
+  basis error confirmed). Real composition: only $59,597 REVENUE; $57,317 OWNER LOANS; $9,551 interco
+  (CB); $1,600 interco (SPLT); $2,390 reversals. So filed figure was wrong BOTH directions (missing
+  Amazon revenue AND inflated by non-revenue owner loans).
+- **⚠️⚠️ GATING QUESTION FOR ALL 2025 — AMAZON $220K TIN/ENTITY (blocks SPLT 2025 classification):**
+  Amazon 1099-K = $240,010 on SGM TIN, but only $19,334 landed in SGM bank; ~$220,676 landed in
+  SPLT's WF 0423. Amazon changed the DISBURSEMENT bank when SPLT formed Jan 2025; 1099-K TIN stayed
+  SGM. TWO possible truths, DIFFERENT returns for BOTH entities:
+    (a) Account still SGM's → $240K is SGM revenue; SPLT received cash → SPLT owes SGM ~$220K PAYABLE;
+        SPLT revenue EXCLUDES the Amazon $220K.
+    (b) Account transferred to SPLT → $220K is SPLT REVENUE; SGM has a 1099-K on income not its own →
+        needs nominee/reporting statement.
+  ✅ RESOLVED (owner): the Amazon account MOVED to SPLT at formation; the TIN did NOT update (Amazon
+  lag) despite that being the intent. So ECONOMICALLY the Amazon income is SPLT'S. This is a NOMINEE-
+  INCOME situation (1099-K issued to wrong TIN).
+  RESOLUTION = NOMINEE DISTRIBUTION (confirmed by Amazon + IRS guidance, irs.gov/.../form-1099-k-in-error):
+    - SGM (old TIN): report the FULL $240,010 1099-K on SGM's return (satisfies IRS matching), then
+      deduct the SPLT-belonging portion as a "Nominee Distribution," AND issue a matching Form 1099
+      from SGM → SPLT for that exact amount. Creates the paper trail; nets that portion to zero on SGM.
+    - SPLT (new TIN): report that exact nominee amount as SPLT gross income.
+    - ⚠️ CUTOFF = 02/04/2025 (account switched to SPLT). SPLIT BY EARNED/ORDER DATE, not bank:
+      Amazon orders Jan 1 – Feb 4 = SGM'S OWN revenue (kept, NOT nominee'd). Orders Feb 5 – Dec 31 =
+      SPLT's (nominee-distributed SGM→SPLT). NOTE the ~2wk Amazon settlement lag: some of SGM's EARNED
+      Jan revenue DISBURSED to SPLT's bank after Feb 4 — so SGM's real earned Amazon > the $19,334 that
+      hit SGM's bank. Attribute by ORDER date, not cash-landing.
+    - NOMINEE amount SGM→SPLT = ONLY the Feb 5–Dec 31 portion (NOT the full $240,010). SGM reports full
+      $240,010 1099-K, keeps Jan1–Feb4 earned, nominees out the rest.
+    - ✅ SPLIT RESOLVED from Amazon order-date dashboard (earned basis, reproducible):
+      SGM Jan 1–Feb 4 Amazon earned = **$15,220.80** (295 items / 302 units).
+      SPLT Feb 5–Dec 31 (nominee) = $240,009.89 − $15,220.80 = **$224,789.09**.
+      Nominee 1099 SGM→SPLT = $224,789.09 (NOT full $240K). SGM reports full $240,010 1099-K, keeps
+      $15,220.80, nominees out $224,789.09.
+    - PARALLEL: also request CORRECTED 1099-K from Amazon under SPLT TIN (belt-and-suspenders).
+- **✅ SGM 2025 REAL revenue ≈ $55,484** = Amazon pre-switch $15,220.80 + non-Amazon bank $34,252 +
+  consulting $6,011. Small wind-down entity + $224,789.09 nominee pass-through. NOT ~$280K. The provisional $280,273 assumed Amazon was SGM's
+  — WRONG. Amazon is SPLT's. SGM 2025 real gross receipts ≈ non-Amazon bank rev $34,252 + consulting
+  $6,011 ≈ ~$40K. SGM 2025 is a SMALL entity + a nominee pass-through of the Amazon 1099-K. Recompute
+  SGM 2025 position on this basis (NOT the $280K gross-up).
+- ⚠️ Amazon 2025 fee ~$117K/48.8% is a PLUG — implausibly high (2024 real ~15%). Conflates fees with
+  timing/returns/entity artifacts. Need real Seller Central settlement statement before trusting. Same
+  trap as 2024.
+- Augusta rent $16,500 clean in bank; deductibility needs 14-day cap + no home-office double-stack (TJ).
+
+## Layer 8 (SPLT 2025 classification) — ✅ COMPLETE
+- **915 transactions, 12/12 months FOOT to the penny** (balance gate enforced; WF balance-as-amount
+  bug caught via x-coordinate parser). Total cr $369,980.87 / dr $360,130.48 / net $9,850.39 = Dec
+  closing balance ✓. All committed per month on master (S177–S188).
+- **Kickstarter DEFERRED confirmed: $54,386.08 across 11 deposits.** Classified DEFERRED_KICKSTARTER;
+  NOT counted as earned revenue. Consistent with Layer 1 lock. Cash-basis tax treatment = TJ decision.
+- **Amazon bank deposits = $96,995.36** in SPLT WF (net-of-fees + timing). Economic/nominee revenue =
+  $224,789.09. Gap ~$127,794 = Amazon fees + marketplace taxes + reserves + timing. ⚠️ NEEDS Amazon
+  Seller Central 2025 settlement report to substantiate fee component; the ~48.8% implied rate is still
+  a plug (same warning as Layer 7). Do NOT deduct $127,794 as fees until Seller Central confirms.
+- **Shopify channel deposits: $81,796 direct + $9,063 BNPL (Affirm) + $25,754 Global-E = $116,613 total.**
+  Shopify 2025 1099-K = $109,063.96 (SPLT TIN). $116,613 deposited > $109,064 1099-K by ~$7,549 — Global-E
+  may be outside the 1099-K scope (managed markets, separate settlement). Flag for Shopify export verification.
+- **TikTok 2025: $3,465.09 in bank** (net deposits, wound-down channel). Prior Layer 1 estimate was ~$1,892
+  settled; bank shows more — possible timing difference or pending payouts landing after Q2. Use $3,465.09
+  (bank-verified, footed). For GMV, gross-up was ~$24,510 — bank basis ≠ platform gross.
+- **COGS_SUPPLIER = $103,463.00** (Kangdao wires). **FREIGHT = $18,235.00** (Guangzhou Zunhuang).
+- **Owner loans in = $81,203.67** (multiple Nwosu personal transfers, branch deposits, Royceton transfers).
+  Chukwuezugo Nwosu wire $3,266.67 (Apr 2, Ally) flagged: needs invoice on file.
+- **Chase card payments (DEBT_CHASE_PAYMENT) = $118,405.79** — paying Chase ···3247 bill (Shark Tank ad
+  spend, Jan–Apr heavy). These are SPLT cash outflows but the underlying spend classification (ads) is on
+  Chase statements (Layer 9 or a separate Chase pass). ⚠️ Two Chase Autopay returns (Nov $5,897.54 + Dec
+  $9,650.18) = payments that bounced back. Net Chase payment = $118,406 − $15,548 = ~$102,858.
+- **Warehouse rent = $20,500** (Zelle to Kamyar Chamasmani, $2,500/mo). Separate from Augusta Rule.
+- **FB ads (bank debit card ···2100) = $22,351.63** — counted from bank, NOT from FB invoice (correct per
+  standing rule). Chase ···3247 FB charges are on Chase statements, not here.
+- **Intercompany: SPLT→SGM cash = $1,600** (Jul $1,300 + Nov $300). Amazon nominee noted in Intercompany
+  tab as REPORTING-only, not a cash transfer.
+- **⚠️ BANK DEPOSITS GAP vs Layer 1 estimate:** Earned revenue deposits $234,385 + Kickstarter $54,386 =
+  $288,771 vs Layer 1 SPLT figure of $279,815 (~$8,956 high). Gap likely from: Shopify GMV-vs-deposits
+  delta, TikTok timing, and/or Kickstarter treatment in Layer 1. Not a material discrepancy; flag for TJ
+  when reconciling SPLT 2025 tax return. Do NOT adjust the $279,815 estimate without sourcing the delta.
+- **⚠️ Nov Paris trip** (~$1,500 in intl purchases: hotel, Uniqlo, pharmacy, Uber, Air France) classified
+  PERSONAL pending business purpose confirmation (trade show / buyer trip?). TJ item.
+- **⚠️ Dec 18 IRS payment $245** labeled "MR Social Gear Media" but paid from SPLT WF — flag for entity
+  confirmation; may be INTERCO_OUT_SGM or a SPLT tax payment mislabeled.
+- **⚠️ Santander BILLPAY $X** (if present) — identity unconfirmed. TJ item.
+- **V12 PROVENANCE STATUS for SPLT 2025:** ALL 12 months footed from WF PDF statements. SPLT_2025_Txns tab
+  is V12-ready for bank-side figures. Amazon nominee $224,789.09 reportable (no 1099-K on SPLT TIN) but
+  fee substantiation STILL BLOCKED on Seller Central reports. Shopify net fees need Shopify export.
+  COGS/freight are bank-verified. CLEAN channels: TikTok bank deposits $3,465.
