@@ -390,52 +390,6 @@ work builds on those totals.
 - Shaed Inc $40,000 = SERVICES income, NOT product/wholesale revenue → OUT of GMV and out of the
   product-revenue line (different character; do not inflate Splitflask product revenue with it).
 
-## Path B — SGM 2024 Fee Substantiation findings (2026-07-09)
-Full detail in `PATH_B_FEE_SUBSTANTIATION.md`. Key corrections and findings:
-
-### SGM 2024 as-filed position (source: 1120-S PDF)
-Gross receipts $418,990 · COGS $270,032 · Gross profit $148,958 · Total deductions $182,309 ·
-Net loss -$33,351. Filed on CASH/DEPOSIT basis (net deposits ≈ $425K). Does NOT include gross-up
-to 1099-K floor. SGM TIN 1099-K floor = $604,026; Splitflask-only SGM 1099-K = $521,762.
-Underreporting gap: $102,772 (Splitflask-only) or $185,036 (full SGM TIN incl. Cyberbackpack
-Shopify $82,264). TJ must decide whether Cyberbrands Shopify ($82,264 on SGM TIN) is amended
-on SGM 1120-S or routed to Cyberbrands.
-
-### Platform fees — plug vs real (sourced)
-| Platform | 1099-K Gross | Plug Rate (prior) | REAL Rate (sourced) | Source |
-|----------|-------------|-------------------|---------------------|--------|
-| Amazon US | $344,036 | 38.5–39% | 15.1% referral+FBA ($52,007 stated) | Settlement CSV |
-| TikTok | $155,295 | 59.9% | UNKNOWN — image PDFs only | ⚠️ SEE BELOW |
-| Shopify (Personal TIN) | $164,614 | 15.6% | ~2.9% (~$5,276 est.) | Sales breakdown CSV |
-
-Amazon plug includes returns ($22,838 = 6.6%) and other non-fee costs. Shopify plug is mostly
-entity mismatch + Shopify Capital repayment (~$37K), not processing fees.
-
-### ⚠️ TikTok 2024 fee substantiation — DATA GAP
-The two 2024 TikTok Sales PDFs are IMAGE-ONLY (zero extractable data). The merchant P&L xlsx
-files are Q1 2025 only. There is NO machine-readable 2024 TikTok fee breakdown in local files.
-The 59.9% plug cannot be corrected without the 2024 TikTok Financial Summary.
-**TJ/Riz action:** Pull from TikTok Seller Center → Finance → Financial Summary → 2024 Full
-Year → export CSV. This is the GATING item for the TikTok fee deduction claim.
-
-### ⚠️ TIMING CORRECTION — $24.7K TikTok figure WAS WRONG
-Prior session claimed "$24.7K TikTok timing gap (Dec 2024 payout landing Jan 2025)." RETRACTED.
-Jan 2025 SGM bank statement (S122) shows only **$1,499.25** in TikTok credits (7 payments,
-Jan 3–10). There is no $24.7K TikTok timing adjustment. The corrected timing gap = $1,499.25.
-Amazon Jan 2025 credits: $17,886 (US $15,085 + MX $711 + CA $1,689) — portions attributable to
-Dec 2024 earned; cutoff election required (TJ: cash basis recommended, immaterial adjustment).
-
-### Shopify entity routing (staged for TJ)
-1099-K $164,614 on Personal TIN (…7639); deposits to SGM $139,500. Gap = Shopify Payments
-fee ~$5,276 (2.9%) + Shopify Capital repayment ~$37K (non-deductible principal).
-**Option A** (recommended): Report on Personal Schedule C per TIN — clean IRS matching.
-**Option B**: Report on SGM 1120-S — requires reconciliation statement on Personal 1040.
-2025 precedent: Splitflask Shopify moved to SPLT TIN → Option A (file on TIN entity) is consistent.
-
-### Step 4 BLOCKED
-Balance reconciliation not committed. Do NOT compute SGM 2024 income neutrality until all 12
-months of SGM_2024_Txns foot to closing balances. Run RECON_SGM_2024_BALANCE next session.
-
 ## STANDING RULE — V12 ASSEMBLY PROVENANCE GATE
 Any figure entering V12 MUST trace to one of: (a) a FOOTED bank statement (passed the balance
 reconciliation gate), (b) a platform document (settlement/financial report, sales export, 1099-K
@@ -454,3 +408,112 @@ EXPOSURE MAP (what still needs footing before it can feed V12):
   unfooted parses; audit or rebuild-from-reconciled-ledger at V12 assembly time before inheriting.
 CLEAN (no footing needed): Layer 0 1099-K floors (form-sourced, penny-matched); Layer 2 headers
 (balances are the reference); GMV/channel locks (platform-documented).
+
+## SGM 2024 RECONCILIATION — corrected reality (supersedes Layer 3 provisional totals)
+- **Parser bug was SYSTEMIC, not 3 lines:** 77 debit rows corrected (balance captured as amount) +
+  3 missing rows added, across all months except November (which footed by luck). ~$1.37M of
+  phantom debit inflation removed. Examples: McDonald's $12,417→$7.92; Venmo $31,240→$66.30. ALL
+  12 months now FOOT to statement balances (diff $0.00). This is why the balance-foot gate is
+  mandatory — sanity bounds alone would never have caught 77 valid-looking inflated lines.
+- **Corrected SGM 2024 deduction base = $614,321** (was unverified ~$720,056; the ~$106K drop was
+  phantom inflation). +$15,363 TJ review items. Categories: COGS $390,068; freight $89,121 (gross,
+  pre-split); ADS ONLY $6,368 (⚠️ understated — see below); OPEX+bank fees $87,037; EIDL $13,320
+  (split principal/interest — TJ); AmEx payments $23,676; CA tax $4,360; other $39,258.
+- Deposits UNCHANGED and still tie: $895,754.12 penny-perfect, and now also foot per-statement.
+- **⚠️ NEUTRALITY NOW AT RISK — deductions dropped $106K.** As-filed net ~$560,938; SGM Splitflask
+  gross-receipts target ~$521,762 (1099-K floor $604,026 − $82,264 Cyberbackpack store). With the
+  corrected lower deduction base, the amendment may RAISE tax unless real ad spend is recovered.
+- **AD-SPEND GROSS-UP IS THE RELEASE VALVE:** ads show only $6,368 in bank because Meta/Google
+  charges hit the AMEX CARD, not the bank; only $23,676 of AmEx PAYMENTS appear in-bank. Real ad
+  spend (likely tens of $K) is in the AmEx statement, unreconstructed. PULL THE AMEX 2024 STATEMENT
+  — reconstructing card-level ad spend is real deductible expense and is plausibly what closes the
+  neutrality gap. This is now load-bearing for Path B, not optional.
+- Freight split unchanged: SGM $46,374 (Splitflask) / Cyberbrands $42,747 (Cyberbackpack); confirm
+  vs invoices; net the reimbursement so it's not SGM income.
+
+## 2024 Splitflask Facebook ad spend — from Meta invoice (authoritative)
+- **Total 2024 = $13,018.14** on 39 charges, two cards: **Visa ···5130 ($7,873.38, 29 charges)**
+  and **Visa ···1400 ($5,144.76, 10 charges)**. Meta ad account 1131220967651378. NO card 3247
+  (confirms 3247/SPLT/Chase is a 2025 card — didn't exist in 2024; the "3247 = uncounted" rule is
+  2025-ONLY).
+- **⚠️ AD SPEND IS SMALL — likely does NOT close the SGM 2024 neutrality gap.** We expected ads to
+  be the "release valve" recovering tens of $K against the $106K SGM deduction drop. Real 2024 Meta
+  spend was only ~$13K. So SGM 2024 neutrality may genuinely NOT hold — this becomes a real gap to
+  bring TJ, not a data-recovery win.
+- OPEN — WHOSE CARDS: identify ···5130 and ···1400 (Cyberbrands? SGM? personal?). Determines which
+  entity deducts the $13K. If Cyberbrands-paid (per earlier owner answer), it's a CYBERBRANDS
+  deduction, not SGM — does nothing for SGM's gap.
+- OPEN — DOUBLE-COUNT: SGM bank already showed $6,368 ads. If ···5130/···1400 are bank debit cards
+  on an already-reconciled account, part of the $13,018 is ALREADY counted — only the portion paid
+  by a card NOT flowing through a reconciled bank account is incremental. Net before adding.
+- AmEx 2024 = NOT used for ads (owner confirmed); AmEx carries OTHER 2024 expenses (separate
+  reconstruction). Chase 3247 = SPLT card, 2025+, paid from SPLT bank — 2025 ad story only.
+
+## Path B (SGM 2024) Steps 1-3 — fee substantiation results (Step 4 neutrality still BLOCKED on recon + TikTok)
+- **Amazon real fee = $52,007 (15.1%)** [referral $32,863 + FBA $19,144], sourced from
+  Splitflask-AMA...UnifiedTransaction.csv — NOT the $143K/39% plug (plug wrongly lumped returns,
+  FBA inventory, timing). PLUS returns $22,838 (sourced, separate deductible line).
+- **Shopify "fee" was a MIRAGE:** real Shopify Payments fee only ~$5,276 (2.9%). The $25K "plug"
+  = $5,276 fee + ~$37K Shopify Capital PRINCIPAL repayment (NON-deductible per owner decision).
+- **⚠️ TikTok 2024 fee = UNSUBSTANTIATED (real blocker).** Source PDFs are image-only; Excel P&Ls
+  are 2025 not 2024. ~44% on $155K gross ≈ ~$68K potential deduction, currently unproven. ACTION
+  (Riz): export 2024 Full-Year Financial Summary from TikTok Seller Center → Finance → Financial
+  Summary. Neutrality cannot fully close without this.
+- Timing scare RETRACTED: prior $24.7K TikTok year-end gap was WRONG — Jan 2025 stmt (S122) shows
+  only $1,499 TikTok credits. Amazon Jan 2025 receipts $17,886; cutoff election staged for TJ
+  (cash-basis 2024 calendar deposits = simplest, defensible for S-corp).
+- **Shopify entity routing = Option A (recommended):** Splitflask Shopify ($164,614, Personal TIN
+  …7639) reports on PERSONAL Schedule C (clean 1099-K TIN match); SGM's receipt of $139,500 =
+  owner capital contribution, NOT SGM revenue. Matches 2025 precedent (store → SPLT TIN).
+- **SGM as-filed 1120-S (extracted):** gross receipts $418,990 (net-of-fees), COGS $270,032, net
+  LOSS −$33,351. Splitflask-only 1099-K $521,762 → amendment gross-up needed = **$102,772**
+  (Splitflask-only) or $185,036 (full SGM TIN). Amazon fees $52,007 + returns $22,838 ≈ $75K of
+  sourced offsets vs the $102,772 gross-up — neutrality is CLOSE; TikTok fee (~$68K) is the swing.
+- **2024 Facebook ad card split RESOLVED:** ···5130 = CYBERBRANDS card → its $7,873.38 = Cyberbrands
+  deduction (carry to Cyberbrands reconstruction, NOT SGM). ···1400 = SGM card → its $5,144.76 =
+  SGM deduction; CONFIRM whether 1400 is an SGM bank-debit card (already in the reconciled $6,368
+  ads) or a separate SGM credit card (incremental) before adding.
+
+## AmEx 2024 reconstruction — result: NOT the release valve (worsens SGM base)
+- AmEx is a PERSONAL card (Arize, acct -12004 / Cheryl -12012) with a ~$49-52K Pay Over Time
+  balance from 2021. SGM paid it from WF 8625. All 7 available statements (Jan-Jul) FOOT clean —
+  AmEx PDFs have a single amount column, so the balance-as-amount bug is STRUCTURALLY IMPOSSIBLE
+  there (bug is specific to WF two-number lines; Chase/cards likely safe too). Aug-Dec = CSV only,
+  minimal/personal.
+- Business charges tiny: ~$720 clean-SGM (PatentYogi $152 + ALL IN Podcast $500 + IONOS/GoDaddy
+  $68); up to ~$3,893 if all routed to SGM. Emotive.io $3,091 + Shopify sub $64 route to PERSONAL
+  Sch C (Splitflask store was on Personal TIN in 2024 — same Option A pattern). AmEx ad spend = $0.
+- **⚠️ NETTING correction WORSENS SGM base:** the $23,676 SGM→AmEx payments were phantom deductions
+  — they're SGM paying down Arize's PERSONAL 2021 debt → reclassed NON-deductible (owner draw). Net:
+  SGM deduction base $614,321 − $23,676 + ~$720 = **~$591,365** (or ~$594,538 all-SGM routing).
+  AmEx did NOT fill the neutrality gap — it DEEPENED it by ~$20-23K.
+- **SGM 2024 NEUTRALITY NOW HINGES ENTIRELY ON THE TIKTOK 2024 FEE.** Gross-up needed ~$102,772;
+  sourced offsets = Amazon fees $52,007 + returns $22,838 ≈ $75K; ad line ~$5K; AmEx net-negative.
+  TikTok fee (~$68K if ~44%) is the ONLY remaining lever and is UNPROVEN (image-only source). If it
+  substantiates → neutrality likely holds. If not → SGM 2024 amendment RAISES tax (real gap for TJ).
+  Every other deduction category has now been checked — no other lever exists in the data.
+- TJ items added: Emotive.io routing; ALL IN Podcast business purpose; IONOS Jan duplicate check;
+  AmEx annual fee % business use.
+
+## ✅ SGM 2024 NEUTRALITY — RESOLVED FAVORABLE (Layer 5)
+- **VERDICT: amendment does NOT raise tax — it is FAVORABLE.** On SOURCED-ONLY deductions, amended
+  taxable income = −$56,776 (deeper loss than as-filed −$33,351); sourced new deductions $126,197 >
+  gross-up $102,772 = +$23,425 cushion. With the two remaining estimates ~−$89,048.
+- TikTok 2024 fee SUBSTANTIATED by STATED components (strongest method) from TikTok Seller Center
+  quarterly income files: seller-borne deductible costs = **$51,352 (33.1%)** = platform fees
+  $22,343 + net shipping $27,964 + ads top-up $1,045. Ties penny-perfect: settlements $62,240.64 =
+  classified SGM bank TikTok deposits. Nine 1099-K detail CSVs summed to $155,294.96 exactly.
+- The old $93,054/59.9% TikTok plug is RETIRED. The $41,702 gap between plug and real = TikTok
+  PLATFORM-FUNDED co-promotions — NOT seller expense, NOT deductible (correct to exclude; explain
+  if audited).
+- **✅ COGS RESOLVED — use reconstructed $387K (footed COGS line $390,068), NOT as-filed $270,032.**
+  Owner confirmed: the as-filed $270K was HIS earlier FLAWED figure given to TJ in good faith; the
+  reconstructed number is correct. So this is a correction to owner input, not a TJ judgment call.
+  ACTION: REPLACE (not add) the $270,032 in the amendment waterfall with the footed reconstructed
+  COGS (~$387K, tie to Kangdao/supplier payments already classified). Effect: ~$117K MORE deduction
+  → sourced-basis amended loss deepens from −$56,776 to ~−$173,000. Makes the amendment internally
+  coherent (revenue AND COGS both on actual basis). Even MORE favorable; still not tax-raising.
+- OPEN estimates (not load-bearing — verdict holds without them): Amazon MX/CA other fees ~$26,996;
+  Shopify Payments fee ~$5,276. Source or label as estimates for a clean package.
+- STAGED for TJ: ···1400 ad $5,145 (confirm incremental vs as-filed $6,368 ad line); Option B full-
+  SGM-TIN routing ($185,036 gross-up, needs Cyberbackpack COGS/fees on SGM) vs Option A (recommended).
