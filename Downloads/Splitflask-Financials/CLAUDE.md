@@ -223,6 +223,36 @@ Amazon ~34.9% haircut · TikTok ~44% (bank-tied) · Shopify ~3%.
 - No figure reaches `locked` in ledger.xlsx without a real `source_id`.
 - Corrections, once made, are locked and moved forward — don't relitigate settled reasoning.
 
+## ⚠️ PDF PARSER ARTIFACT RULE — READ BEFORE ANY BANK STATEMENT EXTRACTION
+
+**The bug:** Wells Fargo PDF statements sometimes place the transaction amount and the running
+ending balance on the same text line. A word-position extractor that picks up two numbers in
+the debit column will capture the ending balance (large) instead of the actual charge (small).
+
+**Confirmed incidents (SGM 2024):**
+- Jan 29: `Apple.Com/Bill … 12.98  13,152.36` → extractor took $13,152.36 (ending balance)
+- Apr 22: `Apple.Com/Bill … 9.99  25,051.28` → extractor took $25,051.28 (ending balance)
+- Sep 06: `Apple.Com/Bill … 0.99  18,438.69` → extractor took $18,438.69 (ending balance)
+
+**Guards that MUST be applied in every extraction script:**
+
+1. **Two-amount rule:** If a single transaction line yields two numeric amounts in the debit
+   column x-range, the SMALLER amount is the actual charge; the LARGER is the ending balance
+   bleed-through. Always take the smaller. Never take the larger of two amounts on one line.
+
+2. **Subscription vendor cap:** For known subscription/SaaS vendors (Apple, Adobe, Google,
+   Shopify, etc.), any single debit > $500 must be flagged `PARSER_ARTIFACT` automatically
+   and logged — do not classify it into any expense category.
+
+3. **Post-extraction sanity check:** After classifying all transactions, sort debits by amount
+   descending. Any amount > $5,000 that is NOT in `COGS_INVENTORY`, `FREIGHT`, `DEBT_*`,
+   `PERSONAL_VEHICLE_LOAN`, `OPEX_RENT`, or `ADV_*` must be manually verified against the
+   raw PDF line before it enters the ledger.
+
+4. **Parser artifacts are never deductible.** If an artifact row slips through, it inflates
+   deductions by the ending balance amount, which can be tens of thousands of dollars. Always
+   verify large anomalous charges against the physical bank statement before reporting totals.
+
 ## v11 reconstruction workbook — verification findings (READ BEFORE TRUSTING v11 REVENUE)
 Location: `Artifacts/` subfolder holds all generated files from prior sessions. The 2025 build
 lives in `SPLT_INC_Financial_Reconstruction_v11.xlsx` (24 tabs). VERIFIED this session — v11's
