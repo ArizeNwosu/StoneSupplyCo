@@ -223,36 +223,6 @@ Amazon ~34.9% haircut · TikTok ~44% (bank-tied) · Shopify ~3%.
 - No figure reaches `locked` in ledger.xlsx without a real `source_id`.
 - Corrections, once made, are locked and moved forward — don't relitigate settled reasoning.
 
-## ⚠️ PDF PARSER ARTIFACT RULE — READ BEFORE ANY BANK STATEMENT EXTRACTION
-
-**The bug:** Wells Fargo PDF statements sometimes place the transaction amount and the running
-ending balance on the same text line. A word-position extractor that picks up two numbers in
-the debit column will capture the ending balance (large) instead of the actual charge (small).
-
-**Confirmed incidents (SGM 2024):**
-- Jan 29: `Apple.Com/Bill … 12.98  13,152.36` → extractor took $13,152.36 (ending balance)
-- Apr 22: `Apple.Com/Bill … 9.99  25,051.28` → extractor took $25,051.28 (ending balance)
-- Sep 06: `Apple.Com/Bill … 0.99  18,438.69` → extractor took $18,438.69 (ending balance)
-
-**Guards that MUST be applied in every extraction script:**
-
-1. **Two-amount rule:** If a single transaction line yields two numeric amounts in the debit
-   column x-range, the SMALLER amount is the actual charge; the LARGER is the ending balance
-   bleed-through. Always take the smaller. Never take the larger of two amounts on one line.
-
-2. **Subscription vendor cap:** For known subscription/SaaS vendors (Apple, Adobe, Google,
-   Shopify, etc.), any single debit > $500 must be flagged `PARSER_ARTIFACT` automatically
-   and logged — do not classify it into any expense category.
-
-3. **Post-extraction sanity check:** After classifying all transactions, sort debits by amount
-   descending. Any amount > $5,000 that is NOT in `COGS_INVENTORY`, `FREIGHT`, `DEBT_*`,
-   `PERSONAL_VEHICLE_LOAN`, `OPEX_RENT`, or `ADV_*` must be manually verified against the
-   raw PDF line before it enters the ledger.
-
-4. **Parser artifacts are never deductible.** If an artifact row slips through, it inflates
-   deductions by the ending balance amount, which can be tens of thousands of dollars. Always
-   verify large anomalous charges against the physical bank statement before reporting totals.
-
 ## v11 reconstruction workbook — verification findings (READ BEFORE TRUSTING v11 REVENUE)
 Location: `Artifacts/` subfolder holds all generated files from prior sessions. The 2025 build
 lives in `SPLT_INC_Financial_Reconstruction_v11.xlsx` (24 tabs). VERIFIED this session — v11's
@@ -364,3 +334,123 @@ before trusting.
   user. SPLT June 2026 statement ADDED by user (resolves the failed closing-balance extract).
   Next session verifies + re-indexes the newly added files. Remaining trivial read: the one
   dup-pair closing balance that failed to extract.
+
+## Layer 3 (SGM 2024 classification) findings
+- 2,022 SGM 2024 transactions classified. **Deposits tie PENNY-PERFECT to $895,754.12** = revenue
+  deposits $581,396 + non-revenue inflows $314,358 (loans, intercompany, transfers, refunds). The
+  on-air deposits claim is now BANK-SUBSTANTIATED line by line. Kangdao Sept 2024 wire RESOLVED
+  (Dongguan Kangdao Industrial).
+- **⚠️ GATING RISK — platform fees are PLUGGED, not substantiated, and the amendment may NOT be
+  income-neutral as-is.** Fees were derived as (1099-K gross − bank deposits), which conflates
+  real fees with (a) year-end TIMING (Amazon ~$14K, TikTok ~$24.7K = Dec payout landing Jan 2025)
+  and (b) ENTITY MISMATCH (Shopify 1099-K on Personal TIN vs deposits in SGM account → the 15.6%
+  "fee" is largely artifact). Implied rates: Amazon 38.5% vs real 34.9%; TikTok 59.9% vs real 44%;
+  Shopify 15.6% vs real ~3%. If plugged fees (~$250K) are deducted, timing+entity artifacts get
+  deducted as expense → real substantiated fees are LOWER → gross-up may exceed offsets → amendment
+  RAISES taxable income. FIX: substantiate fees from actual platform SETTLEMENT reports (stated fee),
+  not the deposit-gap plug. TJ + platform reports. This is the gating item before SGM 2024 files.
+- SGM 2024 substantiated deductions (base) ~$720,056; up to ~$776,698 if Apple $56,642 approved.
+  Categories: COGS ~$312K (Kangdao+), freight $89,121 (pre-split), ads ~$87K, opex ~$75K, Square
+  advances $58,322, EIDL principal noted non-deductible.
+- **Freight intercompany split**: SGM paid $89,121 freight; Cyberbrands reimbursed $42,747 (freight
+  bill reimbursements, captured in Intercompany tab). Split = Splitflask freight $46,374 (SGM
+  1120-S) vs Cyberbackpack freight $42,747 (Cyberbrands). ⚠️ The $42,747 reimbursement ALSO sits in
+  SGM's $314,358 non-revenue inflows — reconciliation must net it so it's not double-counted (SGM
+  deducts $46,374, CB deducts $42,747, reimbursement NOT counted as SGM income). Confirm split vs
+  actual freight invoices before filing.
+- Open (TJ/confirm): TikTok year-end $24.7K gap (check S122 Jan 2025); Shopify TIN routing;
+  Apple.com $56,642 (deductible vs personal hardware — ~$57K deduction swing); Shopify chargebacks
+  $45,296 vs Capital principal (non-deductible); Shaed Inc $40,000 (wholesale rev vs service?);
+  PayPal *Piternurak $18,610 (COGS supplier?).
+
+## STANDING RULE — BALANCE RECONCILIATION IS MANDATORY (parser-artifact guard)
+A recurring parser bug captures the running-BALANCE column as a second transaction AMOUNT
+(hit Monthly Service Fee, SBA EIDL, and Apple.com — Apple inflated by $56,642; real charges were
+$12.98/$9.99/$0.99). It only gets caught when the phantom number looks big/wrong; smaller phantoms
+pass silently. Therefore, for EVERY classification pass, on EVERY statement:
+1. **FOOT TO BALANCE (non-negotiable gate):** sum all classified transactions for the statement;
+   opening balance ± transactions MUST equal the stated closing balance. A statement that does not
+   foot to its own closing balance is NOT done — investigate the break before marking complete.
+   This catches balance-as-amount and missing-transaction errors automatically (arithmetic can't lie).
+2. **ONE AMOUNT PER LINE:** never capture two amounts from one transaction line. The trailing
+   number is the running balance — capture it SEPARATELY into a balance field (used for the foot
+   check), never as a second amount.
+3. **SANITY BOUNDS (backstop only):** flag any single txn that is a large share of monthly volume
+   or ~equals a running balance. Weak net, not the primary defense.
+Note: "penny-perfect to an external target" (e.g. deposits = $895,754.12) is NOT the same as
+"internally foots to each statement's balance" — offsetting errors can hit a target while individual
+statements don't foot. Only per-statement balance reconciliation proves internal consistency.
+RETRO: SGM 2024 classification was done by the buggy parser and has NOT been balance-reconciled —
+its ~$720K deduction total is UNVERIFIED until all 12 months foot. Run reconciliation before any
+work builds on those totals.
+
+## Layer 3 corrections
+- Apple.com/Bill lines are PARSER ARTIFACTS: real charges $12.98 (1/29) + $9.99 (4/22) + $0.99
+  (9/6) = $23.96 → OPEX_SOFTWARE. Delete the phantom $56,642 OPEX_APPLE_REVIEW entries.
+- Shaed Inc $40,000 = SERVICES income, NOT product/wholesale revenue → OUT of GMV and out of the
+  product-revenue line (different character; do not inflate Splitflask product revenue with it).
+
+## Path B — SGM 2024 Fee Substantiation findings (2026-07-09)
+Full detail in `PATH_B_FEE_SUBSTANTIATION.md`. Key corrections and findings:
+
+### SGM 2024 as-filed position (source: 1120-S PDF)
+Gross receipts $418,990 · COGS $270,032 · Gross profit $148,958 · Total deductions $182,309 ·
+Net loss -$33,351. Filed on CASH/DEPOSIT basis (net deposits ≈ $425K). Does NOT include gross-up
+to 1099-K floor. SGM TIN 1099-K floor = $604,026; Splitflask-only SGM 1099-K = $521,762.
+Underreporting gap: $102,772 (Splitflask-only) or $185,036 (full SGM TIN incl. Cyberbackpack
+Shopify $82,264). TJ must decide whether Cyberbrands Shopify ($82,264 on SGM TIN) is amended
+on SGM 1120-S or routed to Cyberbrands.
+
+### Platform fees — plug vs real (sourced)
+| Platform | 1099-K Gross | Plug Rate (prior) | REAL Rate (sourced) | Source |
+|----------|-------------|-------------------|---------------------|--------|
+| Amazon US | $344,036 | 38.5–39% | 15.1% referral+FBA ($52,007 stated) | Settlement CSV |
+| TikTok | $155,295 | 59.9% | UNKNOWN — image PDFs only | ⚠️ SEE BELOW |
+| Shopify (Personal TIN) | $164,614 | 15.6% | ~2.9% (~$5,276 est.) | Sales breakdown CSV |
+
+Amazon plug includes returns ($22,838 = 6.6%) and other non-fee costs. Shopify plug is mostly
+entity mismatch + Shopify Capital repayment (~$37K), not processing fees.
+
+### ⚠️ TikTok 2024 fee substantiation — DATA GAP
+The two 2024 TikTok Sales PDFs are IMAGE-ONLY (zero extractable data). The merchant P&L xlsx
+files are Q1 2025 only. There is NO machine-readable 2024 TikTok fee breakdown in local files.
+The 59.9% plug cannot be corrected without the 2024 TikTok Financial Summary.
+**TJ/Riz action:** Pull from TikTok Seller Center → Finance → Financial Summary → 2024 Full
+Year → export CSV. This is the GATING item for the TikTok fee deduction claim.
+
+### ⚠️ TIMING CORRECTION — $24.7K TikTok figure WAS WRONG
+Prior session claimed "$24.7K TikTok timing gap (Dec 2024 payout landing Jan 2025)." RETRACTED.
+Jan 2025 SGM bank statement (S122) shows only **$1,499.25** in TikTok credits (7 payments,
+Jan 3–10). There is no $24.7K TikTok timing adjustment. The corrected timing gap = $1,499.25.
+Amazon Jan 2025 credits: $17,886 (US $15,085 + MX $711 + CA $1,689) — portions attributable to
+Dec 2024 earned; cutoff election required (TJ: cash basis recommended, immaterial adjustment).
+
+### Shopify entity routing (staged for TJ)
+1099-K $164,614 on Personal TIN (…7639); deposits to SGM $139,500. Gap = Shopify Payments
+fee ~$5,276 (2.9%) + Shopify Capital repayment ~$37K (non-deductible principal).
+**Option A** (recommended): Report on Personal Schedule C per TIN — clean IRS matching.
+**Option B**: Report on SGM 1120-S — requires reconciliation statement on Personal 1040.
+2025 precedent: Splitflask Shopify moved to SPLT TIN → Option A (file on TIN entity) is consistent.
+
+### Step 4 BLOCKED
+Balance reconciliation not committed. Do NOT compute SGM 2024 income neutrality until all 12
+months of SGM_2024_Txns foot to closing balances. Run RECON_SGM_2024_BALANCE next session.
+
+## STANDING RULE — V12 ASSEMBLY PROVENANCE GATE
+Any figure entering V12 MUST trace to one of: (a) a FOOTED bank statement (passed the balance
+reconciliation gate), (b) a platform document (settlement/financial report, sales export, 1099-K
+CSV), or (c) a 1099-K form. NOTHING may enter V12 from an unfooted bank-PDF parse. At assembly,
+every figure carries its source_id; if the source is a bank statement, that statement must be
+marked reconciled in BankIndex. A figure whose only provenance is an unfooted parse is BLOCKED
+from V12 until its statement foots. This makes the parser-artifact guard a gate at the assembly
+boundary — even if a classification pass is missed, the bug cannot reach the final package.
+EXPOSURE MAP (what still needs footing before it can feed V12):
+- SGM 2024 classification — reconciliation in progress (RECON_SGM_2024_BALANCE).
+- Layer 1 (2025 revenue) — BANK-DERIVED figures only (esp. SGM 2025 $52,200 vs ~$131K deposits);
+  platform-CSV figures are clean. Targeted re-check required.
+- Cyberbrands 2024 + 2025-entity classifications — NOT yet run; inherit the foot-to-balance gate
+  from the start (no retro needed).
+- v11 bank-derived tabs (GL_TB_Reconstructed, cash flow, balance sheet, debt) — built pre-rule on
+  unfooted parses; audit or rebuild-from-reconciled-ledger at V12 assembly time before inheriting.
+CLEAN (no footing needed): Layer 0 1099-K floors (form-sourced, penny-matched); Layer 2 headers
+(balances are the reference); GMV/channel locks (platform-documented).
