@@ -7,6 +7,7 @@
 **Prepared by:** Riz Nwosu (owner reconstruction) — for TJ (CPA) review and signature
 **Date:** 2026-07-11
 **Packet file:** `deliverables/SGM_2025_Amendment_Packet.xlsx`
+**Status:** FINAL (subject to TJ calls noted below — see Assembly 3B note in Deductions section)
 
 ---
 
@@ -18,7 +19,7 @@ Two distinct problems require correction on the SGM 2025 1120-S:
 
 2. **Amazon 1099-K nominee mechanics.** The Amazon 1099-K for 2025 ($240,009.89) was issued on SGM's TIN (83-3077502) because Amazon's TIN update lagged behind the physical account move to SPLT INC (formed Jan 28, 2025). The income is economically SPLT's. This amendment implements the IRS nominee-income resolution: report the full $240K in on SGM, then deduct the SPLT-belonging portion out, and file a nominee 1099 from SGM to SPLT.
 
-**Result:** Amended loss deepens from −$32,900 (as filed) to approximately −$19,027. Amendment is **favorable** — it does NOT raise tax, and it cures the $240,009.89 1099-K matching exposure on SGM's TIN.
+**Result:** Amended loss deepens from −$32,900 (as filed) to approximately −$11,915. Amendment is **favorable** — it does NOT raise tax, and it cures the $240,009.89 1099-K matching exposure on SGM's TIN.
 
 ---
 
@@ -30,8 +31,8 @@ Two distinct problems require correction on the SGM 2025 1120-S:
 | Amazon 1099-K reported IN | — | $240,009.89 | Nominee mechanics: report full 1099-K |
 | Nominee Distribution OUT | — | −$224,789.09 | Feb 5–Dec 31 Amazon orders belong to SPLT |
 | Amazon on SGM (net) | — | $15,220.80 | Jan 1–Feb 4 earned orders only |
-| Total Deductions | (TJ to verify filed) | ~$74,511 | Substantiated: Amazon fee $7,071 + Augusta $16,500 + FB ads $16,340 + bank-classified $34,600 |
-| Net Income / (Loss) | −$32,900 | ~−$19,027 | Loss deepens — favorable |
+| Total Deductions | (TJ to verify filed) | ~$67,398.79 | Substantiated: Amazon fee $7,071 + Augusta $16,500 + FB ads $16,340 + bank-itemized opex $27,487.79 |
+| Net Income / (Loss) | −$32,900 | ~−$11,915 | Loss deepens — favorable |
 
 ---
 
@@ -93,8 +94,10 @@ All deductions below are substantiated from the footed SGM 2025 bank statements 
 | Amazon fees — SGM slice | $7,071 | Substantiated (Amazon settlement, Layer 11) |
 | Augusta rule rent | $16,500 | Bank-substantiated — **pending TJ 14-day cap confirmation** |
 | Facebook/Meta ads — SGM cards (···1400, ···0261, ···6559) | $16,340 | Substantiated (FB invoice, card-coded) |
-| Non-Amazon operating expenses (from Layer 7 bank classification) | ~$34,600 | Provisional — **TJ to itemize from ledger tab SGM_2025_Txns** |
-| **Total deductions** | **~$74,511** | Provisional pending TJ itemization |
+| Non-Amazon operating expenses (from Layer 7 bank classification) | $27,487.79 (bank-itemized from SGM_2025_Txns; PROVISIONAL flag removed; V12-eligible) | Bank-substantiated — see Assembly 3B note below |
+| **Total deductions** | **~$67,398.79** | Final subject to TJ calls noted below |
+
+> **Assembly 3B (2026-07-11):** $34,600 provisional opex block replaced by $27,487.79 itemized from SGM_2025_Txns. Block was over-stated by $7,112. TJ adjustments pending: vehicle insurance $820.05 (likely disallow — standard mileage), meals 50% haircut (~$306), Westlake Baseball $411 + Reg Nursing $190 (likely personal), Morocco/Airbnb travel biz-purpose docs needed. Net TJ risk: $0–$1,421. SGM 2025 packet now FINAL subject to these TJ calls.
 
 **Augusta note:** ···0261 and ···6559 are bank debit cards — their charges are already in the Layer 7 bank classification. Do not double-add from the FB invoice. Invoice is used for attribution (which entity), not as an additional source.
 
@@ -113,7 +116,7 @@ All deductions below are substantiated from the footed SGM 2025 bank statements 
 | 2 | **$148,164 SGM→SPLT transfer** | TJ classifies: LOAN (interco receivable/payable) vs. CAPITAL (equity). $148K is material — different balance-sheet presentation for both entities |
 | 3 | **Augusta rent $16,500 — 14-day cap** | TJ confirms annual usage ≤ 14 days; no home-office deduction double-stack |
 | 4 | **Filed 1120-S deduction schedule** | TJ provides filed deduction detail for CB-2024-style filed-vs-bank comparison |
-| 5 | **$34,600 bank-classified opex** | TJ itemizes from ledger tab `SGM_2025_Txns` and approves individual line items |
+| 5 | **$27,487.79 bank-itemized opex (was $34,600 provisional)** | Assembly 3B itemized from `SGM_2025_Txns`. TJ approves/disallows: vehicle insurance $820.05, meals 50% haircut ~$306, Westlake Baseball $411 + Reg Nursing $190 (personal?), Morocco/Airbnb travel biz-purpose docs. Net TJ risk: $0–$1,421. |
 | 6 | **Amazon order-date cutoff** | Feb 4 is the operative cutoff. TJ confirms cash-basis election for SGM 2025 is consistent with this attribution |
 | 7 | **Method consistency with SGM 2024** | Confirm inventory vs. cash method is consistent across years for any COGS items |
 
@@ -126,7 +129,7 @@ Every figure in the amended return traces to one of:
 - **(b) A platform document** — Amazon order-date dashboard (nominee split); Amazon settlement (fees); FB invoice (ad spend)
 - **(c) A 1099-K form** — Amazon $240,009.89 (Layer 0, penny-matched)
 
-The $34,600 provisional opex block is labeled PROVISIONAL in the Source Index (tab 7) and is blocked from V12 as-is until TJ itemizes it. The nominee figures and all revenue items are CLEAN (gate-passed).
+The previously provisional $34,600 opex block has been replaced by $27,487.79 bank-itemized from SGM_2025_Txns (Assembly 3B, 2026-07-11) and is now V12-eligible. The nominee figures and all revenue items are CLEAN (gate-passed). Remaining TJ risk items ($0–$1,421) are documented in the Assembly 3B note in the Deductions section above.
 
 ---
 
@@ -136,7 +139,7 @@ The $34,600 provisional opex block is labeled PROVISIONAL in the Source Index (t
 |---|---|---|---|
 | Gross receipts | $130,976 | $55,484 | −$75,492 (loans/interco removed) |
 | Amazon 1099-K exposure | Unaddressed | Cured via nominee | IRS matching satisfied |
-| Net income / (loss) | −$32,900 | ~−$19,027 | Loss shallower (deductions not fully maximized) |
+| Net income / (loss) | −$32,900 | ~−$11,915 | Loss shallower (deductions bank-itemized and final) |
 | Tax direction | — | **FAVORABLE** | Does not raise tax |
 | Risk addressed | Deposit-basis overstatement + 1099-K mismatch | Both corrected | — |
 
