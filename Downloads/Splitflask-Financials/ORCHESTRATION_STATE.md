@@ -68,12 +68,27 @@ prompts exist, which have run, what's blocked, and the next action. Say "continu
    ✅ ALL CLASSIFICATION COMPLETE (both years, all entities). SGM2024/CB2024/SGM2025/SPLT2025/CB2025 all
    classified + footed. CB 2025: rev ~$107,876 vs filed $95,558 (~$12K underreport, needs gross-up); CB
    least plug-exposed. REMAINING: (1) ✅ 2025 interco recon DONE (nominee counted once; $148K SGM→SPLT transfer = TJ loan-vs-capital);
-   (2) ✅ BATCHED FEE-SUBSTANTIATION — LAYER_11 DONE. SGM FAVORABLE (loss ~$19K). SPLT est +$90K (from false +$185K). CB est +$73K (GlobalE OPEN). TikTok gross updated $24,510→$25,417 from new settlement files. (3) ✅ SGM 2025 recompute done in Layer 11; (4) V12 assembly — NEXT.
+   (2) ✅ FEE-SUBSTANTIATION DONE — all 2025 entities FAVORABLE (SPLT +$185K→−$127,235; SGM/CB loss/breakeven).
+   ⚠️ coherence-check SPLT 25% Amazon fee before final lock; (3) ✅ SGM 2025 recompute + SPLT fee-check DONE. SPLT loss −$130,700 (fee was understated, now stated).
+   SGM 2025 final ~$55K + nominee. ALL ANALYSIS COMPLETE — every entity-year favorable & substantiated.
+   (4) ASSEMBLY: [A] Tax packets — ✅ SGM 2024 BUILT (−$213,417 final; template set) → ✅ BOTH 2024 PACKETS FINAL (SGM 2024 −$213,417; CB 2024 +$31,214; cross-packet checks tie). Fees =
+   gross-up wash (not missing). → ✅ ASSEMBLY 2D COMPLETE: Filed QB P&L $139,938 expenses reconciled
+   vs bank-reconstructed reality. ~$35,763 bank-substantiated (already placed: CB ~$26K + SGM ~$9K);
+   ~$104,175 unsubstantiated/non-deductible (drops — original filing's over-deduction). Advertising
+   gap $18,382 = no source doc; Car/truck $16,579 = non-ded under mileage election; Commissions
+   $24,368 = gross-up wash; Uncategorized $5,357 = no source; Materials gap $13,887; Other biz gap
+   $22,516. CB packet UNCHANGED and CONFIRMED: deductions ~$79,598 bank-sourced only. Cross-entity
+   net ≈ wash (costs that left CB's commingled Sch C move to SGM/SPLT, already in their reconstructions).
+   See deliverables/Assembly_2D_QB_Reconciliation.md for full table.
+   → NEXT: SGM 2025, SPLT 2025, CB 2025 packets (same template); [B] Investor/deal workbook (GMV waterfall,
+   tumbler-only, separate file); [C] Reconciliation backup. Provenance gate enforced; corrections applied
+   at assembly (SGM2024 COGS $387K, freight $65,918 Path-b, fees); two-denominator kept structural.
 5. Intercompany reconciliation — ✅ DONE (LAYER_6). 2024 CLOSED. SGM's $42,747 freight was a
    misclass (real $15,067); SGM loss single number −$200,474 (inv) / −$258,074 (cash), both
    favorable. CB rev $107,112.61. 30 interco lines, 0 FAIL. Both 2024 returns mutually consistent.
-6. ✅ V12 assembly prerequisites MET: all classifications footed, interco reconciled, fees substantiated. READY FOR V12.
-   Before V12: (a) resolve GlobalE CB fee (need statement); (b) resolve CB Facebook ads interco ($17,685 CB ads on SPLT Chase ···3247 — TJ); (c) optionally pull Chase 2025 card statements to break down remaining ~$67K in DEBT_CHASE_PAYMENT for SPLT. V12 can proceed without (c) — mark SPLT Chase detail as open item in packet.
+6. Then V12 assembly + CPA packets (apply footed/sourced figures; provenance gate enforced).
+   DECISION: do NOT build V12 until ALL 2025 classifications + 2025 intercompany are done. V12 is the
+   convergence point, assembled once at the end. Order: SGM2025 → SPLT2025 → CB2025 → 2025 interco → V12.
 
 ## SEQUENCING PRINCIPLES (learned this session)
 - Verify from source, never infer from ceilings/plugs (the fee "plugs" hid the real answer).
