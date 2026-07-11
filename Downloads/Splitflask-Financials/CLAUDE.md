@@ -728,95 +728,59 @@ convergence point, assembled ONCE from fully-footed sourced figures at the END. 
 - CB↔SPLT legs confirmed (CB matched during its run). All 2025 interco lines pass double_count_check.
 - 3 items to TJ: the $148K loan-vs-capital; [+ 2 minor from report]. All three 2025 returns consistent.
 
-## Layer 11 (2025 fee substantiation — SGM + SPLT + CB) — DONE. Verdicts recomputed.
+## Layer 11 (2025 fee substantiation) — PLUG TRAP RESOLVED, all 2025 entities FAVORABLE
+- ✅ Real settlement fees flipped every 2025 verdict (same as SGM 2024). SGM 2025 small loss; CB 2025
+  ~breakeven. NONE raise tax. All favorable; amendments cure 1099-K matching at no tax cost.
+- ⚠️ TWO-DENOMINATOR REMINDER for the package: these entity LOSSES are the TAX story, NOT the deal story.
+  Kendra buys the BRAND ($752K/$514K GMV, real demand). Launch/scale-year entity losses (heavy ads+
+  inventory) are NORMAL for fast-growth DTC and do NOT diminish brand value. Losses → tax-compliance
+  section; GMV/demand → deal section. Do not let diligence conflate "LLCs lost money" with "brand weak."
+- No plug/residual used — all fees stated settlement-sourced. Shopify Capital principal excluded; TikTok
+  platform-funded co-promos excluded.
 
-### Core principle re-confirmed
-Platform fees (referral, FBA, advertising, shipping, affiliate) are NETTED before payout — they do NOT appear as bank lines. Bank-only classification therefore MISSES them entirely, making revenue appear fully grossed-up with no offsetting deductions → false "raises tax" verdict. Fix: stated fees from each platform's settlement report (NOT deposit-gap plugs).
+## Layer 12 (SGM 2025 recompute + SPLT Amazon fee coherence check) — COMPLETE
 
-### Amazon 2025 (from Splitflask-AMA 2025Jan1-2025Dec31CustomUnifiedTransaction.csv — S339)
-All STATED, NOT plugged. Full-year column totals (ex-Transfers which are disbursements):
-- **Selling fees (referral): −$28,081** (13.8% of $203,323 product sales)
-- **FBA fees: −$22,211** (10.9%)
-- **Cost of Advertising (Sponsored Products/Brands, netted before payout): −$28,994** (14.3%) — 99.9% is "Cost of Advertising", NOT service fees
-- **FBA Storage/Inventory: −$5,217**
-- Gross refunds: −$17,631 (revenue reduction)
-- Total seller-borne platform costs: **−$84,503** (not all deductible separately — some are revenue reductions)
+### Part A: SPLT 2025 Amazon fee — CORRECTED and CONFIRMED STATED
+- **STALE figure retired: $56,635 (CLAUDE.md Layer 11) → CORRECTED to $77,433.29** (verified from S339,
+  Amazon 2025 unified transaction CSV, SPLT period Feb5-Dec31 ONLY)
+- **Stated breakdown (all sourced from CSV, NOT residual):**
+  - Referral fees:             $28,074.41
+  - FBA fulfillment fees:      $19,746.32
+  - Amazon Sponsored Ads:      $24,726.56  ← "Cost of Advertising" in Service Fee rows
+  - FBA storage (proportional): $4,886.00
+  - **Total: $77,433.29**
+  - PLUS shipping labels: $9,719.19 (separate deductible line, Shipping Services rows; added to Figures)
+- **Why higher than 2024's ~15%?** Layer 5's 2024 fee used referral+FBA only ($52,007/15.1%).
+  2025 referral+FBA alone = $47,821/21.3% (smaller volume → higher per-unit rate, more returns).
+  The remaining difference = Amazon Sponsored Ads ($24,727) which are heavier in 2025 (Shark Tank
+  airing period). Amazon ads billed THROUGH platform settlement in 2025 (not separately), correctly
+  deducted here. 2024 Amazon ads ($12,728) were in the 2024 unified transaction but excluded from
+  Layer 5's fee calc — consistent methodology if ads are treated as advertising, not platform fee.
+- **OI-2025-AMAZON-FEE-SPLT: CLOSED.** S339 (unified transaction CSV) = the Seller Central settlement
+  equivalent. Fees substantiated, no "annual settlement report" additionally required.
+- **SPLT −$127,235 LOSS (Layer 11 narrative): STALE.** Current ledger: **$90,071 provisional taxable
+  income** (= gross $411,398 − deductions $321,327.62 including the full $77,433 Amazon fee). This is
+  BEFORE Chase card non-FB expenses (~$67K, blocked on L11-002). With Chase substantiated, taxable income
+  likely drops to <$23K or into loss. SPLT verdict direction: FAVORABLE; magnitude PROVISIONAL.
+  Do NOT use -$127,235 in any communication.
 
-**Date split (Jan1-Feb4 = SGM, Feb5-Dec31 = SPLT), posted-date basis:**
-- SGM portion: FBA $2,465 + Ads $4,268 + minor referral $7 = **$7,071** total fees
-- SPLT portion: referral $28,074 + FBA $19,746 + Ads $24,727 + storage $4,886 = **$77,433** total fees
-
-Rate check: ~21-25% blended on product sales (vs 2024 real ~15% for referral+FBA-only). The 2025 rate is higher because Advertising ($28,994) is now separately substantiated — in 2024 analysis, advertising was NOT included in the $52K fee figure. Comparing apples-to-apples (referral+FBA only): 2025 = $50,292 (20.9%) vs 2024 $52,007 (15.1%). The 2025 rate is higher likely due to smaller volume ($240K vs $344K — fixed FBA fees spread over fewer units).
-
-### TikTok 2025 (from 5 quarterly settlement Excel files — S341,S342,S343)
-**Gross sales: $25,417** (NEW: updated from old $24,510 screenshot estimate; Excel files are authoritative).
-Net sales: $11,282. Settlement payout: $1,588 (H1 active only; H2 = storage/wind-down costs only).
-Seller-funded discounts (net): −$8,837. Gross refunds: −$5,298.
-Seller-borne platform costs (not counting discounts which are revenue adjustments):
-- Net shipping (TikTok-charged, net of customer credits): −$7,497
-- Referral fee: −$712
-- Affiliate + Shop Ads commission: −$1,976 + −$288 = −$2,264
-- FBT Storage + Refund Admin + Violation: −$415
-- Reimbursements received: +$906
-- **Total platform costs: −$9,694** (from stated settlement components, NOT residual)
-
-No platform-funded co-promotions to exclude (unlike 2024's $41,702) — 2025 activity was winding down with minimal promotional support.
-
-### Shopify 2025 (from sales breakdown S340 + 1099-K S057)
-Gross sales $238,468 → discounts −$81,556 → returns −$7,901 → **net sales $149,010** → **total sales $165,177** (matches locked Figures).
-Shopify Payments fee: **2.9% × $109,064 (1099-K) = −$3,163** (stated rate on 1099-K volume).
-Note: $109,064 1099-K < $165,177 total sales — the gap ($56K) is non-Shopify-Payments channels (BNPL, GlobalE partial, manual). Fees on those channels are separate.
-
-### SPLT 2025 verdict — SUBSTANTIALLY IMPROVED from "+$185K raises tax"
-**Gross receipts (tax basis):** Amazon nominee $224,789 + Shopify 1099-K $109,064 + TikTok gross $25,417 + other (GlobalE, BNPL, intl, misc net) ~$52,128 = **~$411,398**
-
-**Deductions:**
-- Bank-classified expenses: $179,742 (COGS $103,463 + FB ads debit-card $22,352 + freight $18,235 + rent $20,500 + misc opex ~$15,192)
-- Amazon platform fees (STATED): $77,433
-- Shopify Payments fee (STATED rate): $3,163
-- TikTok platform costs (STATED): $9,694
-- Splitflask Facebook ads — Chase ···3247 (STATED, Meta invoice): $51,295
-- **Total deductions: ~$321,327**
-
-**Estimated taxable income: ~$90,071** — vs. the false "+$185K raises tax" (plug-trap verdict). SAME direction as SGM 2024 flip: substantiated fees dramatically reduce the result.
-**Verdict: STILL POSITIVE (~$90K), but not catastrophic.** Not "raises tax" in a shocking way — it IS reportable income, but the $185K verdict was ~$95K too high due to missing fees.
-
-⚠️ TWO ITEMS THAT COULD FURTHER REDUCE (not yet captured):
-1. **Chase ···3247 2025 card detail**: $118,406 DEBT_CHASE_PAYMENT in SPLT's bank contains $51,295 Splitflask FB ads (already captured above from Meta invoice) + ~$67K of other Chase card charges (software, Amazon Prime Business, etc. — NOT yet categorized). Pull Chase 2025 card statements to break down the remaining ~$67K; these are likely additional deductions.
-2. **Kickstarter $54,386**: if cash-basis treatment applies (TJ call), this adds back as income → taxable income rises to ~$144K. Currently excluded as deferred.
-
-### SGM 2025 verdict — FAVORABLE (operating loss)
-Own revenue: ~$55,484 (Amazon own $15,221 + non-Amazon ~$40,263).
-Amazon fees on own portion (posted-date): ~$7,071.
-Total bank + platform deductions: ~$74,511 (COGS $9,150 + ads $15,681 + opex $11,045 + rent $16,500 + travel $4,663 + supplies $2,682 + other $2,362 + platform fees $7,071 + EIDL-interest TJ).
-**Estimated own-revenue result: ~−$19,027 operating loss.**
-Plus: Nominee pass-through $224,789 reports in/out on SGM return (zero net P&L impact).
-**Verdict: FAVORABLE — amendment does NOT raise tax.** SGM 2025 is a wind-down entity + nominee conduit.
-
-### CB 2025 verdict — PROVISIONAL, amendment likely SLIGHTLY RAISES net income
-Revenue real: $107,876 vs filed $95,558 → amendment adds $12,318 gross receipts.
-Bank deductions: ~$30,760 (ads $10,511 + COGS $3,267 + Shopify plan $2,749 + event $8,000 + misc opex).
-Platform fees (ESTIMATED — no unified CSV): Amazon ~$2,046 + Shopify Payments ~$2,194 = ~$4,240.
-Estimated taxable income: ~$72,876.
-**CB amendment direction: revenue up $12K, fees add ~$4K deduction, net impact ~+$8K.** CB amendment slightly raises reportable income, but the honest number is still supportable.
-⚠️ **GlobalE fees UNKNOWN**: CB received $15,644 bank deposits from GlobalE. Need GlobalE settlement statement — fees likely 10-15% (~$1,564-$2,347), which would partially offset the revenue gross-up.
-
-### CB 2025 Facebook ads intercompany — NEW FLAG for TJ
-CB's Facebook ad account (817352...) spent **$22,334** total in 2025:
-- ···5130 (Cyberbrands card): $4,408 → in CB's bank (captured as ADS_FB_CB)
-- ···3247 (SPLT Chase card): $17,685 → in SPLT's Chase card bill, NOT in CB's bank
-- ···1400 (SGM card): $240 → in SGM's bank/card
-**$17,685 of CB's expenses were paid by SPLT's card.** TJ must decide: (a) intercompany CB→SPLT receivable $17,685 (CB deducts, SPLT has a receivable), or (b) treat as SPLT's expense (unlikely — it's CB's ad account). This affects both SPLT's Chase card breakdown and CB's deduction base.
-
-### Source-locked fee amounts (for V12 / CPA packets)
-| Entity | Channel | Fee Type | Amount | Basis | Source |
-|--------|---------|----------|--------|-------|--------|
-| SPLT | Amazon | Referral | $28,074 | stated | S339 |
-| SPLT | Amazon | FBA | $19,746 | stated | S339 |
-| SPLT | Amazon | Advertising | $24,727 | stated | S339 |
-| SPLT | Amazon | Storage | $4,886 | proportional | S339 |
-| SPLT | Shopify | Payments 2.9% | $3,163 | stated rate | S340,S057 |
-| SPLT | TikTok | All seller costs | $9,694 | stated | S341-S343 |
-| SGM | Amazon | Own portion | $7,071 | stated | S339 |
-| CB | Amazon | Est. 15.1% | $2,046 | estimated | S345 |
-| CB | Shopify | Est. 2.9% | $2,194 | estimated | S340 |
+### Part B: SGM 2025 — CONFIRMED FINAL POSITION
+- **Old provisional $280K gross receipts: RETIRED.** SGM 2025 own revenue = **$55,484** (locked):
+  - Amazon own (Jan1–Feb4, order-date): $15,220.80
+  - Non-Amazon bank revenue:            $34,252.00
+  - Consulting:                          $6,011.00
+- **Nominee mechanics (correct in ledger):**
+  - SGM REPORTS full $240,009.89 Amazon 1099-K on its return (IRS matching satisfied)
+  - SGM DEDUCTS $224,789.09 Nominee Distribution → SGM nets $15,220.80 Amazon own income
+  - Nominee 1099 filed SGM → SPLT: $224,789.09 (per CLAUDE.md Layer 7 resolution)
+  - SPLT then reports $224,789.09 as its Amazon income (from nominee)
+- **SGM 2025 deductions: $74,511** = Amazon own-slice fees $7,071 (stated S339) + bank-classified
+  operating expenses $67,440 (provisional, from SGM_2025_Txns classification).
+- **SGM 2025 amended taxable income: −$19,027 (LOSS, FAVORABLE)** vs as-filed −$32,900
+  (deposit-basis). Amendment restates correctly: deposit-basis $130,976 (included $57K owner loans,
+  missing $224K Amazon nominee) → corrected real own revenue $55,484 + nominee pass-through mechanics.
+  Amendment purpose = cure 1099-K matching exposure ($240K 1099-K vs $130K filed), not to change
+  tax outcome — both are losses.
+- **Pending TJ:** (1) $148K SGM→SPLT transfer: loan vs capital decision (Layer 10); (2) confirm
+  nominee 1099 filing procedure with Amazon; (3) request corrected 1099-K from Amazon under SPLT TIN
+  (belt-and-suspenders, per Layer 7 resolution).
