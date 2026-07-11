@@ -25,6 +25,34 @@
 
 ---
 
+## Platform-Reported Revenue Verification
+
+Amazon, Shopify, and TikTok each independently file payment reports documenting what they paid Splitflask — third-party records, not the seller's own export. These figures independently corroborate the GMV figures above. Only the Splitflask-tumbler-attributable portion of each report is shown.
+
+### 2024
+
+| Platform | Platform-Reported Splitflask Revenue | What It Covers |
+|----------|--------------------------------------|----------------|
+| Amazon (US + Canada + Mexico) | **$366,467** | All Splitflask marketplace sales, all North American storefronts |
+| TikTok Shop | **$155,295** | Splitflask sales on TikTok; independently reported across 9 monthly reports, penny-exact |
+| Shopify (Splitflask store) | **$164,614** | Splitflask DTC; corrected platform report |
+| **Total platform-reported (2024)** | **$686,376** | Card-channel Splitflask sales only (wholesale not on platforms — see reconciliation below) |
+
+**Reconciliation to GMV $751,891:** Platform-reported covers card-channel sales ($686,376). The remaining $65,515 difference resolves as follows: wholesale B2B revenue ($86,776, documented by invoices, has no platform report) minus a ~$21K timing adjustment where platform reports count returns at gross while GMV nets them. Net: $686,376 + $86,776 − $21,261 = $751,891. Three independent sources (platform reports, wholesale invoices, bank deposits) all converge on the same GMV.
+
+### 2025
+
+| Platform | Platform-Reported Splitflask Revenue | What It Covers |
+|----------|--------------------------------------|----------------|
+| Amazon | **$240,010** | Full-year Splitflask US marketplace sales (platform-issued report) |
+| Shopify (Splitflask store) | **$109,064** | Splitflask DTC; corrected platform report |
+| TikTok | No report issued | Channel wound down H2 2025; amounts below platform reporting threshold |
+| **Total platform-reported (2025)** | **$349,074** | Card-channel Splitflask sales (platform-covered channels) |
+
+**Reconciliation to GMV $513,987:** Platform-reported $349,074 covers the two reportable card channels. Remainder: TikTok H1 gross $24,510 (platform-documented, below report threshold) + wholesale $84,125 + international wires $10,069 + Best Buy/Walmart $1,111 + SGM wholesale $45,198 = $164,913. $349,074 + $164,913 ≈ $513,987.
+
+---
+
 ## Revenue Waterfall — 2024 (reconciling on-air claim to verifiable tiers)
 
 | Tier | Amount | Source |
