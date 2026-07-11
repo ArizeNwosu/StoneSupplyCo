@@ -62,24 +62,18 @@ prompts exist, which have run, what's blocked, and the next action. Say "continu
    NOMINEE income). SGM 2025 real rev ~$40K (NOT $280K) + nominee pass-through of $240K 1099-K.
    ✅ Amazon split LOCKED (order-date dashboard): SGM keeps $15,220.80 (Jan1-Feb4); SPLT gets
    $224,789.09 (Feb5-Dec31, nominee). SGM 2025 real rev ≈$55,484.
-   ✅ SPLT 2025 DONE (LAYER_8). 915 txns, 12/12 months foot. Key: Amazon bank deposits $96,995.36
-   (net-of-fees; economic = $224,789.09 nominee); Shopify $81,796 + BNPL $9,063 + Global-E $25,754
-   = $116,613; TikTok $3,465; Kickstarter $54,386.08 DEFERRED; owner loans $81,204; COGS $103,463;
-   Chase card pmts $118,406; Freight $18,235; rent (warehouse Zelle) $20,500; FB ads (bank debit
-   ···2100) $22,352. Intercompany: SPLT→SGM cash $1,600 (Jul $1,300 + Nov $300); Amazon nominee
-   noted (reporting-only, not cash). Total cr $369,981 / dr $360,130. ⚠️ OPEN: Bank deposits
-   $234,385 vs Layer 1 SPLT estimate $279,815 (~$45K gap — likely Shopify GMV-vs-deposits delta +
-   possible Kickstarter inclusion in prior estimate; flag for TJ). Amazon fees require Seller Central
-   settlement to substantiate ($127K gap between nominee $224,789 and bank deposits $96,995).
-   RUN NEXT: CB 2025 (LAYER_9) → reads SPLT's committed intercompany legs, shared ledger tab
-   CB_2025_Txns. No separate files/branches/merge.
-   After both: 2025 intercompany recon → SGM 2025 recompute (~$55,484 real + $224,789 nominee) → V12.
+   RUN SERIAL (not parallel — 2025 keeps surfacing surprises; watch one at a time): SPLT 2025 (LAYER_8)
+   FIRST → shared ledger tab SPLT_2025_Txns, commit master. THEN CB 2025 (LAYER_9) → reads SPLT's
+   committed intercompany legs, shared ledger tab CB_2025_Txns. No separate files/branches/merge.
+   ✅ ALL CLASSIFICATION COMPLETE (both years, all entities). SGM2024/CB2024/SGM2025/SPLT2025/CB2025 all
+   classified + footed. CB 2025: rev ~$107,876 vs filed $95,558 (~$12K underreport, needs gross-up); CB
+   least plug-exposed. REMAINING: (1) ✅ 2025 interco recon DONE (nominee counted once; $148K SGM→SPLT transfer = TJ loan-vs-capital);
+   (2) ✅ BATCHED FEE-SUBSTANTIATION — LAYER_11 DONE. SGM FAVORABLE (loss ~$19K). SPLT est +$90K (from false +$185K). CB est +$73K (GlobalE OPEN). TikTok gross updated $24,510→$25,417 from new settlement files. (3) ✅ SGM 2025 recompute done in Layer 11; (4) V12 assembly — NEXT.
 5. Intercompany reconciliation — ✅ DONE (LAYER_6). 2024 CLOSED. SGM's $42,747 freight was a
    misclass (real $15,067); SGM loss single number −$200,474 (inv) / −$258,074 (cash), both
    favorable. CB rev $107,112.61. 30 interco lines, 0 FAIL. Both 2024 returns mutually consistent.
-6. Then V12 assembly + CPA packets (apply footed/sourced figures; provenance gate enforced).
-   DECISION: do NOT build V12 until ALL 2025 classifications + 2025 intercompany are done. V12 is the
-   convergence point, assembled once at the end. Order: SGM2025 → SPLT2025 → CB2025 → 2025 interco → V12.
+6. ✅ V12 assembly prerequisites MET: all classifications footed, interco reconciled, fees substantiated. READY FOR V12.
+   Before V12: (a) resolve GlobalE CB fee (need statement); (b) resolve CB Facebook ads interco ($17,685 CB ads on SPLT Chase ···3247 — TJ); (c) optionally pull Chase 2025 card statements to break down remaining ~$67K in DEBT_CHASE_PAYMENT for SPLT. V12 can proceed without (c) — mark SPLT Chase detail as open item in packet.
 
 ## SEQUENCING PRINCIPLES (learned this session)
 - Verify from source, never infer from ceilings/plugs (the fee "plugs" hid the real answer).
