@@ -7,7 +7,86 @@
 **Prepared by:** Riz Nwosu (owner reconstruction) — for TJ (CPA) review and signature
 **Date:** 2026-07-11
 **Packet file:** `deliverables/SPLT_2025_Amendment_Packet.xlsx`
-**Status:** FINAL — Assembly 4C complete. 4B number (+$68,855) CONFIRMED. FB ad reconciliation verified. New interco finding (CB ···3247 $17,818.73) flagged for CB 2025 packet.
+**Status:** LOCKED — Assembly 4D complete. All owner reclassifications applied. **Final amended taxable income: ~$56,561.**
+
+---
+
+---
+
+## Assembly 4D — LOCKED FINAL (2026-07-11)
+
+**Amended taxable income: $56,561** (Corp tax ~$11,878 @ 21%).
+
+### Owner Reclassifications Applied
+
+**RECLASSIFIED IN (PERSONAL → deductible):**
+
+| Item | Amount | Category | Notes |
+|---|---|---|---|
+| Venmo micro-influencer payments (May–Jul, 19 payments) | $1,011.65 | ADS_SOCIAL | Splitflask promo during Shark Tank season. ⚠️ 1099-NEC flag: TJ confirm no individual ≥$600/yr |
+| Boardroom Rental Reimbursement Q125 (Apr 2025) | $1,000.00 | RENT | Bank memo exact. C-corp governance meetings. Keep meeting minutes. |
+| Royceton corporate rental (Nov 2025) | $1,300.00 | RENT | Owner confirmed warehouse/office rental. |
+| Frank — warehouse electrical repairs (Sep 2025, 2 Zelle payments) | $251.10 | OPEX_REPAIRS | Keep invoice on file. |
+| Foremost Insurance (Chase stmt) | $1,735.00 | Insurance | PROPERTY insurance (warehouse/premises). NOT vehicle → std mileage bar does NOT apply. ✅ |
+| CGL Los Angeles (Chase stmt) | $3,195.00 | Legal | Owner confirmed = SPLT legal (formation/IP/contracts). |
+| Paddle.net STOCKLMTS (Chase stmt) | $432.00 | Software | Business software confirmed. |
+| SW Airlines Las Vegas (Chase stmt) | $186.00 | Travel | Business trip confirmed. Document purpose. |
+| FL merchant D24939973 (Chase stmt) | $57.00 | Misc | Owner confirmed business. |
+| Safety First Driving (Chase stmt) | $475.00 | Training | Owner confirmed business. |
+| Meta FB ads ···0566 MasterCard | $3,070.00 | ADS_FACEBOOK | Owner confirmed SPLT expense. ⚠️ TJ: confirm ···0566 card identity. |
+| **Total IN** | **$12,712.75** | | |
+
+**RECLASSIFIED OUT (deductible → PERSONAL):**
+
+| Item | Amount | Reason |
+|---|---|---|
+| Paris travel — Hotel Villa Saxe, Air France, Uber, LAX (from OPEX_TRAVEL) | $418.53 | Paris trip = personal (owner confirmed). All Paris-related costs OUT. |
+| **Total OUT** | **$418.53** | |
+
+**NET new deductions: $12,294.22** → income drops from $68,855 to **$56,561**.
+
+**CONFIRMED STAYS OUT (non-deductible, reason updated):**
+
+| Item | Amount | Reason |
+|---|---|---|
+| Tesla Finance payments (3 charges) | $1,783.18 | Covered by standard mileage election (bars actuals) |
+| Tesla Insurance (4 charges) | $1,796.69 | Covered by standard mileage election |
+| ATM cash withdrawals (2) | $1,200.00 | Personal/owner draw — no receipt trail |
+| Paris retail (Uniqlo, pharmacy, etc.) | $611.70 | Personal travel (already in PERSONAL) |
+
+**IONOS + Adobe (from WF bank):** Not found in PERSONAL bucket — already in deductible categories (IONOS on Chase Card $876.50, Section C confirmed; WF software in OPEX_SOFTWARE). No reclassification needed.
+
+### Computation Bridge
+
+| Step | Income |
+|---|---|
+| Assembly 4C base | +$68,855 |
+| 6 Chase flagged items confirmed business (−$6,080) | +$62,775 |
+| ···0566 MasterCard confirmed SPLT (−$3,070) | +$59,705 |
+| Paris travel removed from deductions (+$419) | +$60,124 |
+| Venmo $1,012 + Boardroom $1,000 + Royceton $1,300 + Frank $251 (−$3,563) | **+$56,561** |
+
+### Deduction Totals (Assembly 4D)
+
+| Section | Amount |
+|---|---|
+| Section A — Platform fees | $100,009.92 |
+| Section B — WF bank (updated) | $182,723.85 |
+| Section C — Chase + ···0566 (updated) | $99,796.04 |
+| **TOTAL DEDUCTIONS** | **$382,529.81** |
+
+### Open TJ Items (updated)
+
+All Chase flagged items RESOLVED. Remaining TJ items:
+
+1. **Shopify Capital interest** — additive deduction (lowers profit); TJ extracts from agreement
+2. **Augusta Rule $20,500 — 14-day cap** — TJ confirms
+3. **COGS method** — cash vs inventory (TJ picks, consistent with SGM 2024)
+4. **$148K SGM→SPLT operating transfer** — loan vs capital (TJ)
+5. **1099-NEC** — Venmo influencer payments: confirm no individual ≥$600/yr total
+6. **Amazon 1099-K corrected form** — request from Amazon under SPLT TIN
+7. **CGL LA $3,195** — keep engagement letter/invoice on file
+8. **···0566 MasterCard** — TJ: confirm card identity + bank statement on file
 
 ---
 

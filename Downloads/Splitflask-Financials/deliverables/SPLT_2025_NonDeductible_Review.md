@@ -1,6 +1,17 @@
-# SPLT 2025 — Non-Deductible & Personal Line Items: Owner Review
-*Generated 2026-07-11. Source: ledger.xlsx → SPLT_2025_Txns, PERSONAL category (61 items).*
-*Do NOT reclassify until owner reviews and confirms which items are business.*
+# SPLT 2025 — Non-Deductible & Personal Line Items
+*Generated 2026-07-11. Updated Assembly 4D 2026-07-11.*
+*Owner review COMPLETE. All reclassifications applied to ledger.xlsx + SPLT_2025_Amendment_Packet.xlsx.*
+
+## Assembly 4D Outcome Summary
+
+| Action | Items | Amount |
+|---|---|---|
+| Reclassified IN (WF bank PERSONAL → deductible) | 23 | $3,562.75 |
+| Reclassified OUT (OPEX_TRAVEL → PERSONAL, Paris) | 5 | $418.53 |
+| Net new deductions from WF bank reclassifications | — | $3,144.22 |
+| PERSONAL bucket remaining | 43 | $52,999.90 |
+
+**Final SPLT 2025 amended taxable income: $56,561** (see cover memo for full bridge).
 
 ---
 
@@ -18,9 +29,9 @@
 
 ## SECTION 1: PERSONAL / OWNER-DRAW ITEMS
 
-### ⚠️ A. AMBIGUOUS — Flag for Owner: Possible Business (Reclassify Candidates)
+### A. RECLASSIFIED IN (Assembly 4D) — no longer PERSONAL
 
-*These are the likely-reclassify candidates. Owner to confirm each.*
+*Owner confirmed. Reclassified in ledger + packet. ✅ DONE.*
 
 ---
 
@@ -297,16 +308,20 @@ and not an SGM tax paid by SPLT by mistake.*
 
 ---
 
-## Owner Action Items
+## Owner Action Items — FINAL STATUS (Assembly 4D)
 
-| Priority | Item | Question |
+| Item | Amount | Status |
 |---|---|---|
-| **HIGH** | Boardroom Rental Reimbursement Q125 ($1,000) | Is this an Augusta-rule rent payment? If yes, do you have meeting logs? → Reclassify RENT, deductible. |
-| **HIGH** | Transfer to Royceton ($1,300) | Who is Royceton? Contractor/employee? → May be OPEX_CONTRACTOR. |
-| **MED** | Venmo payments May–Jul (19 × $44–$65, total $1,012) | Were these influencer seeding / micro-creator payments for Splitflask? → If yes, ADS or OPEX_CONTRACTOR. |
-| **MED** | Zelle to Frank 9/17 ($251.10) | Who is Frank? Business or personal? |
-| **LOW** | Zelle to Hamilton Raphael 6/6 ($40) | Contractor or personal? |
-| **LOW** | Home Depot 12/24 ($53.58) | Packaging/supplies or home improvement? |
-| **LOW** | Paris Nov 2025 purchases ($611.70) | Did any part of that trip have a business purpose? |
-| **LOW** | IRS $245 payment — SGM TIN on SPLT bank | Confirm this is SPLT's own tax, not SGM's tax mistakenly debited. |
-| **TJ** | Shopify Capital interest portion | TJ to extract deductible interest from Shopify Capital agreement (the $4,237.64 principal above is non-deductible; interest on it IS deductible). |
+| Boardroom Rental Reimbursement Q125 | $1,000 | ✅ RESOLVED — deductible RENT. Keep meeting minutes. |
+| Transfer to Royceton | $1,300 | ✅ RESOLVED — deductible RENT (corporate rental). |
+| Venmo micro-influencer payments | $1,011.65 | ✅ RESOLVED — ADS deductible. ⚠️ TJ: 1099-NEC if any individual ≥$600/yr. |
+| Zelle to Frank (warehouse electrical) | $251.10 | ✅ RESOLVED — OPEX_REPAIRS deductible. Keep invoice. |
+| Paris travel — hotel/flight/Uber/LAX (from OPEX_TRAVEL) | $418.53 | ✅ RESOLVED — personal, removed from deductions. |
+| Paris retail (Uniqlo, pharmacy, CDG) | $611.70 | ✅ STAYS PERSONAL — confirmed non-deductible. |
+| Tesla payments (3) | $1,783.18 | ✅ STAYS PERSONAL — standard mileage bars actuals. |
+| Tesla insurance (4) | $1,796.69 | ✅ STAYS PERSONAL — standard mileage bars actuals. |
+| ATM withdrawals (2) | $1,200.00 | ✅ STAYS PERSONAL — owner draw (standing rule). |
+| Zelle to Hamilton Raphael | $40.00 | UNRESOLVED — small, TJ can note as personal if undocumented. |
+| Home Depot 12/24 | $53.58 | UNRESOLVED — small, TJ note. |
+| IRS $245 (SGM TIN on SPLT bank) | $245.00 | UNRESOLVED — TJ confirm correct entity. |
+| Shopify Capital interest | TJ item | OPEN — TJ extracts deductible interest from agreement (principal $4,238 non-ded). |
