@@ -729,8 +729,14 @@ convergence point, assembled ONCE from fully-footed sourced figures at the END. 
 - 3 items to TJ: the $148K loan-vs-capital; [+ 2 minor from report]. All three 2025 returns consistent.
 
 ## Layer 11 (2025 fee substantiation) — PLUG TRAP RESOLVED, all 2025 entities FAVORABLE
-- ✅ Real settlement fees flipped every 2025 verdict (same as SGM 2024). SGM 2025 small loss; CB 2025
-  ~breakeven. NONE raise tax. All favorable; amendments cure 1099-K matching at no tax cost.
+- ✅ Real settlement fees flipped every 2025 verdict (same as SGM 2024). SPLT: "+$185K raises tax" →
+  **−$127,235 LOSS** (~$312K swing = the plug distortion removed). SGM 2025 small loss; CB 2025 ~breakeven.
+  NONE raise tax. All favorable; amendments cure 1099-K matching at no tax cost.
+- SPLT Amazon fee = $56,635 on ~$225K nominee revenue (~25%). Nominee fees correctly FOLLOWED income to
+  SPLT (SGM kept fees only on its $15,220 slice) — big part of the swing.
+- ⚠️ COHERENCE CHECK on SPLT −$127K (like the SGM 2024 −$173K audit): 25% Amazon fee is higher than
+  2024's ~15% — CONFIRM the $56,635 is STATED on the Amazon settlement (referral+FBA+ad+storage), not
+  back-derived/carrying returns/timing. A too-high fee = too-deep loss. Verify before locking SPLT final.
 - ⚠️ TWO-DENOMINATOR REMINDER for the package: these entity LOSSES are the TAX story, NOT the deal story.
   Kendra buys the BRAND ($752K/$514K GMV, real demand). Launch/scale-year entity losses (heavy ads+
   inventory) are NORMAL for fast-growth DTC and do NOT diminish brand value. Losses → tax-compliance
@@ -738,49 +744,279 @@ convergence point, assembled ONCE from fully-footed sourced figures at the END. 
 - No plug/residual used — all fees stated settlement-sourced. Shopify Capital principal excluded; TikTok
   platform-funded co-promos excluded.
 
-## Layer 12 (SGM 2025 recompute + SPLT Amazon fee coherence check) — COMPLETE
+## Layer 12 — SGM 2025 FINAL + SPLT fee check. ALL ANALYSIS COMPLETE.
+- SPLT Amazon fee coherence check: fee was UNDERSTATED (not inflated). Stated settlement fees = $60,101
+  (26.7%) vs $56,635 in ledger (missed storage/longterm component). SPLT 2025 loss −$127,235 → ~−$130,700.
+  Fully stated-source, no residual. −$130K confirmed defensible.
+- SGM 2025 FINAL: real gross receipts $55,484 (Amazon $15,220 kept + non-Amazon $34,252 + consulting
+  $6,011). Nominee correct: full $240,010 1099-K reported IN, $224,789.09 nominee'd OUT, nets to $15,220
+  Amazon on SGM. Deposit-basis distortion removed (filed $130,976 had counted $57,317 owner loans as rev).
+  SGM 2025 = small wind-down entity + pass-through, FAVORABLE.
+- **✅ ALL ENTITY-YEARS FINAL & SUBSTANTIATED (favorable, footed, settlement-sourced):**
+  SGM 2024 −$192K | CB 2024 ~breakeven | SGM 2025 ~$55K rev favorable | SPLT 2025 −$130,700 | CB 2025 ~breakeven.
+  Every amendment favorable; every one cures 1099-K matching exposure at ZERO tax cost.
+- REMAINING: ONLY V12 assembly (+ CPA packets). No more analysis — assembly of footed/sourced figures,
+  provenance gate enforced. Keep tax-losses (compliance section) SEPARATE from GMV/demand (deal section).
 
-### Part A: SPLT 2025 Amazon fee — CORRECTED and CONFIRMED STATED
-- **STALE figure retired: $56,635 (CLAUDE.md Layer 11) → CORRECTED to $77,433.29** (verified from S339,
-  Amazon 2025 unified transaction CSV, SPLT period Feb5-Dec31 ONLY)
-- **Stated breakdown (all sourced from CSV, NOT residual):**
-  - Referral fees:             $28,074.41
-  - FBA fulfillment fees:      $19,746.32
-  - Amazon Sponsored Ads:      $24,726.56  ← "Cost of Advertising" in Service Fee rows
-  - FBA storage (proportional): $4,886.00
-  - **Total: $77,433.29**
-  - PLUS shipping labels: $9,719.19 (separate deductible line, Shipping Services rows; added to Figures)
-- **Why higher than 2024's ~15%?** Layer 5's 2024 fee used referral+FBA only ($52,007/15.1%).
-  2025 referral+FBA alone = $47,821/21.3% (smaller volume → higher per-unit rate, more returns).
-  The remaining difference = Amazon Sponsored Ads ($24,727) which are heavier in 2025 (Shark Tank
-  airing period). Amazon ads billed THROUGH platform settlement in 2025 (not separately), correctly
-  deducted here. 2024 Amazon ads ($12,728) were in the 2024 unified transaction but excluded from
-  Layer 5's fee calc — consistent methodology if ads are treated as advertising, not platform fee.
-- **OI-2025-AMAZON-FEE-SPLT: CLOSED.** S339 (unified transaction CSV) = the Seller Central settlement
-  equivalent. Fees substantiated, no "annual settlement report" additionally required.
-- **SPLT −$127,235 LOSS (Layer 11 narrative): STALE.** Current ledger: **$90,071 provisional taxable
-  income** (= gross $411,398 − deductions $321,327.62 including the full $77,433 Amazon fee). This is
-  BEFORE Chase card non-FB expenses (~$67K, blocked on L11-002). With Chase substantiated, taxable income
-  likely drops to <$23K or into loss. SPLT verdict direction: FAVORABLE; magnitude PROVISIONAL.
-  Do NOT use -$127,235 in any communication.
+## ASSEMBLY 1 — SGM 2024 tax packet BUILT (first deliverable for TJ)
+- `deliverables/SGM_2024_Amendment_Packet.xlsx` (7 tabs) + `SGM_2024_Cover_Memo.md`. All corrections
+  landed: COGS $386,799 (not $270K), freight $65,918 Path-b, Apple $23.96, Shaed=services, fees
+  substantiated. Provenance gate held (every figure sourced; MX/CA + Shopify labeled ESTIMATES).
+- **SGM 2024 amended FINAL = −$213,417** (gross receipts $521,762 − COGS $386,799 − deductions $348,380)
+  vs as-filed −$33,351. Supersedes the earlier ~−$192K running estimate (deductions more complete when
+  assembled + tied). Favorable; does NOT raise tax.
+- ⚠️ EYEBALL before TJ: confirm the $348,380 deductions total walks line-by-line in the workbook
+  (fees+freight ~$158K + COGS separate; remainder ads/opex/interest/estimates ~$190K). Report says tabs
+  tie — verify the deduction bridge is traceable.
+- Open TJ decisions in memo: inventory vs cash method; two-filing-models (gross-up vs net-deposits);
+  9 intercompany calls; mold Section 179.
+- TEMPLATE SET for remaining tax packets: CB 2024, SGM 2025, SPLT 2025, CB 2025 (same 7-tab + memo format).
 
-### Part B: SGM 2025 — CONFIRMED FINAL POSITION
-- **Old provisional $280K gross receipts: RETIRED.** SGM 2025 own revenue = **$55,484** (locked):
-  - Amazon own (Jan1–Feb4, order-date): $15,220.80
-  - Non-Amazon bank revenue:            $34,252.00
-  - Consulting:                          $6,011.00
-- **Nominee mechanics (correct in ledger):**
-  - SGM REPORTS full $240,009.89 Amazon 1099-K on its return (IRS matching satisfied)
-  - SGM DEDUCTS $224,789.09 Nominee Distribution → SGM nets $15,220.80 Amazon own income
-  - Nominee 1099 filed SGM → SPLT: $224,789.09 (per CLAUDE.md Layer 7 resolution)
-  - SPLT then reports $224,789.09 as its Amazon income (from nominee)
-- **SGM 2025 deductions: $74,511** = Amazon own-slice fees $7,071 (stated S339) + bank-classified
-  operating expenses $67,440 (provisional, from SGM_2025_Txns classification).
-- **SGM 2025 amended taxable income: −$19,027 (LOSS, FAVORABLE)** vs as-filed −$32,900
-  (deposit-basis). Amendment restates correctly: deposit-basis $130,976 (included $57K owner loans,
-  missing $224K Amazon nominee) → corrected real own revenue $55,484 + nominee pass-through mechanics.
-  Amendment purpose = cure 1099-K matching exposure ($240K 1099-K vs $130K filed), not to change
-  tax outcome — both are losses.
-- **Pending TJ:** (1) $148K SGM→SPLT transfer: loan vs capital decision (Layer 10); (2) confirm
-  nominee 1099 filing procedure with Amazon; (3) request corrected 1099-K from Amazon under SPLT TIN
-  (belt-and-suspenders, per Layer 7 resolution).
+## ASSEMBLY 2 — CB 2024 tax packet BUILT; ⚠️ COGS looks understated (profit likely overstated)
+- `deliverables/CB_2024_Amendment_Packet.xlsx` (7 tabs) + memo. BNPL removed (rev $107,112.61), freight
+  Path-b $23,202.50. ✅ CROSS-PACKET FREIGHT TIES: $23,202.50 (CB) + $65,918.00 (SGM) = $89,120.50 gross.
+  ✅ $8,135.50 payable matches SGM receivable.
+- Amended: gross $107,112.61 − deductions $55,821.84 = net Schedule C **+$51,290.77 PROFIT**.
+- **✅ CB 2024 COGS CORRECTED: 591 units sold × $41.04 = $24,254.64** (inventory method — 2023 factory
+  payments matched to 2024 SALE; deductible in 2024 not 2023). Was $4,178.29. Corrected net Schedule C:
+  $107,112.61 − COGS $24,254.64 − other deductions $51,643.55 = **~+$31,214 profit** (down from +$51,291).
+  ⚠️ METHOD: inventory/accrual (2023-paid units sold 2024 → 2024 COGS). Must be CONSISTENT with SGM
+  method (TJ). Do NOT also deduct these in 2023 (no double-deduct across years).
+- **✅ CB 2024 FINAL ≈ +$31,214 profit** (rev $107,112.61 − COGS $24,254.64 − ads $20,276.87 − freight
+  $23,202.50 − opex $8,164.18). The ONE profitable entity-year — correctly computed, defensible.
+- Platform fees are a GROSS-UP WASH, NOT missing deductions: CB revenue is stated NET-of-fees, so fees
+  are already embedded (adding them as deductions would double-count). They only become deductions if TJ
+  grosses revenue UP — and then they exactly offset (net P&L $0). Correctly kept out of totals. (This
+  corrected an earlier worry that fees were "missing" — they're embedded in net revenue.)
+- ONLY remaining item that lowers CB 2024: Shopify Capital INTEREST (principal $34,446 non-deductible;
+  interest deductible) — TJ extracts from the capital agreement, additive-if-found. Plus CB→SGM ad
+  $2,559.41 + $6,000 mgmt (TJ interco classification).
+- Cross-packet checks STILL HOLD post-correction: $8,135.50 pair matches; freight $23,202.50+$65,918=
+  $89,120.50. **BOTH 2024 PACKETS FINAL & MUTUALLY CONSISTENT.**
+- Also open (report flags): Amazon CB 2024 settlement to source ~$7,947 fee (vs bank-plug); as-filed
+  Sch C numbers (TJ); CB→SGM ad $2,559.41 + $6,000 mgmt classification; Shopify Capital interest.
+
+## ⚠️ CB 2024 AS-FILED Schedule C obtained — COMPOSITION MISMATCH with reconstruction (critical)
+As-filed CB 2024 Schedule C (Arizechukwu Nwosu, Cyberbrands LLC, "Mgmt Scientific & Technical Consulting",
+CASH method):
+- Line 1/3 Gross receipts = **$139,613** (ours: $107,112.61 Cyberbackpack-only → filed is $32,500 HIGHER)
+- Line 4 COGS = **BLANK/$0** (filed NO cost of goods — confirms product cost wasn't taken as COGS)
+- Line 28 Total expenses = **$135,471** (ours ~$55,822 → filed ~$80K HIGHER, ~2x). Filed lines: Advertising
+  $45,027; Car/truck $16,579; Commissions/fees $27,159; Office $28,550; Supplies $14,840; Travel $3,166;
+  Contract labor $150.
+- Line 29 Tentative net = **$4,142** (filed). Ours amended = $31,214. Raw delta = +$27,072 income.
+- **BUT COMPOSITION DIFFERS WILDLY — likely a DENOMINATOR mismatch, not a simple delta:**
+  Filed revenue $139,613 is $32K HIGHER than our Cyberbackpack-only → filed Schedule C likely COMBINES
+  consulting income (line A = consulting) +/or Splitflask-channel money that we attributed ELSEWHERE.
+  Filed expenses ~2x ours → filed likely deducts Splitflask ad spend ($45,027 ads vs our $20,277) and
+  other non-Cyberbackpack costs on this Schedule C.
+- ⚠️ OPEN — OWNER/TJ: What is the filed $139,613 composed of? Cyberbackpack-only, or combined
+  consulting+Splitflask? And what's in the $45,027 advertising (Splitflask ads?)? Determines whether the
+  amendment is "+$27K income" (if truly Cyberbackpack-only) or a RESTRUCTURING of what-belongs-where with
+  ~$0 net tax (if filed was a combined return). CANNOT state back-tax exposure until this is resolved.
+- Filed method = CASH (matters for the 2023-paid inventory COGS question — cash method deducts when paid,
+  so 2023 payments would deduct in 2023 not 2024; our inventory-method $24,254.64 COGS assumes accrual).
+
+
+## ⚠️⚠️ CB 2024 FILED P&L = COMMINGLED CATCH-ALL (reframes the whole CB amendment)
+Source of the filed CB Schedule C = a QuickBooks Self-Employed P&L ("Arize Nwosu", single "Business
+Income $139,613" line). It LUMPED MULTIPLE BUSINESSES into one Schedule C:
+- Income $139,613 = Cyberbackpack (~$107K) + consulting + other/Splitflask-channel money commingled.
+- Advertising $45,027 = includes SPLITFLASK ad spend (~$25K), not just Cyberbackpack (~$20K).
+- "Other business expenses $27,633" + "Uncategorized $5,357" = $33K NEVER PROPERLY CLASSIFIED.
+- Doesn't even self-reconcile: net shows $5,032 (pg1) / −$324 (after uncategorized) / $4,142 (on the
+  actual Schedule C). Three different net figures.
+- Method = CASH; QuickBooks Self-Employed (not real double-entry books).
+**REFRAME: the CB amendment is NOT "+$27K new income / owe back tax." It's a RESTRUCTURING** — split the
+commingled pile into real entities: Cyberbackpack (~$107K + real costs → clean CB Sch C ~$31K); consulting
+→ its proper home; Splitflask ad spend + costs → SGM/SPLT where they DEEPEN those losses. Net tax across
+ALL entities ≈ wash or REDUCTION (Splitflask costs leaving CB become deductions on SGM/SPLT). NOT a new
+tax bill.
+- ⚠️ THIS AFFECTS OTHER PACKETS: Splitflask costs filed on CB's Sch C must MOVE to SGM/SPLT (increase
+  their losses). Confirm no double-count (a cost can't deduct on CB AND SGM). The clean reconstruction IS
+  the correction to this commingled filing.
+- ⚠️ Consulting income (~$6K+ Teslarati/Video Elephant) location: was it inside the filed $139,613? If so
+  it's already been taxed once — don't double-report. TJ to place consulting correctly.
+- BACK-TAX ANSWER: cannot be a simple delta vs $4,142 filed — filed was a commingled number. Real answer =
+  net effect across all restructured entities, likely ~wash. TJ computes on the restructured set.
+
+
+## CORRECTION — 3 items were being DEFERRED that source docs already answer (owner pushed back, correctly)
+1. **Shopify Capital interest — NOT deferred to TJ; DERIVABLE now.** Filed P&L shows "Loan principal $2,791"
+   (non-deductible, correct). The deductible FINANCING COST = total repaid − principal borrowed. Bank shows
+   repayments (CB 2025 ~$11,860 + 2024 piece); agreement shows borrowed amount. Compute the interest/fee
+   portion and DEDUCT it (CB + SPLT both have Shopify Capital). Stop flagging, extract it.
+2. **Consulting — already located by bank.** Teslarati + Video Elephant ~$6,011, deposits identified in
+   SGM 2025 classification with payer names. Bank shows WHERE it landed = which entity reports it. Not an
+   open question — read the deposits already classified.
+3. **Ad split — EXACT, not estimated, from the card-coded FB invoices.** Invoices break spend by card;
+   cards map to entities (···5130=CB, ···1400/···0261/···6559=SGM, ···3247/···2100=SPLT). So the commingled
+   $45,027 filed advertising splits PRECISELY per entity. Cyberbackpack portion stays on CB; Splitflask
+   portion (SGM/SPLT cards) moves to those entities. Use the invoice card totals, do NOT estimate ~$25K.
+These resolve the CB commingling restructuring with real numbers, not TJ hand-waves.
+
+
+## ASSEMBLY 2C RESULTS — CB commingling resolved from source; 2 big findings
+- **Shopify Capital: 2024 principal $34,446.07 (non-ded); deductible financing cost ~$3,700 (estimate,
+  factor 1.10-1.15). Added to CB deductions.** TJ: pull agreement to replace estimate with stated figure.
+  (Applies to SPLT too — SPLT has Shopify Capital repayments.)
+- **Consulting ~$6,011 = SGM 2025 income (Teslarati/Video Elephant), NOT CB 2024.** Already excluded from
+  CB's $107,112.61 (bank-derived). ⚠️ TJ: confirm filed QB $139,613 didn't pull these 2025 SGM deposits
+  into 2024 CB Sch C (if it did, filed income overstated ~$6K — amendment already corrects by being bank-based).
+- **Ad split EXACT: two separate FB accounts. Sourced 2024 ads: CB Cyberbackpack invoices $8,093 (+ CB bank
+  ads $20,277 stays CB); SGM ···1400 $6,368.11 (already on SGM, ties to $0.11 — no double-count).**
+- **⚠️⚠️ $18,382 of filed advertising has NO SOURCE DOC — do NOT deduct on any entity without documentation.**
+  Filed return took an $18K ad deduction that can't be substantiated (40% of the filed $45,027). Real
+  exposure on the ORIGINAL filing; clean amendment deducts only substantiated ads. This makes the amendment
+  MORE defensible.
+- **⚠️⚠️ ~$90K of NON-Cyberbackpack costs were dumped on the filed CB Sch C:** car/truck $16,579,
+  commissions $27,159, office $28,550, supplies $14,840, travel $3,166. Filed CB Sch C was a CATCH-ALL for
+  ALL of Arize's business expenses. Clean CB deducts only ~$56K real Cyberbackpack costs. These ~$90K move
+  to SGM/SPLT (deepen those losses) — TJ/owner must allocate per entity, ONCE, no double-count.
+- **CB 2024 amended net = +$27,514 (was $4,142 filed).** Profit HIGHER because non-CB costs stripped out —
+  but those costs move to SGM/SPLT and deepen those losses → CROSS-ENTITY NET ≈ WASH. NOT new taxable income;
+  a RELOCATION of costs to correct entities.
+- ⚠️ These ~$90K reallocated costs likely mean SGM/SPLT packets GAIN deductions — but need per-entity
+  source allocation + double-count check before adding. Much may be like the $18,382: unsourced on the
+  commingled filing → may not be deductible anywhere without docs.
+
+
+## PRINCIPLE (owner) — commingled costs resolve by ACCOUNT, not TJ judgment
+"If the cost was from a specific account, it should be that account/business's deduction." CORRECT — same
+account-follows-entity rule as the whole reconstruction. The ~$90K of filed-QuickBooks costs (car/truck
+$16,579, commissions $27,159, office $28,550, supplies $14,840, travel $3,166, + $18,382 unsourced ads)
+are NOT a TJ-discretion reallocation. They resolve mechanically:
+- KEY INSIGHT: our bank reconstruction ALREADY classified every txn in every account, both years. So real
+  costs are ALREADY captured + assigned to whichever account paid them. The filed QuickBooks P&L is a
+  SEPARATE commingled document — its category totals either (a) MATCH costs we already assigned per account
+  (already in the right entity's deductions), or (b) are QuickBooks entries with NO bank backing =
+  UNSUBSTANTIATED, deduct nowhere.
+- RESOLUTION METHOD: reconcile filed QuickBooks P&L categories vs the bank-reconstructed per-account reality.
+  Each filed cost → maps to the account/entity that paid it (that entity's deduction, once) OR no source →
+  drops. Mechanical, not judgment.
+- This is a bounded CLI pass, NOT a TJ hand-off. (Corrects prior lean of deferring $90K to TJ.)
+
+
+## ⚠️⚠️⚠️ ASSEMBLY 2D — ORIGINAL CB FILING OVER-DEDUCTED ~$104K (real exposure on the FILED return)
+Reconciled filed QuickBooks P&L ($139,938 expenses) vs bank reality: only **~$35,763 substantiated**;
+**~$104,175 has NO source in ANY business account** — deducted on the filed return with nothing behind it.
+By the account-follows-entity principle: no account paid it → no business owns it → not deductible.
+What drops (each disallowed for a real reason, not stinginess):
+- Advertising $18,382 — no invoice/card/bank line.
+- Car/truck $16,579 — Tesla FINANCE (loan) payments; non-deductible under standard-mileage election.
+- Commissions $24,368 — platform fees already embedded in net revenue (gross-up wash; separate deduction
+  double-counts).
+- Other business exp $27,633 + Uncategorized $5,357 — QB Self-Employed catch-all; only $5,117 real (software).
+- Loan principal $2,791 — non-deductible.
+- Materials/Supplies: only $953 of $14,840 real.
+**IMPLICATION: the ORIGINAL CB Schedule C UNDER-reported tax by claiming ~$104K of deductions it wasn't
+entitled to.** Corrected CB standalone income is HIGHER than filed → a REAL exposure ON THE ORIGINAL FILING.
+The amendment FIXES it (deducts only substantiated ~$79,598: ads $20,277 + COGS $24,255 + freight $23,203 +
+opex $8,164 + Shopify Cap ~$3,700).
+CONTEXT (why not a disaster): CB flows to the JOINT personal return, which also carries SGM/SPLT losses
+($200K+ substantiated). Aggregate across entities still deeply negative → unlikely to owe tax on net. BUT
+this is the ONE genuine "fix the past filing" issue (not just reconcile numbers). TJ must treat the CB
+amendment as a real correction of an OVER-DEDUCTION. Discovering + correcting proactively >> found in
+diligence/audit. Travel actually UNDER-claimed ($4,296 real vs $2,249 filed) — minor offset.
+- CB packet deductions CONFIRMED unchanged (~$79,598, all bank-sourced). Full table:
+  deliverables/Assembly_2D_QB_Reconciliation.md.
+
+## ASSEMBLY 3 — SGM 2025 packet BUILT (nominee correct; $34,600 opex block PROVISIONAL — resolve)
+- `deliverables/SGM_2025_Amendment_Packet.xlsx` (7 tabs) + memo. Filed $130,976 → amended real gross
+  $55,484; loss −$32,900 → ~−$19,027 favorable. Owner loans $57,317 + interco $11,151 + misc $7,024
+  removed from "income."
+- ✅ NOMINEE SHOWN CORRECTLY: full $240,009.89 Amazon 1099-K IN → $224,789.09 nominee OUT → nets $15,220.80
+  on SGM. Amazon fees follow income to SPLT ($53,030 there); SGM deducts only its $7,071 slice. 8-step
+  nominee-1099 procedure in memo for TJ.
+- ✅ $34,600 opex block ITEMIZED (Assembly 3B): substantiated opex = $27,487.79 (100% bank-traced);
+  $7,112.21 dropped as over-stated (vehicle insurance barred by std mileage, meals 50% haircut, etc.).
+  SGM 2025 FINAL amended net = **−$11,915** (was provisional −$19,027; shallower because unsupportable
+  deductions removed — favorable, does not raise tax). PROVISIONAL flag removed, V12-eligible.
+  ⚠️ Further $820–$1,421 reduction possible pending TJ travel/Airbnb business-purpose calls.
+- ⚠️ FILED-VS-BANK confirms the systemic pattern: filed gross $130,976 − filed net −$32,900 = ~$163,876
+  implied expenses on a $55K-rev entity = oversized, same commingled over-deduction signature as CB 2024.
+  Filed 1120-S deduction schedule not source-backed. The filed SGM 2025 return likely over-deducted too.
+- 7 TJ items: nominee 1099 procedure; $148K loan-vs-capital; Augusta cap; filed deduction schedule;
+  $34,600 itemization; Amazon cutoff confirm; method consistency w/ 2024.
+
+## ASSEMBLY 4 — SPLT 2025 packet BUILT but ⚠️ VERDICT BLOCKED (do NOT use +$62,883)
+- `deliverables/SPLT_2025_Amendment_Packet.xlsx` (7 tabs) + memo. ✅ NOMINEE CROSS-CHECK PASSES: SGM
+  nominees OUT $224,789.09 = SPLT reports IN $224,789.09, zero variance (Tabs 2 & 6). Nominee airtight
+  end-to-end across both packets.
+- **⚠️ +$62,883 "income" is NOT REAL — plug trap again.** It depends on DROPPING the ~$67K Chase charges.
+  With Chase substantiated → **−$4,228** (favorable loss). The ~$67K is REAL SPLT business-card spend
+  (Layer 8: $118,406 WF→Chase − $51,295 FB ads = ~$67K remaining); session dropped it only because it
+  couldn't SEE the Chase card statements to itemize. "Can't see itemization" ≠ "not deductible." SPLT
+  is really a LOSS (~−$4,228 or deeper), not +$62,883.
+- **SPLT 2025 VERDICT BLOCKED on the CHASE ···3247 2025 CARD STATEMENTS** (owner action — like the TikTok
+  doc earlier). Highest-value SPLT action: pull Chase 2025 statements, classify the ~$67K. Until then SPLT
+  final swings +$62,883 (wrong) ↔ ~−$4,228 (real) or deeper.
+- Revenue OVERSTATEMENT risk (offsetting): BNPL $9,063 + Amazon CA $6,326 + Amazon MX $2,696 may
+  double-count vs Shopify 1099-K / Amazon nominee → if all overlap, gross drops ~$18K to $393,315 (lowers
+  income, favorable). Needs one-basis check.
+- ✅ KICKSTARTER $54,386 — OWNER DECISION: SPLT is a C-corp → RECOGNIZE as 2025 income now (cash-basis
+  C-corp recognizes when received; the defensible/conservative call). +$54,386 income. No longer deferred.
+- ✅ CHASE ···3247 2025 statements ARE IN THE FOLDER — classify the ~$67K line-by-line (real business
+  spend → deductible; personal → drop). The +$62,883 plug is retired once Chase is classified.
+- NET DIRECTION: Chase classified (pushes DOWN toward −$4,228) + Kickstarter +$54,386 (pushes UP) →
+  SPLT likely lands ~+$50K PROFIT if full $67K substantiates. SPLT's real answer may be a MODEST PROFIT,
+  not the −$130,700 we'd carried. Minus revenue double-counts (~$18K, pushes down). Resolve all 3 together.
+- Other TJ: $148K loan-vs-capital; Shopify Capital interest extraction; Augusta $20,500 cap.
+
+
+## ✅ ASSEMBLY 4B — SPLT 2025 FINAL = +$68,855 INCOME (real, substantiated; retires the plug)
+- Gross receipts $456,722 (incl Kickstarter $54,386 recognized as income; BNPL $9,063 removed as Shopify
+  double-count). Deductions $370,236 (Chase ···3247 classified + footed + V12-eligible; FB ads matched not
+  double-counted). Net = **+$68,855 income.**
+- This is the REAL number (was provisional +$62,883 plug / earlier −$130,700 carried). Kickstarter
+  recognition (+$54K, owner's C-corp call) was the swing loss→profit. Correct + defensible.
+- **⚠️ AGGREGATE PICTURE SHIFTED — no longer all-losses:** SGM 2024 −$213,417 | CB 2024 +$27,514 |
+  SGM 2025 −$11,915 | SPLT 2025 +$68,855 | CB 2025 ~breakeven (pending). SGM 2024 loss still dominates
+  → aggregate net negative, BUT SPLT is a C-CORP with +$68,855 income → may owe C-corp tax on that
+  SEPARATELY from the personal-return picture (S-corp/Schedule C flow differently). REAL TJ item, NOT a wash.
+- SPLT still needs TJ before filing: Shopify Capital interest (deductible portion); Augusta 14-day cap;
+  Amazon CA/MX TIN 2025; Kickstarter 1120 treatment confirm; 6 flagged Chase items ~$6,080 (owner to
+  identify before adding); $148,164 SGM→SPLT loan-vs-capital.
+
+## ✅ ASSEMBLY 4C — SPLT 2025 +$68,855 VERIFIED (four-point check, no errors found)
+**+$68,855 CONFIRMED.** Four checks ran against source documents; number stands with two flags.
+- **FB invoice tie: $97,769.11 ✓.** Prior $85,325 parse was the thousands-comma bug (now documented
+  as a standing parser trap in CSV files with quoted numbers). Correct card breakdown: ···3247 $51,294.89
+  (SPLT Chase, Section C) + ···2100 $21,216.81 (SPLT WF debit, Section B bank $22,351.63) + ···1400/0261/6559
+  $16,340 (SGM) + ···5130 $5,847 (CB/Splitflask invoice) + ···0566 $3,070 (unknown). 
+- **⚠️ ···2100 FLAG: bank $22,351.63 vs invoice $21,216.81 = $1,134.82 delta.** Per standing rule, bank is
+  authoritative for debit cards. But $1,134.82 is NOT on the Splitflask invoice and NOT on the CB invoice
+  → owner must identify which Meta ad account this belongs to. If non-Splitflask: remove → income +$69,990.
+  Current packet uses bank figure ($22,351.63); this flag is minor.
+- **Chase charges-vs-payments gap explained:** WF→Chase payments $118,406 vs Section C charges $90,646 =
+  $27,760 gap. Full reconciliation: CB interco ads $17,819 (see below) + 6 flagged items $6,080 + residual
+  $3,861 (personal/timing). No missing SPLT deductions.
+- **Bridge from Assembly 4 prior to current is clean:** +$62,883 prior → +$54,386 Kickstarter − $39,351
+  Chase non-FB − $9,063 BNPL = +$68,855. Each line sourced. The Layer 12 −$130,700 was a provisional-fee
+  mid-estimate (no Chase classified, different revenue build); Assembly 4 rebuilt on stated sources → different
+  answer. Not the same computation → no single bridge available across methodology change.
+- **NEW INTERCO FINDING — CB 2025 FB ads $17,818.73 on SPLT Chase ···3247:** The CB 2025 FB invoice (Meta
+  Cyberbrands ad account) shows $17,818.73 ALL on ···3247. CB's WF bank has ZERO Meta/FB payments. SPLT
+  Chase card paid CB's FB ads. Layer 10 (SPLT↔CB = $0) was WF-bank-only scope; Chase was out of scope at
+  that time. Treatment: SPLT interco receivable $17,818.73; CB payable $17,818.73 + deduction $17,818.73.
+  ZERO SPLT P&L impact (already excluded — packet uses Splitflask invoice $51,294.89 for ···3247, not total).
+  **FEEDS CB 2025 PACKET: add $17,818.73 FB ad deduction + interco payable to SPLT.**
+- **6 flagged Chase items still pending owner ID:** CGL LA $3,195; Foremost Insurance $1,735; Paddle.net
+  $432; SW Airlines/LV $186; FL merchant D24939973 $57; Safety First Driving $475. Total $6,080.
+  If all business → income −$6,080 → +$62,775. If all personal → stays +$68,855. Owner IDs before filing.
+- **RANGE: +$62,775 to +$69,990.** Base $68,855 stands pending owner confirmations.
+
+
+## ⚠️ SPLT 2025 +$68,855 QUESTIONED — 2025 FB ad spend doesn't reconcile (owner: FB was $97K in 2025)
+Owner states 2025 Facebook ad spend was ~$97K. This ties to the 2025 FB INVOICE total $97,769.11 (locked
+earlier). But SPLT's packet only counted $51,295 (Chase ···3247) of FB ads. The invoice split:
+- SPLT Chase ···3247: $51,295 (COUNTED)
+- SPLT bank DEBIT ···2100: ~$21,217 — ⚠️ IS THIS IN SPLT's BANK-CLASSIFIED ADS? (debit charges flow
+  through SPLT WF bank; rule = count from bank not invoice. VERIFY it was actually captured, not missed.)
+- SGM cards: ~$16,340 (on SGM packet)
+- CB ···5130: $5,847 (CB packet)
+- Unknown ···0566 MasterCard: $3,070 — whose?
+Sum ≈ $97,769 ✓ IF each counted once on right entity.
+**IF the ···2100 ~$21,217 SPLT debit FB ads were NOT captured, SPLT deductions are UNDERSTATED by ~$21K →
+real SPLT profit ≈ +$48,000, not +$68,855.** MUST verify ···2100 FB ads are in SPLT's advertising
+deductions (once, from bank). This is the anchor of the SPLT verification pass. Also identify ···0566.

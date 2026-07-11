@@ -7,7 +7,24 @@
 **Prepared by:** Riz Nwosu (owner reconstruction) — for TJ (CPA) review and signature
 **Date:** 2026-07-11
 **Packet file:** `deliverables/SPLT_2025_Amendment_Packet.xlsx`
-**Status:** FINAL — Assembly 4B complete. Chase classified (9 stmts, all foot), BNPL resolved, Kickstarter recognized.
+**Status:** FINAL — Assembly 4C complete. 4B number (+$68,855) CONFIRMED. FB ad reconciliation verified. New interco finding (CB ···3247 $17,818.73) flagged for CB 2025 packet.
+
+---
+
+## Assembly 4C Verification (2026-07-11)
+
+**+$68,855 CONFIRMED.** Four checks completed:
+
+| Check | Result |
+|---|---|
+| FB invoice tie ($97,769.11) | ✓ Confirmed with proper CSV parse (prior $85,325 = thousands-comma parse bug, now fixed) |
+| ···3247 Chase FB $51,294.89 | ✓ In packet Section C — matches invoice exactly |
+| ···2100 WF debit FB | Bank $22,351.63 vs invoice $21,216.81 → $1,134.82 delta flagged (owner: which Meta account?) |
+| Chase charges vs payments | Gap $27,760 = CB interco $17,819 + flagged $6,080 + residual $3,861. Fully explained. |
+| 6 flagged Chase items | Listed in prior memo; owner ID still needed. Range: $62,775–$68,855. |
+| Bridge from prior −$130,700 | Layer 12 used provisional fees, no Chase classified; Assembly 4 rebuilt from stated sources. Traceable internal bridge: +$62,883 prior → +$5,972 net (Kickstarter +$54K, Chase non-FB −$39K, BNPL −$9K) → $68,855. |
+
+**NEW FINDING — CB 2025 interco (feeds CB 2025 packet):** CB's 2025 Meta FB ads ($17,818.73) were paid entirely via SPLT's Chase ···3247 card — CB's WF bank shows $0 FB ad payments. Layer 10 (SPLT↔CB=$0) was correct for WF bank flows only. Chase flows were not in scope then. Treatment: SPLT records interco receivable $17,818.73; CB records payable $17,818.73 + deduction $17,818.73. Zero SPLT P&L impact — already excluded from SPLT deductions (packet uses Splitflask invoice $51,294.89 only for ···3247). Tab 6 updated.
 
 ---
 
