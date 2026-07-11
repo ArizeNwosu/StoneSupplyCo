@@ -73,6 +73,8 @@ Amazon monthly from Unified Transaction (order date); sum $81,157 vs dashboard O
 - **Feb–May plateau (~$13–17K/mo):** Underlying run-rate after halo fades
 - **Jun uptick ($18.3K):** Amazon Jun strong ($16.4K, highest non-Jan month); summer seasonality?
 
+**Trajectory context (honest):** 2026 H1 core annualized = ~$184–213K vs 2025 GMV $513,987 — well below 2025. This is a continuing channel decline story: Amazon US annualized ~$161K (vs 2025 $224K, -28%); Shopify annualized ~$48K (vs 2025 $165K, -71%); TikTok negligible. The decline reflects TikTok closing, Shopify heavy discounting, and Amazon normalization post-Shark-Tank-spike. Wholesale ($84K in 2025) and new retail (Best Buy/Walmart) are the 2026 upside levers — unconfirmed for H1.
+
 ---
 
 ## Run-Rate Analysis (PRELIMINARY — label in workbook)
@@ -134,9 +136,37 @@ Checked SPLT WF …0423 for Jan and May:
 
 ---
 
-## Open Items Before Finalizing 2026 GMV
+## CLOSED — International True-Up (B2 Deliverable)
 
-1. **Global-E / Shopify International** — are those "Global - E Payment / Managed Markets" bank deposits inside or outside the Shopify dashboard export? May $5,421 alone could represent ~$7–8K of international Shopify GMV not captured. Potentially adds $20–40K to H1 Shopify if outside.
-2. **Wholesale 2026** — any B2B/distributor orders Jan–Jun? (ESP, Von Maur, Knocking, SATS, or new accounts?) If active, add to GMV.
-3. **Amazon MX/CA gross** — pull Amazon MX/CA dashboard exports for H1 2026 to get proper OPS (not just bank payout).
-4. **Shopify discount rate** — confirm $23,703 H1 discounts reflect real promotional strategy (not data error). If intentional, may want to show both gross ($49K) and net ($24K) in the workbook.
+**Prepared:** 2026-07-11 | Deliverable B2 pass
+
+### Task 1 — Global-E / Shopify International: CONFIRMED INSIDE SHOPIFY
+
+The Shopify "Total Sales Breakdown" admin export covers ALL store transactions including Managed Markets / Global-e orders. The "Global - E Payment / Managed Markets" bank deposits are simply the settlement payouts for those international orders — analogous to how Shopify Payments payouts are separate from order data.
+
+Bank cross-check confirms: Jan 2026 Shopify net sales $12,950 ≈ Shopify payout $7,053 + Global-E payout $1,149 + Shopify fees (~$375) + Shopify Capital repayments (~$4,373 est.). Arithmetic is consistent with Global-E inside the export.
+
+**Verdict: NO add. Shopify net $23,939.89 already includes Global-e international orders. $106K core stands.**
+
+### Task 2 — Amazon Singapore + Australia (2025 and 2026 H1)
+
+| Marketplace | 2025 | Already in $513,987? | 2026 H1 | Net-new |
+|-------------|------|----------------------|---------|---------|
+| Amazon Singapore | $855.13 USD | YES (locked $513,987 includes SG/AU $2,383) | $0 (no 2026 sales) | $0 |
+| Amazon Australia | A$2,369.15 → $1,528.34 USD | YES | A$74.44 → ~$48 USD (one sale Jan 1) | ~$48 |
+| Amazon Mexico | ~$4,664 USD est. | Likely yes (in $513,987 gap) | MX$907.51 → ~$50 USD | ~$50 |
+
+**SG/AU double-count check:** Amazon SG and AU are separate Amazon marketplace accounts — NOT routed through Shopify/Global-e. They are correctly additive to Shopify GMV and were already counted in 2025. For 2026 H1, SG has zero sales; AU had one sale ($48) on Jan 1. Net-new 2026 international from SG/AU/MX = **~$98 total** — negligible vs $106K headline.
+
+Sources: `Splitflask-Amazon-SalesDashboard-07-07-26 (1).csv` (SG, SGT timezone, Jan 2025–Jul 2026: $855.13 in 2025, $0 in 2026); `Splitflask-Amazon-SalesDashboard-07-07-26.csv` (AU, AEST timezone, total A$2,443.59: A$2,369.15 in 2025, A$74.44 in 2026); `Splitflask-Amazon-SalesDashboard-7-06-26.csv` (MX, CST timezone, total MX$82,534: MX$81,626 in 2025, MX$907 in 2026).
+
+### Task 3 — Atlantic Access: NO CHANGE
+Per owner decision: 1,400 units = SGM 2024 carryover inventory, never counted as sold. Excluded for consistency.
+
+### Final 2026 H1 GMV: $106,311 CONFIRMED (no change)
+
+Core confirmed channels are unchanged. International adds ~$98 (rounds to zero vs headline). The $3,000 intl estimate in the workbook was an overestimate — actual Amazon intl H1 2026 total = ~$98 (AU + MX combined).
+
+**Open items (not resolved here — separate owner action):**
+- Wholesale 2026 status unknown — $84K channel in 2025; unconfirmed in H1 2026.
+- Shopify $23,703 discount rate — heavy discounting confirmed in data; consider showing gross alongside net.

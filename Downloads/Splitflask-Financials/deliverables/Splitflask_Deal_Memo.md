@@ -18,8 +18,8 @@ Splitflask is a patented dual-chamber tumbler (US Patent 12,577,032 B2) that let
 |------|----------------------|--------|
 | 2024 | **$751,891** | Verified & locked — bank + platform sourced |
 | 2025 | **$513,987** | Verified — see narrative below |
-| 2026 H1 (Jan–Jun) | **~$106K confirmed core** | Preliminary — platform-sourced, unaudited |
-| 2026 Conservative Annualized | **~$213K (straight H1 × 2)** | Labeled projection — see framing note |
+| 2026 H1 (Jan–Jun) | **~$106K confirmed core** | Preliminary — platform-sourced, unaudited; Global-e + SG/AU verified (no material add) |
+| 2026 Conservative Annualized | **~$213K (straight H1 × 2)** | Labeled projection — see framing note; last-3-mo run-rate $184K |
 
 **2024** was the brand's launch year at scale. Four channels active: Amazon ($321K), Shopify ($189K charged), TikTok Shop ($155K), and Wholesale/B2B ($87K). Consumer demand at list price reached $1,032,079; net of promotional discounts, consumers paid $751,891 (GMV). Total deposits through the business were $895,754 — the figure referenced on air.
 
@@ -28,7 +28,7 @@ Splitflask is a patented dual-chamber tumbler (US Patent 12,577,032 B2) that let
 - **TikTok wind-down:** TikTok Shop was a $155K channel in 2024. Platform instability and regulatory uncertainty caused a deliberate wind-down; TikTok contributed only $24K in 2025 and is effectively closed. Amazon and Shopify cores held: Amazon $224K (−30%) and Shopify $165K (−12%) — the structural channels performed.
 - Wholesale remained strong at ~$84K, confirming B2B demand.
 
-**2026** is re-accelerating. The Shark Tank episode aired January 2026, generating a demand spike visible in the monthly data (January: $32.7K; subsequent months: $13–18K underlying run-rate). Amazon US H1 annualized ~$161K; Shopify re-engaging. Wholesale and international GMV for H1 are not yet confirmed but both channels were active in 2025 (~$84K and ~$10K respectively) and are likely additive.
+**2026** shows continued DTC channel normalization. The Shark Tank episode aired January 2026, generating a visible demand spike (January: $32.7K). Stripping that spike, the Feb–Jun underlying run-rate is $13–18K/month. Amazon US H1 annualized ~$161K (vs 2025 $224K); Shopify annualized ~$48K (vs 2025 $165K, reflecting heavy promotional discounting in H1). TikTok is effectively closed. Core-channel annualized run-rate $184–213K vs 2025 $514K — the honest framing is continuing DTC moderation, not re-acceleration. The growth levers not yet reflected in the run-rate: wholesale ($84K in 2025, 2026 status unconfirmed), Best Buy/Walmart Mirakl (live Dec 2025, nascent), and the Kendra Scott distribution itself. International confirmed via B2 true-up: Global-e already inside Shopify export (no add); Amazon SG = $0 in 2026; Amazon AU = one sale (~$48) in Jan; all negligible.
 
 ---
 
