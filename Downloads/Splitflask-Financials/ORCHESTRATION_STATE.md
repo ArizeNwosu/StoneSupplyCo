@@ -71,16 +71,23 @@ prompts exist, which have run, what's blocked, and the next action. Say "continu
    (2) ✅ FEE-SUBSTANTIATION DONE — all 2025 entities FAVORABLE (SPLT +$185K→−$127,235; SGM/CB loss/breakeven).
    ⚠️ coherence-check SPLT 25% Amazon fee before final lock; (3) ✅ SGM 2025 recompute + SPLT fee-check DONE. SPLT loss −$130,700 (fee was understated, now stated).
    SGM 2025 final ~$55K + nominee. ALL ANALYSIS COMPLETE — every entity-year favorable & substantiated.
-   (4) ASSEMBLY: [A] Tax packets — ✅ SGM 2024 BUILT (−$213,417 final; template set) → ✅ BOTH 2024 PACKETS FINAL (SGM 2024 −$213,417; CB 2024 +$31,214; cross-packet checks tie). Fees =
-   gross-up wash (not missing). → ✅ ASSEMBLY 2D COMPLETE: Filed QB P&L $139,938 expenses reconciled
-   vs bank-reconstructed reality. ~$35,763 bank-substantiated (already placed: CB ~$26K + SGM ~$9K);
-   ~$104,175 unsubstantiated/non-deductible (drops — original filing's over-deduction). Advertising
-   gap $18,382 = no source doc; Car/truck $16,579 = non-ded under mileage election; Commissions
-   $24,368 = gross-up wash; Uncategorized $5,357 = no source; Materials gap $13,887; Other biz gap
-   $22,516. CB packet UNCHANGED and CONFIRMED: deductions ~$79,598 bank-sourced only. Cross-entity
-   net ≈ wash (costs that left CB's commingled Sch C move to SGM/SPLT, already in their reconstructions).
-   See deliverables/Assembly_2D_QB_Reconciliation.md for full table.
-   → NEXT: SGM 2025, SPLT 2025, CB 2025 packets (same template); [B] Investor/deal workbook (GMV waterfall,
+   (4) ASSEMBLY: [A] Tax packets — ✅ SGM 2024 BUILT (−$213,417 final; template set) → ✅ SGM 2024 FINAL (−$213,417). CB 2024 FINAL — clean deductions ~$79,598 (net ~+$27,514). ⚠️ CB filing
+   discovery: ORIGINAL return over-deducted ~$104K (unsubstantiated) — real exposure on the FILED return;
+   amendment corrects it; aggregate still net-loss across entities (TJ handle deliberately). → ✅ SGM 2025 FINAL (−$11,915). ✅ SPLT 2025 LOCKED = +$56,561 (C-corp tax ~$11,878 @ 21% — the ONE place real tax owed; doesn't net vs SGM
+   losses). Slightly lower once Shopify Capital interest extracted (TJ). C-corp may owe
+   tax separately (TJ). NEW: SPLT paid $17,819 of CB's FB ads → CB 2025 packet ADDS it. → ✅ ALL 5 TAX PACKETS DONE (SGM24 −$213,417 | CB24 +$27,514 | SGM25 −$11,915 | SPLT25 +$56,561 |
+   CB25 −$16,470). Only real tax = SPLT C-corp ~$11,878. Deliverable (A) complete.
+   REMAINING: (B) investor/deal workbook — 3-YEAR (2024+2025 locked GMV + 2026 YTD-thru-Jun30). 2026 GMV light pass DONE: 2024 $751,891 | 2025 $513,987 | 2026 H1 ~$430K (2025=transition, 2026
+   re-accelerating post-Shark-Tank). ⚠️ run-rate must be CONSERVATIVE (Shark Tank spike ≠ sustainable;
+   don't annualize peak). → ✅ DELIVERABLE B COMPLETE: deal workbook + memo on VERIFIED GMV (2024 $751,891 | 2025 $513,987 | 2026
+   H1 $106,411, annualized ~$184-213K). Intl true-up confirmed no hidden volume; 2026 is a real decline
+   (TikTok→0, Shopify -71%, Amazon -28%). Honest narrative: proven product, founder-DTC maxed, Kendra
+   distribution = the growth thesis. Two-denominator wall held. → ✅ COMPLETE. (A) 5 tax packets (B) deal workbook+memo (C1) 41-item CPA decision list (C2) reconciliation
+   backup w/ corrections log. FINAL SEQUENCE: (1) READ_FILED_RETURNS_METHOD (method per entity from filed
+   1120-S/1120 + as-filed baselines + audience-split the backup) → (2) PACKAGE_TWO_FOLDERS (handoff/CPA_TJ
+   + handoff/Kendra_Diligence, wall GREP-verified). Then owner/TJ actions only (Augusta 14-day property
+   total; method keep-or-change/Form 3115; nominee 1099; Amazon corrected 1099-K; Shopify Capital agreement). (C) reconciliation
+   backup; + standing TJ decision list. [B] Investor/deal workbook (GMV waterfall,
    tumbler-only, separate file); [C] Reconciliation backup. Provenance gate enforced; corrections applied
    at assembly (SGM2024 COGS $387K, freight $65,918 Path-b, fees); two-denominator kept structural.
 5. Intercompany reconciliation — ✅ DONE (LAYER_6). 2024 CLOSED. SGM's $42,747 freight was a

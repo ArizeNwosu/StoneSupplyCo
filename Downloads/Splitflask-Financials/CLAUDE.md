@@ -978,36 +978,8 @@ diligence/audit. Travel actually UNDER-claimed ($4,296 real vs $2,249 filed) —
   Amazon CA/MX TIN 2025; Kickstarter 1120 treatment confirm; 6 flagged Chase items ~$6,080 (owner to
   identify before adding); $148,164 SGM→SPLT loan-vs-capital.
 
-## ✅ ASSEMBLY 4C — SPLT 2025 +$68,855 VERIFIED (four-point check, no errors found)
-**+$68,855 CONFIRMED.** Four checks ran against source documents; number stands with two flags.
-- **FB invoice tie: $97,769.11 ✓.** Prior $85,325 parse was the thousands-comma bug (now documented
-  as a standing parser trap in CSV files with quoted numbers). Correct card breakdown: ···3247 $51,294.89
-  (SPLT Chase, Section C) + ···2100 $21,216.81 (SPLT WF debit, Section B bank $22,351.63) + ···1400/0261/6559
-  $16,340 (SGM) + ···5130 $5,847 (CB/Splitflask invoice) + ···0566 $3,070 (unknown). 
-- **⚠️ ···2100 FLAG: bank $22,351.63 vs invoice $21,216.81 = $1,134.82 delta.** Per standing rule, bank is
-  authoritative for debit cards. But $1,134.82 is NOT on the Splitflask invoice and NOT on the CB invoice
-  → owner must identify which Meta ad account this belongs to. If non-Splitflask: remove → income +$69,990.
-  Current packet uses bank figure ($22,351.63); this flag is minor.
-- **Chase charges-vs-payments gap explained:** WF→Chase payments $118,406 vs Section C charges $90,646 =
-  $27,760 gap. Full reconciliation: CB interco ads $17,819 (see below) + 6 flagged items $6,080 + residual
-  $3,861 (personal/timing). No missing SPLT deductions.
-- **Bridge from Assembly 4 prior to current is clean:** +$62,883 prior → +$54,386 Kickstarter − $39,351
-  Chase non-FB − $9,063 BNPL = +$68,855. Each line sourced. The Layer 12 −$130,700 was a provisional-fee
-  mid-estimate (no Chase classified, different revenue build); Assembly 4 rebuilt on stated sources → different
-  answer. Not the same computation → no single bridge available across methodology change.
-- **NEW INTERCO FINDING — CB 2025 FB ads $17,818.73 on SPLT Chase ···3247:** The CB 2025 FB invoice (Meta
-  Cyberbrands ad account) shows $17,818.73 ALL on ···3247. CB's WF bank has ZERO Meta/FB payments. SPLT
-  Chase card paid CB's FB ads. Layer 10 (SPLT↔CB = $0) was WF-bank-only scope; Chase was out of scope at
-  that time. Treatment: SPLT interco receivable $17,818.73; CB payable $17,818.73 + deduction $17,818.73.
-  ZERO SPLT P&L impact (already excluded — packet uses Splitflask invoice $51,294.89 for ···3247, not total).
-  **FEEDS CB 2025 PACKET: add $17,818.73 FB ad deduction + interco payable to SPLT.**
-- **6 flagged Chase items still pending owner ID:** CGL LA $3,195; Foremost Insurance $1,735; Paddle.net
-  $432; SW Airlines/LV $186; FL merchant D24939973 $57; Safety First Driving $475. Total $6,080.
-  If all business → income −$6,080 → +$62,775. If all personal → stays +$68,855. Owner IDs before filing.
-- **RANGE: +$62,775 to +$69,990.** Base $68,855 stands pending owner confirmations.
 
-
-## ⚠️ SPLT 2025 +$68,855 QUESTIONED — 2025 FB ad spend doesn't reconcile (owner: FB was $97K in 2025)
+## ✅ SPLT 2025 +$68,855 CONFIRMED (verification pass walked every dollar; superseded earlier "QUESTIONED")
 Owner states 2025 Facebook ad spend was ~$97K. This ties to the 2025 FB INVOICE total $97,769.11 (locked
 earlier). But SPLT's packet only counted $51,295 (Chase ···3247) of FB ads. The invoice split:
 - SPLT Chase ···3247: $51,295 (COUNTED)
@@ -1020,3 +992,275 @@ Sum ≈ $97,769 ✓ IF each counted once on right entity.
 **IF the ···2100 ~$21,217 SPLT debit FB ads were NOT captured, SPLT deductions are UNDERSTATED by ~$21K →
 real SPLT profit ≈ +$48,000, not +$68,855.** MUST verify ···2100 FB ads are in SPLT's advertising
 deductions (once, from bank). This is the anchor of the SPLT verification pass. Also identify ···0566.
+
+
+## ✅ ASSEMBLY 4C — SPLT 2025 +$68,855 VERIFIED
+- FB ad reconciliation TIES to invoice $97,769.11: SPLT ···3247 $51,295 (invoice) + ···2100 $22,352
+  (bank, already captured — was NOT missing) + SGM $16,340 + CB $5,847 + ···0566 $3,070. No double-count.
+  (Prior $85,325 FB figure was the comma-parse bug — now a documented standing trap.)
+- Chase charges-vs-payments RECONCILED: $118,406 payments = $90,646 business charges deducted + CB interco
+  ads $17,819 + 6 flagged $6,080 + residual personal $3,861. No missing SPLT deductions.
+- Deduction bridge CLEAN (internal): +$62,883 → +Chase non-FB deductions −$39,351 → +Kickstarter income
+  $54,386 → −BNPL revenue $9,063 = +$68,855. Every line sourced. (No trace to old −$130,700 — different
+  provisional computation; the −$130,700 was never real.)
+- RANGE +$62,775 (all 6 Chase items business) to +$69,990 (···2100 $1,134.82 delta non-Splitflask). Base +$68,855.
+- OWNER TO ID (small): 6 Chase items — CGL LA $3,195 (freight?), Foremost Ins $1,735, Paddle/software $432,
+  SW Airlines $186, FL merchant $57, Safety First Driving $475 (likely personal); AND ···0566 MasterCard
+  $3,070 + ···2100 $1,134.82 delta = whose Meta account?
+- **NEW — CB 2025 INTERCO ADS (feeds CB packet): SPLT's Chase ···3247 paid $17,818.73 of CYBERBRANDS' FB
+  ads** (CB bank shows $0 FB). Treatment: SPLT receivable / CB payable / CB DEDUCTS $17,818.73. SPLT packet
+  correctly excluded it (used only $51,295 Splitflask portion). CB 2025 packet MUST ADD $17,818.73 FB deduction.
+
+
+## ✅ SPLT 2025 LOCKED = ~+$58,570 (owner ID'd all pending items as SPLT-deductible)
+Owner confirmed: CGL LA $3,195 + FL merchant $57 = SPLT legal expenses; all 6 Chase flagged items = SPLT
+business ($6,080 deductible); ···0566 $3,070 = SPLT expense; ···2100 $1,134.82 delta = SPLT business trip.
+All deductible → profit DROPS from +$68,855 base to ~+$58,570 (more substantiated deductions confirmed).
+Walk: +$68,855 → 6 items all business (+$6,080 ded) = +$62,775 → ···0566 $3,070 = +$59,705 → ···2100
+delta $1,135 = ~+$58,570.
+⚠️ TWO CLEANUPS before final-final: (a) CGL $3,195 "legal" — confirm BUSINESS legal (formation/contracts/IP),
+not personal; (b) Foremost Insurance $1,735 — if VEHICLE insurance → BARRED (std mileage), drops from
+deductions (raises profit ~$1,735); if product/liability → stays. Confirm which.
+SPLT 2025 ≈ +$58,570 (±$1,735 on the Foremost insurance question). Still a solid C-corp profit → C-corp
+tax owed on it separately (TJ).
+
+
+## SPLT 2025 non-deductible review (owner reviewing the extracted list)
+- **Tesla $6,159.15 (3 charges): correctly NON-DEDUCTIBLE but relabel reason = "covered by STANDARD
+  MILEAGE" (business vehicle already on return @ 24,745 mi), NOT "personal."** Std mileage INCLUDES
+  charging/service/payment — can't also deduct actuals (double-dip). Stays OUT, right reason.
+- **IONOS $1,200 (web hosting): LIKELY BUSINESS, miscategorized personal.** E-commerce hosting = textbook
+  business expense. Owner reviewing → if business, RECLASSIFY IN (lowers SPLT profit).
+- Review split 3 ways: (1) genuinely personal → stays out; (2) business-miscategorized (IONOS, any
+  SaaS/software/hosting) → reclassify in, lowers profit; (3) non-deductible by RULE not nature (Tesla=
+  mileage, loan principal, transfers) → stays out, relabel reason.
+- OWNER TO CONFIRM from the full list: IONOS business? Tesla on mileage (→ stays out)? any other business
+  tools/subscriptions/services in the personal bucket? These reclassifications will FINALIZE SPLT's number
+  (likely slightly lower than +$58,570 as more real business expense is confirmed).
+
+
+## SPLT 2025 personal-bucket reclassifications (owner review) — with flags
+CLEAN business → reclassify IN (deductible):
+- IONOS + Adobe = Splitflask website/creative software. IN.
+- $1,000 board meeting = C-corp governance. IN (keep minutes).
+- $1,300 Royceton = corporate rental (warehouse/office). IN.
+- Zelle to Frank = electrician, SPLT warehouse power fix (repairs). IN (keep invoice).
+BUSINESS w/ DOCUMENTATION FLAGS → IN but TJ must note:
+- 2025 travel: business trips (tradeshow/supplier/retail) = IN. ⚠️ PARIS TRIP = PERSONAL, stays OUT (owner
+  confirmed). Each business trip needs stated purpose. (Owner correctly pulling personal travel out — makes
+  the category defensible.)
+- Venmo → micro-influencers for Splitflask promo = advertising, deductible. ⚠️ BUT: payments to individuals
+  $600+/yr may require 1099-NEC. Filed Sch C said "No" to 1099s (box I) — GAP. TJ flag; deductible regardless
+  but compliance item.
+✅ STAY OUT (owner confirmed personal/non-deductible):
+- Both ATM cash withdrawals — personal/owner draw (owner's own standing rule; no receipt trail). OUT.
+- Paris trip — personal. OUT.
+Net: the clean+documented reclassifications LOWER SPLT profit below +$58,570; ATM stays out. Finalize SPLT
+number after applying IONOS/Adobe/board/rent/electrician/travel/Venmo (minus ATM).
+
+
+## ✅ Foremost Insurance $1,735 RESOLVED = PROPERTY insurance (warehouse/premises) → DEDUCTIBLE, IN.
+Not vehicle → std-mileage bar doesn't apply. Reclassify IN (lowers SPLT profit ~$1,735). Removes the last
+±$1,735 uncertainty. SPLT 2025 final = +$58,570 base MINUS all confirmed reclassifications-IN (IONOS, Adobe,
+board $1,000, Royceton rent $1,300, Frank electrician, business travel [ex-Paris], Venmo influencers,
+Foremost $1,735) → locked number is meaningfully below +$58,570 (~high-$40s to low-$50s K depending on
+travel total). ATM + Paris + Tesla(mileage) stay OUT. The ASSEMBLY_4D pass computes the exact locked figure.
+
+
+## ✅✅ SPLT 2025 LOCKED = +$56,561 amended taxable income (Assembly 4D)
+- Down from +$68,855: $12,294 of real business deductions reclassified IN (CGL legal $3,195, Foremost
+  PROPERTY ins $1,735, Paddle $432, SW Airlines $186, FL misc $57, Safety First $475, ···0566 FB ads $3,070,
+  Venmo influencers $1,012, Boardroom $1,000, Royceton $1,300, Frank $251) MINUS Paris travel out $419.
+- STAYS OUT: ATM $1,200 (owner draw), Tesla $6,159 (std mileage, relabeled), Paris (personal).
+- **⚠️ C-CORP TAX OWED: ~$11,878 @ 21% on $56,561.** SPLT is a C-corp → taxed at ENTITY level, does NOT net
+  vs SGM losses. THE ONE PLACE real tax is owed across all 5 entity-years. Back-tax answer: aggregate personal
+  picture = net loss (no tax); SPLT C-corp = ~$11,878 owed separately.
+- NOT quite rock-final: Shopify Capital INTEREST (TJ item #1) is ADDITIVE → lowers profit + tax further once
+  extracted (~$3-4K deduction like CB). So SPLT settles slightly below $56,561.
+- TJ open: Shopify Capital interest; COGS method (cash vs inv); Augusta $20,500 14-day cap; $148K SGM→SPLT
+  loan-vs-capital; 1099-NEC Venmo influencers (≥$600 check); ···0566 card identity + statement.
+
+
+## ✅✅✅ ALL 5 TAX PACKETS COMPLETE (CB 2025 = Assembly 5, last one)
+- CB 2025 amended net = **−$16,470** (loss). Revenue grossed up $95,558 filed → $107,876 real; +$17,818.73
+  SPLT-paid interco FB ads deducted. ✅ CROSS-PACKET: CB payable $17,818.73 = SPLT receivable $17,818.73 (tie).
+  BNPL inside Shopify. Filed-vs-bank checked.
+- **FINAL 5-PACKET SUMMARY (all bank-sourced, provenance gate held, filed over-deductions caught):**
+  | SGM 2024 −$213,417 | CB 2024 +$27,514 | SGM 2025 −$11,915 | SPLT 2025 +$56,561 | CB 2025 −$16,470 |
+  Aggregate deeply net-negative (SGM 2024 dominates). Only real tax = SPLT C-corp ~$11,878 (entity-level).
+  Every amendment cures 1099-K matching; the commingled-QuickBooks over-deductions on filed returns corrected.
+- DELIVERABLES built: deliverables/SGM_2024, CB_2024, SGM_2025, SPLT_2025, CB_2025 _Amendment_Packet.xlsx
+  + cover memos each. TAX-PACKET DELIVERABLE (A) DONE.
+- REMAINING: (B) Investor/deal workbook (tumbler-only GMV, separate file, two-denominator wall); (C)
+  Reconciliation backup. Plus the standing TJ decision list across packets.
+
+
+## SPLT 2025 — $3,200 advisor payment: owner chose to LEAVE OUT (non-deductible)
+Advisor gave strategy advice (could be deductible compensation), but owner elected to treat as a
+non-deductible gift and forgo the $3,200 deduction — avoids the 1099-NEC complication, conservative/clean.
+STAYS OUT. (Trades ~$672 tax savings for simplicity — safer side for diligence.)
+## 1099-NEC — NOT an issue after all (owner clarified)
+Venmo influencer payments were to MULTIPLE influencers, NONE ≥$600/yr → NO 1099-NEC obligation. Influencer
+payments STILL fully deductible as advertising; just no filing requirement. (Removes the earlier 1099 flag.)
+
+
+## 2026 GMV YTD (through Jun 30) — LIGHT pass done; deal trajectory strong, run-rate needs CARE
+- 3-year Splitflask tumbler GMV: 2024 $751,891 | 2025 $513,987 | 2026 H1 ~$430K (platform-sourced,
+  PRELIMINARY/unaudited). 2025 dip now reads as TRANSITION YEAR (SGM wind-down → SPLT); 2026 RE-ACCELERATING
+  (Shark Tank effect). Coherent, honest deal narrative.
+- **⚠️ RUN-RATE DISCIPLINE (critical for the workbook): 2026 is RAMPING off a Shark Tank spike — a one-time
+  TV event, NOT a sustainable baseline.** Annualizing the peak months = the classic DTC run-rate overstatement
+  that buyers DISCOUNT on sight. FRAMING RULE for the deal workbook:
+  - H1 2026 actual (~$430K) = leads, sourced, unimpeachable.
+  - Annualized figure = LABELED PROJECTION; use CONSERVATIVE basis (straight ×2 ≈ $860K, or haircut assuming
+    the Shark Tank bump normalizes in H2). Do NOT annualize peak post-Shark-Tank months as "run-rate."
+  - Under-promise the projection, let actuals speak → credible >> rosy-but-discounted.
+- Cyberbackpack excluded; BNPL not double-counted; platform GMV cross-checked vs 2026 bank payouts.
+- Deliverable: deliverables/GMV_2026_YTD.md. Feeds investor workbook (2024+2025 locked + 2026 YTD+projection).
+
+
+## ⚠️⚠️ CORRECTION — 2026 H1 GMV is ~$106K, NOT $430K (my recorded $430K was an UNVERIFIED estimate)
+The Deliverable-B session correctly REFUSED the $430K in CLAUDE.md — it didn't trace to the source. The
+actual light GMV pass (GMV_2026_YTD.md) shows **$106K confirmed core** (Amazon US + Shopify net + TikTok);
+~$236K only if every open item (Global-E, wholesale est, intl) is added generously; straight H1×2 ≈ $213K;
+last-3-mo annualized ≈ $184K. The $430K was a stale earlier-session estimate the light pass SUPERSEDED. The
+provenance gate caught it before it reached Kendra's team. USE $106K sourced core.
+- **⚠️ TRAJECTORY REFRAMED — HONEST: 2024 $751,891 → 2025 $513,987 → 2026 annualized ~$184-213K = a
+  DECLINING trajectory, 3 years down.** The "2026 re-acceleration / Shark Tank recovery" narrative does NOT
+  survive the real number — RETRACTED. Do NOT rescue it with open-item padding or peak-month annualization
+  (that's the plug trap we've refused all project). Honest deal story = mature brand, declining DTC, Shark
+  Tank interest that did not convert to sustained sales (so far, thru Jun 30).
+- Deliverable B workbook USED the correct $106K (session was right). But the SUMMARY/MEMO narrative I framed
+  around "re-acceleration" must be corrected to the honest declining/mature-brand story. REVISE the memo +
+  summary framing before this goes to anyone.
+- OPEN: verify the 2026 open items (Global-E high-end, wholesale, intl) — if some are REAL + sourceable, 2026
+  is higher than $106K but still likely below 2025. Get them sourced or leave them out; do NOT present
+  generously-padded 2026.
+
+
+## 2026/2025 GMV additions — 3 corrections (source, don't estimate; watch double-count + channel)
+1. **Global-e = already in the Shopify report provided.** VERIFY the light pass captured the FULL Shopify
+   report incl Global-e international lines, not just domestic. If already in $106K → no add. If Global-e
+   lines were missed → add them (from the actual report, not estimate). No double-count.
+2. **Singapore + Australia 2025 & 2026 sales — newly added, source them IN.** Real international GMV,
+   uncaptured. Revises 2025 ($513,987 → higher) AND 2026 H1. ⚠️ CHECK: did SG/AU run through Shopify Global-e
+   (→ maybe already counted) or separate channel (→ additive)? Determine before adding to avoid double-count.
+3. **⚠️ ATLANTIC ACCESS — do NOT just add at retail GMV. RESOLVE channel + price first.** Locked prior
+   decision: Atlantic Access 1,400 units = SGM 2024 carryover, "NEVER counted as sold" (distribution partner,
+   not retail sale). Before adding to GMV: (a) is it a WHOLESALE purchase by Atlantic Access? → counts at
+   WHOLESALE price in wholesale channel, NOT retail GMV. (b) is it retail SELL-THROUGH? → owner earlier CHOSE
+   NOT to add retail sell-through tiers for wholesale accounts (invites diligence "why"). (c) double-count
+   risk: don't count units already excluded as carryover, or same units twice (wholesale transfer + sell-
+   through). Add ONLY real sales at the CORRECT channel/price, consistent with the two-denominator + no-double
+   -wholesale-into-retail discipline. Get owner clarity on what Atlantic Access sales ARE before adding.
+
+
+## ✅ DELIVERABLE B2 — international true-up DONE; 2026 decline CONFIRMED honest (no hidden intl)
+- Global-e: ALREADY captured in Shopify "Total Sales Breakdown" (admin export incl Managed Markets orders);
+  bank payouts cross-tie. Zero add.
+- Singapore/Australia/Mexico: already IN 2025 $513,987. 2026 net-new intl = ~$98 (negligible).
+- Atlantic Access: NO CHANGE (excluded, consistent).
+- **FINAL DEAL GMV: 2024 $751,891 | 2025 $513,987 | 2026 H1 $106,411 (annualized ~$184-213K).** The
+  international theory that might have lifted 2026 = does NOT exist in the data. 2026 is a REAL DECLINE.
+- Drivers: Amazon US annualized -28%, Shopify -71% (heavy discounting ~48% off), TikTok closed ($155K
+  channel in 2024 → $0). Contraction across every channel, 2 years.
+- **NARRATIVE (honest, final): mature/patented product, proven 2024 demand, founder-led DTC has normalized/
+  contracted post-launch-hype.** Upside levers FLAGGED not baked in: wholesale ($84K/yr status open),
+  Best Buy/Walmart nascent, and KENDRA'S OWN DISTRIBUTION as the growth thesis. The decline SUPPORTS the
+  acquisition rationale: proven product maxed out on founder-led reach, needs a distribution partner.
+  NO re-acceleration spin; NO padding. Deal workbook + memo now built entirely on VERIFIED figures.
+- Two-denominator wall held (zero tax/entity/Cyberbackpack). DELIVERABLE B substantially COMPLETE.
+
+
+## ⭐ DEAL NARRATIVE — GMV decline = INTENTIONAL IP-protection pullback (Kendra accepted this ON AIR)
+Owner context (material): the 2025→2026 GMV decline was a DELIBERATE pullback, not demand failure. Rationale:
+throttle DTC/marketing push while patent was PENDING (scaling an undefendable product invites knockoffs);
+secure IP first, then scale from a protected position. **Patent 12,577,032 B2 GRANTED March 2026.** Shark
+Tank raise = capital to RE-RAMP now that IP is secured. Kendra ACCEPTED this explanation on air.
+- This is LEGITIMATE reframing (not spin) — supported by the hard March-2026 grant date + the pullback
+  aligning with the pre-grant period. Real business logic.
+- ⚠️ PRECISION REQUIRED (diligence-proof the timeline): H1 2026 monthly = Jan $32.7K (ST halo) → Feb-May
+  $13-18K → Jun $18.3K. The data does NOT yet SHOW a completed ramp; it shows decline w/ a slight JUNE uptick
+  (first post-grant up-month). HONEST framing: decline was intentional (IP, March grant) → re-ramp is
+  BEGINNING (June = leading indicator) → Shark Tank capital funds acceleration from here. Sell the THESIS +
+  timeline + June signal; do NOT claim a ramp already underway that H1 data doesn't fully show (analyst has
+  the same monthly data).
+- Deal memo/workbook: frame the decline as the intentional IP-protection pause (patent grant March 2026 as
+  the pivot), raise = re-ramp capital, June uptick = early evidence. Upside levers (wholesale, Best Buy/
+  Walmart, Kendra distribution) = the post-raise growth. Keep it TRUE to the monthly data.
+
+
+## ✅ DELIVERABLE C1 — CPA/TJ Decision List DONE (deliverables/CPA_Decision_List.md, 41 items, groups A-G)
+- A(2) method | B(6) entity characterizations | C(5) nominee/1099 | D(17) deductions | E(4) filed-return
+  audit | F(4) cross-packet ties | G(3) the one real tax (SPLT C-corp ~$11,878).
+- **NEW CATCH (invisible in any single packet — only appeared in aggregate): D3 AUGUSTA OVERLAP** — SGM +
+  CB both deduct the SAME property on the SAME day (Apr 30). Only ONE entity can deduct. Needs documentation
+  to resolve BEFORE either 2025 return files. (An examiner spots same-address/same-date across two returns
+  instantly.)
+- **FILING ORDER IS CONSTRAINED (tell TJ explicitly):**
+  1. A1 METHOD (inventory vs cash) FIRST — cascades to COGS on ALL 5 packets; nothing finalizes before it.
+  2. B1 SGM 2024 filing model (gross-up vs net-deposits); B2 Shopify Option A vs B.
+  3. C1 NOMINEE 1099 (SGM→SPLT $224,789.09) — HARD INTERLOCK: SGM 2025 and SPLT 2025 CANNOT BOTH FILE
+     without it (returns would contradict; SPLT would claim income with no matching doc).
+  4. F CROSS-PACKET TIES verified ($8,135.50 pair; $17,818.73 pair; nominee; freight $89,120.50) — BOTH
+     sides of each pair must match BEFORE EITHER side files.
+  5. Then file.
+
+
+## ✅✅✅ PROJECT COMPLETE — full package delivered
+(A) 5 tax-amendment packets + cover memos: SGM 2024 −$213,417 | CB 2024 +$27,514 | SGM 2025 −$11,915 |
+    SPLT 2025 +$56,561 | CB 2025 −$16,470. Only real tax = SPLT C-corp ~$11,878.
+(B) Deal workbook + memo + GMV_2026_YTD: 2024 $751,891 | 2025 $513,987 | 2026 H1 $106,411. Two-denominator
+    wall held absolutely (zero tax/entity/Cyberbackpack content). Honest IP-pullback narrative (patent
+    granted Mar 2026; June = leading indicator of re-ramp; Shark Tank capital funds acceleration).
+(C1) CPA_Decision_List.md — 41 items, groups A-G, constrained filing order (method → filing model → nominee
+    1099 → verify cross-packet ties → file). Augusta Apr-30 SGM/CB overlap must resolve first.
+(C2) Reconciliation_Backup.xlsx — 6 tabs, every headline figure traced; 4 cross-packet pairs both-sides
+    verified; 25 source docs indexed; Corrections & Findings Log documents the 5 material discoveries
+    (WF parser bug ~$1.37M phantom; plug trap; QB commingling ~$104K; FB comma-parse $85,325→$97,769;
+    2026 $430K stale estimate → real $106,411).
+
+## OWNER'S REMAINING ACTIONS (nothing else blocked on the reconstruction)
+- Resolve Augusta Apr-30 overlap (which entity actually used the property) — blocks both 2025 filings.
+- TJ: make the A1 METHOD election first (cascades to all 5 packets); then filing model; then nominee 1099.
+- Request corrected Amazon 1099-K under SPLT TIN; pull Shopify Capital agreement (interest → lowers SPLT tax).
+- Pull filed 2025 personal return to check for the same commingling pattern found in CB 2024.
+
+
+## CORRECTION — Augusta "overlap" was MIS-FLAGGED (owner right)
+I flagged "only ONE entity can deduct the Apr-30 property" — WRONG. Augusta/§280A(g): the 14-day limit
+attaches to the PROPERTY/HOMEOWNER, not per-business. Two DIFFERENT corporations (SGM, CB/SPLT) each holding
+a GENUINELY SEPARATE board meeting at the same property on the same day CAN each deduct — they're independent
+taxpayers with independent business purposes.
+**The REAL constraint: total rental DAYS across ALL entities on that property must be ≤14/yr** (homeowner can
+exclude only 14 days of rental income total, NOT 14 per business). So:
+- ✅ Same-day, two separate meetings, two entities = fine IF genuinely separate events.
+- ⚠️ VERIFY: total 2025 rental days across SGM + CB + SPLT on the property ≤ 14? (If each used 14 → 28 days →
+  OVER the cap.)
+- ⚠️ DOCUMENT: two sets of minutes, two distinct meetings, arm's-length rate each — same-day double-rental
+  LOOKS like double-dipping even when it isn't; documentation is what distinguishes it.
+Update CPA_Decision_List D3 accordingly (not "only one can deduct" — it's "count total property days ≤14 +
+document separateness").
+
+## METHOD ELECTION — partly DETERMINABLE from filed returns (not purely a TJ blank)
+- CB 2024: filed Schedule C box F = **CASH** (confirmed from the uploaded return). Definitive.
+- SGM (1120-S) + SPLT (1120): have accounting-method lines — READ them from the filed returns if available →
+  turns A1 from "TJ elects" into "here's what WAS elected."
+- ⚠️ NUANCE: filed method ≠ method to KEEP. CB filed CASH but reconstruction used INVENTORY for COGS (591u ×
+  $41.04, cost matched to sale). Conflict. Cash → 2023-paid inventory deducts in 2023 not 2024. Changing
+  cash→inventory generally needs IRS consent (Form 3115). So: read what was elected, THEN decide keep-or-change
+  (and price the change).
+- OWNER: do you have the filed SGM 1120-S and SPLT 1120? If so we can read the method boxes directly.
+
+
+## AUDIENCE SPLIT — the Corrections Log is CPA-facing, NOT Kendra-facing (owner right; I over-generalized)
+- **TJ/CPA: KEEP it** (rename → "Methodology Notes"). He's SIGNING returns; if he re-derives from the same raw
+  statements he'll hit the same WF parser bug / plug trap. The notes tell him the traps exist + how resolved.
+  That PROTECTS him and speeds him up. Frame as professional data-trap notes, NOT a confession list.
+- **Kendra/diligence: DO NOT lead with it.** A buyer's analyst reading "$1.37M phantom / $104K over-deduction /
+  $430K→$106K" pattern-matches to "this seller's numbers MOVE A LOT" — it creates doubt about the CURRENT
+  numbers. Rigor should be DEMONSTRATED (every figure traces to a platform source doc; we handed them the
+  honest $106K, not a padded number), NOT NARRATED.
+- Deliver: CPA package = Reconciliation_Backup.xlsx (all tabs, log → Methodology Notes). Kendra package =
+  deal workbook + memo + Diligence_Source_Index (figure → platform source, clean, no process narrative).
+  Full backup held in reserve if diligence ASKS — not led with.

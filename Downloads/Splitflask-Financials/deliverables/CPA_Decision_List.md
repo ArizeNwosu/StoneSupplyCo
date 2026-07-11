@@ -56,30 +56,76 @@
 
 ---
 
+## FILED RETURN BASELINES — From Source Returns (Session C2)
+
+*Read from the actual filed returns. These are now confirmed facts, not assumptions.*
+
+### Accounting Method — CONFIRMED from Filed Returns
+
+| Entity | Year | Form | Method (as filed) | Preparer |
+|--------|------|------|-------------------|----------|
+| SGM | 2024 | 1120-S | **CASH** (Schedule B Q1a checked) | Nnamdi Ezeruo / Q Tax Services |
+| SGM | 2025 | 1120-S | **CASH** (Schedule B Q1a checked) | Nnamdi Ezeruo / Protacs Inc |
+| SPLT | 2025 | 1120 | **CASH** (Schedule K Q1a checked) | Nnamdi Ezeruo / Protacs Inc |
+| CB | 2024 | Schedule C | **CASH** (box F) | QuickBooks Self-Employed / personal 1040 |
+
+**No Form 3115** (change of accounting method) has been filed by any entity. This means any shift away from CASH method requires TJ to file Form 3115 with the amended return.
+
+**Note on preparers:** SGM 2024 was filed by Q Tax Services (Nnamdi Ezeruo). SGM 2025 and SPLT 2025 were both filed by Protacs Inc (same preparer, new firm name). Both SGM returns used Form 1125-A (Cost of Goods Sold) with all COGS entered on Line 5 "Other costs" — no inventory beginning/end, no purchases listed, no inventory valuation method checked. This is consistent with cash-basis small business treatment under §471 exception.
+
+### As-Filed Baselines Table
+
+| Entity | Year | Gross Receipts | COGS | Total Deductions | Net Income (Loss) |
+|--------|------|----------------|------|-----------------|-------------------|
+| SGM | 2024 | $418,990 | $270,032 | $182,309 | **−$33,351** |
+| SGM | 2025 | $130,976 | $113,315 | $50,561 | **−$32,900** |
+| SPLT | 2025 | $369,981 | $331,210 | $28,921 | **+$9,850** taxable; $2,069 tax OWED |
+| CB | 2024 | $139,613 | $0 | $135,471 | **+$4,142** (commingled — see CB packet) |
+
+### ⚠️ SPLT 2025 Filed vs Reconstruction Discrepancy
+
+**Filed:** Gross $369,981, COGS $331,210, taxable income $9,850, tax $2,069.
+**Reconstruction:** Gross $456,722, deductions $400,161, taxable income **+$56,561**, tax ~$11,878.
+
+Delta: reconstruction raises SPLT income by ~$46,711 and tax by ~$9,809 vs what was filed.
+
+Likely explanation: preparer lumped platform fees INTO COGS on the 1125-A (the same "Other costs" pattern as SGM), while our reconstruction tracked fees separately. The COGS gap ($331,210 filed vs our lower figure) suggests the preparer may have included Amazon fees + Shopify fees inside COGS rather than as separate deduction lines. Revenue gap ($456,722 vs $369,981) likely reflects Kickstarter $54,386 and/or different Amazon nominee treatment.
+
+**Action for TJ:** Compare the filed SPLT 1125-A (COGS schedule) and deduction detail to our reconstruction line-by-line before adopting either as the amendment basis. The filed number is not obviously wrong — it may just present the same economics differently. Resolve composition before filing the SPLT amendment.
+
+### Other Filed-Return Notes
+
+- **Schedule L (balance sheet) is BLANK** on both SGM returns despite gross > $250K in 2024. SGM 2024 Q11 small-business exception technically only applies if BOTH receipts < $250K AND assets < $250K. SGM 2024 gross $418,990 > $250K threshold. Preparer may have relied on the asset test alone. TJ should confirm or note in the amended return.
+- **SPLT Schedule K Q13 exception checked (Yes)** despite line 1a gross of $369,981 > $250K. Same issue — exception shouldn't apply if gross > $250K. Schedule L is blank for SPLT too. Flag for TJ.
+- **SPLT is an initial return** (box E1 checked). The amendment will be its first amended 1120.
+- **Both SGM 1125-A forms:** No inventory valuation method checked (Cost, LCM, Other all unchecked). No Section 263A / UNICAP. No LIFO. No changes in valuation from prior year. Consistent with cash method small business exception treatment throughout.
+
+---
+
 ## A — Accounting Method Elections
 
 ### A1 — Inventory vs Cash Method (all entities — elect consistently)
 
-**Decision:** Which method applies to ALL entities and both filing years?
+**Decision:** All entities FILED on CASH method (confirmed above). Question is whether TJ KEEPS cash or CHANGES to inventory method for COGS. A change requires Form 3115.
 
 **Options:**
-- **Inventory / accrual method:** COGS = units *sold* × per-unit cost (recognized at sale). Requires ending inventory adjustment.
-- **Cash method:** COGS = all supplier payments made during the year, regardless of when units sell.
+- **Keep CASH (no Form 3115):** COGS = supplier payments made during the year. For CB 2024 specifically: the 2023-paid Kangdao inventory CANNOT be deducted in 2024 under pure cash — it was paid in 2023. CB 2024 COGS under cash = $0 (no Kangdao payments in 2024). This eliminates the $24,254 reconstruction COGS and raises CB 2024 profit to ~$51,769.
+- **Change to Inventory / Accrual (requires Form 3115):** COGS = units *sold* × per-unit cost (recognized at sale). Enables the $24,254 inventory-matched CB 2024 COGS and other inventory-year matching. Form 3115 creates a §481(a) adjustment.
 
 **$ impact by entity:**
 
 | Entity / Year | Cash Method COGS | Inventory Method COGS | Delta |
 |---|---|---|---|
 | SGM 2024 | $390,068 | $332,468 (−$57,600 ending inv) | $57,600 |
-| CB 2024 | N/A (no 2024 payments) | $24,254.64 (2023-paid units sold 2024) | $24,254 |
+| CB 2024 | $0 (no 2024 Kangdao payments) | $24,254.64 (2023-paid units, sold 2024) | $24,254 |
 | CB 2025 | $3,266.67 | ~$57,456 (~1,400 units × $41.04) | ~$54,189 |
 | SPLT 2025 | $103,463.00 | $77,584 (units sold × unit cost, ending inv $25,879) | $25,879 |
 
-**CB 2024 cross-year note:** The 2023 Kangdao payments (inventory method → 2024 COGS at sale) must **NOT** also appear as deductions on the 2023 Schedule C. One deduction, one year. Confirm 2023 CB return before filing CB 2024.
+**CB 2024 cross-year note (cash method):** Under cash, the 2023 Kangdao payments deducted in 2023. Confirm the 2023 CB Sch C before filing CB 2024 amendment — if 2023 already took the deduction, DO NOT also take it in 2024. One deduction, one year.
 
-**Recommendation:** Choose one method and apply it to all entities for the same year. Whichever method reduces taxable income most is favorable but must be defensible under small-business exception (IRC §471 / §448). Consistency across entities is mandatory.
+**Recommendation:** Choose one method and apply it to all entities for the same year. Consistency across entities is mandatory. Whichever method is chosen must be applied uniformly and the SPLT 2025 discrepancy resolved against that choice.
 
-**Status:** OPEN — CPA elects.
+**Status:** OPEN — CPA elects. **MUST DECIDE FIRST** — cascades to COGS on all five packets.
 
 ---
 
