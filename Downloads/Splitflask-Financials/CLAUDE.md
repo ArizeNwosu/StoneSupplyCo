@@ -1598,76 +1598,60 @@ at 32001 Royceton Ct = the RESIDENCE. TWO DIFFERENT PROPERTIES. Zero overlap. Co
   LIABILITY** (ties to the blank Schedule L). Quantify from the loan docs.
 
 
-## ✅ SBA LOAN + REVOLVING LOAN + $4,238 — ALL CLOSED (source-verified from docs)
+## ⚠️⚠️⚠️ SBA EIDL — SOURCE-VERIFIED. Two items for DEAL COUNSEL (not tax)
+Loan #7855987406 | Borrower **SGM** | Guarantor **Arize Nwosu PERSONALLY ONLY** (SBA Form 2128; Cheryl NOT on
+it; **SPLT NOT on it**) | **$404,200** (1st Mod 4/23/2021; original note $23,000 4/18/2020) | **3.75%/yr** |
+$2,018/mo from ~May 2022 | matures 5/18/2050 | **COLLATERAL: broad UCC lien on ALL SGM BUSINESS ASSETS**
+(inventory, equipment, AR, intangibles).
+- ✅ **DEAL CLEAN ON PAPER:** §7(M) change-of-control defaults SGM only if SGM changes ownership — **SPLT is a
+  separate entity NOT owned by SGM → selling SPLT does NOT trigger it.** SPLT is on NEITHER the note nor the
+  guarantee.
+- ⚠️⚠️ **FOR DEAL COUNSEL #1 — the "Limits on Distribution of Assets" clause** prohibits SGM from distributing
+  assets to AFFILIATED ENTITIES without SBA prior written consent. **The $148,164 SGM→SPLT capital contribution
+  IS EXACTLY THAT.** Handle PROACTIVELY: retroactive consent letter or disclosure. SGM's problem, not a
+  deal-stopper — but do NOT let it surface from Kendra's side first.
+- ⚠️⚠️ **FOR DEAL COUNSEL #2 — the SBA has a UCC lien on ALL SGM business assets.** SGM was the 2024 operating
+  entity. **Did any SBA COLLATERAL move to SPLT** (Splitflask inventory carryover, tooling, the PATENT, equipment)?
+  A buyer's lawyer WILL ask. Need a clear documented answer BEFORE they do.
+- ⚠️ **PERSONAL: guarantee SURVIVES the sale — ~$387K follows Riz** if SPLT sells and SGM winds down. Plan
+  servicing/retirement in the deal structure.
+## ✅ Revolving Loan Agreement = AIRTIGHT WALL (source-verified)
+Lender Arize → Borrower SPLT. Effective 6/30/2026 (amends 3/6/2025). Balance $13,879 (advances $66,587 −
+repayments $52,708). **5% simple, ONLY from 6/30/2026 → SPLT 2025 interest deduction = $0.** §2.7 explicitly:
+SPLT's SBA payments "do NOT create any obligation of Borrower to the SBA, do not make Borrower a co-obligor
+or guarantor." Advances at lender's SOLE DISCRETION → **SPLT can STOP at closing.** $13,879 balance repaid or
+forgiven at close (forgiveness = income to SPLT — TJ advises).
+## ⚠️ SGM's SBA INTEREST — partly unclaimed; Assembly 1 over-deducted principal
+2024: est. full-year interest ~$15,060. Bank shows only $13,320 paid (6.6 mo) → interest ≈$8,285 / principal
+≈$5,035. **Assembly 1 deducted the FULL $13,320 → TJ must REMOVE the ~$5,035 principal (non-deductible).**
+⚠️ Pull SBA payment history: if 12 full payments were made from ANOTHER account, up to **~$6,775 MORE interest
+is deductible and unrecorded.** 2025: est. interest ~$14,700 — TJ confirm captured. **Balance-sheet liability
+~$396K (2024) / ~$387K (2025) — MUST appear on Schedule L** (which was left BLANK).
+## ✅ ALL FIVE FINAL (post every correction)
+| **SGM 2024 ≈ −$182,089** | **CB 2024 +$31,214** | **SGM 2025 ≈ +$85 (breakeven)** | **SPLT 2025 ≈ +$59,094
+(C-corp tax ~$12,410)** | **CB 2025 −$16,470** |
+Aggregate deeply net-negative (SGM 2024 dominates). ONLY real tax = SPLT C-corp ~$12,410.
+$4,238 CLOSED: Santander $2,770 balance-sheet; Affirm $901 deductible; Shopify fees $566 deductible (+$1,468 ded).
 
-### SBA EIDL — Source: "SBA-Loan Agreement, Note, Guarantee and Related Documents.pdf"
-- **Loan #7855987406**, Application #3600191127
-- **BORROWER: Social Gear Media (SGM only)** — signed by Arize Nwosu, Owner/Officer
-- **GUARANTOR: Arize Nwosu PERSONAL ONLY** (SBA Form 2128, 32001 Royceton Ct.). Cheryl = NOT on it. **SPLT = NOT on it.**
-- **Amount: $404,200** (1st Modification effective April 23, 2021; original note was $23,000 dated April 18, 2020)
-- **Rate: 3.75% per annum**
-- **Payment: $2,018/month** — started 24 months after original note ≈ May 2022
-- **Maturity: May 18, 2050** (30 years from original note)
-- **Collateral: all SGM business assets** (inventory, equipment, AR, intangibles, etc. — broad UCC lien)
-- **Change-of-control:** §7(M) of Modification of Note — SGM defaults if it "changes ownership or business structure without SBA's prior written consent." **This applies to SGM, NOT SPLT.** Selling SPLT (a separate entity not owned by SGM) does NOT trigger this.
-- ⚠️ **LA&A ASSET DISTRIBUTION CLAUSE:** "Borrower will not, without the prior written consent of SBA, make any distribution of Borrower's assets… to any company directly or indirectly controlling or affiliated with or controlled by Borrower." The **$148,164 SGM→SPLT capital contribution** was an SGM asset distribution to an affiliated entity. This may have required SBA prior written consent that was not obtained. Flag for deal counsel proactively — retroactive SBA consent or notation in the transaction documents. This is an SGM compliance issue, not a SPLT deal-blocker, but disclose.
-- **DEAL ANSWER (clean): SPLT is NOT a borrower, NOT a guarantor, NOT on the SBA paper in any capacity.** SPLT's SBA payments (§2.7 Revolving Loan) were owner-directed advances, not SPLT's SBA obligation. The obligation stays with SGM and Riz personally. Terminates at closing.
-- **PERSONAL GUARANTEE SURVIVES THE DEAL.** Riz remains personally on the hook for the SBA EIDL even after SPLT is sold and SGM winds down. Deal counsel must address retirement/servicing in the transaction structure.
 
-### SGM Unclaimed SBA Interest Deduction
-Opening balance at first payment (May 2022) ≈ **$420,220** (includes ~$16K interest accrued on $404,200 during 24-month deferral).
-Monthly rate = 3.75%/12 = 0.3125%. By Jan 2024 (after ~20 months of payments): balance ≈ **$405,545**.
-- **2024 interest (full year):** 12 × ~$1,255 avg = **~$15,060** deductible to SGM.
-  Bank shows $13,320 in SBA payments (6.6 payments). Of that: interest ≈ **$8,285** / principal ≈ **$5,035**.
-  ⚠️ Assembly 1 included $13,320 as a deduction (flagged "TJ — split"). TJ must remove the ~$5,035 principal (non-deductible). Net change to SGM 2024: +$5,035 income. ALSO: if 12 full payments were made (another ~5-6 payments from a non-SGM-bank account), **up to ~$6,775 additional interest** may be deductible but unrecorded. TJ to pull SBA loan payment history (SBA portal / Santander servicer) to confirm actual 2024 payment count and amounts.
-- **2025 interest (estimate):** By Jan 2025 balance ≈ **$396,400**. Full-year interest ≈ **~$14,700**. If SGM made 12 payments in 2025, up to ~$14,700 in interest deductions should appear in the SGM 2025 bank classification — TJ to confirm this was captured (Layer 7 / Assembly 3). If payments were missed or diverted, there's an unclaimed deduction here.
-- **Balance-sheet liability:** SGM's SBA EIDL balance ≈ **$396K year-end 2024 / $387K year-end 2025** — MUST appear on Schedule L (both SGM returns had Schedule L blank; amendment must fix).
-
-### Revolving Loan Agreement — Source: "Revolving_Loan_Agreement_SPLT_Nwosu (1).pdf"
-- **Structure: Arize Nwosu (lender) → SPLT INC (borrower).** Effective June 30, 2026. Amends/restates March 6, 2025 original loan.
-- **Balance as of June 30, 2026: $13,879** (total advances $66,587 − total repayments $52,708; Exhibit A verified)
-- **Rate: 5% per annum, simple interest, accruing FROM June 30, 2026** on outstanding balance. "Without retroactive compounding." (§2.3)
-- **SPLT 2025 interest deduction = $0.** Interest only starts from the June 30, 2026 effective date; all prior advances (2025) carry no retroactive interest under this agreement. The original March 6, 2025 agreement terms were superseded.
-- **§2.7 SBA payments — DEFINITIVELY DOCUMENTED:** "Each such payment constitutes a repayment by Borrower to Lender under this Agreement… This characterization does NOT create any obligation of Borrower to the SBA, does not make Borrower a co-obligor or guarantor on the Social Gear Media LLC EIDL loan." SPLT's SBA-directed payments are revolving loan principal repayments. Non-deductible (balance sheet). Clean — the agreement explicitly walls off SPLT from SBA liability.
-- **SPLT can stop at closing:** Advances are "at Lender's sole discretion" (§2.1). SPLT has no ongoing contractual obligation to keep making payments. The revolving balance ($13,879) can simply be repaid or forgiven at transaction close.
-- ⚠️ **$7,000 "cup deposit" Oct 14, 2025 in Exhibit A:** originated from "Royceton" reference rather than "Nwosu A" — flagged in agreement; parties to confirm source before filing or dispute. Small item but document it.
-
-### $4,237.64 — ALL FOUR BUCKETS CLOSED
-- **$2,770.14 Santander BILLPAY** = revolving loan principal repayment (SPLT→Riz→SBA, per §2.7). **Balance sheet, NON-DEDUCTIBLE.** Not SPLT's SBA obligation. ✅ CLOSED
-- **$901.12 Affirm/Shop Pay** = BNPL return clawbacks / net settlement debits. **FULLY DEDUCTIBLE** (BNPL_NET_SETTLEMENT_DEBIT). ✅ CLOSED
-- **$566.38 Shopify transfers** = platform plan/app fees (owner confirmed: NO Capital advance on Splitflask store in Shopify Finance). **FULLY DEDUCTIBLE** (OPEX_PLATFORM_FEE). ✅ CLOSED
-- **Net new SPLT 2025 deductions from this bucket: $901.12 + $566.38 = $1,467.50**
-
-## ✅✅✅ ALL FIVE ENTITY-YEARS — FINAL FIGURES (all corrections applied)
-
-| Entity-Year | FINAL Amended Net | Prior Base | Changes |
-|---|---|---|---|
-| **SGM 2024** | **≈ −$182,089** | −$213,417 (Assy 1) | +$22,250 brother loan; +$12,000 Augusta; −$2,922 Shopify Capital |
-| **CB 2024** | **+$31,214** | +$27,514 (Assy 2) | Shopify Capital = $0 on CB; COGS + BNPL already applied |
-| **SGM 2025** | **≈ +$85 (breakeven)** | −$11,915 (Assy 3) | +$12,000 Augusta correction (deduction −$12K) |
-| **SPLT 2025** | **≈ +$59,094** | +$56,561 (Assy 4D) | +$4,000 Augusta; −$1,467.50 ($4,238 deductions) |
-| **CB 2025** | **−$16,470** | −$16,470 (Assy 5) | No changes post-Assembly 5 |
-
-**C-corp tax (SPLT 2025 only): ~$12,410 @ 21%** (from +$59,094). The one entity-year with a real tax bill.
-Aggregate personal picture = deeply net-negative (SGM 2024 dominates). No personal-level federal tax expected.
-
-**Notes on the SGM 2024 figure:**
-- The −$182,089 does NOT yet incorporate the EIDL principal split. Assembly 1 included $13,320 of EIDL payments as deductions. TJ must split: interest ≈ $8,285 (keep) / principal ≈ $5,035 (remove → income +$5,035). If applied: SGM 2024 ≈ −$177,054. But leave for TJ since the exact split depends on payment dates and the SBA amortization schedule.
-- SGM 2025 flips to a tiny +$85 profit (S-corp, flows through to personal return) after the Augusta correction. Tax cost is minimal but TJ must report the income, not a loss.
-- SPLT +$59,094 is still pending Shopify Capital interest extraction (small, ~$300-400 on the deductible portion of SGM's charge, if any part routes to SPLT — likely minimal since the advance was SGM's).
-
-**TJ ADDITIONS to CPA Decision List (new from this session):**
-- D-NEW: **SBA EIDL interest/principal split** — the $13,320 SGM 2024 EIDL must be split; principal non-deductible. Pull SBA payment history to determine if full 12 payments were made (another ~$6,775 interest may be deductible and unrecorded). Same check for SGM 2025.
-- D-NEW: **SGM Schedule L (both 2024 + 2025 amendments)** — record SBA EIDL balance as long-term liability (~$396K / ~$387K). Currently blank.
-- F-NEW: **$148K SGM→SPLT capital contribution vs SBA LA&A** — the asset distribution clause likely required SBA prior written consent. Deal counsel to address (retroactive consent or disclosure). SGM compliance, not SPLT's problem, but flag proactively.
-- F-NEW: **Revolving Loan $13,879 balance** — disposition at closing. Options: SPLT repays Riz, or forgiven (forgiveness = SPLT income; raise with TJ). Must be addressed in deal structure.
-- F-NEW: **Riz personal SBA guarantee post-closing** — survives SPLT sale. Deal counsel must plan servicing/retirement of the EIDL in the transaction structure.
-
-**WHAT IS NOW FULLY CLOSED (no further analysis needed):**
-- SBA borrower/guarantor identity: SGM / Arize Nwosu personal. SPLT = not on paper. ✅
-- SPLT change-of-control exposure from SBA: none. ✅
-- $4,237.64 bucket: all four items characterized and deductions applied. ✅
-- Revolving loan §2.7: SPLT's SBA payments are documented non-SBA-obligation repayments; discretionary; terminates at closing. ✅
-- Shopify Capital: SGM's ($5,330 charge; 2024 ≈ $2,922 deduction; 2023 ≈ $2,408). CB = $0. ✅
-- Augusta: 14 days total (SPLT 11 × $1,500 = $16,500; SGM 3 × $1,500 = $4,500). Minutes + comps on file. ✅
-- All five entity-years have their final amended net income figures. ✅
+## ⚠️ CRITICAL CLARIFICATION — Amazon: SGM's EIN but SPLT's BANK ACCOUNT (cash never touched SGM)
+Owner: the Amazon account had **SGM's EIN** (never updated to SPLT after February — omission) but **SPLT's
+BANK ACCOUNT for payouts.** So: **Amazon → SPLT's bank directly. Only the TAX REPORTING landed on SGM.**
+- ✅ **THIS STRENGTHENS THE NOMINEE POSITION.** SGM never received the cash; the income was economically
+  SPLT's from the moment Amazon paid. Textbook nominee: WRONG TIN on the reporting, RIGHT entity receiving
+  the money. SGM reports the $240,009.89 1099-K then deducts $224,789.09 nominee-out to SPLT — now even more
+  clearly correct. Makes the corrected-1099-K request to Amazon well-founded (administrative EIN/bank mismatch).
+- ⚠️⚠️ **BUT THIS RE-OPENS THE $148,164:** if Amazon payouts went STRAIGHT to SPLT's bank, they never sat in
+  SGM — so **the $148,164 that moved SGM→SPLT is a SEPARATE flow of actual SGM cash.** It CANNOT be the Amazon
+  receipts. **WHAT WAS IT?** Two possibilities, materially different:
+  (a) SGM's own funds moved to capitalize SPLT → **CAPITAL CONTRIBUTION** → the SBA "Limits on Distribution of
+      Assets" covenant IS implicated (deal counsel).
+  (b) Other misdirected receipts that DID land in SGM and were forwarded → pass-through, not a distribution,
+      SBA covenant likely NOT implicated.
+- ⚠️ **VERIFY FROM BANK DATA, not recollection: did SGM's bank account receive ANY Amazon deposits in 2025, or
+  did they all land in SPLT's account?** Checkable — confirms the owner's account or reveals something more
+  complicated. Also trace what the $148,164 actually was.
+- ✅ Patent/IP: held PERSONALLY by owner, assigned DIRECTLY to SPLT — **never an SGM asset, never under SGM's
+  UCC lien.** Clean answer for buyer's counsel: "the patent was held personally by the founder and assigned
+  directly to SPLT; it was never an asset of Social Gear Media and never subject to the SBA security interest."
+- ✅ SPLT's inventory: bought with OWNER PERSONAL LOANS (the revolving loan), not SGM assets. Not lien-encumbered.
