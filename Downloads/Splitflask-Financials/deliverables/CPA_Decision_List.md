@@ -55,6 +55,7 @@
 | G2 | CB 2025 profit — SE tax applies (personal Sch C) | CB 2025 | Tax owed | **Action** |
 | G3 | Personal return aggregate — confirm deeply negative despite CB/SPLT | Personal 1040 | Confirmation | High |
 | G4 | SPLT $13,376 personal expenses — Dividend vs Compensation model needed ⚠️ NEW | SPLT 2025 | Tax owed | **High** |
+| H1 | **Atlantic Access — 1,400 consigned units on SGM balance sheet at cost** | SGM 2024 | Balance sheet | **High — complete Schedule L** |
 
 ---
 
@@ -87,9 +88,10 @@
 ### ⚠️ SPLT 2025 Filed vs Reconstruction Discrepancy
 
 **Filed:** Gross $369,981, COGS $331,210, taxable income $9,850, tax $2,069.
-**Reconstruction:** Gross $456,722, deductions $400,161, taxable income **+$56,561**, tax ~$11,878.
+**Reconstruction (FIX 1 applied, 2026-07-11):** Gross $456,722, deductions $385,274, taxable income **+$53,817**, tax ~$11,302.  
+*(Prior Assembly 4D locked figure was $56,561 / $11,878 — FIX 1 adds intl Amazon ads $2,319 + misc Amazon fees $425 = $2,744 new deductions.)*
 
-Delta: reconstruction raises SPLT income by ~$46,711 and tax by ~$9,809 vs what was filed.
+Delta: reconstruction raises SPLT income by ~$43,967 and tax by ~$9,233 vs what was filed.
 
 Likely explanation: preparer lumped platform fees INTO COGS on the 1125-A (the same "Other costs" pattern as SGM), while our reconstruction tracked fees separately. The COGS gap ($331,210 filed vs our lower figure) suggests the preparer may have included Amazon fees + Shopify fees inside COGS rather than as separate deduction lines. Revenue gap ($456,722 vs $369,981) likely reflects Kickstarter $54,386 and/or different Amazon nominee treatment.
 
@@ -688,15 +690,17 @@ If yes to any: amendment corrects by removing these and substituting real deduct
 
 | Final taxable income | Corp tax rate | Tax owed |
 |---|---|---|
-| **$56,561** (Assembly 4D locked) | 21% | **~$11,878** |
+| **$53,817** (FIX 1 applied 2026-07-11) | 21% | **~$11,302** |
+
+*Prior Assembly 4D figure was $56,561 / $11,878 — reduced by intl Amazon ads $2,319 + misc Amazon fees $425.*
 
 **Additive reductions still pending (lower the tax):**
 - Shopify Capital interest (D1 above) — deductible, will reduce income ~$1K–$4K
 - Final CPA review of filed 1120 deductions (E2 above) — may uncover further legitimate deductions
 
 **Actions:**
-- File SPLT 1120 with ~$56,561 taxable income
-- Pay C-corp tax (~$11,878 minus Shopify Capital interest adjustment)
+- File SPLT 1120 with ~$53,817 taxable income
+- Pay C-corp tax (~$11,302 minus Shopify Capital interest adjustment)
 - Discuss payment timing / estimated payment requirements with CPA
 - Note: this is a **compliance-driven result** — the Amazon 1099-K matching must be cured regardless of whether it raises tax
 
@@ -757,9 +761,45 @@ to both cure the reasonable-comp exposure and stop personal spending being run t
 
 **Expected result:** Aggregate personal return deeply net-negative (SGM 2024 loss dominates). **No income tax owed on personal return.** SE tax on CB profit may apply separately.
 
-**SPLT reminder:** SPLT's $56,561 income does NOT appear here — it is a C-corp item (G1 above).
+**SPLT reminder:** SPLT's $53,817 income does NOT appear here — it is a C-corp item (G1 above).
 
 **Status:** OPEN — CPA confirms aggregate personal return direction.
+
+---
+
+---
+
+## H — Balance Sheet Items
+
+### H1 — Atlantic Access: 1,400 Consigned Units on SGM Balance Sheet
+
+**Facts (FIX 3 — 2026-07-11):**
+- 1,400 Splitflask tumblers are held by Atlantic Access (European distribution partner) on **consignment** — title has NOT passed to Atlantic Access.
+- Units came from **SGM's 2024 carryover inventory**. SGM is the legal owner until Atlantic Access sells through.
+- Atlantic Access has NOT paid. Payment terms: Atlantic Access sells units, deducts expenses, splits net proceeds. No proceeds yet.
+
+**Tax treatment:**
+- **NO sale, NO revenue, NO COGS deduction.** Consigned goods are still SGM inventory — title hasn't passed.
+- **NO "market-seeding expense"** — owner never surrenders title; the cost is already in inventory as an asset. You cannot expense inventory you still own, and there is no deduction for foregone profit.
+- Revenue and COGS recognize only when Atlantic Access sells through and reports proceeds to SGM.
+
+**Balance sheet disclosure (SGM — Schedule L must be completed):**
+
+| Asset Line | Description | Amount |
+|---|---|---|
+| Inventory — consigned to Atlantic Access (Europe) | 1,400 units × $9.60/unit (SGM 2024 unit cost) | **$13,440** |
+
+*Unit cost: SGM 2024 ending inventory unit cost = $9.60/unit (per SGM 2024 COGS & Inventory tab: $10.40 landed − $1.30 freight/unit). Apply same cost to consigned units.*
+
+**⚠️ TJ action item — inventory count reconciliation:** Confirm whether the physical count underlying the 6,000-unit ending inventory figure (SGM 2024) included or excluded the 1,400 Atlantic Access units (which were physically located in Europe at year-end 2024).
+- If the 6,000 count **included** the Atlantic Access units: no adjustment to COGS; disclose separately on Schedule L as "consigned inventory — Atlantic Access $13,440."
+- If the 6,000 count **excluded** them: SGM ending inventory was understated by $13,440 → COGS was overstated by $13,440 → amended loss shallower by $13,440 (minor adjustment; still highly favorable). Restate ending inventory to 7,400 units / $71,040 on Schedule L.
+
+**Deal workbook:** Consigned ≠ sold → correctly excluded from GMV. No change to any deal figure.
+
+**SPLT confirmed unaffected:** SPLT's unit math closes cleanly (15,000 imported = 11,244 sold + 3,756 ending inventory). The consigned units were never SPLT's.
+
+**Status:** OPEN — TJ confirms physical count scope and completes Schedule L.
 
 ---
 

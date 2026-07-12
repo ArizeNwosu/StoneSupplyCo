@@ -7,15 +7,36 @@
 **Prepared by:** Riz Nwosu (owner reconstruction) — for TJ (CPA) review and signature
 **Date:** 2026-07-11
 **Packet file:** `deliverables/SPLT_2025_Amendment_Packet.xlsx`
-**Status:** LOCKED — Assembly 4D complete. All owner reclassifications applied. **Final amended taxable income: ~$56,561.**
+**Status:** UPDATED — FIX 1 applied 2026-07-11. **Final amended taxable income: ~$53,817** (was $56,561; reduced by intl Amazon ads $2,319 + misc Amazon fees $425).
 
 ---
+
+---
+
+## FIX 1 — International Amazon Ads + Misc Fees (2026-07-11)
+
+**Amended taxable income: $53,817** (Corp tax ~$11,302 @ 21%).
+
+### New deductions added (FIX 1)
+
+| Item | Amount | Source | FX Rate |
+|---|---|---|---|
+| International Amazon ads — MXN 2,394.44 | $120.44 | Splitflask-AMA Ad_Spend_2025.csv | MXN/USD 0.0503 (19.88 MXN/USD avg 2025) |
+| International Amazon ads — CAD 3,025.58 | $2,190.82 | Same CSV | CAD/USD 0.7241 (1.381 CAD/USD avg 2025) |
+| International Amazon ads — AUD 12.48 | $7.94 | Same CSV | AUD/USD 0.6361 (1.572 AUD/USD avg 2025) |
+| **Intl ads subtotal** | **$2,319.20** | | |
+| Misc Amazon fees: FBA Txn fees $533.93 + Amazon Fees $167.06 − Adjustments $276.12 | $424.87 | Splitflask-AMA 2025Jan1-2025Dec31CustomUnifiedTransaction.csv | — |
+| **Total FIX 1 new deductions** | **$2,744.07** | | |
+
+Income: $56,561 − $2,744 = **$53,817**. Corp tax @21%: **~$11,302**.
+
+*Note: intl ads billed in local currency through MX/CA/AU Amazon ad accounts — NOT in the US settlement report (S339). These are pure ad expenses per owner.*
 
 ---
 
 ## Assembly 4D — LOCKED FINAL (2026-07-11)
 
-**Amended taxable income: $56,561** (Corp tax ~$11,878 @ 21%).
+**Assembly 4D base taxable income: $56,561** (before FIX 1). Current final: **$53,817**.
 
 ### Owner Reclassifications Applied
 
@@ -65,19 +86,20 @@
 | ···0566 MasterCard confirmed SPLT (−$3,070) | +$59,705 |
 | Paris travel removed from deductions (+$419) | +$60,124 |
 | Venmo $1,012 + Boardroom $1,000 + Royceton $1,300 + Frank $251 (−$3,563) | **+$56,561** |
+| FIX 1: intl Amazon ads −$2,319 + misc Amazon fees −$425 | **+$53,817** |
 
 ### Deduction Totals (Assembly 4D)
 
 | Section | Amount |
 |---|---|
-| Section A — Platform fees | $100,009.92 |
+| Section A — Platform fees (incl. FIX 1 intl ads $2,319 + misc fees $425) | $102,753.99 |
 | Section B — WF bank (updated) | $182,723.85 |
 | Section C — Chase + ···0566 (updated) | $99,796.04 |
-| **TOTAL DEDUCTIONS** | **$382,529.81** |
+| **TOTAL DEDUCTIONS** | **$385,273.88** |
 
 ### Open TJ Items (updated)
 
-All Chase flagged items RESOLVED. Remaining TJ items:
+All Chase flagged items RESOLVED. FIX 2 verified (SBA clean — see below). Remaining TJ items:
 
 1. **Shopify Capital interest** — additive deduction (lowers profit); TJ extracts from agreement
 2. **Augusta Rule $20,500 — 14-day cap** — TJ confirms
@@ -87,6 +109,12 @@ All Chase flagged items RESOLVED. Remaining TJ items:
 6. **Amazon 1099-K corrected form** — request from Amazon under SPLT TIN
 7. **CGL LA $3,195** — keep engagement letter/invoice on file
 8. **···0566 MasterCard** — TJ: confirm card identity + bank statement on file
+
+---
+
+## FIX 2 — SBA Payment Verified Zero Deduction (2026-07-11)
+
+✅ **Confirmed: the $2,770.14 Santander BILLPAY (SPLT paying SGM's SBA EIDL) deducts NOTHING on SPLT.** Reviewed Tab 5_Deductions — no SBA, Santander, or EIDL line in any of the three deduction sections. Treatment is correctly balance-sheet only (intercompany advance / owner-loan, per CLAUDE.md Revolving Loan Agreement §2.7). Interest on the revolving loan does not accrue until 6/30/2026 → SPLT 2025 interest = $0. Income unchanged.
 
 ---
 
