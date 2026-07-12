@@ -1476,112 +1476,198 @@ CPA TASK: model and choose —
   REASONABLE COMPENSATION. CPA to advise on starting a salary in 2026 (also stops personal spend leaking
   onto the corporate card = root cause of the original commingling).
 
-## CLEANUP FIXES — Post-Assembly 5 (four bounded corrections from new docs + owner answers)
 
-### FIX 1 — $25K Chukwuezugo: LOAN REPAYMENT, kill the mold/Section-179 treatment
-Owner answer confirmed: the $25K SGM 2024 bank entry (previously classified mold → Section 179) was a
-**loan PRINCIPAL repayment** on a note made by Riz's brother Chukwuezugo Nwosu to SGM in 2023. Terms:
-10% annual interest, 3-year term. $4,000 of principal remains outstanding after the $25K payment.
-- **REMOVE $25,000 from SGM 2024 deductions entirely** (principal is never deductible).
-- **ADD deductible interest:** at 10% on the estimated original principal (~$27–$29K), 2024 interest
-  ≈ **~$2,750** (range $2,500–$3,000 depending on exact note amount and dates). NEED the actual note
-  to compute precisely. Estimate only — replace with stated figure from the note before filing.
-- **SGM 2024 new net: approximately −$194,089** (was −$213,417; net change ≈ +$19,328 shallower due
-  to removing $25K deduction, partially offset by ~$2,750 interest + ~$2,922 SGM Shopify Capital fix below).
-- **$4,000 remaining balance = related-party note payable** on SGM 2024 balance sheet (Chukwuezugo Nwosu).
-- **TJ FLAG: 1099-INT** — SGM must issue Form 1099-INT to Chukwuezugo for 2024 interest paid (~$2,750
-  estimated). Also check 2023 (interest on outstanding balance from origination to year-end = ~$2,900).
-  Chukwuezugo must include the interest as income on his personal return. Arm's-length documentation
-  of the note is needed (signed promissory note with rate, term, maturity date).
-- Prior B5 in CPA list ("Section 179 vs COGS") is KILLED. Replaced with the above.
+## ⚠️⚠️ CLEANUP RESULTS — 3 real findings; AUGUSTA LOCATION is now the critical question
+### 1. ⚠️ AUGUSTA PROPERTY TYPE — §280A(g) ONLY applies to a dwelling used as the taxpayer's RESIDENCE
+Schedule E shows the 2 rentals (526 Houston Dr $56,400 rent; 378 Fittner Cir $39,600) are INVESTMENT RENTALS
+with arm's-length tenants → **Augusta does NOT apply to them.** Augusta only works at **32001 Royceton Ct**
+(personal residence; also the Cyberbrands Sch C business address).
+- **OWNER MUST CONFIRM: where did the 11 SPLT + 3 SGM board meetings actually take place?**
+  - At ROYCETON (residence) → Augusta applies (14 days @ $1,500 = $21,000). ✅
+  - At a RENTAL property → Augusta does NOT apply AT ALL; that rent = ordinary RENTAL INCOME to owner on
+    Sch E, no 14-day exclusion, no free pass.
+- ⚠️ POSSIBLE DOUBLE-COUNT: owner earlier reclassified a **"$1,300 transfer to Royceton" as corporate rental**
+  (deductible, SPLT). If Royceton IS the personal residence, that $1,300 and the Augusta rent are the SAME
+  KIND OF THING on the SAME property — check we're not mixing an Augusta claim with an ordinary rent deduction,
+  or double-counting. RESOLVE.
+### 2. ⚠️ Shopify Capital doc is **SGM's, NOT Cyberbrands'** (entity was mislabeled all along)
+- Stated terms (SOURCED, replaces estimates): **principal $41,000, finance charge $5,330**, signed Aug 16
+  2023, ~303-day term. → SGM 2024 gets +$2,922 deduction (166/303 days of the charge).
+- **CB's ~$3,700 estimated financing cost = REMOVED (misattributed).** CB 2024 net moves to ~+$34,914.
+- SPLT Shopify Capital: **DOES NOT EXIST** (owner was right). $4,238 removed from SPLT balance sheet; action
+  item deleted. SPLT income unchanged +$56,561 (principal was non-deductible anyway).
+- ⚠️ **OPEN: what ARE the ~$34,446 of CB bank entries labeled "Shopify Capital repayments"?** Real money moved
+  — needs correct classification. Owner: does CB have a SEPARATE Shopify Capital agreement? If not, CB has $0
+  Shopify Capital financing cost and those entries are something else. Same for SPLT's $4,238 entries.
+### 3. ✅ $25K brother loan: principal $25,000 OUT of SGM deductions; interest ~$2,750 IN (10%; need actual note
+to replace estimate). SGM 2024 new net ≈ **−$194,089**. $4,000 = related-party note payable. SGM must issue
+**1099-INT** to Chukwuezugo (check 2023 too).
+### 4. ✅ 2025 PERSONAL 1040 IS CLEAN — no 2024-style commingling
+CB 2025 Sch C as filed: rev $95,558 / COGS $71,051 / net −$1,343 / CASH method. vs reconstruction rev
+$107,876 / net −$16,470. Amendment FAVORS owner (bigger loss) — filed return badly understated FB ads
+($5,520 filed vs $20,277 bank + $17,819 interco). ⚠️ TJ verify "Office expense $15,470" = platform fees
+(gross-up wash) or real outlays? Overall 1040: AGI $68,420, $0 net federal tax, refund $8,982. SPLT correctly
+absent (C-corp).
 
-### FIX 2 — Shopify Capital doc is for SGM, not Cyberbrands (file was mislabeled)
-The doc added to the folder as "Cyberbrands-Shopify-Capital.pdf" has **BORROWER = SOCIAL GEAR MEDIA**
-(not Cyberbrands). This is **SGM's Shopify Capital agreement**, signed August 16, 2023:
-- Loan amount (principal): **$41,000**
-- Finance charge (fixed): **$5,330** (stated in the agreement — NOT estimated)
-- Total repayment: $46,330 at 17% of daily Shopify sales
-- Estimated term: 303 days (payoff estimated ~June 2024)
 
-**2024/2023 split of the $5,330 finance charge** (cash method, deducted as paid via daily 17% withhold):
-- 2023 portion (Aug 16 – Dec 31 = 137 of 303 days): 137/303 × $5,330 ≈ **$2,408** (SGM 2023 deduction)
-- 2024 portion (Jan 1 – ~Jun 15 = 166 days): 166/303 × $5,330 ≈ **$2,922** (SGM 2024 deduction)
-→ **ADD ~$2,922 to SGM 2024 deductions** (Shopify Capital financing cost, sourced to the agreement).
-SGM 2024 new net incorporates this (see FIX 1 above; combined impact = ~−$194,089).
+## ✅ RESOLVED — Augusta location + Shopify Capital attribution (owner answers)
+### Augusta: meetings were at **32001 ROYCETON CT = owner's PERSONAL RESIDENCE** → §280A(g) APPLIES. ✅
+14 days (SPLT 11 + SGM 3) @ $1,500 = $21,000 stands. NOT at the Sch-E rental properties. Augusta LOCKED.
+⚠️ STILL CHECK: the "$1,300 transfer to Royceton" reclassified as SPLT corporate rental — Royceton IS the
+residence, SAME property as the Augusta claim. Is that $1,300 part of the Augusta rent (→ already counted,
+DOUBLE-COUNT) or a separate ordinary-rent payment on the residence (→ would BREAK Augusta — can't claim a
+14-day exclusion AND ordinary rent on the same residence)? RESOLVE before filing.
+### Shopify Capital: signed by SGM (account holder) but FUNDS WENT TO CYBERBRANDS → **CB DEDUCTS IT**
+The Shopify account was SGM's and hosted BOTH the Cyberbackpack store AND the Splitflask store. The advance
+was signed under SGM as account holder, but the **FUNDS WENT TO THE CYBERBACKPACK/CYBERBRANDS BUSINESS.**
+**RULE: interest is deductible by the entity that USED the borrowed funds in its business — not the entity
+whose name is on the agreement.** (Same account-follows-entity/use-of-funds logic as everything else.)
+- ✅ **The $5,330 finance charge belongs to CYBERBRANDS** (sourced, replaces the ~$3,700 estimate). SGM is the
+  nominal borrower; CB is the beneficial one.
+- ✅ The **~$34,446 CB "Shopify Capital repayments" are CORRECT after all** — CB was repaying because CB got
+  the money. Principal (non-deductible) + financing cost (deductible to CB).
+- ⚠️ **REVERSE the cleanup pass's +$2,922 to SGM** — that was assigned on the NAME on the agreement, not the
+  USE of funds. SGM does NOT get the Shopify Capital deduction. Restore CB's (now $5,330 sourced, allocated
+  across the repayment years 2024/2025).
+- ⚠️ STILL OPEN: **what is the $4,238 on SPLT's books labeled Shopify Capital?** Advance was SGM-signed /
+  CB-funded — so SPLT's $4,238 may be SPLT repaying on CB's behalf (another INTERCO) or a misclassification.
+  Small but must be identified.
 
-**CB 2024 IMPACT — remove the misattributed ~$3,700:**
-Prior sessions identified ~$34,446.07 in CB 2024 bank as "Shopify Capital" and estimated ~$3,700
-financing cost in the CB 2024 amendment packet. That was based on the wrong premise that CB had
-Shopify Capital. **REMOVE the ~$3,700 CB 2024 financing-cost deduction** — no CB Shopify Capital
-agreement on file.
-- **CB 2024 new net: approximately +$34,914** (was +$31,214; less favorable).
-- ⚠️ The ~$34,446.07 CB 2024 bank entries previously labeled "Shopify Capital repayments" must be
-  RECLASSIFIED. What were they? Possibly CB repaying SGM's Shopify Capital as intercompany (the
-  repayments flowed through CB's account), or something else. TJ/owner must identify and reclassify
-  these CB entries before filing. Do NOT assume they are CB's Shopify Capital cost.
-- ⚠️ OPEN: Does CB have its own SEPARATE Shopify Capital agreement (different from the SGM one)?
-  If yes, owner needs to locate that doc. If no, CB has $0 Shopify Capital financing cost.
 
-### FIX 3 — SPLT Shopify Capital: DOES NOT EXIST (remove and reclassify)
-Owner stated only CB/Cyberbrands has Shopify Capital. The actual doc is for SGM (see FIX 2). Result:
-SPLT has NO Shopify Capital.
-- **REMOVE $4,238 "Shopify Capital principal" from SPLT 2025 balance sheet.**
-- **DELETE action item "extract SPLT Shopify Capital interest"** (no SPLT agreement exists).
-- **SPLT 2025 income unchanged at +$56,561** (principal was non-deductible anyway — no P&L impact).
-- ⚠️ The $4,238 in SPLT's bank previously classified as "Shopify Capital repayments" needs
-  reclassification. Identify what those bank entries actually were (separate from SGM's Shopify Capital).
+## ✅ ROYCETON RESOLVED — SPLT rented storage for inventory pallets
+Royceton = a RENTAL-PROPERTY management account (NOT the residence account). **SPLT rented space there to
+STORE PALLETS OF INVENTORY** → SPLT's $1,300 = ordinary RENT/STORAGE expense, DEDUCTIBLE. Clean.
+- NO double-count with Augusta: Augusta is at **32001 Royceton Ct = the RESIDENCE** (14 days @ $1,500,
+  §280A(g)); the $1,300 storage rent is a SEPARATE ordinary expense at a rental property. Different things.
+- Corresponding rent income appears on owner's Schedule E — consistent.
+## ⚠️ SPLT $4,238 "Shopify Capital" — owner called it "a capital expense for the store service." PUSHED BACK:
+- If it's a Shopify Capital LOAN repayment → principal NON-deductible (only interest deducts) — and SPLT
+  shouldn't have an advance at all (SGM-signed / CB-funded).
+- If it's Shopify PLATFORM/SERVICE FEES → ORDINARY deductible expense in full — but then it's NOT "Shopify
+  Capital," and NOT a "capital expense" either. (⚠️ "Capital expense" in tax = a long-lived asset you
+  DEPRECIATE over years — that's WORSE than an ordinary expense, not better. Wrong label.)
+- Pass cut (IDENTIFY_SPLT_4238) to pull the VERBATIM transaction descriptors and classify correctly.
 
-### FIX 4 — 2025 Personal 1040 read (new file: "ARIZECHUKWU NWOSU CHERYL BENEFIELD 2025 Form 1040.pdf")
 
-**Preparer:** Nnamdi Ezeruo / Protacs Inc (same as the entity returns). Filed May 18, 2026.
+## ⚠️⚠️ SPLT $4,237.64 = FOUR different things (none a Shopify Capital advance) + NEW: SBA EIDL / Revolving Loan
+### 1. **$2,770.14 Santander BILLPAY = SPLT paying SGM's SBA EIDL** at owner's direction, under a
+**REVOLVING LOAN AGREEMENT §2.7 (agreement ON FILE — previously unknown to this reconstruction).**
+- Principal = balance sheet (NON_REV_OWNER_LOAN, non-deductible). **5% INTEREST on the running balance IS
+  DEDUCTIBLE** — TJ computes from Exhibit A.
+- ⚠️⚠️ **NEW MATERIAL ITEM: there is an SBA EIDL LOAN on SGM that has NOT appeared anywhere in the
+  reconstruction.** Is it on SGM's balance sheet? Has its INTEREST been deducted? SBA EIDLs are substantial
+  with real interest → potentially a MEANINGFUL missed interest deduction on SGM. INVESTIGATE.
+### 2. **$901.12 Affirm/Shop Pay** = return clawbacks / net settlement debits on BNPL orders →
+**FULLY DEDUCTIBLE** (BNPL_NET_SETTLEMENT_DEBIT).
+### 3. **$566.38 Shopify transfers — UNCONFIRMED.** Either a NEW SPLT Shopify Capital advance (no doc) or
+Shopify plan/app fees. SGM's advance was fully repaid ~Jun 2024 so these are NOT SGM's.
+→ **OWNER 30-SECOND CHECK: Shopify → Finance → Capital on the SPLITFLASK store.** If fees → OPEX_PLATFORM_FEE
+(deductible).
+### 4. Net effect: SPLT 2025 income DROPS ~$1,300–$2,267 once Affirm + owner-loan interest + Shopify fees are
+confirmed deductible.
+## ⚠️ CB SHOPIFY CAPITAL — REVERSED AGAIN; the DOCUMENT wins: the advance is **SGM's**
+CB_2024_Txns bank descriptors read verbatim: **"Shopify Capital ACH Debit — SOCIAL GEAR MEDIA."** The legal
+borrower is SGM (name in the descriptor AND on the agreement). Repayments were withheld from the CB store's
+payouts (17%), but that's the servicing route, not the borrower.
+- **CB deductible financing cost = $0.** The **$5,330 finance charge belongs to SGM** (2023 ~$2,408 / 2024
+  ~$2,922). (Supersedes the prior "funds went to Cyberbrands → CB deducts" note — the DOCUMENT + descriptor
+  say SGM. Go with the document.)
+- **CB 2024 CORRECTED: remove the erroneous ~$3,700 → CB 2024 net = +$31,214.42** (was +$27,514).
+- ⚠️ OPEN: CB's "Shopify* Card 5130" entries (~$13K, irregular) do NOT say "Social Gear Media" — may be
+  Shopify plan/app FEES (deductible OPEX_PLATFORM_FEE). Separate pass worth running.
+- ⚠️ If CB serviced SGM's debt from CB payouts, consider whether that's an INTERCO (CB receivable / SGM
+  payable). TJ call.
+## ✅ ROYCETON: SPLT $1,300 = inventory pallet storage at a COMMERCIAL property (RENT, deductible). Augusta is
+at 32001 Royceton Ct = the RESIDENCE. TWO DIFFERENT PROPERTIES. Zero overlap. Confirmed.
 
-**Schedule C (CB 2025, Cyberbrands LLC):** AS-FILED figures, now confirmed from the actual return:
-- Revenue (Line 1): **$95,558** / COGS (Part III): **$71,051** (materials/supplies, cash method)
-- Expenses: Advertising $5,520; Commissions $695; Office $15,470; Other property rent $3,600;
-  Travel $65; Utilities $500 → Total $25,850
-- Net (Line 31): **−$1,343**
-- Method: **CASH** (box F) ✓
 
-**E1 (pull CB 2025 Schedule C) = RESOLVED.** Now comparing filed vs reconstruction:
-- Revenue: filed $95,558 vs reconstruction $107,876 → **$12,318 underreported** (known gap).
-- COGS: filed $71,051 (cash method materials/supplies) — compare carefully to reconstruction method.
-- Advertising: filed $5,520 vs bank-confirmed $20,277 + interco $17,819 = ~$38,096 → huge understatement.
-- "Office expense $15,470" ⚠️: verify whether these are platform fees embedded in net revenue (gross-up
-  wash = double-count if deducted separately) OR real incremental cash outlays (real deductions). TJ reviews.
-- **Commingling check: CLEAN.** Unlike 2024's $104K catch-all, 2025 CB is a modest, reasonable-looking
-  return with no phantom car/truck, no $27K commissions, no $28K office sprawl. The 2025 amendment is a
-  genuine correction (revenue + missing deductions), not a restructuring of a commingled mess.
-- Amendment direction: revenue UP $12,318 (adverse), FB ads added ~$32,596 (favorable), net → bigger loss.
-  Filed −$1,343 → reconstruction ~−$16,470. The amendment FAVORS Riz on CB 2025 (deeper loss, less SE tax).
+## ✅ SBA EIDL — BORROWER = SGM. GUARANTOR = ARIZE NWOSU personally. SPLT is on NEITHER line.
+- **DEAL (favorable, clean): Kendra is acquiring SPLT. SPLT is NOT the borrower and NOT a guarantor → the SBA
+  debt does NOT travel with the purchased entity.** Answer for buyer's counsel: "the SBA obligation stays with
+  Social Gear Media, personally guaranteed by the owner; SPLT has no liability."
+- ⚠️ THE QUESTION THEIR LAWYER WILL ASK: **SPLT has been PAYING SGM's SBA loan** ($2,770 Santander BILLPAY,
+  Revolving Loan Agreement). SPLT isn't liable, but its cash serviced the debt. CLEAN ANSWER: those were
+  **owner-directed INTERCOMPANY ADVANCES, not a contractual SPLT obligation — they terminate at closing.**
+  ⚠️ VERIFY in the Revolving Loan Agreement §2.7 that it does NOT contractually bind SPLT to keep paying. If
+  it does, that's a disclosable obligation. (Pass READ_SBA_LOAN_DOCS confirms.)
+- ⚠️ **PERSONAL (owner should know, non-tax): the personal guarantee SURVIVES the deal.** If SPLT is sold and
+  SGM winds down, **Riz is still personally on the hook for the SBA EIDL.** Plan for servicing/retiring it in
+  the transaction structure — raise with deal counsel.
+- TAX: SBA EIDL interest is deductible to the BORROWER (SGM). ⚠️ This loan never appeared in the reconstruction
+  → SGM may have an **UNCLAIMED INTEREST DEDUCTION (2024 + 2025)** and an **unrecorded balance-sheet
+  LIABILITY** (ties to the blank Schedule L). Quantify from the loan docs.
 
-**Schedule E:** Two rental properties plus SGM K-1 pass-through:
-- Property A: 526 Houston Dr, Thousand Oaks CA 91360 — gross rents $56,400 / expenses $53,353 / net $3,047
-- Property B: 378 Fittner Cir, Thousand Oaks CA 91360 — gross rents $39,600 / expenses $39,589 / net $11
-- SGM 2025 K-1 nonpassive loss: $32,900 (= filed SGM 2025 net −$32,900 on its 1120-S)
-- Schedule E total (flows to Schedule 1 Line 5): **−$29,842** (= $3,058 rental + (−$32,900) SGM)
 
-**⚠️ CRITICAL — AUGUSTA RULE PROPERTY TYPE MISMATCH:**
-Both rental properties on Schedule E (526 Houston + 378 Fittner) are **investment rental properties
-rented to tenants** — NOT Riz and Cheryl's personal residence. The personal residence is **32001 Royceton
-Ct, Westlake Village, CA 91361** (home address on the 1040).
-IRC §280A(g) (Augusta Rule) only applies to a **"dwelling unit used by the taxpayer as a residence"**.
-Investment rental properties rented to arm's-length tenants do NOT qualify as the taxpayer's dwelling.
-**All Augusta Rule meeting rentals claimed by the corporations (SGM $16,500 / SPLT $20,500 / CB $1,000)
-MUST be for meetings held at 32001 Royceton Ct (personal residence) — NOT at 526 Houston or 378 Fittner.**
-If any meeting was billed to corporate entities for use of Houston Dr or Fittner Cir, the §280A(g)
-exclusion does NOT apply → the meeting rental income IS taxable (should appear on Schedule E) AND
-the corporate deduction may be disallowed (rental from a non-residence of owner). TJ must confirm
-which property hosted each meeting. This is a new verification item, not previously flagged.
+## ✅ SBA LOAN + REVOLVING LOAN + $4,238 — ALL CLOSED (source-verified from docs)
 
-**Overall 1040 picture:**
-- W-2 income (Cheryl): $99,605 (University of California $97,832 + CHC Payroll $1,773)
-- Schedule 1 additional income: −$31,185 (CB −$1,343 + Schedule E −$29,842)
-- Total income: $68,420 / Taxable income: $36,920 / Federal tax: $0 (CTC offset) / Refund: $8,982
-- SPLT 2025 (+$56,561 C-corp income) correctly NOT on this return — taxed at entity level
-- Effective tax rate: 0.00%
+### SBA EIDL — Source: "SBA-Loan Agreement, Note, Guarantee and Related Documents.pdf"
+- **Loan #7855987406**, Application #3600191127
+- **BORROWER: Social Gear Media (SGM only)** — signed by Arize Nwosu, Owner/Officer
+- **GUARANTOR: Arize Nwosu PERSONAL ONLY** (SBA Form 2128, 32001 Royceton Ct.). Cheryl = NOT on it. **SPLT = NOT on it.**
+- **Amount: $404,200** (1st Modification effective April 23, 2021; original note was $23,000 dated April 18, 2020)
+- **Rate: 3.75% per annum**
+- **Payment: $2,018/month** — started 24 months after original note ≈ May 2022
+- **Maturity: May 18, 2050** (30 years from original note)
+- **Collateral: all SGM business assets** (inventory, equipment, AR, intangibles, etc. — broad UCC lien)
+- **Change-of-control:** §7(M) of Modification of Note — SGM defaults if it "changes ownership or business structure without SBA's prior written consent." **This applies to SGM, NOT SPLT.** Selling SPLT (a separate entity not owned by SGM) does NOT trigger this.
+- ⚠️ **LA&A ASSET DISTRIBUTION CLAUSE:** "Borrower will not, without the prior written consent of SBA, make any distribution of Borrower's assets… to any company directly or indirectly controlling or affiliated with or controlled by Borrower." The **$148,164 SGM→SPLT capital contribution** was an SGM asset distribution to an affiliated entity. This may have required SBA prior written consent that was not obtained. Flag for deal counsel proactively — retroactive SBA consent or notation in the transaction documents. This is an SGM compliance issue, not a SPLT deal-blocker, but disclose.
+- **DEAL ANSWER (clean): SPLT is NOT a borrower, NOT a guarantor, NOT on the SBA paper in any capacity.** SPLT's SBA payments (§2.7 Revolving Loan) were owner-directed advances, not SPLT's SBA obligation. The obligation stays with SGM and Riz personally. Terminates at closing.
+- **PERSONAL GUARANTEE SURVIVES THE DEAL.** Riz remains personally on the hook for the SBA EIDL even after SPLT is sold and SGM winds down. Deal counsel must address retirement/servicing in the transaction structure.
 
-**B3 RESOLVED — $148,164 SGM→SPLT = CAPITAL CONTRIBUTION (owner decision, now locked):**
-Update SGM 2025 and SPLT 2025 packets accordingly. SGM: remove interco receivable, record as equity
-distribution to owner (Riz directed the transfer). SPLT: record as additional paid-in capital.
-TJ note: unusual inter-entity equity transfer (S-corp → C-corp, both owned by Riz); confirm no
-taxable distribution on SGM's side. Both packets must agree on the treatment.
+### SGM Unclaimed SBA Interest Deduction
+Opening balance at first payment (May 2022) ≈ **$420,220** (includes ~$16K interest accrued on $404,200 during 24-month deferral).
+Monthly rate = 3.75%/12 = 0.3125%. By Jan 2024 (after ~20 months of payments): balance ≈ **$405,545**.
+- **2024 interest (full year):** 12 × ~$1,255 avg = **~$15,060** deductible to SGM.
+  Bank shows $13,320 in SBA payments (6.6 payments). Of that: interest ≈ **$8,285** / principal ≈ **$5,035**.
+  ⚠️ Assembly 1 included $13,320 as a deduction (flagged "TJ — split"). TJ must remove the ~$5,035 principal (non-deductible). Net change to SGM 2024: +$5,035 income. ALSO: if 12 full payments were made (another ~5-6 payments from a non-SGM-bank account), **up to ~$6,775 additional interest** may be deductible but unrecorded. TJ to pull SBA loan payment history (SBA portal / Santander servicer) to confirm actual 2024 payment count and amounts.
+- **2025 interest (estimate):** By Jan 2025 balance ≈ **$396,400**. Full-year interest ≈ **~$14,700**. If SGM made 12 payments in 2025, up to ~$14,700 in interest deductions should appear in the SGM 2025 bank classification — TJ to confirm this was captured (Layer 7 / Assembly 3). If payments were missed or diverted, there's an unclaimed deduction here.
+- **Balance-sheet liability:** SGM's SBA EIDL balance ≈ **$396K year-end 2024 / $387K year-end 2025** — MUST appear on Schedule L (both SGM returns had Schedule L blank; amendment must fix).
+
+### Revolving Loan Agreement — Source: "Revolving_Loan_Agreement_SPLT_Nwosu (1).pdf"
+- **Structure: Arize Nwosu (lender) → SPLT INC (borrower).** Effective June 30, 2026. Amends/restates March 6, 2025 original loan.
+- **Balance as of June 30, 2026: $13,879** (total advances $66,587 − total repayments $52,708; Exhibit A verified)
+- **Rate: 5% per annum, simple interest, accruing FROM June 30, 2026** on outstanding balance. "Without retroactive compounding." (§2.3)
+- **SPLT 2025 interest deduction = $0.** Interest only starts from the June 30, 2026 effective date; all prior advances (2025) carry no retroactive interest under this agreement. The original March 6, 2025 agreement terms were superseded.
+- **§2.7 SBA payments — DEFINITIVELY DOCUMENTED:** "Each such payment constitutes a repayment by Borrower to Lender under this Agreement… This characterization does NOT create any obligation of Borrower to the SBA, does not make Borrower a co-obligor or guarantor on the Social Gear Media LLC EIDL loan." SPLT's SBA-directed payments are revolving loan principal repayments. Non-deductible (balance sheet). Clean — the agreement explicitly walls off SPLT from SBA liability.
+- **SPLT can stop at closing:** Advances are "at Lender's sole discretion" (§2.1). SPLT has no ongoing contractual obligation to keep making payments. The revolving balance ($13,879) can simply be repaid or forgiven at transaction close.
+- ⚠️ **$7,000 "cup deposit" Oct 14, 2025 in Exhibit A:** originated from "Royceton" reference rather than "Nwosu A" — flagged in agreement; parties to confirm source before filing or dispute. Small item but document it.
+
+### $4,237.64 — ALL FOUR BUCKETS CLOSED
+- **$2,770.14 Santander BILLPAY** = revolving loan principal repayment (SPLT→Riz→SBA, per §2.7). **Balance sheet, NON-DEDUCTIBLE.** Not SPLT's SBA obligation. ✅ CLOSED
+- **$901.12 Affirm/Shop Pay** = BNPL return clawbacks / net settlement debits. **FULLY DEDUCTIBLE** (BNPL_NET_SETTLEMENT_DEBIT). ✅ CLOSED
+- **$566.38 Shopify transfers** = platform plan/app fees (owner confirmed: NO Capital advance on Splitflask store in Shopify Finance). **FULLY DEDUCTIBLE** (OPEX_PLATFORM_FEE). ✅ CLOSED
+- **Net new SPLT 2025 deductions from this bucket: $901.12 + $566.38 = $1,467.50**
+
+## ✅✅✅ ALL FIVE ENTITY-YEARS — FINAL FIGURES (all corrections applied)
+
+| Entity-Year | FINAL Amended Net | Prior Base | Changes |
+|---|---|---|---|
+| **SGM 2024** | **≈ −$182,089** | −$213,417 (Assy 1) | +$22,250 brother loan; +$12,000 Augusta; −$2,922 Shopify Capital |
+| **CB 2024** | **+$31,214** | +$27,514 (Assy 2) | Shopify Capital = $0 on CB; COGS + BNPL already applied |
+| **SGM 2025** | **≈ +$85 (breakeven)** | −$11,915 (Assy 3) | +$12,000 Augusta correction (deduction −$12K) |
+| **SPLT 2025** | **≈ +$59,094** | +$56,561 (Assy 4D) | +$4,000 Augusta; −$1,467.50 ($4,238 deductions) |
+| **CB 2025** | **−$16,470** | −$16,470 (Assy 5) | No changes post-Assembly 5 |
+
+**C-corp tax (SPLT 2025 only): ~$12,410 @ 21%** (from +$59,094). The one entity-year with a real tax bill.
+Aggregate personal picture = deeply net-negative (SGM 2024 dominates). No personal-level federal tax expected.
+
+**Notes on the SGM 2024 figure:**
+- The −$182,089 does NOT yet incorporate the EIDL principal split. Assembly 1 included $13,320 of EIDL payments as deductions. TJ must split: interest ≈ $8,285 (keep) / principal ≈ $5,035 (remove → income +$5,035). If applied: SGM 2024 ≈ −$177,054. But leave for TJ since the exact split depends on payment dates and the SBA amortization schedule.
+- SGM 2025 flips to a tiny +$85 profit (S-corp, flows through to personal return) after the Augusta correction. Tax cost is minimal but TJ must report the income, not a loss.
+- SPLT +$59,094 is still pending Shopify Capital interest extraction (small, ~$300-400 on the deductible portion of SGM's charge, if any part routes to SPLT — likely minimal since the advance was SGM's).
+
+**TJ ADDITIONS to CPA Decision List (new from this session):**
+- D-NEW: **SBA EIDL interest/principal split** — the $13,320 SGM 2024 EIDL must be split; principal non-deductible. Pull SBA payment history to determine if full 12 payments were made (another ~$6,775 interest may be deductible and unrecorded). Same check for SGM 2025.
+- D-NEW: **SGM Schedule L (both 2024 + 2025 amendments)** — record SBA EIDL balance as long-term liability (~$396K / ~$387K). Currently blank.
+- F-NEW: **$148K SGM→SPLT capital contribution vs SBA LA&A** — the asset distribution clause likely required SBA prior written consent. Deal counsel to address (retroactive consent or disclosure). SGM compliance, not SPLT's problem, but flag proactively.
+- F-NEW: **Revolving Loan $13,879 balance** — disposition at closing. Options: SPLT repays Riz, or forgiven (forgiveness = SPLT income; raise with TJ). Must be addressed in deal structure.
+- F-NEW: **Riz personal SBA guarantee post-closing** — survives SPLT sale. Deal counsel must plan servicing/retirement of the EIDL in the transaction structure.
+
+**WHAT IS NOW FULLY CLOSED (no further analysis needed):**
+- SBA borrower/guarantor identity: SGM / Arize Nwosu personal. SPLT = not on paper. ✅
+- SPLT change-of-control exposure from SBA: none. ✅
+- $4,237.64 bucket: all four items characterized and deductions applied. ✅
+- Revolving loan §2.7: SPLT's SBA payments are documented non-SBA-obligation repayments; discretionary; terminates at closing. ✅
+- Shopify Capital: SGM's ($5,330 charge; 2024 ≈ $2,922 deduction; 2023 ≈ $2,408). CB = $0. ✅
+- Augusta: 14 days total (SPLT 11 × $1,500 = $16,500; SGM 3 × $1,500 = $4,500). Minutes + comps on file. ✅
+- All five entity-years have their final amended net income figures. ✅
