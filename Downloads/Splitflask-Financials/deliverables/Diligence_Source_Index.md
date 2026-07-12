@@ -10,18 +10,23 @@
 | Figure | Amount | Source Document |
 |--------|--------|-----------------|
 | **2024 Total Splitflask GMV** | **$700,134** | Four-channel build (below); net basis |
-| — Amazon US+MX+CA (net of returns) | $321,251 | Amazon Unified Transaction CSV; net product sales; MX+CA at 1099-K proxy |
+| — Amazon US+MX+CA (net of returns) | $321,251 | Amazon Unified Transaction CSV; MX+CA 1099-K proxy per prior session — ⚠️ pull CA+MX settlement CSVs to verify CA ($11,870) + MX ($10,562) are included; if not, add ~$20,952 est. |
 | — Shopify Splitflask store | $166,156 | `Splitflask-Shopify-Total sales breakdown - 2024-01-01 - 2024-12-31.csv` NET column; cross-verified vs SKU export |
 | — TikTok Shop (net after seller discount, excl. shipping) | $125,951 | Nine 1099-K detail CSVs: sum(SKU subtotal − seller discount); 54% seller discount rate |
 | — Wholesale (B2B) | $86,776 | Invoices: ESP ~$57.6K, Von Maur ~$7.2K, Knocking ~$11.25K, SATS ~$10.7K |
-| **2025 Total Splitflask GMV** | **$461,934** | Seven-channel build (below); net basis |
+| **2025 Total Splitflask GMV** | **$399,412** | Nine-channel build (below); net basis; bank-reconciled (WHOLESALE_TRACE) |
 | — Amazon US (settlement net of returns) | $203,323 | `Splitflask-AMA 2025Jan1-2025Dec31CustomUnifiedTransaction.csv` product sales total |
-| — Amazon SG+AU | $2,383 | Amazon SG/AU dashboard (prior locked) |
+| — Amazon SG+AU | $2,383 | Amazon SG/AU dashboard (prior locked: SG $855 + AU $1,528 @0.6451) |
+| — Amazon MX 2025 ⚠️ | ~$4,083 est. | `Amazon/Mexico-2025-sales-SalesDashboard-7-12-26.csv` MX$81,626 ÷ 20 MXN/USD — **ESTIMATED; dashboard not settlement; pull MX settlement CSV to verify** |
 | — Shopify SPLT store | $149,010 | `Splitflask-Shopify-Total sales breakdown - 2025-01-01 - 2025-12-31.csv` NET; cross-verified vs SKU export |
 | — TikTok (H1 only, net) | $11,282 | Five `2025-Splitflask-Tiktok-income_*.xlsx` Reports sheets; gross $25,418 − disc/refunds = net $11,282 |
-| — Intl wires | $7,686 | Named wire records (Everything Kitchen AU, Waen JP, Citiesocial TW, Kuwait NBK) |
-| — SGM wholesale + Best Buy/Walmart | $84,125 + $1,111 | SGM bank deposits (classified Layer 7); Mirakl channel records |
+| — Intl wires (5 named counterparties) | $7,686 | Named wire records: Everything Kitchen AU, Waen JP, Citiesocial TW, Kuwait NBK |
+| — SGM Knocking/CBS Deals (bank-sourced) | $7,567 | SGM 2025 WF bank, 4 wires |
+| — SGM Walmart marketplace (bank-sourced) | $4,026 | SGM 2025 WF bank, 16 payments |
+| — SGM Ownstar intl wire | $1,004 | SGM 2025 WF bank |
+| — SPLT Lucky Rubber Ducky | $517 | SPLT 2025 WF bank |
 | — Atlantic Access (INV-8707 net) | $3,014 | Invoice INV-8707, £2,336.73 net × 1.29 |
+| — SGM cash/check deposits (⚠️ owner-confirmed Splitflask) | $9,600 | 22 SGM 2025 branch deposits; owner confirmed Splitflask sales |
 | **2026 H1 GMV (PRELIMINARY)** | **~$98K confirmed core** | Platform sources below; unaudited — marked preliminary |
 | — Amazon US H1 2026 (net of refunds) | $72,392 | `Splitflask-AMA 2026Jan1-2026Jun30CustomUnifiedTransaction.csv` |
 | — Shopify H1 2026 | $23,940 | `Shopify-2026-Total sales breakdown - 2026-01-01 - 2026-06-30.csv` NET column |
@@ -40,7 +45,7 @@
 | Net revenue (tax-basis) | ~$560,938 | Bank-deposit basis, SGM bank + Shopify personal TIN |
 
 *On-air 2024 claim ($895,000) attaches at the deposits tier — documented, bank-substantiated, penny-exact.*
-*On-air 2025 claim ($499,000) is +8% above the reconstructed GMV of $461,934. The difference reflects sourcing corrections (TikTok gross→net, Amazon 1099-K→settlement, Shopify estimate→export). The on-air figure was a live management estimate; the reconstructed figure uses settled platform data on a uniform net basis.*
+*On-air 2025 claim ($499,000) is +25% above the reconstructed GMV of $399,412. The gap reflects three sourcing corrections (TikTok gross→net, Amazon 1099-K→settlement, Shopify estimate→export) and the wholesale plug elimination ($84,125 estimate → $12,597 bank-sourced). Disclosure language in GMV_Rebuild_Net_Basis.md §7.*
 
 ---
 
