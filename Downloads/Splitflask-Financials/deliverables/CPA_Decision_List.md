@@ -16,16 +16,16 @@
 | A2 | CB 2025 COGS — method choice swings profit by ~$57K | CB 2025 | Method / $ impact | **High** |
 | B1 | SGM 2024 filing model — gross-up vs net-deposits | SGM 2024 | Filing model | **MUST DECIDE FIRST** |
 | B2 | Shopify entity routing — Option A vs B | SGM 2024 | Revenue attribution | **High — affects SGM 2024 gross** |
-| B3 | $148,164 SGM→SPLT transfer — loan vs capital | SGM 2025 / SPLT 2025 | Balance sheet | **High** |
+| B3 | ~~$148,164 SGM→SPLT transfer — loan vs capital~~ **RESOLVED: Capital contribution** | SGM 2025 / SPLT 2025 | Balance sheet | ✅ RESOLVED |
 | B4 | SPLT Kickstarter $54,386 — cash-basis income confirm | SPLT 2025 | Income timing | High |
-| B5 | Mold $25K (Chukwuezugo) — Section 179 vs COGS | SGM 2024 | Characterization | Medium |
+| B5 | ~~Mold $25K (Chukwuezugo) — Section 179 vs COGS~~ **KILLED: $25K = loan principal repayment. Remove from deductions; add ~$2,750 interest. SGM 2024 new net ~−$194K** | SGM 2024 | Correction | ✅ RESOLVED |
 | B6 | Mold $8,733.33 (Kangdao) — separate from B5, confirm | SGM 2024 | Characterization | Medium |
 | C1 | Amazon nominee 1099 SGM→SPLT $224,789.09 — file it | SGM 2025 / SPLT 2025 | IRS filing | **Critical — blocks both returns** |
 | C2 | Request corrected Amazon 1099-K under SPLT TIN | SPLT 2025 | IRS action | High |
 | C3 | Amazon CA/MX 2025 TIN — nominee needed? | SPLT 2025 | IRS inquiry | Medium |
 | C4 | 1099-NEC — confirm no individuals ≥$600 in any packet | All entities | Compliance | Medium |
 | C5 | SGM 2025 consulting — confirm not double-reported on CB 2024 | SGM 2025 / CB 2024 | Cross-return | Medium |
-| D1 | Shopify Capital interest — extract stated figure from agreement | CB 2024 / SPLT 2025 / CB 2025 | Deduction | High |
+| D1 | Shopify Capital — **entity corrected: SGM has it (not CB or SPLT)**. SGM 2024 gets ~$2,922 deduction (stated $5,330 finance charge, 2024 portion). CB 2024: remove ~$3,700 estimate. SPLT: none. | SGM 2024 / CB 2024 | Correction + Deduction | **High** |
 | D2 | Augusta Rule 14-day cap — all three entity-years | SGM 2025 / SPLT 2025 / CB 2025 | Deduction | High |
 | D3 | Augusta Rule Apr 30 overlap — SGM and CB same day | SGM 2025 / CB 2025 | Deduction | High |
 | D4 | SBA EIDL — confirm interest/principal split | SGM 2024 | Deduction | Medium |
@@ -42,7 +42,7 @@
 | D15 | CB→SGM interco ad transfers $2,559.41 (2024) — classification | CB 2024 / SGM 2024 | Interco | Medium |
 | D16 | CB→SGM management/marketing $6,000 (2024) — arm's length | CB 2024 / SGM 2024 | Interco | Medium |
 | D17 | CGL LA $3,195 — confirm business legal, keep engagement letter | SPLT 2025 | Documentation | Low |
-| E1 | Pull filed CB 2025 Schedule C — check commingling | CB 2025 | Over-deduction audit | **High** |
+| E1 | ~~Pull filed CB 2025 Schedule C — check commingling~~ **RESOLVED: PULLED this session.** Rev $95,558 / COGS $71,051 / Net −$1,343 / Method: CASH. CLEAN — no 2024-style catch-all commingling. See CLAUDE.md FIX 4. | CB 2025 | ✅ RESOLVED |
 | E2 | Pull filed SPLT 2025 1120 deduction schedule — check over-deduction | SPLT 2025 | Over-deduction audit | **High** |
 | E3 | Pull filed SGM 2025 1120-S deduction schedule — check over-deduction | SGM 2025 | Over-deduction audit | **High** |
 | E4 | Pull filed CB 2024 Schedule C from personal return | CB 2024 | Comparison baseline | High |
@@ -50,9 +50,11 @@
 | F2 | $17,818.73 interco — SPLT receivable = CB payable (2025) | SPLT 2025 / CB 2025 | Cross-packet | **Must match before filing** |
 | F3 | Amazon nominee $224,789.09 — SGM out = SPLT in | SGM 2025 / SPLT 2025 | Cross-packet | **Confirmed $0 variance — verify in filings** |
 | F4 | Freight 2024 cross-check — $23,202.50 + $65,918.00 = $89,120.50 | SGM 2024 / CB 2024 | Cross-packet | **Must match before filing** |
+| D18 | Augusta Rule meeting location — must be Royceton Ct, NOT Houston/Fittner (investment rentals) ⚠️ NEW | All entities 2025 | Documentation | **High** |
 | G1 | SPLT 2025 C-corp tax ~$11,878 — separate from personal return | SPLT 2025 | Tax owed | **Action** |
 | G2 | CB 2025 profit — SE tax applies (personal Sch C) | CB 2025 | Tax owed | **Action** |
 | G3 | Personal return aggregate — confirm deeply negative despite CB/SPLT | Personal 1040 | Confirmation | High |
+| G4 | SPLT $13,376 personal expenses — Dividend vs Compensation model needed ⚠️ NEW | SPLT 2025 | Tax owed | **High** |
 
 ---
 
@@ -177,18 +179,15 @@ Likely explanation: preparer lumped platform fees INTO COGS on the 1125-A (the s
 
 ---
 
-### B3 — $148,164 SGM→SPLT Operating Transfer (2025) — Loan vs Capital
+### B3 — $148,164 SGM→SPLT Operating Transfer — ✅ RESOLVED: CAPITAL CONTRIBUTION
 
-**Facts:** SGM moved $148,164 of operating cash to SPLT as the business shifted entities during 2025. Both balance sheets affected. NOT a P&L item — but the characterization matters.
+**Owner decision (locked):** Capital contribution. SGM: remove interco receivable, record as equity
+distribution to owner (Riz directed the transfer out of SGM). SPLT: record as additional paid-in capital.
 
-| Treatment | SGM Books | SPLT Books | Notes |
-|---|---|---|---|
-| **Loan** | Interco receivable $148,164 | Interco payable $148,164 | Must settle eventually; interest implications |
-| **Capital contribution** | Equity distribution to owner; owner re-contributes to SPLT | Capital injection into SPLT | Permanent; possible tax on distribution |
+**TJ action:** Confirm no taxable distribution triggered on SGM's side (S-corp distribution rules);
+update both packets' balance sheets to reflect equity treatment (NOT a loan receivable/payable pair).
 
-**$ impact:** Balance sheet only in both cases — no P&L effect IF correctly characterized. Wrong characterization could create phantom income.
-
-**Status:** OPEN — CPA decides. Note this appears in BOTH SGM 2025 and SPLT 2025 packets and must agree.
+**Status:** ✅ RESOLVED — update both SGM 2025 and SPLT 2025 packets.
 
 ---
 
@@ -205,20 +204,33 @@ Likely explanation: preparer lumped platform fees INTO COGS on the 1125-A (the s
 
 ---
 
-### B5 — Mold $25,000 (Chukwuezugo Nwosu) — Section 179 vs COGS
+### B5 — ✅ KILLED — $25,000 Chukwuezugo: LOAN REPAYMENT, Not Mold
 
-**Facts:** $25,000 payment to Chukwuezugo Nwosu (Riz's brother) for mold fabrication. Currently classified as COGS in SGM 2024. Related-party transaction.
+**Correction:** The $25,000 SGM 2024 bank entry was a **loan principal repayment** to Chukwuezugo Nwosu
+(Riz's brother), NOT a mold payment. Loan terms: originated in SGM 2023, 10% annual interest, 3-year term.
 
-**Options:**
-- **COGS:** Deducted via inventory/cost-of-goods-sold. Reduces gross profit.
-- **Section 179:** Fully expensed as depreciable equipment in year placed in service. Same income effect, different form line. More defensible for a physical mold.
+**Actions (all three required):**
 
-**Required before finalizing:**
-- Confirm arm's-length pricing (commercially reasonable rate for mold fabrication)
-- Obtain invoice / agreement
-- Confirm Kangdao received the mold (manufacturing dependency)
+1. **REMOVE $25,000 from SGM 2024 deductions** (principal repayment = non-deductible).
 
-**Status:** OPEN — CPA classifies and confirms arm's length.
+2. **ADD deductible interest ~$2,750** (10% × estimated original principal ~$27–$29K for 2024 period).
+   - Pull the actual promissory note to compute the exact 2024 interest (original principal × 10% × days/365).
+   - Estimate is provisional; replace with stated figure before filing.
+   - Check 2023 as well: interest on the outstanding balance from origination (also deductible in 2023).
+
+3. **Record $4,000 remaining principal on SGM balance sheet** as "Related-party note payable —
+   Chukwuezugo Nwosu, $4,000, 10% annual interest, due [maturity date from note]."
+
+4. **Issue 1099-INT to Chukwuezugo** for 2024 interest paid (~$2,750 estimated). SGM is the payer;
+   Chukwuezugo must report interest income. Also issue for 2023 if not previously done.
+
+**SGM 2024 net impact of B5 correction (combined with D1 SGM Shopify Capital fix):**
+- Remove $25,000 mold deduction: +$25,000 (shallower loss)
+- Add ~$2,750 interest: −$2,750 (deeper)
+- Add ~$2,922 SGM Shopify Capital finance charge (D1): −$2,922 (deeper)
+- **SGM 2024 new net ≈ −$194,089** (was −$213,417). Still favorable; amendment still does NOT raise tax.
+
+**Status:** ✅ RESOLVED — apply corrections to SGM 2024 packet before filing.
 
 ---
 
@@ -302,19 +314,41 @@ Likely explanation: preparer lumped platform fees INTO COGS on the 1125-A (the s
 
 ## D — Deductions Needing Confirmation / Extraction
 
-### D1 — Shopify Capital Interest (CB 2024, SPLT 2025, CB 2025)
+### D1 — Shopify Capital — Entity Corrected (SGM has it; CB and SPLT do NOT)
 
-**Principle:** Principal repayments are non-deductible. Only the interest / financing cost embedded in total repayments is deductible business interest (IRC §163).
+**Critical correction from source doc:** The Shopify Capital agreement ("Cyberbrands-Shopify-Capital.pdf")
+is actually for **Social Gear Media (SGM)**, not Cyberbrands. Borrower stated in the agreement: "Social
+Gear Media." The file was mislabeled by the owner.
 
-| Entity | Repayments | Estimated Financing Cost | Current Status |
+**Stated terms (from the agreement):**
+- Principal: **$41,000** (non-deductible)
+- Finance charge: **$5,330** (fixed — this is the stated, not estimated, financing cost)
+- Signed: August 16, 2023. Estimated term: 303 days (~payoff June 2024).
+- Repayment: 17% of daily Shopify sales (taken pre-payout, not a separate bank debit)
+
+**Entity actions:**
+
+| Entity | Action | Amount | Status |
 |---|---|---|---|
-| CB 2024 | $34,446.07 (2024) | ~$3,700 ESTIMATE (factor 1.10–1.15) | In packet as estimate |
-| SPLT 2025 | (Chase subscriptions include Shopify Capital) | TBD — TJ item | Not yet in packet |
-| CB 2025 | ~$11,860 (2025) | ~$1,500 ESTIMATE | In packet as estimate |
+| **SGM 2024** | ADD financing cost (2024 portion: 166/303 days × $5,330) | **~$2,922 deduction** | Apply to packet |
+| **SGM 2023** | ADD financing cost (2023 portion: 137/303 days × $5,330) | **~$2,408 deduction** | Personal/SGM 2023 return |
+| **CB 2024** | REMOVE the ~$3,700 estimated financing cost — wrong entity | **−$3,700** (loss of deduction) | Correct in CB packet |
+| **SPLT 2025** | None — SPLT has no Shopify Capital | $0 | Remove $4,238 from balance sheet |
+| **CB 2025** | None unless a SEPARATE CB agreement is located | TBD | See below |
 
-**Action:** Pull the Shopify Capital agreement for each advance. The stated financing cost (fixed fee or interest rate × principal) replaces the estimates in all three packets. Do not use factor-method estimates in the final filed return.
+**⚠️ Outstanding questions for owner/TJ:**
+1. The ~$34,446.07 in CB 2024 bank previously labeled "Shopify Capital repayments" — what are these
+   entries actually? They are NOT CB's Shopify Capital (no CB agreement exists). Reclassify before filing.
+2. Does CB have a SEPARATE Shopify Capital agreement not yet provided? If yes: obtain it. If no: $0 CB
+   financing cost and the bank entries need another explanation.
+3. SGM finance charge (~$2,408) may need to appear on the SGM 2023 1120-S as well — check with TJ.
 
-**Status:** OPEN — CPA / owner pulls agreements.
+**Updated net effects:**
+- SGM 2024 deductions: +$2,922 (favorable — already incorporated in B5 net above → new net ~−$194,089)
+- CB 2024 net: +$31,214 → **~+$34,914** (less favorable — loses the ~$3,700 estimated deduction)
+
+**Status:** PARTIALLY RESOLVED — SGM deduction amount stated (replace estimate). CB/SPLT entities corrected.
+Owner to identify CB 2024 bank entries and confirm no separate CB agreement exists.
 
 ---
 
@@ -514,6 +548,28 @@ Likely explanation: preparer lumped platform fees INTO COGS on the 1125-A (the s
 
 ---
 
+### D18 — Augusta Rule: Verify Meeting Location = Royceton Ct (NOT the investment rentals) ⚠️ NEW
+
+**Issue identified from the 2025 personal 1040:** Two Schedule E rental properties are on the return —
+526 Houston Dr and 378 Fittner Cir (both Thousand Oaks, CA). These are **investment rental properties
+rented to arm's-length tenants** (gross rents $56,400 and $39,600 respectively). The personal residence
+is **32001 Royceton Ct, Westlake Village, CA 91361**.
+
+**The problem:** IRC §280A(g) (Augusta Rule) allows income exclusion only for "dwelling units used by
+the taxpayer as a residence." Investment properties rented to unrelated tenants are NOT the owner's
+"residence" under §280A. If any of the corporate meeting rentals (SGM $16,500, SPLT $20,500, CB $1,000)
+were billed for meetings at 526 Houston Dr or 378 Fittner Cir, the §280A(g) exclusion does NOT apply:
+- The meeting rental income WOULD be taxable (should appear on Schedule E)
+- The corporate deduction may be challenged as a related-party rental not at arm's length / not §280A-qualified
+
+**Action:** Confirm all Augusta Rule meetings were held at **32001 Royceton Ct** (personal residence).
+If any meeting was at Houston Dr or Fittner Cir: (a) remove that meeting's amount from the Augusta Rule
+exclusion, (b) add the rental income to Schedule E, (c) reconsider the corporate deductibility.
+
+**Status:** OPEN — TJ/owner confirms all meeting locations = Royceton Ct.
+
+---
+
 ## E — Filed-Return Corrections (Pull and Check)
 
 ### E1 — Pull Filed CB 2025 Schedule C
@@ -650,6 +706,29 @@ If yes to any: amendment corrects by removing these and substituting real deduct
 **Critical context:** CB 2025 profit on personal return combines with SGM 2024 losses (−$213K pass-through), other Schedule C losses, and personal deductions. The **aggregate personal return is deeply negative** — SE tax may still be owed on CB's profit as a self-employment tax item even if income tax net is zero. CPA computes.
 
 **Status:** OPEN — CPA computes aggregate personal return with all entities and personal items.
+
+---
+
+### G4 — SPLT 2025: $13,376 Personal Expenses — Dividend vs Compensation ⚠️ NEW
+
+**Facts:** SPLT's Chase card paid $13,376 of owner personal expenses in 2025 (per Layer 8 / SPLT
+classification). Cannot be deducted as ordinary business expense. Must be characterized as one of:
+
+| Treatment | SPLT Tax | Riz Personal Tax | Payroll Tax | W-2 Required | Net Cost |
+|---|---|---|---|---|---|
+| **Compensation/wages** | −$2,809 corp deduction (@21%) | Ordinary income + federal/state | ~$2,047 (15.3%) | Yes (unfiled — requires W-2 amendment + back FICA) | Higher — payroll penalties likely |
+| **Dividend** | No deduction | Qualified dividend rates (~15-20%) | None | No | Lower all-in if qualified dividend rates apply |
+| **Loan (Riz owes SPLT)** | No income event now | No income now | None | No | Deferred — must be documented + repaid with interest |
+
+**CPA recommendation:** Model all three. Dividend is likely the lowest-cost path (avoids payroll tax +
+W-2 penalties). Loan requires formal documentation and actual repayment schedule (risk of constructive
+dividend if not arm's length).
+
+**⚠️ Reasonable compensation:** SPLT pays Riz $0 salary. For a working C-corp officer/owner, the IRS
+expects reasonable compensation. This was a known issue. **CPA to advise on commencing salary in 2026**
+to both cure the reasonable-comp exposure and stop personal spending being run through the corporate card.
+
+**Status:** OPEN — CPA models and recommends treatment before filing SPLT 1120 amendment.
 
 ---
 

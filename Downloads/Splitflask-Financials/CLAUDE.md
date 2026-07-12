@@ -1264,3 +1264,324 @@ document separateness").
 - Deliver: CPA package = Reconciliation_Backup.xlsx (all tabs, log → Methodology Notes). Kendra package =
   deal workbook + memo + Diligence_Source_Index (figure → platform source, clean, no process narrative).
   Full backup held in reserve if diligence ASKS — not led with.
+
+
+## ✅ FILED RETURNS READ — method answered + 2 new findings
+**ALL ENTITIES FILED CASH METHOD. No Form 3115 ever filed.** As-filed baselines:
+| SGM 2024: gross $418,990 / COGS $270,032 / ded $182,309 / net −$33,351 |
+| SGM 2025: gross $130,976 / COGS $113,315 / ded $50,561 / net −$32,900 |
+| SPLT 2025: gross $369,981 / COGS $331,210 / ded $28,921 / net +$9,850 |
+| CB 2024: gross $139,613 / COGS $0 / ded $135,471 / net +$4,142 |
+- **A1 METHOD is now a CONCRETE fork (not a blank): KEEP CASH (cheap, matches filed) or CHANGE to inventory
+  (requires FORM 3115 + IRS consent, costs $).** CB 2024 conflict is precise: under CASH, the 2023-paid
+  Kangdao inventory deducts in **2023**, not 2024 → the reconstruction's $24,254 COGS ONLY works if method
+  changes. Real fork with a price tag. SGM: cash-basis COGS compatible, no conflict.
+- **⚠️⚠️ SPLT 2025 GAP — the one ADVERSE amendment: filed +$9,850 vs reconstruction +$56,561 (~$46K gap,
+  ~$9,809 more tax).** Cause (likely): preparer dumped platform FEES into COGS via 1125-A "Other costs"
+  catch-all (filed COGS $331,210 on $369,981 gross = 90% cost ratio, implausible). Same commingling pattern,
+  different box. The amendment RAISES SPLT's tax — correct (bank-sourced) but TJ must reconcile the
+  COMPOSITION before signing an amendment that increases his client's tax. Verify: filed COGS inflated by
+  fees/other that reconstruction correctly reclassified as deductions, AND reconstruction removed
+  non-deductibles (ATM/Paris/Tesla/personal) the filed return buried in the catch-all.
+- **NEW FILING DEFECT (add to TJ list): Schedule L BLANK on SGM 2024 + SPLT despite gross >$250K** —
+  small-business exception shouldn't apply; balance sheet should have been completed. Fix in the amendments.
+  Also: both preparers used 1125-A with everything in "Other costs," no inventory-method boxes checked.
+  SPLT = initial return (box E1).
+- ✅ Audience split DONE: TJ backup tab → "Methodology Notes"; Kendra gets Diligence_Source_Index.md
+  (figure → platform source, zero corrections log, zero tax).
+
+
+## CORRECTION — Kendra's folder SHOULD include 1099-K revenue verification (I over-stripped)
+Owner right. The split is **REVENUE VERIFICATION (include) vs TAX COMPUTATION (exclude)** — NOT "anything
+touching the IRS."
+- ✅ INCLUDE in Kendra folder: 1099-K reconciliation — but ONLY the SPLITFLASK-ATTRIBUTABLE portion. Rationale:
+  1099-Ks are THIRD-PARTY-VERIFIED (Amazon/Shopify/TikTok independently reported to the IRS what they paid).
+  That's the STRONGEST corroboration of GMV available — not the seller's word, the platforms' word. Any buyer
+  wants it. Stripping it WEAKENS our own case.
+  ⚠️ CAREFUL: raw 1099-K total ($791,054) is the TAX denominator — includes Cyberbackpack + spans entities
+  (SGM EIN / personal SSN / Cyberbrands EIN). Hand over ONLY the Splitflask tumbler portion, cleanly
+  reconciled ("of platform-reported revenue, $X is Splitflask"), with Cyberbackpack excluded and entity
+  mechanics NOT surfaced.
+- ❌ STILL EXCLUDE from Kendra folder: entity taxable income/losses, deductions, C-corp tax, the amendments,
+  commingled-filing history, corrections log, Cyberbackpack (different product — contaminates the deal GMV).
+- The line: does it VERIFY tumbler REVENUE (in) or COMPUTE entity TAX (out)?
+
+
+## AUGUSTA (§280A(g)) — OWNER RULE: cap at 14 DAYS total across all entities; excess disregarded
+Owner's rule: deduct a max of 14 corporate-meeting rental days across SGM + CB + SPLT COMBINED; days beyond
+14 = NOT deducted (and not excluded income personally). Correct application — the cap is on DAYS, not dollars.
+⚠️ **BUT THE RATE IS THE BIGGER EXPOSURE, and capping days does NOT solve it.** SGM $16,500 + SPLT $20,500 =
+$37,000. Even capped at 14 days that's ~$2,640/day for meeting space at a RESIDENCE (Westlake Village). The
+IRS test is ALSO "reasonable arm's-length market rate for comparable space." ~$2,640/day will not survive.
+**RECOMMENDATION (conservative, diligence-safe):**
+1. Cap at 14 days total (owner's rule). 2. Set a DEFENSIBLE daily rate from real local comparables (hotel
+conference / coworking exec meeting space in the area — realistically a few hundred to ~$1,000-1,500/day).
+3. Deduct 14 × defensible rate; DISREGARD the excess (non-deductible, not personal income).
+STRATEGIC: an aggressive Augusta deduction on a residence is a CLASSIC red flag — it makes a buyer's
+accountant ask what else was aggressive. A modest, supported Augusta deduction is invisible. The tax savings
+on the difference is NOT worth the signal, especially with returns going to an acquirer's diligence team.
+⚠️ STILL NEEDED FROM OWNER: (a) actual days used; (b) a defensible daily rate + comparable support.
+
+
+## AUGUSTA — rate SET at $1,500/day (owner). ⚠️ BUT allocation must follow FACTS, not tax优 optimization
+- ✅ RATE: **$1,500/day** — defensible, sits inside Westlake Village comps (hotel/coworking boardrooms
+  $300-1,000/day; private-estate corporate rentals higher). Owner to pull 3 Peerspace/Giggster comps as
+  contemporaneous support. Max 14 days total across ALL entities; excess disregarded.
+- **⚠️ PUSHED BACK: owner asked to "put as much as we can on SPLT 2025." CANNOT allocate rent to whichever
+  entity is convenient.** The deduction belongs to the entity that ACTUALLY HELD the meeting — same
+  account-follows-entity principle the owner himself established for the commingled $90K. Motive is
+  understood (SPLT is the only entity with taxable income → deductions worth 21¢; SGM deductions worth $0
+  today), but loading SGM's meetings onto SPLT FABRICATES the record and collapses if diligence asks for
+  minutes.
+- **NEEDED (factual): in 2025, which entity actually held board meetings at the residence, and HOW MANY
+  EACH?** Allocate $1,500 × (that entity's actual meeting days). Legit forward-looking move: if SPLT is the
+  operating entity going forward, hold ITS meetings there and document them — but 2025 follows 2025's facts.
+- **⚠️ DOCUMENTATION GATE: each meeting needs MINUTES (date, entity, attendees, business discussed).** An
+  Augusta deduction with no meeting records is the FIRST thing disallowed on audit. OWNER: do minutes exist?
+  If not, that's a bigger problem than the allocation.
+
+
+## AUGUSTA RESOLVED (mostly) — minutes EXIST; SPLT held 11 meetings; rate $1,500/day
+- ✅ Minutes exist (documentation gate passed). SPLT 2025 = **11 meetings × $1,500 = $16,500** supportable.
+- ⚠️ SPLT currently has ~$20,500 booked → **OVER-deducted ~$4,000.** Correcting RAISES SPLT taxable income
+  to ~$60,561 and C-corp tax to ~$12,718 (+~$840). Honest direction; small cost.
+- ⚠️ **14-DAY CAP IS THE BINDING CONSTRAINT.** SPLT used 11 of 14 → only **3 days left for SGM + CB combined**
+  ($4,500 max). SGM currently has $16,500 booked (implies ~11 meetings) → SGM+SPLT = ~22 days vs 14 allowed =
+  **8 days OVER**. Total currently booked $37,000 vs max supportable $21,000 (14 × $1,500) = **~$16,000
+  over-deducted across entities.**
+- FIX: SPLT $16,500 (11 days) + SGM $4,500 (3 remaining days) = $21,000. SGM drops from $16,500 → $4,500.
+- **CASH IMPACT IS TINY:** SGM losing $12,000 of deduction costs ~$0 today (SGM already at −$11,915 loss →
+  becomes ~breakeven). SPLT losing $4,000 costs ~$840. **Total <$1,000 to get Augusta fully right and remove
+  a major red flag.** A $37,000 Augusta on a residence with 22 days claimed vs a 14-day limit is EXACTLY what
+  gets a return pulled. Fixing it makes it invisible. Do it.
+- ⚠️ STILL NEEDED: **how many board meetings did SGM hold at the property in 2025?** If 3 → everything fits
+  (11+3=14). If more → cap at 3, disregard the rest. Also: pull 3 Peerspace/Giggster comps as rate support.
+
+
+## AUGUSTA RATE LOCKED = $1,500/day (owner confirmed; rejected the "1% of home value" heuristic)
+Owner briefly proposed $1,775/day = 1% of Zillow value. PUSHED BACK and owner agreed to keep $1,500.
+⚠️ STANDING NOTE: "1% of property value" is NOT an IRS rule — no statutory/regulatory basis; it's tax-marketing
+folklore. The ONLY test is FAIR MARKET RENT for COMPARABLE SPACE. A value-derived rate AFFIRMATIVELY shows the
+rate wasn't comp-based = hands an examiner the disallowance. (Also: Zillow $1,775,100 vs Redfin $1,647,639 —
+a $127K spread — proves there's no rule there.) $1,500 sits inside real Westlake Village comps (hotel/coworking
+boardrooms $300-1,000/day; private-estate corporate rentals higher) → defensible on the CORRECT basis.
+**AUGUSTA FINAL: $1,500/day × 14 days max across ALL entities = $21,000 ceiling. SPLT 11 meetings = $16,500.
+SGM = remaining 3 days = $4,500. Minutes exist. Owner to attach 3 Peerspace/Giggster comps as rate support.**
+Effect: SPLT over-deducted ~$4,000 → taxable income ~$60,561, C-corp tax ~$12,718. SGM drops $16,500 → $4,500
+(costs ~$0; SGM already at a loss). Total cash cost of getting it right: <$1,000. Red flag removed.
+
+
+## ✅ AUGUSTA FULLY CLOSED — fits the cap exactly
+SGM held **3** meetings; SPLT held **11**. 11 + 3 = **exactly 14 days = the cap.** Nothing disregarded.
+- SPLT: 11 × $1,500 = **$16,500** (was ~$20,500 booked → reduce $4,000; SPLT taxable ~$60,561; C-corp tax
+  ~$12,718).
+- SGM: 3 × $1,500 = **$4,500** (was $16,500 booked → reduce $12,000; SGM loss shrinks toward breakeven; ~$0
+  cash cost since SGM is at a loss).
+- Minutes EXIST. Rent COMPS added to the folder by owner. Rate $1,500/day comp-supported.
+- STATED FACT for the CPA packet: "14 days total (SPLT 11, SGM 3) @ $1,500/day, comp-supported, minutes on
+  file." NO LONGER AN OPEN ITEM.
+
+## ✅ KENDRA FOLDER FIXED — platform revenue verification restored
+Diligence_Source_Index now has "Platform-Reported Revenue Verification": 2024 Amazon $366,467 + TikTok
+$155,295 + Shopify $164,614 = $686,376, reconciled to GMV $751,891 (+wholesale $86,776 − refund timing
+$21,261). 2025 Amazon $240,010 + Shopify $109,064 = $349,074 → GMV $513,987. Excluded: raw $791K combined,
+non-Splitflask products, ALL entity/EIN/nominee/TIN mechanics. Wall check CLEAN.
+
+
+## ⚠️⚠️ CORRECTION — the ~$25K "mold payment" to Chukwuezugo is a LOAN REPAYMENT, NOT a deductible expense
+Owner: the $25K was **repayment of a 2023 LOAN** from his brother Chukwuezugo. Paperwork EXISTS. **$4,000
+balance remains outstanding.**
+- **LOAN PRINCIPAL IS NOT DEDUCTIBLE** (the borrowed money wasn't income when received → repaying it isn't an
+  expense). Same rule as Shopify Capital principal / owner draws.
+- **KILL the Section 179 / mold-cost treatment entirely** — it was based on a wrong understanding of the
+  payment. REMOVE the ~$25K from deductions on whichever entity carries it.
+- ⚠️ MUST DETERMINE: **which entity's books currently carry this $25K and how is it classified?** If SGM 2024
+  (as mold/tooling, the Section 179 candidate) → removing it cuts SGM deductions $25K → SGM loss shrinks from
+  −$213,417 to ~−$188,417 (no tax cost today; SGM still deeply negative, but the number CHANGES). If it sits
+  on a PROFITABLE entity → real tax cost.
+- ✅ **RECOVERABLE: any INTEREST portion IS deductible** (principal out / interest deductible — same split as
+  Shopify Capital). Owner has the paperwork — does it specify an interest rate? If yes, extract the interest
+  portion of the $25K as a legit deduction. If interest-free, none of it deducts.
+- Balance sheet: record the **$4,000 remaining** as an outstanding RELATED-PARTY LIABILITY.
+- ⚠️ Related-party loan flag for CPA: interest-free family loans can raise IMPUTED-INTEREST issues. TJ to note.
+- (Supersedes: "mold $25K Section 179 + Chukwuezugo arm's-length" — that framing was WRONG. Also the
+  "promissory note to be drafted" item — paperwork already EXISTS per owner.)
+
+
+## OWNER ANSWERS — remaining open items (most now closed; 2 real flags)
+- **Brother loan (Chukwuezugo):** came INTO SGM 2023, repaid OUT of SGM 2024. **10% interest, 3-year term,
+  no set payment schedule, paperwork exists, $4,000 balance remains.** → The $25K splits: PRINCIPAL
+  (non-deductible) + **INTEREST (DEDUCTIBLE to SGM — compute from the note @10%)**. Brother should report the
+  interest as income; SGM may need to issue a **1099-INT**. Properly papered related-party loan = fine.
+  KILL the Section 179/mold treatment (wrong premise). $4,000 → balance-sheet related-party liability.
+- **$148,164 SGM→SPLT = "just a transfer"** (no note, no terms, no schedule). → With no note/rate/repayment
+  terms it doesn't look like a loan. Default/cleaner treatment: **CAPITAL CONTRIBUTION** (SGM → SPLT). TJ
+  decides, but "just a transfer" points to capital, not loan.
+- ⚠️ **$13,376 SPLT personal expenses — owner wants COMPENSATION treatment (SPLT paid no salary). PUSHED
+  BACK — this needs modeling, not instinct:**
+  - As COMPENSATION/wages: SPLT deducts $13,376 (saves ~$2,800 tax) BUT it's subject to **PAYROLL TAX**
+    (~15.3% ≈ $2,000+), required **W-2** (never filed), and possible **penalties for unfiled W-2 / unremitted
+    payroll tax**.
+  - As DIVIDEND: SPLT gets **NO deduction**; owner pays personal tax at dividend rates (~15%). Simpler; no
+    payroll tax, no W-2 problem.
+  - **Dividend may cost LESS all-in** once payroll tax + penalties are counted. → CPA MUST MODEL BOTH.
+    (Separate real issue: a working C-corp officer is expected to take REASONABLE COMPENSATION — SPLT paying
+    $0 salary is its own compliance question.)
+- ⚠️ **SPLT Shopify Capital — LIKELY DOESN'T EXIST (owner challenged, correctly).** Only CYBERBRANDS has a
+  Shopify Capital agreement (doc now in folder). The "SPLT Shopify Capital principal $4,238" figure and the
+  "extract SPLT's Shopify Capital interest" action item **must be VERIFIED — probably REMOVE, not chase.**
+  (Orchestrator likely assumed SPLT had one. Verify against SPLT bank/Shopify data.)
+- ✅ Cyberbrands Shopify Capital loan doc → in folder (extract CB's deductible interest from it).
+- ✅ Filed 2025 personal return → in folder: "ARIZECHUKWU NWOSU CHERYL BENEFIELD 2025 Form 1040.pdf" — READ IT
+  to check for the same commingling pattern as CB 2024 (CB 2025 + Sch C flow through it).
+- ✅ September 2024 Kangdao wire = **INVENTORY** (resolved).
+
+
+## DECISIONS — $148K = CAPITAL; personal living expenses = NOT deductible (hard line, owner pushed, held)
+- ✅ **$148,164 SGM→SPLT = CAPITAL CONTRIBUTION** (owner decision). Matches facts (no note/terms/schedule).
+  Balance-sheet, not loan. Record in both packets.
+- ⚠️ **OWNER ASKED: "can my company pay my living expenses as a business expense since I take no salary?"
+  ANSWER: NO. HELD FIRM.** A C-corp can NEVER deduct an owner's personal living expenses — taking no salary
+  does NOT convert personal consumption into business expense. §162 requires ORDINARY AND NECESSARY FOR THE
+  BUSINESS; the test is the NATURE of the expense, not the owner's comp arrangement. No such rule exists (it
+  would be an enormous loophole).
+  - When a C-corp pays an owner's personal costs, IRS treats it as a **constructive DIVIDEND** (taxable to
+    owner, NOT deductible to corp) or **disguised COMPENSATION** (deductible but payroll tax + W-2 required).
+    It is NEVER just "a business expense."
+  - Deducting personal costs = EXACTLY the ~$104K disallowed-deduction pattern this whole reconstruction
+    CORRECTED on the other entities. Reintroducing it would undo the package's integrity — on the one entity
+    with taxable income, on returns going to an acquirer's diligence team.
+  - **LEGITIMATE ways to get money out of SPLT: (1) SALARY (owner SHOULD be taking one — working C-corp
+    officer is expected to take reasonable compensation; SPLT deducts, owner pays income+payroll tax, W-2);
+    (2) DIVIDEND (no corp deduction, dividend-rate tax); (3) accountable-plan reimbursement of ACTUAL
+    documented business expenses.**
+  - The $13,376 already paid: characterize as DIVIDEND or COMPENSATION (TJ models both — see prior note).
+    It CANNOT be a business-expense deduction.
+  - GOING FORWARD FIX: **start taking a salary from SPLT** — solves reasonable-comp compliance AND stops
+    personal spending running through the corporate card (the root cause of the original mess).
+
+
+## CPA FLAG — $13,376 SPLT personal expenses: CPA to choose the LOWER-COST treatment (owner request)
+Owner: "flag it for my CPA to decide the best tax-limiting way to record it." AGREED — but the menu is
+DIVIDEND vs COMPENSATION. (Deducting personal expenses as ordinary business expense is NOT on the menu —
+not a characterization choice, simply unavailable. Don't frame the flag as "find a way to deduct this";
+frame it as "model both treatments, pick the lower-cost one.")
+CPA TASK: model and choose —
+- **COMPENSATION/wages:** SPLT DEDUCTS $13,376 (≈ −$2,800 corp tax @21%) BUT triggers payroll tax (~15.3% ≈
+  $2,000+), required W-2 (never filed), and possible penalties for unfiled W-2 / unremitted payroll tax.
+- **DIVIDEND:** SPLT gets NO deduction; owner pays personal tax at dividend rates (~15%); no payroll tax,
+  no W-2 exposure, no penalties. SIMPLER.
+- Net: DIVIDEND may cost LESS all-in once payroll tax + penalties are counted. CPA computes both and picks.
+- SEPARATE (going forward): SPLT pays owner $0 salary — a working C-corp officer is expected to take
+  REASONABLE COMPENSATION. CPA to advise on starting a salary in 2026 (also stops personal spend leaking
+  onto the corporate card = root cause of the original commingling).
+
+## CLEANUP FIXES — Post-Assembly 5 (four bounded corrections from new docs + owner answers)
+
+### FIX 1 — $25K Chukwuezugo: LOAN REPAYMENT, kill the mold/Section-179 treatment
+Owner answer confirmed: the $25K SGM 2024 bank entry (previously classified mold → Section 179) was a
+**loan PRINCIPAL repayment** on a note made by Riz's brother Chukwuezugo Nwosu to SGM in 2023. Terms:
+10% annual interest, 3-year term. $4,000 of principal remains outstanding after the $25K payment.
+- **REMOVE $25,000 from SGM 2024 deductions entirely** (principal is never deductible).
+- **ADD deductible interest:** at 10% on the estimated original principal (~$27–$29K), 2024 interest
+  ≈ **~$2,750** (range $2,500–$3,000 depending on exact note amount and dates). NEED the actual note
+  to compute precisely. Estimate only — replace with stated figure from the note before filing.
+- **SGM 2024 new net: approximately −$194,089** (was −$213,417; net change ≈ +$19,328 shallower due
+  to removing $25K deduction, partially offset by ~$2,750 interest + ~$2,922 SGM Shopify Capital fix below).
+- **$4,000 remaining balance = related-party note payable** on SGM 2024 balance sheet (Chukwuezugo Nwosu).
+- **TJ FLAG: 1099-INT** — SGM must issue Form 1099-INT to Chukwuezugo for 2024 interest paid (~$2,750
+  estimated). Also check 2023 (interest on outstanding balance from origination to year-end = ~$2,900).
+  Chukwuezugo must include the interest as income on his personal return. Arm's-length documentation
+  of the note is needed (signed promissory note with rate, term, maturity date).
+- Prior B5 in CPA list ("Section 179 vs COGS") is KILLED. Replaced with the above.
+
+### FIX 2 — Shopify Capital doc is for SGM, not Cyberbrands (file was mislabeled)
+The doc added to the folder as "Cyberbrands-Shopify-Capital.pdf" has **BORROWER = SOCIAL GEAR MEDIA**
+(not Cyberbrands). This is **SGM's Shopify Capital agreement**, signed August 16, 2023:
+- Loan amount (principal): **$41,000**
+- Finance charge (fixed): **$5,330** (stated in the agreement — NOT estimated)
+- Total repayment: $46,330 at 17% of daily Shopify sales
+- Estimated term: 303 days (payoff estimated ~June 2024)
+
+**2024/2023 split of the $5,330 finance charge** (cash method, deducted as paid via daily 17% withhold):
+- 2023 portion (Aug 16 – Dec 31 = 137 of 303 days): 137/303 × $5,330 ≈ **$2,408** (SGM 2023 deduction)
+- 2024 portion (Jan 1 – ~Jun 15 = 166 days): 166/303 × $5,330 ≈ **$2,922** (SGM 2024 deduction)
+→ **ADD ~$2,922 to SGM 2024 deductions** (Shopify Capital financing cost, sourced to the agreement).
+SGM 2024 new net incorporates this (see FIX 1 above; combined impact = ~−$194,089).
+
+**CB 2024 IMPACT — remove the misattributed ~$3,700:**
+Prior sessions identified ~$34,446.07 in CB 2024 bank as "Shopify Capital" and estimated ~$3,700
+financing cost in the CB 2024 amendment packet. That was based on the wrong premise that CB had
+Shopify Capital. **REMOVE the ~$3,700 CB 2024 financing-cost deduction** — no CB Shopify Capital
+agreement on file.
+- **CB 2024 new net: approximately +$34,914** (was +$31,214; less favorable).
+- ⚠️ The ~$34,446.07 CB 2024 bank entries previously labeled "Shopify Capital repayments" must be
+  RECLASSIFIED. What were they? Possibly CB repaying SGM's Shopify Capital as intercompany (the
+  repayments flowed through CB's account), or something else. TJ/owner must identify and reclassify
+  these CB entries before filing. Do NOT assume they are CB's Shopify Capital cost.
+- ⚠️ OPEN: Does CB have its own SEPARATE Shopify Capital agreement (different from the SGM one)?
+  If yes, owner needs to locate that doc. If no, CB has $0 Shopify Capital financing cost.
+
+### FIX 3 — SPLT Shopify Capital: DOES NOT EXIST (remove and reclassify)
+Owner stated only CB/Cyberbrands has Shopify Capital. The actual doc is for SGM (see FIX 2). Result:
+SPLT has NO Shopify Capital.
+- **REMOVE $4,238 "Shopify Capital principal" from SPLT 2025 balance sheet.**
+- **DELETE action item "extract SPLT Shopify Capital interest"** (no SPLT agreement exists).
+- **SPLT 2025 income unchanged at +$56,561** (principal was non-deductible anyway — no P&L impact).
+- ⚠️ The $4,238 in SPLT's bank previously classified as "Shopify Capital repayments" needs
+  reclassification. Identify what those bank entries actually were (separate from SGM's Shopify Capital).
+
+### FIX 4 — 2025 Personal 1040 read (new file: "ARIZECHUKWU NWOSU CHERYL BENEFIELD 2025 Form 1040.pdf")
+
+**Preparer:** Nnamdi Ezeruo / Protacs Inc (same as the entity returns). Filed May 18, 2026.
+
+**Schedule C (CB 2025, Cyberbrands LLC):** AS-FILED figures, now confirmed from the actual return:
+- Revenue (Line 1): **$95,558** / COGS (Part III): **$71,051** (materials/supplies, cash method)
+- Expenses: Advertising $5,520; Commissions $695; Office $15,470; Other property rent $3,600;
+  Travel $65; Utilities $500 → Total $25,850
+- Net (Line 31): **−$1,343**
+- Method: **CASH** (box F) ✓
+
+**E1 (pull CB 2025 Schedule C) = RESOLVED.** Now comparing filed vs reconstruction:
+- Revenue: filed $95,558 vs reconstruction $107,876 → **$12,318 underreported** (known gap).
+- COGS: filed $71,051 (cash method materials/supplies) — compare carefully to reconstruction method.
+- Advertising: filed $5,520 vs bank-confirmed $20,277 + interco $17,819 = ~$38,096 → huge understatement.
+- "Office expense $15,470" ⚠️: verify whether these are platform fees embedded in net revenue (gross-up
+  wash = double-count if deducted separately) OR real incremental cash outlays (real deductions). TJ reviews.
+- **Commingling check: CLEAN.** Unlike 2024's $104K catch-all, 2025 CB is a modest, reasonable-looking
+  return with no phantom car/truck, no $27K commissions, no $28K office sprawl. The 2025 amendment is a
+  genuine correction (revenue + missing deductions), not a restructuring of a commingled mess.
+- Amendment direction: revenue UP $12,318 (adverse), FB ads added ~$32,596 (favorable), net → bigger loss.
+  Filed −$1,343 → reconstruction ~−$16,470. The amendment FAVORS Riz on CB 2025 (deeper loss, less SE tax).
+
+**Schedule E:** Two rental properties plus SGM K-1 pass-through:
+- Property A: 526 Houston Dr, Thousand Oaks CA 91360 — gross rents $56,400 / expenses $53,353 / net $3,047
+- Property B: 378 Fittner Cir, Thousand Oaks CA 91360 — gross rents $39,600 / expenses $39,589 / net $11
+- SGM 2025 K-1 nonpassive loss: $32,900 (= filed SGM 2025 net −$32,900 on its 1120-S)
+- Schedule E total (flows to Schedule 1 Line 5): **−$29,842** (= $3,058 rental + (−$32,900) SGM)
+
+**⚠️ CRITICAL — AUGUSTA RULE PROPERTY TYPE MISMATCH:**
+Both rental properties on Schedule E (526 Houston + 378 Fittner) are **investment rental properties
+rented to tenants** — NOT Riz and Cheryl's personal residence. The personal residence is **32001 Royceton
+Ct, Westlake Village, CA 91361** (home address on the 1040).
+IRC §280A(g) (Augusta Rule) only applies to a **"dwelling unit used by the taxpayer as a residence"**.
+Investment rental properties rented to arm's-length tenants do NOT qualify as the taxpayer's dwelling.
+**All Augusta Rule meeting rentals claimed by the corporations (SGM $16,500 / SPLT $20,500 / CB $1,000)
+MUST be for meetings held at 32001 Royceton Ct (personal residence) — NOT at 526 Houston or 378 Fittner.**
+If any meeting was billed to corporate entities for use of Houston Dr or Fittner Cir, the §280A(g)
+exclusion does NOT apply → the meeting rental income IS taxable (should appear on Schedule E) AND
+the corporate deduction may be disallowed (rental from a non-residence of owner). TJ must confirm
+which property hosted each meeting. This is a new verification item, not previously flagged.
+
+**Overall 1040 picture:**
+- W-2 income (Cheryl): $99,605 (University of California $97,832 + CHC Payroll $1,773)
+- Schedule 1 additional income: −$31,185 (CB −$1,343 + Schedule E −$29,842)
+- Total income: $68,420 / Taxable income: $36,920 / Federal tax: $0 (CTC offset) / Refund: $8,982
+- SPLT 2025 (+$56,561 C-corp income) correctly NOT on this return — taxed at entity level
+- Effective tax rate: 0.00%
+
+**B3 RESOLVED — $148,164 SGM→SPLT = CAPITAL CONTRIBUTION (owner decision, now locked):**
+Update SGM 2025 and SPLT 2025 packets accordingly. SGM: remove interco receivable, record as equity
+distribution to owner (Riz directed the transfer). SPLT: record as additional paid-in capital.
+TJ note: unusual inter-entity equity transfer (S-corp → C-corp, both owned by Riz); confirm no
+taxable distribution on SGM's side. Both packets must agree on the treatment.
