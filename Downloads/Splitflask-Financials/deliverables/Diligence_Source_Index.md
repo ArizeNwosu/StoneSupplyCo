@@ -5,23 +5,27 @@
 
 ## Splitflask GMV — Tumbler Only (Deal Universe)
 
+**GMV basis: Net Merchandise Sales** = customer-paid price, after seller-funded discounts and returns, before platform fees, shipping, and tax. Applied uniformly to every channel and every year. Full rebuild: `GMV_Rebuild_Net_Basis.md`.
+
 | Figure | Amount | Source Document |
 |--------|--------|-----------------|
-| **2024 Total Splitflask GMV** | **$751,891** | Four-channel build (below) |
-| — Amazon US (net of returns) | $321,251 | Amazon Unified Transaction CSV (referral + FBA fee lines; returns netted) |
-| — Shopify Splitflask store | $188,569 charged / $181,912 settled | Shopify 1099-K (corrected form, Personal TIN …7639) + monthly settlement exports |
-| — TikTok Shop | $155,295 | TikTok 1099-K detail CSVs × 9 (Jan–Dec 2024); sum verified penny-exact |
+| **2024 Total Splitflask GMV** | **$700,134** | Four-channel build (below); net basis |
+| — Amazon US+MX+CA (net of returns) | $321,251 | Amazon Unified Transaction CSV; net product sales; MX+CA at 1099-K proxy |
+| — Shopify Splitflask store | $166,156 | `Splitflask-Shopify-Total sales breakdown - 2024-01-01 - 2024-12-31.csv` NET column; cross-verified vs SKU export |
+| — TikTok Shop (net after seller discount, excl. shipping) | $125,951 | Nine 1099-K detail CSVs: sum(SKU subtotal − seller discount); 54% seller discount rate |
 | — Wholesale (B2B) | $86,776 | Invoices: ESP ~$57.6K, Von Maur ~$7.2K, Knocking ~$11.25K, SATS ~$10.7K |
-| **2025 Total Splitflask GMV** | **$513,987** | Five-channel build (below) |
-| — Amazon (nominee to SPLT) | $224,789 | Amazon order dashboard, Feb 5–Dec 31 split; 1099-K on SGM TIN $240,010 confirmed |
-| — Shopify SPLT store | $165,177 | Shopify 1099-K (SPLT TIN …4308) + settlement exports |
-| — TikTok (H1 only) | $24,510 gross | TikTok 2025 financial summary screenshots (Q1 Jan–Mar + Q2 Apr–Jun) |
-| — Amazon SG/AU + intl wires | $2,383 + $7,686 | Amazon SG/AU dashboard; named wire records (Everything Kitchen AU, Waen JP, Citiesocial TW, Kuwait NBK) |
+| **2025 Total Splitflask GMV** | **$461,934** | Seven-channel build (below); net basis |
+| — Amazon US (settlement net of returns) | $203,323 | `Splitflask-AMA 2025Jan1-2025Dec31CustomUnifiedTransaction.csv` product sales total |
+| — Amazon SG+AU | $2,383 | Amazon SG/AU dashboard (prior locked) |
+| — Shopify SPLT store | $149,010 | `Splitflask-Shopify-Total sales breakdown - 2025-01-01 - 2025-12-31.csv` NET; cross-verified vs SKU export |
+| — TikTok (H1 only, net) | $11,282 | Five `2025-Splitflask-Tiktok-income_*.xlsx` Reports sheets; gross $25,418 − disc/refunds = net $11,282 |
+| — Intl wires | $7,686 | Named wire records (Everything Kitchen AU, Waen JP, Citiesocial TW, Kuwait NBK) |
 | — SGM wholesale + Best Buy/Walmart | $84,125 + $1,111 | SGM bank deposits (classified Layer 7); Mirakl channel records |
-| **2026 H1 GMV (PRELIMINARY)** | **$106,411** | Platform sources below; unaudited — marked preliminary |
-| — Amazon US H1 2026 | Per Amazon dashboard | Amazon-2026-SalesDashboard-7-11-26.csv |
-| — Shopify H1 2026 | Per Shopify export | Shopify admin export (includes Global-e Managed Markets — already inside total) |
-| — TikTok H1 2026 | ~$1,798 | TikTok 2026 Q1/Q2 income PDFs (wound to trickle post-2024) |
+| — Atlantic Access (INV-8707 net) | $3,014 | Invoice INV-8707, £2,336.73 net × 1.29 |
+| **2026 H1 GMV (PRELIMINARY)** | **~$98K confirmed core** | Platform sources below; unaudited — marked preliminary |
+| — Amazon US H1 2026 (net of refunds) | $72,392 | `Splitflask-AMA 2026Jan1-2026Jun30CustomUnifiedTransaction.csv` |
+| — Shopify H1 2026 | $23,940 | `Shopify-2026-Total sales breakdown - 2026-01-01 - 2026-06-30.csv` NET column |
+| — TikTok H1 2026 | ~$1,598 | TikTok 2026 Q1/Q2 income PDFs (wound to trickle post-2024) |
 
 ---
 
@@ -31,12 +35,12 @@
 |------|--------|--------|
 | Total deposits through SGM bank | $895,754 | SGM WF …8625 statements, all 12 months, penny-footed |
 | ↓ Remove non-revenue inflows (loans, interco, refunds) | −$314,358 | SGM 2024 classification ledger |
-| **Splitflask GMV (consumer-paid, all channels)** | **$751,891** | Platform source docs (see above) |
+| **Splitflask GMV (consumer-paid, net of discounts + returns)** | **$700,134** | Platform source docs (see above); net basis |
 | ↓ Platform fees + returns | −$190,953 | Amazon Unified Transaction CSV; TikTok quarterly income; Shopify fee report |
 | Net revenue (tax-basis) | ~$560,938 | Bank-deposit basis, SGM bank + Shopify personal TIN |
 
 *On-air 2024 claim ($895,000) attaches at the deposits tier — documented, bank-substantiated, penny-exact.*
-*On-air 2025 claim ($499,000) attaches at the GMV tier — within 2% of locked $513,987.*
+*On-air 2025 claim ($499,000) is +8% above the reconstructed GMV of $461,934. The difference reflects sourcing corrections (TikTok gross→net, Amazon 1099-K→settlement, Shopify estimate→export). The on-air figure was a live management estimate; the reconstructed figure uses settled platform data on a uniform net basis.*
 
 ---
 
@@ -47,7 +51,7 @@
 | Amazon main US | SGM …7502 | $344,035.75 | Splitflask |
 | Amazon MX | SGM …7502 | $10,561.67 | Splitflask |
 | Amazon CA | SGM …7502 | $11,870.02 | Splitflask |
-| TikTok Shop | SGM …7502 | $155,294.96 | Splitflask |
+| TikTok Shop | SGM …7502 | $155,294.96 | Splitflask (= Unadj Gross Sales = net-of-seller-discount + shipping; GMV uses $125,951 excl. shipping) |
 | Shopify Splitflask store | Personal …7639 | $164,613.99 | Splitflask |
 | Shopify Cyberbrands store | SGM …7502 | $82,263.58 | Cyberbackpack |
 | Amazon Cyberbrands | Cyberbrands …7466 | $22,414.83 | Cyberbackpack |
