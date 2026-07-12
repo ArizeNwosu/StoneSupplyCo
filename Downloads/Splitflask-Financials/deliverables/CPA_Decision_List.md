@@ -16,7 +16,7 @@
 | A2 | CB 2025 COGS — method choice swings profit by ~$57K | CB 2025 | Method / $ impact | **High** |
 | B1 | SGM 2024 filing model — gross-up vs net-deposits | SGM 2024 | Filing model | **MUST DECIDE FIRST** |
 | B2 | Shopify entity routing — Option A vs B | SGM 2024 | Revenue attribution | **High — affects SGM 2024 gross** |
-| B3 | ~~$148,164 SGM→SPLT transfer — loan vs capital~~ **RESOLVED: Capital contribution** | SGM 2025 / SPLT 2025 | Balance sheet | ✅ RESOLVED |
+| B3 | ~~$148,164 SGM→SPLT transfer~~ **VOIDED: This transaction does not exist in bank data. Remove phantom balance-sheet entry from both packets.** | SGM 2025 / SPLT 2025 | Balance sheet | ✅ VOID — remove |
 | B4 | SPLT Kickstarter $54,386 — cash-basis income confirm | SPLT 2025 | Income timing | High |
 | B5 | ~~Mold $25K (Chukwuezugo) — Section 179 vs COGS~~ **KILLED: $25K = loan principal repayment. Remove from deductions; add ~$2,750 interest. SGM 2024 new net ~−$194K** | SGM 2024 | Correction | ✅ RESOLVED |
 | B6 | Mold $8,733.33 (Kangdao) — separate from B5, confirm | SGM 2024 | Characterization | Medium |
@@ -179,15 +179,25 @@ Likely explanation: preparer lumped platform fees INTO COGS on the 1125-A (the s
 
 ---
 
-### B3 — $148,164 SGM→SPLT Operating Transfer — ✅ RESOLVED: CAPITAL CONTRIBUTION
+### B3 — $148,164 SGM→SPLT Transfer — ✅ VOIDED (Transaction Does Not Exist)
 
-**Owner decision (locked):** Capital contribution. SGM: remove interco receivable, record as equity
-distribution to owner (Riz directed the transfer out of SGM). SPLT: record as additional paid-in capital.
+**Bank trace result (2026-07-11):** This amount has NO bank transaction behind it. Bank search:
+- SGM 2025: ZERO debits > $10,000 in the entire year. No transfer to SPLT of any amount close to $148K.
+- SPLT 2025: No credits from SGM. Only credits > $10K are $20K owner loan (Mar) and $49,562 Kickstarter (Apr).
 
-**TJ action:** Confirm no taxable distribution triggered on SGM's side (S-corp distribution rules);
-update both packets' balance sheets to reflect equity treatment (NOT a loan receivable/payable pair).
+**Origin of phantom:** A prior analytical session calculated a reconciliation plug between a wrong
+"$224,281.65 Amazon in SPLT bank" claim and the Amazon already attributed by the nominee. That plug
+was labeled an "SGM→SPLT operating transfer." The actual SPLT bank Amazon total = $107,802.81.
 
-**Status:** ✅ RESOLVED — update both SGM 2025 and SPLT 2025 packets.
+**Correct picture:** Amazon paid SPLT bank directly (Feb 5–Dec 31). Amazon paid SGM bank directly
+(Jan–early Feb). No operating cash moved SGM→SPLT. The only SPLT→SGM cash is $1,600 (already in Interco).
+
+**SBA covenant:** NOT implicated. No SGM→SPLT distribution of assets occurred.
+
+**TJ action:** Remove phantom $148,164 from both packets' balance sheets. No interco receivable on SGM.
+No interco payable on SPLT. No loan, no capital contribution — the transaction never happened.
+
+**Status:** ✅ VOIDED — remove from SGM 2025 and SPLT 2025 packets. Prior "capital contribution" decision is moot.
 
 ---
 
