@@ -1655,3 +1655,353 @@ BANK ACCOUNT for payouts.** So: **Amazon → SPLT's bank directly. Only the TAX 
   UCC lien.** Clean answer for buyer's counsel: "the patent was held personally by the founder and assigned
   directly to SPLT; it was never an asset of Social Gear Media and never subject to the SBA security interest."
 - ✅ SPLT's inventory: bought with OWNER PERSONAL LOANS (the revolving loan), not SGM assets. Not lien-encumbered.
+
+
+## ⚠️⚠️⚠️ THE $148,164 IS A PHANTOM — IT NEVER EXISTED (owner caught it; 3rd plug-carried-as-fact)
+**Traced to bank: SGM 2025 has ZERO debits >$10,000. No SGM→SPLT transfer of any kind. SPLT 2025 has NO
+credits from SGM** (only owner loans from Nwosu A + Kickstarter). The $148,164 was a **RECONCILIATION PLUG**
+computed by an early session from a WRONG intermediate (it claimed SPLT bank received $224,281 from Amazon;
+ACTUAL = $107,803), labeled "SGM→SPLT operating transfer," and carried forward through every later pass
+WITHOUT EVER BEING VERIFIED against a real transaction.
+- ✅ **VOID IT. Remove the phantom balance-sheet entry (SGM receivable / SPLT payable $148K) from BOTH the
+  SGM 2025 and SPLT 2025 packets.** No P&L effect — it SIMPLIFIES both packets.
+- ✅ **Kill the "loan vs capital" decision entirely** (B3 / CPA list) — there is nothing to characterize.
+- ✅ **SBA "Limits on Distribution of Assets" covenant: NOT IMPLICATED.** No SGM→SPLT distribution ever
+  occurred. Amazon paid SPLT DIRECTLY. Comes OFF deal counsel's list.
+- ✅ **NOMINEE CONFIRMED CLEAN, COUNTED ONCE.** Tax: SGM reports $240K 1099-K → nominees $224,789 → SPLT
+  reports $224,789 (REPORTING ONLY, no cash). Cash: Amazon → SPLT bank $107,803 net of fees (the cash receipt
+  of that same income). Same income, two views — NOT two incomes.
+- Amazon cash by month: → SGM bank $19,334 (Jan $17,886 + Feb $182 + Mar-Dec $1,266); → SPLT bank $107,803.
+  **Payout-bank switched Feb 5** (EIN never switched — that's the whole nominee issue).
+- 🔁 **PATTERN (3rd time): a PLUG, confidently labeled, inherited as fact.** Same as the $430K 2026 GMV and
+  the phantom SPLT Shopify Capital. The provenance gate catches these ONLY when someone asks. Owner caught
+  all three.
+## ⚠️ NEW OPEN ITEM (real): AMAZON RESERVE BALANCE
+Implied Amazon fee rate from bank = ~47% ($112,873 gap on $240K gross), but the stated Seller Central fee is
+$77,433 (26.7%). Gap between expected net (~$147K) and actual bank ($107,803) ≈ **$39,553 = likely Amazon
+RESERVE BALANCE + return clawbacks.** → **TJ: confirm the 12/31/25 Amazon reserve balance from Seller Central
+— it's an ASSET on SPLT's balance sheet** (money Amazon holds but SPLT owns). Do NOT treat it as a fee.
+
+
+## 3 CLARIFICATIONS
+### 1. ⚠️ ORCHESTRATOR OVERREACH — I've been ASSUMING the deal is an ACQUISITION of SPLT
+I don't actually know the structure (acquisition? equity investment? license?). **OWNER TO CONFIRM what the
+Kendra Scott deal actually IS.** Don't reason about "the sale" until confirmed.
+What I meant re the guarantee: **IF SPLT changes hands, Riz's PERSONAL GUARANTEE on SGM's SBA loan does NOT
+move.** It's his signature on SGM's debt; SGM isn't in the transaction. ~$387K, maturing 2050, UCC lien on
+SGM's assets — and SGM may end up a shell with nothing in it.
+### 2. "Ideal structure" = DEAL COUNSEL + TAX COUNSEL territory, NOT the orchestrator's
+Won't give a confident structure — that's exactly the overreach that produced 3 phantom numbers. What I CAN
+flag as a CONSIDERATION for counsel:
+**THE CORE TENSION: SPLT holds the VALUE (patent, brand, operating business). SGM holds the DEBT ($404K SBA,
+personally guaranteed).** If SPLT is sold/invested-in and proceeds flow to Riz personally, SGM is left a shell
+with a large personally-guaranteed loan. **PLAN THIS AT STRUCTURING TIME** (do proceeds retire the SBA loan?
+what happens to SGM? any SBA consent needed?) — easy to solve early, painful later. RAISE WITH DEAL COUNSEL.
+### 3. ✅ The ~$39,553 is probably AMAZON AD SPEND, not a reserve (owner correction — likely right)
+**Amazon deducts ADVERTISING SPEND directly from the payout balance** (standard: ad costs come out before
+Amazon remits net). Gross − fees − ADS = net deposited. That fits the gap exactly.
+- ⚠️ TREATMENT DIFFERS COMPLETELY: **RESERVE → an ASSET SPLT owns** (balance sheet). **AD SPEND → a DEDUCTIBLE
+  EXPENSE → LOWERS SPLT income and tax.**
+- ⚠️ We already carry Amazon ads **$24,727 INSIDE the $77,433 stated fee.** So: does the stated fee ALREADY
+  include the ads, or is there ADDITIONAL ad spend deducted from the balance on top? **The Seller Central
+  settlement report answers this definitively — PULL IT.** Don't guess; this moves SPLT's tax.
+
+
+## ⚠️⚠️ AMAZON SETTLEMENT REPORTS (authoritative) — ADS ARE **NOT** IN THE SETTLEMENT. Double-count risk.
+Read the Amazon unified transaction reports directly. **THERE IS NO ADVERTISING TRANSACTION TYPE.** Types
+present: Order, Shipping Services, Refund, FBA Inventory Fee, Adjustment, Service Fee, FBA Transaction fees,
+Transfer, Order_Retrocharge, Debt, Amazon Fees, SAFE-T reimbursement, Chargeback Refund.
+→ **Amazon ads are billed SEPARATELY to a CARD, NOT deducted from the payout balance.** (Also confirms owner:
+no long-running reserve — Amazon releases ~7 days after latest estimated delivery.)
+**AUTHORITATIVE FIGURES:**
+- **2025:** product sales **$203,322.68** | sales tax $14,338.60 | shipping credits $3,234.01 | promo rebates
+  −$2,443.47 | mkt withheld tax −$14,426.40 | selling fees −$28,080.99 | FBA fees −$22,210.92 | other txn fees
+  −$28,994.27 | **TOTAL FEES −$79,286.18** (≈ the $77,433 we carry — roughly confirms) | Transfers −$114,745.88.
+- **2024:** product sales **$297,476.56** | total fees **−$65,191.84** | Transfers −$209,223.69.
+- **Ad spend is MULTI-CURRENCY (do NOT sum raw):** 2025 = USD $29,020.94 + MXN 2,394.44 + CAD 3,025.58 + AUD
+  12.48 ≈ **~$31,350 USD**. 2024 = USD $14,307.46 + MXN 1,138.82 + CAD 865.54 ≈ **~$15,000 USD**.
+- ⚠️ **DOUBLE-COUNT RISK: we carry "$24,727 Amazon ads" INSIDE the $77,433 stated fee — but ads are billed to
+  a CARD and should ALSO be in the Chase/bank classifications.** Same ad spend possibly deducted TWICE.
+  FIX: fees = SETTLEMENT fees only (no ads); ads = counted ONCE from the CARD/bank charges. RESOLVE.
+- ⚠️ **1099-K $240,009.89 vs settlement product sales $203,322.68** (+tax+shipping ≈ $220,895) = **~$19K GAP**
+  — explain (other marketplaces CA/MX/AU? 1099-K gross basis? timing). Affects the gross-receipts basis.
+- ⚠️ The ~$39,553 "gap" is **NOT ads and NOT a reserve** — reconcile settlement Transfers $114,745.88 vs bank
+  Amazon deposits ($107,803 SPLT + $19,334 SGM = $127,137). Explain properly.
+- 2026 H1 report now available → recheck the $80,573 Amazon figure in the deal workbook.
+
+
+## ⚠️ ORCHESTRATOR ERROR CORRECTED — Amazon ads ARE deducted from the seller balance (owner right, with proof)
+I concluded "ads are billed to a CARD" from the ABSENCE of an advertising line in the unified transaction
+report. WRONG — absence of evidence ≠ evidence of absence. **The Amazon ads INVOICE (INVOICE-321448522DPA26,
+billed to SPLT Inc.) states explicitly: "Payment Method: Seller Account — Automatic deduction from your seller
+account."** Proceeds Deduction is Amazon's DEFAULT billing method.
+**WHY ads aren't in the transaction report but ARE deducted:** the report shows ORDER-level and FEE
+transactions; the ad charge is applied against the AVAILABLE BALANCE at the DISBURSEMENT level — it REDUCES
+THE TRANSFER rather than appearing as its own transaction type. Real, deducted, invisible in that report.
+**CONSEQUENCES:**
+- ✅ **NO Chase double-count from ads** (they never hit a card). That risk is DEAD.
+- ✅ Explains the payout gap: settlement net > bank deposits because ads were taken out at disbursement.
+- ⚠️ **THE LIVE QUESTION (worth real money): is the "$24,727 Amazon ads" we carry INSIDE the $77,433 stated
+  fee, or SEPARATE?** Ads are NOT in the settlement fee total ($79,286 for 2025) — they're not in that report
+  at all.
+  - If the $77,433 came from Seller Central's fee summary INCLUDING a Cost-of-Advertising line → ads counted
+    once, fine.
+  - If $77,433 = settlement fees ONLY → **ads (~$31,350 for 2025) are an ADDITIONAL deduction → SPLT's
+    deductions go UP ~$31K → SPLT tax drops meaningfully.**
+- AUTHORITATIVE AD SPEND (multi-currency, convert; don't sum raw): **2025 ≈ $31,350 USD** (USD $29,020.94 +
+  MXN 2,394.44 + CAD 3,025.58 + AUD 12.48). **2024 ≈ $15,000 USD** (USD $14,307.46 + MXN 1,138.82 + CAD 865.54).
+  Source = Amazon ad-spend CSVs + ad INVOICES (invoice is "the definitive source for campaign charges").
+
+
+## ✅ AMAZON TRUE-UP COMPLETE — no double-count; fee substantiation was RIGHT; small storage fix
+**Ads ARE in the settlement report** — as **Service Fee rows, description "Cost of Advertising,"** flowing
+into `other transaction fees`. (My "no advertising type" claim was wrong: I read the TYPE column and stopped.
+2nd error on this item — also wrongly said "billed to a card." Owner corrected both, with the invoice.)
+- **The $77,433 was ALREADY the sum of 4 lines (referral + FBA + advertising + storage)** — NOT a block that
+  ads needed adding to. **Ads counted ONCE, correctly, all along. NO double-count, NO $31K windfall, NO error.**
+- Cost of Advertising in settlement: 2024 US $12,728 | 2025 SPLT-period $24,717. Ad-spend CSV totals (all
+  markets, USD): 2024 $15,008 | 2025 $31,267. Difference = **international MX/CA/AUD ads (~$2,287 for 2025)
+  NOT in the US settlement → currently UNCAPTURED for SPLT** (small; TJ may add, sourced to the ad CSVs).
+- ✅ **REAL FIX: storage $4,886 PROVISIONAL → $3,938.34 STATED** (settlement FBA Inventory Fee rows).
+  **Fee total $77,433 → $76,486. SPLT 2025: $56,561 → ~$57,085. C-corp tax ≈ $11,988.**
+- Minor uncaptured: FBA Transaction fees + Amazon Fees − Adjustments = **+$424.87** additional deductions (TJ).
+- ✅ **1099-K RECONCILES: $240,009.89 vs settlement-derived $242,677 = −$2,667 (1.1%) year-end posting timing.**
+  Settlement is US-only (amazon.com). **Nominee split UNCHANGED: SGM $15,220.80 / SPLT $224,789.09.**
+- ✅ **The "$39,553 gap" was a STALE ARTIFACT.** Real gap = $12,391 (bank $127,137 vs settlement transfers
+  $114,746) — entirely year-end timing (Dec-2024 orders paying into Jan-2025 bank). **ALL 2025 settlement rows
+  are RELEASED — NO reserve, NO deferred transactions** (owner was right: Amazon releases ~7 days post-delivery).
+- ✅ 2026 H1 Amazon GMV: $80,573 → **$81,157** (authoritative settlement gross orders). Deal workbook Summary
+  2026 H1: $106,411 → **$106,995**. Monthly: Jan $19,514 / Feb $11,604 / Mar $11,182 / Apr $10,709 / May
+  $11,719 / **Jun $16,429** (June uptick holds — the post-patent leading indicator).
+
+
+## ✅✅✅ CPA PACKET V2 COMPLETE — plug-and-play, 3-5 hrs, ZERO owner-fact open items
+`handoff/CPA_TJ/CPA_Sequenced_Action_Plan_V2.md` (364 lines) = the primary deliverable. Each Excel packet has
+a V2 correction block atop its Summary tab. Old decision list preserved but superseded.
+**FIVE FINAL FIGURES (filed → amended):**
+| SGM 2024: −$33,351 → **−$182,089** | CB 2024: +$4,142 → **+$31,214** | SGM 2025: −$32,900 → **+$85 (breakeven)**
+| SPLT 2025: +$9,850 → **+$59,094** ⚠️ (the ONE real tax: C-corp **~$12,410**) | CB 2025: ~$0 → **−$16,470** |
+**3 GENUINE CPA DECISIONS (flagged top):** (1) method election (rec: keep CASH; CB 2024 COGS then shifts to
+2023); (2) **SPLT ADVERSE amendment** — verify the 90%-COGS composition before signing (~$10,341 MORE tax —
+the only amendment that raises tax); (3) nominee 1099 SGM→SPLT $224,789.09 (HARD INTERLOCK — neither 2025
+return files without it).
+⚠️ **TIE-OUT TO CHECK:** summary says SPLT +$59,094 / ~$12,410, but the Amazon true-up landed SPLT at
+**~$57,085 / ~$11,988** (storage $4,886 → $3,938.34; fee total → $76,486). ~$2K difference — confirm which
+the packet built on and that BOTH the storage fix AND the Augusta reduction flowed through. Immaterial to the
+story, but it should tie.
+⚠️ Open ADDITIVE items only push SPLT's tax DOWN: ~$2,287 intl Amazon ads; $424.87 misc Amazon fees; up to
+~$6,775 more SBA interest (if payments came from another account — TJ pulls the SBA payment history).
+**~$12K is the CEILING on the tax, not the floor.**
+
+
+## ⚠️ ATLANTIC ACCESS = CONSIGNMENT (owner confirmed) — NO deduction; units STILL SPLT's inventory
+Owner: **Atlantic Access has NOT paid. CONSIGNMENT** — they pay SPLT once units sell, expenses deducted, then
+profits split. **No profits yet.** Units are **SPLT's** (not SGM's, per owner correction).
+- **TAX: title has NOT passed → NO sale, NO revenue, NO deduction. The units remain SPLT INVENTORY (an ASSET),
+  merely located in Europe.** ⚠️ **There is NO "market-seeding expense"** — consigned goods aren't given away.
+  You never get a deduction for foregone profit, and inventory you still OWN can't be expensed. Revenue + COGS
+  recognize only WHEN Atlantic Access sells through.
+- ⚠️⚠️ **RECONCILIATION PROBLEM (may INCREASE SPLT income):** SPLT 2025 = **15,000 imported = 11,244 sold +
+  3,756 ending inv** — closes to ZERO, no room for ~1,500 consigned units.
+  - If 3,756 ALREADY includes the consigned units → fine, but DISCLOSE the split (domestic vs. on-consignment).
+  - If NOT → true ending inventory ≈ **5,256**, meaning **COGS is OVERSTATED by ~1,500 × unit cost → SPLT's
+    income is UNDERSTATED and must be corrected UPWARD.** Check this.
+- ⚠️ COUNT/ENTITY CONFLICT: CLAUDE.md previously had **1,400 units, SGM 2024 carryover**; owner now says
+  **1,500, SPLT's.** Resolve both.
+- ✅ DEAL WORKBOOK: consigned ≠ sold → correctly EXCLUDED from GMV. No change.
+## ✅ Owner confirmed: INTERNATIONAL Amazon ads (MX/CA/AU ≈ $2,287 2025) = pure expenses → DEDUCT (not in the
+US settlement). Plus $424.87 misc Amazon fees. ✅ SBA payments = **NOT deductible on SPLT** (balance sheet;
+Revolving Loan interest $0 for 2025) — verify the packet deducts nothing.
+
+
+## ✅ ATLANTIC ACCESS RESOLVED — **1,400 units, SGM's 2024 carryover, CONSIGNMENT** (owner confirmed)
+Reverts to the ORIGINAL locked position. Owner's brief "it's SPLT's" was a reaction, not a correction.
+- ✅ **SPLT UNAFFECTED** — 15,000 = 11,244 + 3,756 closes cleanly. **NO COGS overstatement, NO income
+  correction.** The reconciliation concern is VOID.
+- **SGM:** 1,400 units stay **SGM INVENTORY (asset)**, located in Europe. NO sale, NO revenue, NO deduction
+  (title hasn't passed; Atlantic hasn't paid). **No "market-seeding expense" exists** — can't expense inventory
+  you still own; no deduction for foregone profit. Recognize revenue + COGS only WHEN they sell through.
+- **ACTION: disclose the 1,400 consigned units on SGM's BALANCE SHEET at cost** → feeds the blank **Schedule L**.
+- ✅ Deal workbook: consigned ≠ sold → correctly excluded from GMV. Unchanged.
+
+
+## ✅✅✅ FINAL — all three fixes applied; SPLT tie-out RESOLVED
+**FIVE FINAL FIGURES (definitive):**
+| **SGM 2024: −$182,779** | **CB 2024: +$31,214** | **SGM 2025: −$2,592** (was +$85 breakeven — 2024 intl ads
+belong to SGM) | **SPLT 2025: +$56,373** (C-corp tax **~$11,838**) | **CB 2025: −$16,470** |
+**The ONE real tax: SPLT C-corp ~$11,838.** All other entities at losses/pass-through.
+- ✅ **SPLT TIE-OUT RESOLVED** ($59,094 vs $57,085 discrepancy closed → **$56,373** after intl ads + misc fees).
+- ✅ INTERNATIONAL AMAZON ADS deducted: 2025 SPLT ≈ $2,287 (MXN/CAD/AUD converted, rates stated) + $424.87 misc
+  Amazon fees. 2024 SGM ≈ $690 (MXN/CAD).
+- ✅ SBA payments on SPLT: confirmed **ZERO deduction** (balance sheet; revolving-loan interest $0 for 2025).
+- ✅ ATLANTIC ACCESS: **1,400 units, SGM's, CONSIGNMENT** → SGM INVENTORY (asset) on the balance sheet; NO
+  deduction, NO revenue until sell-through. SPLT unaffected (15,000 = 11,244 + 3,756 closes). Deal workbook
+  unchanged (consigned ≠ sold, correctly excluded from GMV).
+- ⚠️ **OPEN (owner/TJ): what did SGM ACTUALLY PAY per unit for the 2024 carryover inventory?** The pass valued
+  the 1,400 consigned units at ~$57,400 using SPLT's **$41/unit — that's a PLACEHOLDER**, not SGM's real cost
+  (different production run, different landed cost). This is an ASSET on SGM's balance sheet feeding the
+  **Schedule L** — diligence may ask how it was valued. Derive SGM's true 2024 per-unit cost from SGM's 2024
+  COGS + unit records, or owner supplies it.
+
+
+## ⚠️⚠️ UNIT-COST CONTAMINATION + 2024 UNIT FLOW (pass cut: UNIT_FLOW_RECONCILIATION_2024)
+**$41.04 = the CYBERBACKPACK unit cost. Splitflask TUMBLERS cost $9.60/unit EX-FACTORY (Kangdao).** A pass
+wrongly applied $41.04 to tumblers when valuing the Atlantic Access consigned units → **$57,400 was WRONG;
+it's 1,400 × $9.60 = $13,440** (+ allocated landed cost). Scan for the same contamination elsewhere.
+(Sanity check that proves it: tumblers sell for $44–49. A $41 cost = ~10% gross margin — nonsensical for DTC.
+At $9.60 → ~78-80% GM, exactly right for a tumbler brand.)
+**OWNER-STATED 2024 UNIT FLOW (to verify):**
+- SGM PURCHASED **33,000** tumblers in 2024 (arrived ~Mar 2024; pre-selling began Oct 2023).
+- **~6,000 to AFFILIATES** for content marketing (~5,000 recorded on TikTok + ~1,000 scattered influencers) —
+  GIVEN AWAY, not sold.
+- **6,000 ENDING INVENTORY** at 12/31/24 (this pool later includes the 1,400 Atlantic consigned units).
+- ⇒ **~21,000 SOLD.** Cross-check: GMV $751,891 ÷ 21,000 ≈ **$35.80 blended ASP** — plausible (list $44-49,
+  wholesale lower, TikTok discounted). ⚠️ Owner's earlier "27,000 sold" likely meant units that LEFT INVENTORY
+  (sold + affiliate), NOT revenue units. Separate the two.
+**THE KEY TAX QUESTION:** SGM 2024 COGS = $386,799. Check 33,000 × $9.60 = $316,800 + freight ≈ ties.
+⚠️ **Under CASH METHOD (what was filed / what TJ recommends), you deduct what you PAID → if SGM paid for all
+33,000 units in 2024, ALL of them — INCLUDING the ~6,000 affiliate units — are ALREADY in the $386,799 COGS →
+NO ADDITIONAL DEDUCTION for the giveaways.** Confirm from the factory wires. (If instead COGS was built on
+units SOLD, the affiliate units need separate promotional-expense treatment at COST: ~6,000 × $9.60 ≈ $57,600.
+**Deductible AT COST ONLY — never at retail; no deduction for foregone profit.**)
+**BALANCE SHEET:** if all 33,000 expensed but 6,000 remain → SGM carries 6,000 units at ZERO basis
+(cash-correct) — Schedule L must reflect it. ⚠️ **DISCLOSURE: SGM deducted 33,000 units while selling ~21,000,
+giving away ~6,000, holding 6,000. A diligence analyst WILL do this arithmetic — have the answer ready.**
+
+
+## ⚠️ ATLANTIC ACCESS — SALES HAVE OCCURRED (invoice record now in folder)
+Owner: **SGM still OWNS the units**; Atlantic Access STORES + SELLS them in Europe, deducting storage,
+marketing, and selling costs from sales; profits split. **"Running about a $1,500 loss so far."**
+⚠️ **A LOSS MEANS SALES HAVE OCCURRED — "no profits yet" ≠ "no activity yet."** Under consignment, the SALE
+happens **when the AGENT sells to the END CUSTOMER**, not when they remit. So SGM likely must recognize:
+gross sales as REVENUE | units sold OUT of inventory as COGS ($9.60 + landed) | Atlantic's deducted costs as
+DEDUCTIONS | net ≈ −$1,500.
+- Invoice shows totals only, **no unit count** → DERIVE units sold = gross sales ÷ EU selling price.
+  **Remaining consigned inventory = 1,400 − units sold** (so the asset is NOT 1,400 × $9.60 anymore).
+- ⚠️ **WHICH YEAR do the sales fall in?** 2025/2026 → doesn't touch the 2024 return. Any in 2024 → SGM 2024
+  must reflect them. Determines which packet changes.
+- ⚠️ **DOCUMENTATION GAP: is there a WRITTEN CONSIGNMENT AGREEMENT with Atlantic Access?** The entire
+  no-sale/no-deduction treatment rests on title NOT having passed. Without paper, an examiner could argue the
+  units were sold or given away outright. **If none exists, PAPER IT** (confirmation letter: units held, terms,
+  title not passed). The consigned units are an ASSET on SGM's Schedule L — assets need support.
+
+
+## ⚠️⚠️ ATLANTIC ACCESS INVOICE READ (INV-8707) — billed to **SPLITFLASK INC**, period **Feb–Aug 2025**
+Source doc: Atlantic Access Ltd (UK, Co. 09873297, VAT 234008250), invoice INV-8707, dated 31 Aug 2025,
+reference "Feb-Aug25 Splitflask". **CUSTOMER = "Splitflask Inc" (SPLT), NOT Social Gear Media.**
+**THE NUMBERS (GBP; sales in parens = credits to us, fees positive = charges to us):**
+- **REVENUE: Amazon sales £2,086.12 + Shopify sales £443.74 = £2,529.86 GROSS SALES**
+- **COSTS: Amazon fees £1,023.07 | Amazon marketing £519.26 | Amazon returns £151.47 | 3rd-party fees £746.63
+  | Klarna/Shopify fees £17.41 | Shopify returns £41.66 | AA commission £260.77 (12.5% to 2.5k, then 10%, then
+  7.5%) | Marketing coordination £990.00 (influencers £300, PR outreach UK £30 × 3) | Monthly software £149.94
+  = ~£3,900 TOTAL**
+- **NET: SPLT OWES ATLANTIC £1,370.35** (~$1,750) — costs exceeded sales. THIS is the owner's "~$1,500 loss."
+**TAX TREATMENT (it is NOT "no activity"):** recognize **gross sales ~£2,530 (~$3,200) as REVENUE**; deduct the
+**fees/commission/marketing/returns ~£3,900 (~$4,950)**; net = a **~$1,750 DEDUCTIBLE LOSS**. Units sold come
+OUT of inventory as COGS. **This is a 2025 item → SGM 2024 is UNTOUCHED.**
+⚠️⚠️ **ENTITY CONFLICT — MUST RESOLVE:** the invoice bills **SPLT**, but we just locked the 1,400 units as
+**SGM's 2024 carryover.** Either (a) the units really are SPLT's (→ my earlier SPLT inventory/COGS
+reconciliation concern is LIVE again: is SPLT's ending inventory 3,756 or 3,756+remaining-consigned?), or
+(b) the units are SGM's but the EUROPEAN OPERATION is being run under SPLT's name → **entity mismatch that
+needs cleaning up** (SPLT paying/booking activity on SGM-owned inventory = another intercompany item).
+**OWNER: which entity actually owns the units in Europe — and why is Atlantic billing SPLT?**
+⚠️ Invoice does NOT state units → derive units sold from £2,530 gross ÷ EU unit price. Remaining consigned
+inventory = 1,400 − units sold.
+⚠️ Still no WRITTEN CONSIGNMENT AGREEMENT sighted — the whole no-sale/inventory-asset treatment rests on it.
+
+
+## ✅ ATLANTIC ACCESS = **SPLT's** (owner confirmed; matches the invoice billing "Splitflask Inc")
+**The European units are SPLT's, not SGM's. SGM 2024 and 2025 are UNTOUCHED by Atlantic Access.**
+⚠️⚠️ **THIS REOPENS SPLT'S UNIT RECONCILIATION (may INCREASE SPLT's tax):**
+SPLT: **15,000 imported = 11,244 sold + 3,756 ending inv** → closes to ZERO. **NO ROOM for ~1,400 units in
+Europe.** Either:
+- **(a)** the 1,400 are ALREADY INSIDE the 3,756 → fine, but the balance sheet must DISCLOSE the split (US
+  warehouse vs. on-consignment at Atlantic Access UK); or
+- **(b)** they are NOT → true ending inventory ≈ **5,156**, and **SPLT's COGS is OVERSTATED by ~1,400 × landed
+  cost → SPLT expensed units it STILL OWNS → CORRECT UPWARD (more income, more tax).**
+**Pass cut: SPLT_ATLANTIC_UNIT_RECON.** Also books the European activity into SPLT 2025: revenue £2,529.86;
+deductions ~£3,900; **net ~$1,750 deductible loss**; units sold (~60-70?) OUT of inventory; remaining consigned
+≈ 1,330-1,340. ⚠️ Check whether the £1,370.35 is PAID (cash-method deduction) or an outstanding PAYABLE.
+⚠️ **DEAL WORKBOOK DECISION:** units that SOLD THROUGH in Europe are **real Splitflask sales (~$3,200)**. GMV
+currently excludes ALL Atlantic units as "never sold" — right for UNSOLD units, WRONG for sold-through ones.
+Either add ~$3,200 to 2025 GMV ($513,987) or state the exclusion explicitly. **Be consistent.**
+
+
+## ✅✅ ATLANTIC ACCESS **AGENCY CONTRACT** READ — settles the treatment (but it's UNSIGNED)
+Parties: **Atlantic Access Limited (UK, co. 09873297)** ↔ **SPLT Inc. (Delaware, 33-3094308)** — confirms
+**SPLT** is the counterparty. English law, EU territory.
+### THE DECISIVE CLAUSE — **3.4: "Risk in the Products shall pass to the Agent on delivery, provided that
+TITLE SHALL REMAIN WITH THE COMPANY"** → **TITLE STAYS WITH SPLT.** The European units are **SPLT INVENTORY
+(an asset)**, NOT a sale. Consignment treatment CONFIRMED and now PAPERED. (Exception — Cl. 11.4(a): products
+not collected within 20 working days of termination become the Agent's property.)
+### ⚠️ IT IS AN **AGENCY** AGREEMENT → **GROSS-RECEIPTS reporting, not net**
+Atlantic sells **on behalf of** SPLT ("The Agent shall manage all such sales in return for a fee"). A European
+customer's purchase **IS SPLT'S SALE.** → **SPLT recognizes GROSS REVENUE and separately DEDUCTS the
+"Allowable Deductions."** Same gross-receipts principle already applied to Amazon/Shopify. Atlantic nets it out
+on the statement, but tax reporting is GROSS.
+**ALLOWABLE DEDUCTIONS (contract-defined, broad):** logistics incl. returns; WEEE/battery/packaging
+registration; **storage & warehousing**; debt collection; **VAT**; **taxes & duties on importation**;
+**advertising & marketing**; **ecommerce marketplace fees**; insurance; 3rd-party software; GPSR; website &
+graphic design.
+**FEE STRUCTURE:** D2C commission **12.5%** up to £2,500 commission, then **10%**, then **7.5%** (on net RRP
+less VAT). B2B **15%**. Customer-service fee **£175/mo**. Marketing coordination per agreed service level
+(target ~15% of net revenue). Settlement: Agent sends a monthly statement (units sold, Net Price, Allowable
+Deductions) within 8 working days of month-end; **sums due paid in USD** (Cl. 6.6).
+⚠️ **Cl. 3.2: the AGENT pays import taxes/duties, deducted from sums due to SPLT** → affects LANDED COST.
+### ⚠️⚠️ DOCUMENTATION PROBLEM: **THE CONTRACT IS UNSIGNED**
+Signature blocks BLANK. Date BLANK ("made the ___ day of ___ 2024"). Commencement Date, Market Date, and
+several fee amounts BLANK/"TBC". **OWNER: is there an EXECUTED copy?** The whole treatment (title not passed,
+agency not sale, units = SPLT asset) rests on this agreement governing. An unsigned draft is weak support.
+**MITIGANT: the CONDUCT matches the draft exactly** (invoice INV-8707 applies the 12.5%/10%/7.5% commission
+tiers as drafted) — strong evidence the parties operated under it. **But GET THE EXECUTED VERSION.**
+
+
+## ✅ SPLT UNIT RECON RESOLVED — the 1,400 Atlantic units ARE INSIDE the 3,756 ending inventory (owner)
+**15,000 = 11,244 sold + 3,756 ending CLOSES. NO COGS overstatement. SPLT's income UNCHANGED.** The earlier
+concern is closed.
+**ACTION = DISCLOSURE, not correction.** SPLT's 3,756 ending inventory is physically split:
+**~2,356 units US warehouse + ~1,400 units on CONSIGNMENT at Atlantic Access (UK)** — title retained by SPLT
+per Agency Contract Cl. 3.4. Both valued at SPLT's **LANDED** cost (ex-factory $9.60 + freight + duties;
+⚠️ Cl. 3.2: the AGENT pays import taxes/duties, deducted from sums due to SPLT — factor this in). Put the
+split on the balance sheet / Schedule L. "Where is your inventory?" → "1,400 units at a UK agent under an
+agency agreement" is a GOOD diligence answer.
+**STILL TO BOOK into SPLT 2025:** the Atlantic European activity (Feb–Aug 2025) — GROSS revenue £2,529.86;
+Allowable Deductions ~£3,900; **net ~$1,750 DEDUCTIBLE LOSS**; units sold (~60-70) come OUT of inventory
+(remaining consigned ≈ 1,330-1,340). Check if the £1,370.35 is PAID (cash-method deduction) or a PAYABLE.
+
+## ✅ ATLANTIC ACCESS BOOKED — CASH BASIS P&L = $0; $1,769 PAYABLE (2026-07-11)
+Source: INV-8707 confirmed read. SPLT WF …0423 bank all 12 months searched — NO payment to Atlantic, NO
+receipt from Atlantic. Both confirmed absent.
+**CASH BASIS RESULT: $0 P&L impact in 2025.** Revenue and deduction both recognized when cash moves.
+**BALANCE SHEET: $1,769 PAYABLE** (£1,370.35 × 1.29 GBP/USD avg Feb–Aug 2025). Invoice past-due 31 Aug 2025.
+Must appear on SPLT 2025 Schedule L (currently blank — TJ action).
+
+### INV-8707 numbers (GBP → USD @1.29)
+- Gross revenue £2,529.86 = $3,263 | Net of returns £2,336.73 = **$3,014** (added to deal GMV)
+- Total costs £3,900.21 = $5,031 | Net owed to Atlantic £1,370.35 = **$1,769** (payable)
+
+### Unit reconciliation (updated)
+- ~63 units sold through (£2,529.86 net ÷ ~£37 est. UK price; ESTIMATE — exact needs AA sales report)
+- 1,400 − 63 = **~1,337 remaining at Atlantic**; 3,756 − 63 = **~3,693 total SPLT ending inventory**
+- Inventory split: ~2,356 US warehouse + ~1,337 at Atlantic (UK consignment, title held by SPLT)
+- Inventory value: 3,693 × $8.113/unit landed = **$29,950**
+
+### Landed cost — SPLT 2025 tumblers (bank-sourced)
+Factory (Kangdao wires) $103,463 + freight $18,235 = $121,698 ÷ 15,000 = **$8.113/unit**.
+The SPLT packet's $6.897/unit = factory only; $8.113 is the correct landed figure for inventory valuation.
+⚠️ TJ: SGM 2024 packet note says "$10.40 landed − $1.30 freight = $9.60" but $10.40−$1.30=$9.10≠$9.60 —
+arithmetic error in note; operative ending inventory value $9.60×6,000=$57,600 stands. Confirm from Kangdao invoices.
+
+### Unit cost contamination — FINDING: NO CONTAMINATION IN CURRENT DELIVERABLES
+$41.04 = Cyberbackpack cost (Kangdao, 2023-paid). Correctly used ONLY in CB_2024 and CB_2025 packets.
+CB_2025 COGS tab "~1,400 units × $41.04" = CB units sold in 2025 (Shopify~1,100+Amazon~100+GlobalE~200)
+— NOT the Atlantic Access tumblers. Clarifying note added to CB_2025 COGS tab in both deliverables/ and handoff/.
+SPLT_2025 packet correctly uses $6.897/unit factory (bank-sourced). NO fix needed for tumbler contamination.
+
+### 2025 GMV update (deal workbook)
+Atlantic sell-through = real Splitflask consumer sales → added to GMV.
+$513,987 + $3,014 (net Atlantic) = **$517,001**. Updated in all deal workbook tabs.
+On-air claim $499K: gap widens from 2.9% to 3.6% below GMV — still favorable.
+
+### SPLT 2025 income: UNCHANGED at +$53,817 / C-corp tax ~$11,302
+### Documentation: deliverables/Atlantic_Access_Reconciliation.md
