@@ -1,7 +1,7 @@
 # Splitflask GMV Rebuild — Single Net Basis
 **Date:** 2026-07-12  
-**Session:** GMV-REBUILD (basis fix, all channels, all years)  
-**Status:** ✅ FINAL — replaces all prior GMV figures in the deal workbook and memo
+**Session:** GMV-REBUILD (basis fix) → WHOLESALE_TRACE (wholesale sourcing)  
+**Status:** ✅ FINAL v2 — wholesale plug eliminated; 2025 GMV corrected downward
 
 ---
 
@@ -95,10 +95,16 @@ TikTok 2025 detail (from XLSX Reports sheets):
 ### Wholesale & Other
 | Channel | 2024 | 2025 | Source |
 |---------|------|------|--------|
-| US Wholesale (ESP, Von Maur, Knocking, SATS) | $86,776 | $84,125 (est) | 2024 invoice-sourced+locked; 2025 SGM wholesale estimate |
-| Intl wires (Kuwait, Japan, Taiwan, AU dist) | — | $7,686 | Prior locked |
-| Best Buy / Walmart Mirakl | — | $1,111 | Prior locked |
-| Atlantic Access (INV-8707, net GBP→USD 1.29) | — | $3,014 | Invoice INV-8707 net £2,336.73 |
+| US Wholesale (ESP, Von Maur, Knocking, SATS) | $86,776 | — | 2024 invoice-sourced; ESP/Von Maur/SATS absent in 2025 bank |
+| SGM Knocking/CBS Deals | — | $7,567 | ✅ SGM 2025 bank (4 wires) |
+| SGM Walmart marketplace | — | $4,026 | ✅ SGM 2025 bank (16 payments) |
+| SGM Ownstar intl wire (TW) | — | $1,004 | ✅ SGM 2025 bank — NEW, not previously in GMV |
+| SPLT intl wires (5 named counterparties) | — | $7,686 | ✅ SPLT 2025 bank |
+| SPLT Lucky Rubber Ducky wholesale | — | $517 | ✅ SPLT 2025 bank |
+| Atlantic Access (INV-8707, net GBP→USD 1.29) | — | $3,014 | ✅ Invoice INV-8707 net £2,336.73 |
+| SGM cash/check deposits (⚠️ payer unknown) | — | $9,600 | ⚠️ UNCERTAIN — owner must identify |
+| ~~Best Buy/Walmart $1,111~~ | | ~~RETIRED~~ | Pre-classification estimate; Walmart actual = $4,026 above |
+| ~~SGM wholesale $84,125~~ | | ~~RETIRED~~ | Pre-Layer-7 plug — see Wholesale_Trace_2025.md |
 
 ---
 
@@ -109,31 +115,42 @@ TikTok 2025 detail (from XLSX Reports sheets):
 | Amazon | $321,251 | $205,706 | $72,392 |
 | Shopify | $166,156 | $149,010 | $23,940 |
 | TikTok | $125,951 | $11,282 | $1,598 |
-| Wholesale | $86,776 | $84,125 | — |
-| Intl wires | — | $7,686 | — |
-| Best Buy/Walmart | — | $1,111 | — |
+| Wholesale (US, invoice-sourced 2024) | $86,776 | — | — |
+| SGM Knocking (bank-sourced) | — | $7,567 | — |
+| SGM Walmart marketplace (bank-sourced) | — | $4,026 | — |
+| SGM Ownstar intl wire (bank-sourced) | — | $1,004 | — |
+| SPLT intl wires (bank-sourced, 5 named) | — | $7,686 | — |
+| SPLT Lucky Rubber Ducky (bank-sourced) | — | $517 | — |
 | Atlantic Access | — | $3,014 | — |
-| **TOTAL GMV** | **$700,134** | **$461,934** | **$97,930** |
-| *Old GMV* | *$751,891* | *$513,987* | *~$106,995* |
-| *Change* | *−$51,757 (−6.9%)* | *−$52,053 (−10.1%)* | *−$9,065 (−8.5%)* |
+| SGM cash/check (⚠️ uncertain) | — | [$9,600] | — |
+| **TOTAL GMV (verified)** | **$700,134** | **$389,812** | **$97,930** |
+| **TOTAL GMV (w/ uncertain)** | | **$399,412** | |
+| *Prior rebuild (v1)* | *$700,134* | *$461,934* | *$97,930* |
+| *Change from prior rebuild* | *—* | *−$72,122 (wholesale plug removed)* | *—* |
+| *Change from pre-rebuild (locked)* | *−$51,757 (−6.9%)* | *−$124,175 (−24.2%)* | *−$9,065 (−8.5%)* |
 
 **2026 H1 annualized (straight ×2): ~$196K** (conservative; no 2026 wholesale or intl data yet)
+
+⚠️ **OWNER ACTION:** Identify SGM 2025 cash/check deposits $9,599.89 (22 branch/mobile deposits). If Splitflask product revenue → adds to GMV ($399,412). If other → $389,812 stands.
 
 ---
 
 ## 5. YEAR-OVER-YEAR TREND (corrected)
 
-| Metric | 2024 | 2025 | 2026 ann. |
-|--------|------|------|-----------|
-| GMV | $700,134 | $461,934 | ~$196K |
-| YoY change | — | **−34.0%** | **−57.5%** |
+| Metric | 2024 | 2025 (verified) | 2026 ann. |
+|--------|------|-----------------|-----------|
+| GMV | $700,134 | $389,812 | ~$196K |
+| YoY change | — | **−44.3%** | **−49.7% ann.** |
 
-*Old trend: $751,891 → $513,987 → ~$214K ann. (−31.7%, then −58.4%)*
+*Old trend (v1 rebuild): $700,134 → $461,934 → ~$196K ann. (−34.0%, then −57.5%)*  
+*Legacy figures: $751,891 → $513,987 → ~$214K ann.*
 
-The trend is slightly more negative with the corrected basis, but not materially different in direction. The mix shifts:
-- Shopify's 2024→2025 decline NARROWS from −12% (old) to **−10.3%** (new) — actually shows better structural performance
-- Amazon's 2024→2025 decline WIDENS from −30% (old) to **−35.9%** (new) — because old used 1099-K gross, new uses settlement net
-- TikTok 2024→2025: both OLD and NEW show near-total wind-down; the NET basis makes the 2024 number smaller ($156K → $126K), so the story is the same (TikTok gone)
+The corrected 2025 decline of 44% is steeper than previously reported. Drivers:
+- **US Wholesale collapsed: $86,776 → $0 verified** (ESP/Von Maur/SATS/UncommonGoods all absent in 2025 bank)
+- **TikTok wound down: $125,951 → $11,282 (−91%)**
+- **Amazon: $321,251 → $205,706 (−36%)**
+- **Shopify: $166,156 → $149,010 (−10%)** (most resilient channel)
+- New 2025 B2B channels (Knocking $7.6K, Walmart marketplace $4.0K, intl wires $8.7K) partially offset but far below the 2024 wholesale base
 
 ---
 
@@ -159,18 +176,21 @@ At list $49–$56, a $52.82 blended ASP makes sense: Amazon channel is near-list
 
 ## 7. ON-AIR RECONCILIATION (2025 only — 2024 unchanged)
 
-| | Old | New |
+| | Prior rebuild (v1) | **Corrected (v2)** |
 |-|-----|-----|
-| On-air claim | $499,000 | $499,000 (unchanged, it's what was said) |
-| GMV | $513,987 | $461,934 |
-| On-air vs GMV | on-air was −2.9% BELOW GMV (ok) | on-air is now **+8.0% ABOVE GMV** |
+| On-air claim | $499,000 | $499,000 (unchanged — it's what was said) |
+| GMV | $461,934 | **$389,812** (verified) / **$399,412** (w/ uncertain) |
+| On-air vs GMV | on-air +8% above | **on-air +28% above** (verified) / **+25%** (w/ uncertain) |
 
-The 2025 on-air claim ($499K) now EXCEEDS the reconstructed GMV ($462K) by ~$37K (8%). Previously, the on-air figure sat comfortably below GMV, implying conservative on-air disclosure. With the correct basis, it sits above.
+The 2025 on-air claim ($499K) now exceeds the verified reconstructed GMV ($390K) by ~$109K (28%). This is a larger gap than the 8% reported in v1.
 
-**Explanation for diligence (if asked):**
-> "The on-air $499K figure was a rounded management estimate provided live. The reconstructed GMV of $462K uses settled, platform-sourced figures on a uniform net-merchandise basis (customer-paid price, net of seller discounts and returns, before shipping and fees). The $37K difference (8%) reflects the correction of the TikTok channel from gross to net (−$13K), the Amazon channel from 1099-K to settlement basis (−$18K), and the Shopify channel from a working estimate to the SKU-export net (−$16K). These are sourcing and basis corrections, not revenue that existed and disappeared."
+**Explanation for diligence (proactive disclosure recommended):**
+> "The $499K on-air figure was a management estimate. The verified GMV on a uniform net-merchandise basis is $390K. The $109K difference reflects:  
+> (1) Basis corrections from the prior estimate: TikTok gross → net (−$13K), Amazon 1099-K → settlement (−$18K), Shopify estimate → SKU-export net (−$16K) — total −$47K;  
+> (2) Wholesale channel contraction not captured in the estimate: the 2024 wholesale base (ESP $57.6K, Von Maur, SATS, UncommonGoods) did not reorder in 2025; only Knocking and Walmart marketplace continued at reduced levels — net wholesale gap −$62K vs the estimate.  
+> The contraction was intentional: the company throttled its sales push while patent 12,577,032 B2 was pending (granted March 2026). The $390K reflects the IP-protection pause accurately."
 
-The waterfall still works: 2025 deposits > 2025 GMV (if needed, the deposit tier serves as the upper bound that can absorb the on-air claim). TJ or deal counsel should confirm the 2025 deposit figure if this comes up.
+⚠️ **DISCLOSE THIS PROACTIVELY.** A buyer's analyst will reconstruct GMV from the same platform files and land at ~$390K. "We found this ourselves and here's the bridge" is a rigor signal; being asked about it is not.
 
 ---
 
@@ -237,5 +257,10 @@ Traced to an early-session estimate built before the SKU exports were uploaded. 
 | Amazon 2024 $321,251 | Prior session (locked); Unified Transaction US $297,477 + MX/CA 1099-K $22,432 | ✅ prior verified |
 | Amazon 2025 US $203,323 | `Splitflask-AMA 2025Jan1-2025Dec31CustomUnifiedTransaction.csv` net product sales | ✅ |
 | Amazon 2026 H1 $72,392 | `Splitflask-AMA 2026Jan1-2026Jun30CustomUnifiedTransaction.csv` net product sales | ✅ |
-| Wholesale 2024 $86,776 | Invoice-sourced, locked prior | ✅ |
+| Wholesale 2024 $86,776 | Invoice-sourced (ESP $57.6K, Von Maur $7.2K, Knocking $11.3K, SATS partial); bank $82,234 (−$4.5K timing) | ✅ |
+| SGM Knocking 2025 $7,567 | SGM_2025_Txns REV_WHOLESALE_KNOCKING (4 entries) | ✅ |
+| SGM Walmart 2025 $4,026 | SGM_2025_Txns REV_WALMART (16 entries) | ✅ |
+| SGM Ownstar wire 2025 $1,004 | SGM_2025_Txns REV_INTL_WIRE, Yuanta Commercial Bank, May 15 | ✅ |
+| SPLT Lucky Rubber Ducky 2025 $517 | SPLT_2025_Txns REV_WHOLESALE, Apr 7 | ✅ |
+| SPLT intl wires 2025 $7,686 | SPLT_2025_Txns REV_INTL_WIRE (5 named wires) | ✅ |
 | Atlantic $3,014 | INV-8707 £2,336.73 × 1.29 | ✅ |

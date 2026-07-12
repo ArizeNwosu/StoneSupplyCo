@@ -2056,62 +2056,234 @@ Closes. 8,618 × ~$52 ≈ **$448K** — narrows the gap to the locked $513,987 G
 accessories + Kickstarter + wholesale — the pass must BRIDGE it).
 
 
-## ✅ SPLT 2025 UNIT FLOW REBUILD — COMPLETE (2026-07-12)
-Full pass: `deliverables/SPLT_2025_Unit_Flow_Rebuild.md`. Key findings locked below.
+## ✅ SPLT 2025 UNIT REBUILD — flow CLOSES; **ZERO P&L effect** (cash method); landed cost corrected
+**UNIT FLOW: 8,618 sold + 1,152 Atlantic + 1,230 US warehouse = 11,000 ordered ✓**
+- **LANDED COST CORRECTED: ($103,463 factory + $18,235 freight) ÷ 11,000 = $11.063/unit** (was $8.113 on the
+  wrong 15K denominator). Both components **bank-footed** to SPLT WF ···0423.
+- ✅ **SPLT 2025 INCOME UNCHANGED: +$53,817 / C-corp tax ~$11,302.** **Cash method deducts what was PAID
+  ($121,698), not what was SOLD** → the unit-count correction has ZERO P&L effect.
+- ⚠️⚠️ **STRATEGIC FINDING — THE METHOD ELECTION IS NOW QUANTIFIED:** if TJ switched SPLT to INVENTORY method,
+  COGS = 8,618 × $11.063 = **$95,345** → SPLT income rises to **~+$80,170** ≈ **~$5,500 MORE TAX.**
+  → **STAYING ON CASH IS WORTH ~$5,500 TO SPLT.** This materially strengthens the "keep cash" recommendation —
+  TJ now has the number, not just the argument.
+- **BALANCE SHEET (updated):** US warehouse 1,230 units $13,608 + Atlantic consignment ~1,089 units ~$12,048
+  = **~2,319 units, ~$25,656.** (Replaces the prior 3,693 × $8.113 = $29,950.)
+- ✅ **KICKSTARTER SETTLED:** no deferral (cash basis); ~800 units unfulfilled = **~$8,851 future COGS**;
+  **EXCLUDED from deal GMV** (pre-orders, not shipped). Correct.
+- ✅ Amazon 2025 verified **100% tumblers** (4,688 units, every SKU 30oz dual-chamber). Accessories are
+  **exclusively on Shopify**, embedded in $165,177.
+### ⚠️⚠️ **BRIDGE ERROR — THE GMV BRIDGE DOES NOT TIE.** It was built on **7,618** tumblers (the superseded
+count), not **8,618**. At 8,618 × $52 = **$448,136** (not $396,136) — **$52K higher** — which would OVERSHOOT
+the $517,001 total once wholesale + accessories + Atlantic are added. **THE BRIDGE MUST BE REBUILT ON 8,618.**
+This is EXACTLY the arithmetic a diligence analyst will run (units × price vs stated GMV). **FIX IT.**
+### ⚠️ OWNER DECISION OPEN: **accessories (~$21,026 implied, Shopify only) — IN or OUT of tumbler GMV?**
+Needs a product-level Shopify export (Sales > Products) to quantify exactly.
 
-### Landed cost — CORRECTED
-- **$11.063/unit** (factory $103,463 + freight $18,235 = $121,698 ÷ 11,000 units)
-- Prior $8.113 used WRONG denominator (15,000). RETIRED.
-- Sources: both amounts bank-footed SPLT WF ···0423. Factory confirmed as 11,000-unit run.
 
-### SPLT 2025 income — UNCHANGED under cash method
-Cash method deducts what was PAID ($121,698 factory + freight). Unit count correction has zero P&L effect.
-**SPLT 2025 amended income: +$53,817 | C-corp tax ~$11,302.** STANDS.
-⚠️ If TJ switches to inventory method: COGS = 8,618 × $11.063 = $95,345 → income RISES to ~+$80,170 (worse).
-**Inventory method is UNFAVORABLE. Keep cash.**
+## ✅ OWNER DECISION: **ACCESSORIES ARE IN GMV** (Splitflask-branded products)
+Cyberbackpack remains definitively OUT (different brand/product line). The two-denominator rule stands:
+**Splitflask-branded GMV** (deal metric) vs **total gross receipts** (tax metric). State it explicitly in the
+workbook so the denominator is unambiguous.
+## ⚠️ GMV BRIDGE REBUILD (pass cut: GMV_BRIDGE_REBUILD) — two defects to fix
+1. **Bridge built on the SUPERSEDED 7,618 unit count** — must be **8,618**.
+2. ⚠️ **The ~$21,026 accessories figure was BACKED INTO FROM THE GAP = A PLUG.** Plugs-carried-as-fact is the
+   #1 recurring failure in this project ($430K GMV / phantom $148K / phantom SPLT Shopify Capital / $41.04
+   unit cost — ALL plugs). **SOURCE IT from a product-level Shopify export (Sales > Products) or flag it as
+   UNSOURCED. Do not present a plug as a fact.**
+**Method for the rebuild: derive tumbler revenue BY CHANNEL from platform data (Amazon settlement — verified
+100% tumblers, 4,688 units; Shopify product export; wholesale; Atlantic $3,014), then CHECK whether the
+channel figures SUM to the locked GMV. The blended ASP is an OUTPUT (total $ ÷ 8,618), NOT an input — do not
+multiply by a $52 guess. If it doesn't tie, REPORT THE GAP — do not plug it.**
 
-### Ending inventory (balance sheet) — UPDATED
-| Location | Units | Value (@$11.063) |
-|---|---|---|
-| US warehouse | 1,230 | $13,608 |
-| Atlantic Access (consignment, ~63 sold-through) | ~1,089 | ~$12,048 |
-| **Total** | **~2,319** | **~$25,656** |
-Prior: 3,693 × $8.113 = $29,950 — REPLACED.
 
-### Atlantic Access — updated counts
-- Units shipped: **1,152** (was 1,400)
-- Units sold-through: ~63 (INV-8707 GBP amounts unchanged)
-- Units remaining: **~1,089** (was ~1,337)
-- Inventory value: ~$12,048 (was $10,847)
-- $1,769 payable: UNCHANGED
-- $3,014 GMV addition: UNCHANGED
+## ⚠️⚠️⚠️ SHOPIFY 2025 — THE SKU EXPORT CONTRADICTS THE LOCKED FIGURE. THREE DIFFERENT NUMBERS.
+Owner supplied the 2025 Shopify **product-variant-SKU** exports (gross + net). Computed directly:
+- **Shopify GROSS 2025 (by SKU) = $238,467.80**
+- **Shopify NET 2025 (by SKU) = $149,009.88**
+- **Gap = $89,457.92 = 37.5% discounts/returns** (huge — consistent with the known heavy Shopify discounting)
+**BUT:** the DEAL WORKBOOK has Shopify 2025 locked at **$109,064** (the "platform-reported revenue" figure),
+and the recent unit-rebuild pass used **$165,177**. **THREE IRRECONCILABLE NUMBERS for the same channel.**
+**LIKELY EXPLANATION (VERIFY, don't assume):** $109,064 is probably the **1099-K**, which captures only
+**SHOPIFY PAYMENTS** transactions. Orders paid via **PayPal / Affirm-ShopPay / Klarna** would NOT appear on it
+— and we KNOW Affirm/Shop Pay activity exists (we found the $901 clawbacks; the Atlantic invoice lists "Klarna
+& Shopify Fees"). **If so, the 1099-K UNDERSTATES true Shopify sales and the SKU EXPORT IS THE BETTER SOURCE.**
+### ⚠️ THE ACCESSORIES PLUG WAS WRONG (as suspected)
+SKU decode: **SPTS30xx = TUMBLERS** | **SPL30xx = LIDS** | **SPS30xx = STRAWS** | **SPTS30xx-SPTS30xx = BUNDLES**
+- **ACCESSORIES (lids + straws) GROSS ≈ $13,270** — NOT the plugged **$21,026**. **The plug OVERSTATED by
+  ~$7,750.** (Exactly why plugs must be sourced.)
+### ⚠️ **$37,122.11 of GROSS sales has a BLANK SKU** — the 2nd-largest line in the export. **UNIDENTIFIED
+PRODUCT.** Must be explained before ANY 2025 GMV figure is final.
+### ⚠️ CONSEQUENCE: **2025 deal GMV ($513,987 / $517,001) CANNOT BE LOCKED until the Shopify channel is
+resolved.** This feeds the deal metric directly.
 
-### Kickstarter $54,386 — NO deferral, income in 2025 (confirmed again)
-- Tax: cash received 2025 = 2025 income. No § 451 deferral on cash basis.
-- Fulfillment obligation: ~800 units × $11.063 = **~$8,851 future COGS** (units not yet produced)
-- Balance sheet: deferred delivery liability ~$8,851
-- Deal GMV: **EXCLUDED** (product not shipped). Label as "Kickstarter bookings $54,386 — unfulfilled as of 12/31/25."
 
-### Accessories (~1,000 units, Shopify only)
-- Amazon 2025: **ALL 4,688 units are tumblers** (verified from SKU/description — every SKU is 30oz dual-chamber)
-- Accessories are exclusively on Shopify, embedded in $165,177 total Shopify sales
-- Cannot quantify without product-level Shopify export (Products > Export by product)
-- ⚠️ **OWNER DECISION REQUIRED**: accessories in or out of deal GMV?
-  - IN: $517,001 already includes them (no change)
-  - OUT: need product-level report; GMV drops ~$21,026 (implied from bridge)
+## 🚨🚨 CRITICAL — 2024 AND 2025 GMV ARE ON **DIFFERENT BASES**. 2025 IS MATERIALLY UNDERSTATED.
+Owner CONFIRMED: **$109,064 IS the Shopify 1099-K** (Shopify Payments only — misses PayPal/Affirm/Klarna).
+Owner CONFIRMED: **the $37,122 blank-SKU line IS TUMBLERS.**
+| Shopify 2025 | | Shopify 2024 | |
+| GROSS (SKU export) | **$238,467.80** | GROSS | **⚠️ STILL NEEDED — owner's "2024 gross" upload was a DUPLICATE of the 2025 gross file** |
+| NET (SKU export) | $149,009.88 | NET (SKU export) | **$166,155.55** |
+| 1099-K | $109,064 | 1099-K | $164,614 |
+| **USED IN DEAL GMV** | **$109,064** ⚠️ (1099-K!) | **USED IN DEAL GMV** | **$188,569** (≈gross basis) |
+### 🚨 **THE PROBLEM: 2024's GMV Shopify ($188,569) is ABOVE both its net ($166,156) AND its 1099-K ($164,614)
+→ 2024 is on a ~GROSS basis. But 2025's GMV Shopify uses the 1099-K ($109,064). THE TWO YEARS ARE NOT
+COMPARABLE.**
+- **2025 Shopify is UNDERSTATED by ~$129,000** ($238,468 gross vs $109,064 used).
+- **→ 2025 GMV would go from $513,987 to roughly $643,000.**
+- 🚨 **THE "DECLINING REVENUE" NARRATIVE IN THE DEAL MEMO MAY BE SUBSTANTIALLY WRONG** — the decline could be
+  far shallower than presented, or largely an ARTIFACT of mixing bases. **This cuts in the owner's FAVOR —
+  but only if both years are put on the SAME footing.** A buyer's analyst who spots two different revenue
+  definitions across years will NOT be charitable.
+### ✅ ACCESSORIES (2025, SOURCED — replaces the $21,026 PLUG)
+SKU decode: SPTS30xx = TUMBLERS | SPL30xx = LIDS | SPS30xx = STRAWS | SPTS30xx-SPTS30xx = BUNDLES (2 tumblers)
+**Accessories GROSS 2025 = $13,269.91** (lids $5,890 + straws $7,380). Plug was $21,026 → **overstated ~$7,750.**
+Tumblers gross 2025 = $238,467.80 − $13,269.91 = **$225,197.89** (incl. the $37,122 blank = tumblers, confirmed).
+⚠️ `SPTH30HB` ($3,401) — decode it (tumbler variant? handle?). ⚠️ Bundles = TWO tumbler units each.
+### ⚠️ NEEDED FROM OWNER: **the 2024 Shopify GROSS by-SKU export** (the file uploaded was the 2025 gross again).
 
-### GMV Bridge — 8,618 units reconcile to $517,001
-| Component | Amount |
-|---|---|
-| 7,618 tumblers × $52 blended (SPLT direct retail) | $396,136 |
-| SGM wholesale (2024 carryover, separate entity) | $84,125 |
-| Intl/misc (SG, AU, Kuwait, wire) | $12,700 |
-| Atlantic sell-through | $3,014 |
-| Accessories (implied, Shopify only) | ~$21,026 |
-| **Total** | **$517,001** ✓ |
 
-Note: 8,618 = 7,618 tumblers + ~1,000 accessories (assumed). SGM wholesale (~$84K) is from SGM's 2024 carryover — NOT in SPLT's 11,000. Confirm 8,618 is SPLT-direct retail only (excluding SGM wholesale), otherwise bridge shifts.
+## 🚨🚨🚨 SHOPIFY RESOLVED — **NEITHER YEAR IN THE WORKBOOK IS SOURCED. THE DECLINE IS 2-4× OVERSTATED.**
+SKU exports computed directly (both years, gross + net):
+| Shopify | 2024 | 2025 |
+| **GROSS (SKU export)** | **$305,065.90** | **$238,467.80** |
+| **NET (SKU export)** | **$166,155.55** | **$149,009.88** |
+| 1099-K | $164,614 | $109,064 |
+| **IN THE DEAL WORKBOOK** | **$188,569** 🚨 | **$109,064** 🚨 |
+### 🚨 **THE 2024 FIGURE ($188,569) MATCHES NOTHING** — not gross, not net, not the 1099-K. It sits between net
+and gross with NO SOURCE. **IT IS A PLUG.** And 2025 uses the **1099-K** (Shopify Payments only — misses
+PayPal/Affirm/Klarna). **The two years aren't just on different bases — one isn't on ANY basis.**
+### 🚨 WHAT IT DOES TO THE DEAL STORY
+| Basis | 2024 → 2025 | Change |
+| **Workbook (as-is)** | $188,569 → $109,064 | **−42.2%** |
+| **Consistent GROSS** | $305,066 → $238,468 | **−21.8%** |
+| **Consistent NET** | $166,156 → $149,010 | **−10.3%** |
+**Shopify is presented as declining 42% when the TRUE decline is 10–22%. The deal memo's "pullback" narrative
+rests on a decline 2-4× STEEPER THAN REALITY.**
+### ⚠️ **HUGE DISCOUNT RATE (real, in the data, and a buyer WILL interrogate it): gross→net = 45.5% (2024),
+37.5% (2025).** Nearly half of Shopify list value given away in promos.
+### ✅ RECOMMENDATION — **USE NET AS THE GMV BASIS.** Gross = price × qty BEFORE discounts; **nobody paid
+that.** NET is what customers ACTUALLY paid → the honest, defensible GMV. Using gross would inflate the
+numbers on a basis that would have to be defended. **Whatever is chosen: apply it to EVERY channel and EVERY
+year, and STATE it in the workbook.**
+### ✅ ACCESSORIES SOURCED (both years, replaces the $21,026 plug)
+| | 2024 | 2025 |
+| Accessories GROSS | $11,361.92 | $13,269.91 |
+| Accessories NET | $8,399.86 | $6,732.71 |
+| Tumblers GROSS | $293,703.98 | $225,197.89 |
+| Tumblers NET | $157,755.69 | $142,277.17 |
+(SPL30xx = LIDS, SPS30xx = STRAWS. The blank-SKU line = TUMBLERS, owner-confirmed.)
+### 🚨 **AMAZON HAS THE SAME BASIS PROBLEM — CHECK IT:** is GMV using the 1099-K ($240,010) or the settlement
+product sales ($203,323)? **DEFINE THE GMV BASIS ONCE. APPLY IT EVERYWHERE. STATE IT.**
 
-### Five final tax figures — UNCHANGED
-| SGM 2024: −$182,779 | CB 2024: +$31,214 | SGM 2025: −$2,592 | **SPLT 2025: +$53,817** | CB 2025: −$16,470 |
-Real tax: SPLT C-corp ~$11,302. All figures hold — unit correction affects balance sheet only, not P&L.
+
+## ✅🚨 TIKTOK — order-level data EXISTS with DISCOUNT DETAIL. And it's a THIRD basis.
+The TikTok 1099-K **DETAIL** CSVs (all months, in folder) are ORDER-LEVEL with columns: `SKU subtotal before
+discount` | `SKU seller discount` | `Original shipping fee` | `Shipping fee seller discount` | `Unadjusted
+Gross Sales`.
+**VERIFIED (Sept 2024): 86,860.02 − 49,330.00 = 37,530.02; + 9,111.30 shipping = 46,641.32 = "Unadjusted Gross
+Sales" ✓ EXACT.**
+- **TRUE GROSS = SKU subtotal before discount. TRUE NET = subtotal − seller discount** (exclude shipping, to
+  match Shopify's net definition). **TikTok CAN be put on the same basis — no estimation needed.**
+- 🚨 **The $155,295 in GMV is NOT gross — it's NET-OF-DISCOUNT + SHIPPING. A THIRD DIFFERENT BASIS.**
+- ⚠️ **Sept 2024 discount rate = 56.8%** ($49,330 off $86,860) — higher than Shopify's 45.5%. If representative,
+  **2024 TikTok TRUE GROSS ≈ $290K+.**
+### 🚨 **ALL THREE 2024 CHANNELS USE DIFFERENT DEFINITIONS:**
+- **Shopify $188,569** = A PLUG (matches nothing) | **Amazon $240,010** = 1099-K GROSS (incl. tax + shipping)
+- **TikTok $155,295** = net-of-discount + shipping
+**Three channels, three bases, summed into one "GMV." THAT is the defect. Amazon settlement reports + Shopify
+SKU exports + TikTok detail CSVs mean EVERY channel CAN now be put on ONE sourced basis.**
+### 💡 BIGGER PICTURE: the 2024 business was MUCH larger at LIST value and ran on VERY heavy promotional
+discounting (Shopify 45.5%, TikTok 56.8%). That's normal for TikTok Shop — but it means the SHAPE of the
+business differs from what the workbook shows. **A buyer WILL interrogate a ~50% blended discount rate.**
+Have the explanation ready (promo-led growth strategy, creator-driven volume).
+
+
+## 🚨✅ GMV REBUILT ON ONE BASIS — **THE NUMBERS WENT DOWN, NOT UP** (orchestrator's expectation was WRONG)
+**BASIS (now stated in the workbook): "NET MERCHANDISE SALES = customer-paid value, after seller-funded
+discounts and returns, before fees, shipping, and tax."** One definition, every channel, every year.
+### CORRECTED GMV (supersedes ALL prior figures)
+| Year | OLD | **NEW** | Change |
+| 2024 | $751,891 | **$700,134** | −$51,757 (−6.9%) |
+| 2025 | $513,987 | **$461,934** | −$52,053 (−10.1%) |
+| 2026 H1 | ~$107K | **~$98K** | −$9K (−8.5%) |
+| 2026 annualized | ~$213K | **~$196K** | |
+### CHANNEL CORRECTIONS
+- **Shopify 2024: $188,569 (PLUG) → $166,156** | Shopify 2025: $165,177 → **$149,010** | Shopify 2026 H1 → $23,940
+- **TikTok 2024: $155,295 → $125,951** (the $155,295 was "Unadjusted Gross Sales" = net + SHIPPING; **$29,344
+  of it was SHIPPING revenue, not product revenue**) | TikTok 2025: $24,510 → **$11,282** (Q1 $10,994 + Q2 $288;
+  **H2 = $0**)
+- **Amazon 2025: $224,155 (1099-K derived) → $205,706** (US settlement net $203,323 + SG/AU $2,383) | Amazon
+  2026 H1: $81,157 → **$72,392** (net of refunds) | **Amazon 2024 UNCHANGED $321,251** (already settlement-sourced)
+### TRUE TREND: **2024→2025 = −34.0%** (was −31.7%). **The decline is slightly STEEPER on a consistent basis,
+not shallower.** My earlier read (that fixing the basis would reveal a BIGGER business) was **WRONG** — Shopify's
+gross looked large, but TikTok's $155K was mostly net+shipping and Amazon's 1099-K was inflated vs settlement.
+**The IP-pullback narrative still HOLDS; it just needs more precise language.**
+### ✅ UNIT CROSS-CHECK PASSES: 8,618 tumblers × **$52.82 blended ASP** = $455K tumbler GMV. Defensible against
+$49–56 list with 34–54% channel discounting. **No plug needed.**
+### 🚨🚨 **THE ON-AIR CLAIM IS NOW A PROBLEM — HANDLE IT PROACTIVELY**
+**Shark Tank on-air claim = $499K. Corrected 2025 GMV = $461,934. The claim is now +8% ABOVE actual** (it used
+to look ~3% BELOW). **Kendra's team WILL reconcile this.**
+**Bridge (already in the Diligence Source Index):** TikTok gross→net −$13K | Amazon 1099-K→settlement −$18K |
+Shopify estimate→export −$16K = the $37K gap.
+**FRAMING IS EVERYTHING: "we tightened our revenue definition during diligence prep — here's the bridge" reads
+as RIGOR. Being ASKED "why did you say $499K?" reads very differently. DISCLOSE IT FIRST, IN YOUR OWN WORDS.**
+The $499K was computed on platform-headline figures (1099-K gross, TikTok "unadjusted gross sales" incl.
+shipping) — **how most founders quote revenue. Not a misrepresentation; a methodology refinement THE OWNER
+FOUND HIMSELF.**
+### 🔁 **THE $188,569 WAS A PLUG (confirmed)** — an early-session estimate (1099-K $164K + a rough ~$24K
+adjustment). No document produces it. **Same plug-carried-as-fact failure as the $430K 2026 GMV and the phantom
+$148K transfer. FOURTH instance.** Feeds the corrections log.
+Files: `deliverables/GMV_Rebuild_Net_Basis.md` (new primary reference), Deal_Memo + Diligence_Source_Index updated.
+
+
+## ✅ WHOLESALE TRACE DONE — $461,934 was another plug; CORRECTED 2025 GMV = **$389,812** (verified)
+**Full trace: deliverables/Wholesale_Trace_2025.md**
+
+The $92,922 non-platform component broke down as:
+- SPLT intl wires $7,686 ✅ REAL (5 named wires — Everything Kitchen AU, Waen JP, Citiesocial TW ×2, Kuwait)
+- Best Buy/Walmart $1,111 🚨 NOT IN BANK — pre-classification estimate; superseded by actual SGM Walmart $4,026
+- SGM wholesale $84,125 🚨 PLUG — Layer 1 pre-classification estimate; actual SGM B2B = $12,597
+
+**Kickstarter confirmed EXCLUDED**: $54,386 tagged DEFERRED_KICKSTARTER in ledger, not in any GMV channel.
+
+**2024 wholesale $86,776 BROADLY VERIFIED**: SGM bank shows $82,234 (ESP $57.6K + Knocking $11.3K + Von Maur $7.2K + Frost/SATS $3.7K + small others). ~$4.5K gap = timing. 2024 $700,134 STANDS.
+
+**Actual 2025 wholesale/B2B from bank (ALL entities):**
+| Entity | Channel | Amount |
+|--------|---------|--------|
+| SPLT | Lucky Rubber Ducky (wholesale) | $517 |
+| SPLT | Intl wires (5 counterparties) | $7,686 |
+| SGM | Knocking/CBS Deals | $7,567 |
+| SGM | Walmart marketplace | $4,026 |
+| SGM | Ownstar intl wire (TW, additive) | $1,004 |
+| SGM | Cash/check deposits (⚠️ payer unknown) | $9,600 |
+| **TOTAL VERIFIED** | | **$20,800** |
+| **TOTAL W/ UNCERTAIN** | | **$30,400** |
+
+Major 2024 wholesale accounts (ESP $57.6K, Von Maur, SATS, UncommonGoods) absent entirely in 2025.
+
+**CORRECTED 2025 GMV (bottom-up, sourced only):**
+Amazon $205,706 + Shopify $149,010 + TikTok $11,282 + Atlantic $3,014 + SPLT intl $7,686 + Knocking $7,567 +
+Walmart mktpl $4,026 + Ownstar $1,004 + Lucky RD $517 = **$389,812**
+With uncertain cash/check: **$399,412**
+
+**THIS IS THE SIXTH PLUG IN THIS PROJECT** ($430K 2026 GMV / phantom $148K / phantom SPLT Shopify Capital /
+$188,569 Shopify 2024 / $84,125 wholesale estimate / now caught).
+
+⚠️ **OWNER ACTION:** Identify SGM 2025 cash/check deposits $9,599.89 (22 branch deposits, payer unknown).
+
+### LOCKED 2025 GMV = **$389,812** (verified) / up to **$399,412** (w/ uncertain cash/check)
+
+### UPDATED DEAL TREND
+| | 2024 | 2025 | 2026 H1 ann |
+|--|------|------|------------|
+| GMV | $700,134 | $389,812 | ~$196K |
+| YoY | — | **−44.3%** | — |
+
+Wholesale collapsed: $86,776 → $20,800 (−76%). TikTok: $125,951 → $11,282 (−91%). Amazon: −36%. Shopify: −10%.
+
+### ON-AIR RECONCILIATION UPDATED
+On-air $499K vs verified GMV $389,812 = **+$109K (+28% above)**. 
+Prior v1 rebuild showed +8%. The wholesale plug masked $62K of the true gap.
+Bridge: basis corrections −$47K (TikTok/Amazon/Shopify) + wholesale collapse −$62K = total −$109K.
+**DISCLOSE PROACTIVELY.** See GMV_Rebuild_Net_Basis.md §7 for the full disclosure language.
