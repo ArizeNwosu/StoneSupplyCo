@@ -1969,39 +1969,149 @@ agency agreement" is a GOOD diligence answer.
 Allowable Deductions ~£3,900; **net ~$1,750 DEDUCTIBLE LOSS**; units sold (~60-70) come OUT of inventory
 (remaining consigned ≈ 1,330-1,340). Check if the £1,370.35 is PAID (cash-method deduction) or a PAYABLE.
 
-## ✅ ATLANTIC ACCESS BOOKED — CASH BASIS P&L = $0; $1,769 PAYABLE (2026-07-11)
-Source: INV-8707 confirmed read. SPLT WF …0423 bank all 12 months searched — NO payment to Atlantic, NO
-receipt from Atlantic. Both confirmed absent.
-**CASH BASIS RESULT: $0 P&L impact in 2025.** Revenue and deduction both recognized when cash moves.
-**BALANCE SHEET: $1,769 PAYABLE** (£1,370.35 × 1.29 GBP/USD avg Feb–Aug 2025). Invoice past-due 31 Aug 2025.
-Must appear on SPLT 2025 Schedule L (currently blank — TJ action).
 
-### INV-8707 numbers (GBP → USD @1.29)
-- Gross revenue £2,529.86 = $3,263 | Net of returns £2,336.73 = **$3,014** (added to deal GMV)
-- Total costs £3,900.21 = $5,031 | Net owed to Atlantic £1,370.35 = **$1,769** (payable)
+## ✅ ATLANTIC / UNIT-COST PASS — my contamination suspicion was WRONG (good: nothing to fix)
+**$41.04 is NOT applied to tumblers anywhere in the current packets.** It appears only in CB_2024 / CB_2025,
+CORRECTLY, for CYBERBACKPACKS. ⚠️ **TRAP: CB_2025's "~1,400 units × $41.04" = CYBERBACKPACK units sold in 2025**
+(Shopify ~1,100 + Amazon ~100 + GlobalE ~200) — a COINCIDENTAL collision with the 1,400 Atlantic Access
+TUMBLERS. **Two different 1,400s.** Now annotated in the cell so no future session conflates them.
+### ✅ SPLT TUMBLER LANDED COST (bank-sourced — supersedes the $9.60 working figure)
+- Factory **$103,463 ÷ 15,000 = $6.897/unit** | Freight **$18,235 ÷ 15,000 = $1.216/unit**
+- **LANDED = $8.113/unit ← the inventory carrying value.**
+- UK import duties: **Atlantic pays** per Agency Contract Cl. 3.2 (deducted from sums owed SPLT) → **zero
+  additional UK duty cost to SPLT.**
+- (Even better margin story: $8.11 landed vs $44–49 sale ≈ **~82% GM.**)
+- ⚠️⚠️ **ARITHMETIC ERROR FOR TJ:** the SGM 2024 packet note says "$10.40 landed − $1.30 freight = $9.60" —
+  but $10.40 − $1.30 = **$9.10**, not $9.60. The note is internally inconsistent. **TJ must confirm which
+  figure SGM's ending inventory actually uses** — it changes SGM's balance sheet.
+### ✅ ATLANTIC ACCESS BOOKED (INV-8707, Feb–Aug 2025) — invoice is **UNPAID** → cash-basis P&L = **$0**
+- Gross revenue £2,529.86 = **$3,263** | Net GMV (net of returns) £2,336.73 = **$3,014** | GBP/USD **1.29**
+  (avg Feb–Aug 2025).
+- **£1,370.35 = $1,769 → BALANCE-SHEET PAYABLE** (outstanding, past due 31 Aug 2025). **No deduction until
+  PAID** (cash method). Correct and conservative.
+- Units: **~63 sold through** (£2,529.86 ÷ ~£37 est. UK price — ESTIMATE; exact needs the AA sales report).
+  **~1,337 remaining at Atlantic.**
+### ✅ SPLT ENDING INVENTORY (updated, disclosed by location)
+**~2,356 US warehouse + ~1,337 Atlantic Access UK (consignment, title = SPLT) = ~3,693 units @ $8.11 =
+$29,950.**
+### ✅ DEAL GMV 2025: $513,987 + $3,014 Atlantic = **$517,001.** (On-air claim $499K now 3.6% below GMV —
+still favorable/conservative.)
+### SPLT 2025 income UNCHANGED: **+$53,817 / C-corp tax ~$11,302.**
+### ⚠️ Agency Agreement still UNSIGNED — INV-8707 shows the parties operated under the draft's exact commission
+tiers (strong conduct evidence). **GET THE EXECUTED COPY before diligence — an acquirer's counsel WILL ask.**
+Full reconciliation: `deliverables/Atlantic_Access_Reconciliation.md`.
 
-### Unit reconciliation (updated)
-- ~63 units sold through (£2,529.86 net ÷ ~£37 est. UK price; ESTIMATE — exact needs AA sales report)
-- 1,400 − 63 = **~1,337 remaining at Atlantic**; 3,756 − 63 = **~3,693 total SPLT ending inventory**
-- Inventory split: ~2,356 US warehouse + ~1,337 at Atlantic (UK consignment, title held by SPLT)
-- Inventory value: 3,693 × $8.113/unit landed = **$29,950**
 
-### Landed cost — SPLT 2025 tumblers (bank-sourced)
-Factory (Kangdao wires) $103,463 + freight $18,235 = $121,698 ÷ 15,000 = **$8.113/unit**.
-The SPLT packet's $6.897/unit = factory only; $8.113 is the correct landed figure for inventory valuation.
-⚠️ TJ: SGM 2024 packet note says "$10.40 landed − $1.30 freight = $9.60" but $10.40−$1.30=$9.10≠$9.60 —
-arithmetic error in note; operative ending inventory value $9.60×6,000=$57,600 stands. Confirm from Kangdao invoices.
+## ⚠️⚠️⚠️ OWNER CORRECTED THE SPLT 2025 UNIT FIGURES — several locked numbers MOVE
+| Item | WAS | **NOW (owner)** |
+| Units ORDERED 2025 | 15,000 | **11,000** |
+| Units SOLD 2025 | 11,244 | **7,618** |
+| Shipped to Atlantic | 1,400 | **1,152** |
+| Tumbler price | $44–49 | **$49–56** |
+| Factory $103,463 | ÷15,000 | **corresponds to 11,000 units (CONFIRMED)** |
+**NEW FLOW: 11,000 − 7,618 sold − 1,152 Atlantic = 2,230 US warehouse.** Closes.
+### ⚠️ LANDED COST WAS WRONG (wrong denominator): ($103,463 + $18,235) ÷ **11,000** = **~$11.06/unit** (NOT
+$8.113, which divided by 15,000). Cascades into COGS, ending inventory, Atlantic consigned value, balance sheet.
+### ⚠️⚠️ KICKSTARTER — A REAL, UNDISCLOSED OBLIGATION
+**~$54,386 booked as SPLT 2025 income for ~800 units that HAVE NOT SHIPPED.** The 11,000 units are FULLY
+accounted for (7,618 + 1,152 + 2,230) → **the ~800 Kickstarter units DON'T EXIST YET.**
+- TAX (cash method): recognizing the cash in 2025 is defensible — KEEP. COGS hits when the units are PAID FOR
+  (later year).
+- ⚠️ **BALANCE SHEET: SPLT owes ~800 customers their product = a DEFERRED DELIVERY OBLIGATION. DISCLOSE IT.**
+  Cost to fulfil ≈ **800 × $11.06 ≈ $8,850** + fulfilment. **Diligence WILL ask: "you booked $54K for 800
+  undelivered units — where's the inventory, what's the cost to fulfil?" The answer must be STATED, not
+  discovered.**
+- ⚠️ **DEAL-GMV DECISION (owner's call): is Kickstarter money "SALES" if product hasn't shipped?** Most
+  acquirers treat undelivered pre-orders as **BOOKINGS, not revenue.** Make the treatment explicit and
+  CONSISTENT across the tax packet and the deal workbook.
+### ⚠️ ACCESSORIES: ~1,000 units of NON-TUMBLER accessories sold on Shopify.
+- TAX: revenue, in gross receipts. Correct.
+- **DEAL METRIC: owner decision required.** They ARE Splitflask-branded (unlike Cyberbackpack, definitively
+  OUT). In or out of tumbler GMV? Quantify and present both.
+### ⚠️ **RECONCILIATION TO CHECK: 7,618 units × ~$52 avg ≈ $396K — but 2025 GMV is locked at $513,987.**
+The ~$118K gap must be explained (accessories + Kickstarter + wholesale?). **If it doesn't bridge, say so
+plainly.** Pass cut: SPLT_UNIT_REBUILD_2025.
 
-### Unit cost contamination — FINDING: NO CONTAMINATION IN CURRENT DELIVERABLES
-$41.04 = Cyberbackpack cost (Kangdao, 2023-paid). Correctly used ONLY in CB_2024 and CB_2025 packets.
-CB_2025 COGS tab "~1,400 units × $41.04" = CB units sold in 2025 (Shopify~1,100+Amazon~100+GlobalE~200)
-— NOT the Atlantic Access tumblers. Clarifying note added to CB_2025 COGS tab in both deliverables/ and handoff/.
-SPLT_2025 packet correctly uses $6.897/unit factory (bank-sourced). NO fix needed for tumbler contamination.
 
-### 2025 GMV update (deal workbook)
-Atlantic sell-through = real Splitflask consumer sales → added to GMV.
-$513,987 + $3,014 (net Atlantic) = **$517,001**. Updated in all deal workbook tabs.
-On-air claim $499K: gap widens from 2.9% to 3.6% below GMV — still favorable.
+## ⚠️ KICKSTARTER DEFERRED-REVENUE QUESTION — ANSWER: **NO deferral available. SPLT is CASH basis.**
+Owner proposed booking the ~$54,386 Kickstarter as DEFERRED REVENUE to lower SPLT's tax (citing a ChatGPT
+analysis). **The analysis is correct on the mechanics but does not reach that conclusion — its own text says:
+"If you are CASH basis, the IRS generally taxes advance payments WHEN RECEIVED. If you are ACCRUAL basis,
+there are circumstances where deferral is permitted."**
+- **SPLT FILED CASH. No Form 3115 was ever filed. TJ's recommendation (which the whole packet is built on) is
+  to KEEP CASH.** → **Cash received in 2025 = income in 2025. The §451 advance-payment deferral rules are
+  ACCRUAL rules. No deferral election exists on cash basis.**
+- To defer, SPLT must **SWITCH TO ACCRUAL** = Form 3115 + IRS consent + cascade through EVERY COGS figure.
+  A different return, not a line-item change.
+- ⚠️ **AND IT COULD BACKFIRE: switching to accrual defers ~$54K of income BUT LOSES the cash-basis COGS
+  treatment (deduct inventory when PAID). The net could go AGAINST the owner.** If pursued, **TJ MUST MODEL
+  BOTH.** Do not assume it's a win.
+- ✅ **WHAT IS CORRECT AND AVAILABLE — a BOOK-vs-TAX DIFFERENCE:** GAAP/book = **DEFERRED REVENUE (contract
+  liability), no revenue until shipment** → present it that way on the **BALANCE SHEET**. Tax (cash) = income
+  in 2025 → report on the return. Not contradictory — a normal book-tax difference.
+- ✅ **DEAL METRIC: treating undelivered pre-orders as BOOKINGS, not revenue, IS defensible and honest** — an
+  acquirer would likely make that adjustment themselves. That's the legitimate place this distinction helps.
+## ✅ UNITS CORRECTED AGAIN: **8,618 sold** (not 7,618). **11,000 − 8,618 − 1,152 Atlantic = 1,230 US warehouse.**
+Closes. 8,618 × ~$52 ≈ **$448K** — narrows the gap to the locked $513,987 GMV considerably (remainder =
+accessories + Kickstarter + wholesale — the pass must BRIDGE it).
 
-### SPLT 2025 income: UNCHANGED at +$53,817 / C-corp tax ~$11,302
-### Documentation: deliverables/Atlantic_Access_Reconciliation.md
+
+## ✅ SPLT 2025 UNIT FLOW REBUILD — COMPLETE (2026-07-12)
+Full pass: `deliverables/SPLT_2025_Unit_Flow_Rebuild.md`. Key findings locked below.
+
+### Landed cost — CORRECTED
+- **$11.063/unit** (factory $103,463 + freight $18,235 = $121,698 ÷ 11,000 units)
+- Prior $8.113 used WRONG denominator (15,000). RETIRED.
+- Sources: both amounts bank-footed SPLT WF ···0423. Factory confirmed as 11,000-unit run.
+
+### SPLT 2025 income — UNCHANGED under cash method
+Cash method deducts what was PAID ($121,698 factory + freight). Unit count correction has zero P&L effect.
+**SPLT 2025 amended income: +$53,817 | C-corp tax ~$11,302.** STANDS.
+⚠️ If TJ switches to inventory method: COGS = 8,618 × $11.063 = $95,345 → income RISES to ~+$80,170 (worse).
+**Inventory method is UNFAVORABLE. Keep cash.**
+
+### Ending inventory (balance sheet) — UPDATED
+| Location | Units | Value (@$11.063) |
+|---|---|---|
+| US warehouse | 1,230 | $13,608 |
+| Atlantic Access (consignment, ~63 sold-through) | ~1,089 | ~$12,048 |
+| **Total** | **~2,319** | **~$25,656** |
+Prior: 3,693 × $8.113 = $29,950 — REPLACED.
+
+### Atlantic Access — updated counts
+- Units shipped: **1,152** (was 1,400)
+- Units sold-through: ~63 (INV-8707 GBP amounts unchanged)
+- Units remaining: **~1,089** (was ~1,337)
+- Inventory value: ~$12,048 (was $10,847)
+- $1,769 payable: UNCHANGED
+- $3,014 GMV addition: UNCHANGED
+
+### Kickstarter $54,386 — NO deferral, income in 2025 (confirmed again)
+- Tax: cash received 2025 = 2025 income. No § 451 deferral on cash basis.
+- Fulfillment obligation: ~800 units × $11.063 = **~$8,851 future COGS** (units not yet produced)
+- Balance sheet: deferred delivery liability ~$8,851
+- Deal GMV: **EXCLUDED** (product not shipped). Label as "Kickstarter bookings $54,386 — unfulfilled as of 12/31/25."
+
+### Accessories (~1,000 units, Shopify only)
+- Amazon 2025: **ALL 4,688 units are tumblers** (verified from SKU/description — every SKU is 30oz dual-chamber)
+- Accessories are exclusively on Shopify, embedded in $165,177 total Shopify sales
+- Cannot quantify without product-level Shopify export (Products > Export by product)
+- ⚠️ **OWNER DECISION REQUIRED**: accessories in or out of deal GMV?
+  - IN: $517,001 already includes them (no change)
+  - OUT: need product-level report; GMV drops ~$21,026 (implied from bridge)
+
+### GMV Bridge — 8,618 units reconcile to $517,001
+| Component | Amount |
+|---|---|
+| 7,618 tumblers × $52 blended (SPLT direct retail) | $396,136 |
+| SGM wholesale (2024 carryover, separate entity) | $84,125 |
+| Intl/misc (SG, AU, Kuwait, wire) | $12,700 |
+| Atlantic sell-through | $3,014 |
+| Accessories (implied, Shopify only) | ~$21,026 |
+| **Total** | **$517,001** ✓ |
+
+Note: 8,618 = 7,618 tumblers + ~1,000 accessories (assumed). SGM wholesale (~$84K) is from SGM's 2024 carryover — NOT in SPLT's 11,000. Confirm 8,618 is SPLT-direct retail only (excluding SGM wholesale), otherwise bridge shifts.
+
+### Five final tax figures — UNCHANGED
+| SGM 2024: −$182,779 | CB 2024: +$31,214 | SGM 2025: −$2,592 | **SPLT 2025: +$53,817** | CB 2025: −$16,470 |
+Real tax: SPLT C-corp ~$11,302. All figures hold — unit correction affects balance sheet only, not P&L.

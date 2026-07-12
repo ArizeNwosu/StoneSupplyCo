@@ -71,19 +71,22 @@ GBP/USD rate: **1.29** (avg Feb–Aug 2025)
 
 ---
 
-## Unit Reconciliation
+## Unit Reconciliation ⚠️ UPDATED 2026-07-12
 
 | | Units | Notes |
 |---|---|---|
-| Beginning at Atlantic | 1,400 | Owner confirmed; inside SPLT's 3,756 ending inv |
+| Beginning at Atlantic | **1,152** | ~~1,400~~ — owner correction 2026-07-12 |
 | Sold through (est.) | ~63 | £2,529.86 net ÷ ~£37 est. UK price. ESTIMATE — exact requires AA sales report |
-| Remaining at Atlantic | ~1,337 | |
-| Updated SPLT ending inventory | **~3,693** | 3,756 − 63 = 3,693 |
+| Remaining at Atlantic | **~1,089** | ~~1,337~~ — corrected |
+| Updated SPLT ending inventory | **~2,319** | ~~3,693~~ — see full rebuild |
 
-**Ending inventory split (12/31/25):**
-- US warehouse: ~2,356 units
-- Atlantic Access UK (consignment): ~1,337 units (title retained by SPLT per agency contract Cl. 3.4)
-- Inventory value: 3,693 × $8.113 = **$29,950**
+**⚠️ ALL UNIT FIGURES BELOW REVISED — See `SPLT_2025_Unit_Flow_Rebuild.md` (2026-07-12)**
+
+**Ending inventory split (12/31/25) — CORRECTED:**
+- Total ordered: 11,000 (was 15,000) — **landed cost $11.063/unit** (was $8.113)
+- US warehouse: **~1,230 units** (was ~2,356)
+- Atlantic Access UK (consignment): **~1,089 units** (title retained by SPLT per agency contract Cl. 3.4)
+- Inventory value: 2,319 × $11.063 = **$25,656** (was $29,950)
 
 ⚠️ EXACT UNIT COUNT NEEDED: Request sales report from Atlantic Access (units sold by month, SKU, price). Diligence will ask "where is your inventory?" — the answer is good (1,337 at a UK agent under agency contract), but the exact count and valuation need to be sourced.
 
@@ -109,11 +112,14 @@ INV-8707 confirms agency/commission structure (12.5%/10%/7.5% tiers = consignmen
 
 ---
 
-## SPLT 2025 Final Income (unchanged)
+## SPLT 2025 Final Income (unchanged after unit corrections)
 
 | Scenario | Income | C-corp tax |
 |---|---|---|
-| Current (FIX 1 applied) | +$53,817 | ~$11,302 |
-| After Atlantic (cash basis) | **+$53,817** | **~$11,302** |
+| FIX 1 applied | +$53,817 | ~$11,302 |
+| After Atlantic (cash basis) | +$53,817 | ~$11,302 |
+| After unit count correction (2026-07-12) | **+$53,817** | **~$11,302** |
 
-Atlantic adds $0 to income or deductions in 2025. Balance sheet payable $1,769 disclosed.
+Atlantic adds $0 to income or deductions in 2025 (cash basis, no payment moved).
+Unit count correction (15K→11K) has zero income effect under cash method — same payments deducted.
+Balance sheet payable $1,769 disclosed. Inventory value updated to $25,656 total (2,319 units × $11.063).
