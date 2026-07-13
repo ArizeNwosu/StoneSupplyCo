@@ -9,11 +9,15 @@
 
 | Figure | Amount | Source Document |
 |--------|--------|-----------------|
-| **2024 Total Splitflask GMV** | **$700,134** | Four-channel build (below); net basis |
-| — Amazon US+MX+CA (net of returns) | $321,251 | Amazon Unified Transaction CSV; MX+CA 1099-K proxy per prior session — ⚠️ pull CA+MX settlement CSVs to verify CA ($11,870) + MX ($10,562) are included; if not, add ~$20,952 est. |
-| — Shopify Splitflask store | $166,156 | `Splitflask-Shopify-Total sales breakdown - 2024-01-01 - 2024-12-31.csv` NET column; cross-verified vs SKU export |
+| **2024 Total Splitflask GMV** | **$728,310** | Bottom-up sourced + bank-reconciled. Updated 2026-07-13: 6 new B2B items confirmed. See deliverables/Wholesale_Decomp_2024_2026-07-13.md |
+| — Amazon US (net of returns) | $297,589 | Unified Transaction CSV: product sales $320,427 − returns $22,838 |
+| — Amazon CA | $9,266 | CA settlement (CAD) |
+| — Amazon MX | $9,682 | MX settlement (MXN) |
+| — Shopify Splitflask store | $166,156 | `Splitflask-Shopify-Total sales breakdown - 2024-01-01 - 2024-12-31.csv` NET column; cross-verified vs SKU export (both $166,155.55 ✓); 0.9% gap from 1099-K = PayPal/non-Shopify-Payments orders |
 | — TikTok Shop (net after seller discount, excl. shipping) | $125,951 | Nine 1099-K detail CSVs: sum(SKU subtotal − seller discount); 54% seller discount rate |
-| — Wholesale (B2B) | $86,776 | Invoices: ESP ~$57.6K, Von Maur ~$7.2K, Knocking ~$11.25K, SATS ~$10.7K |
+| — Knocking (retail) | $18,135 | Payout files (order-level): 404 net units × $45.00 |
+| — Walmart marketplace | $2,331 | Supplier Center export; 15% commission confirmed |
+| — B2B Wholesale (12 named accounts) | $101,246 | Bank wires + check deposits: ESP $57,600 · Von Maur EDI $7,200 · Von Maur check $4,950 · SATS-Creuers $10,725 (DBS wire 3/20/24, /Org= confirmed) · UncommonGoods $1,905 · Frost Bank customer $3,651 (payer TBD — pull /Org= from WF online) · Potpourri Group $5,084 · Hammacher Schlemmer $6,264 · Macy's $1,315 (3 checks, Dec 2024) · Kuwait/Almatrouk $2,413 · eBay $139 |
 | **2025 Total Splitflask GMV** | **$399,412** | Nine-channel build (below); net basis; bank-reconciled (WHOLESALE_TRACE) |
 | — Amazon US (settlement net of returns) | $203,323 | `Splitflask-AMA 2025Jan1-2025Dec31CustomUnifiedTransaction.csv` product sales total |
 | — Amazon SG+AU | $2,383 | Amazon SG/AU dashboard (prior locked: SG $855 + AU $1,528 @0.6451) |
@@ -95,7 +99,7 @@
 | Shopify 1099-K (SPLT TIN) | $109,063.96 — corrected form | SPLT / 2025 |
 | Shopify admin sales exports | Monthly settlement detail, includes Global-e intl | 2024, 2025, 2026 |
 | Wells Fargo bank statements (all entities) | All inflows + outflows, footed per statement | SGM/SPLT/CB/Personal |
-| Wholesale invoices | ESP, Von Maur, Knocking, SATS | SGM / 2024 |
+| Wholesale invoices + bank wires | ESP, Von Maur (2 payments), Knocking, SATS (DBS wire), UncommonGoods, Potpourri, Hammacher Schlemmer, Macy's, Kuwait/Almatrouk, Frost Bank customer, eBay — 12 accounts | SGM / 2024 |
 | International wire records | Kuwait NBK, Everything Kitchen AU, Waen JP, Citiesocial TW | SPLT / 2025 |
 
 ---
