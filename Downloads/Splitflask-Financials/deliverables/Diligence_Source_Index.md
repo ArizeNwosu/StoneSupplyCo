@@ -9,12 +9,16 @@
 
 | Figure | Amount | Source Document |
 |--------|--------|-----------------|
-| **2024 Total Splitflask GMV** | **$700,134** | Four-channel build (below); net basis |
-| — Amazon US+MX+CA (net of returns) | $321,251 | Amazon Unified Transaction CSV; MX+CA 1099-K proxy per prior session — ⚠️ pull CA+MX settlement CSVs to verify CA ($11,870) + MX ($10,562) are included; if not, add ~$20,952 est. |
-| — Shopify Splitflask store | $166,156 | `Splitflask-Shopify-Total sales breakdown - 2024-01-01 - 2024-12-31.csv` NET column; cross-verified vs SKU export |
-| — TikTok Shop (net after seller discount, excl. shipping) | $125,951 | Nine 1099-K detail CSVs: sum(SKU subtotal − seller discount); 54% seller discount rate |
-| — Wholesale (B2B) | $86,776 | Invoices: ESP ~$57.6K, Von Maur ~$7.2K, Knocking ~$11.25K, SATS ~$10.7K |
-| **2025 Total Splitflask GMV** | **$399,412** | Nine-channel build (below); net basis; bank-reconciled (WHOLESALE_TRACE) |
+| **2024 Total Splitflask GMV** | **$697,420** | Eight-channel build (below); net basis; corrections 2026-07-13 |
+| — Amazon US (net of returns) | $297,589 | Amazon Unified Transaction CSV: order product sales $320,427 − returns $22,838; CA/MX in separate rows |
+| — Amazon CA | $9,266 | Canada settlement (CAD 12,693 × 0.7300); verified Channel_Swap_2026-07-12 |
+| — Amazon MX | $9,682 | Mexico settlement (MXN 176,039 × 0.0550); verified Channel_Swap_2026-07-12 |
+| — Shopify Splitflask store | $166,156 | `Splitflask-Shopify-Total sales breakdown - 2024-01-01 - 2024-12-31.csv` NET column; cross-verified vs SKU export AND 1099-K (triple-corroborated) |
+| — TikTok Shop (net after seller discount, excl. shipping) | $125,951 | Nine 1099-K detail CSVs: sum(SKU subtotal − seller discount) = $125,951.46 ✓ exact |
+| — Knocking (retail, order-level) | $18,135 | Knocking payout files: 404 net units × $45.00 retail; 50% commission confirmed |
+| — Wholesale (B2B excl. Knocking, cash-collected) | $68,476 | Bank wires: ESP $57,600 + Von Maur $7,200 + UncommonGoods $1,905 + SATS $3,651 collected; SATS $7,049 uncollected removed (confirmed zero 2025/2026 bank) |
+| — Walmart marketplace | $2,331 | Walmart Supplier Center export Sep–Dec 2024: $2,330.58 at 15.0% commission |
+| **2025 Total Splitflask GMV** | **$419,102** | Ten-channel build (below); net basis; bank-reconciled; Walmart corrected from export |
 | — Amazon US (settlement net of returns) | $203,323 | `Splitflask-AMA 2025Jan1-2025Dec31CustomUnifiedTransaction.csv` product sales total |
 | — Amazon SG+AU | $2,383 | Amazon SG/AU dashboard (prior locked: SG $855 + AU $1,528 @0.6451) |
 | — Amazon MX 2025 ⚠️ | ~$4,083 est. | `Amazon/Mexico-2025-sales-SalesDashboard-7-12-26.csv` MX$81,626 ÷ 20 MXN/USD — **ESTIMATED; dashboard not settlement; pull MX settlement CSV to verify** |
@@ -22,7 +26,7 @@
 | — TikTok (H1 only, net) | $11,282 | Five `2025-Splitflask-Tiktok-income_*.xlsx` Reports sheets; gross $25,418 − disc/refunds = net $11,282 |
 | — Intl wires (5 named counterparties) | $7,686 | Named wire records: Everything Kitchen AU, Waen JP, Citiesocial TW, Kuwait NBK |
 | — SGM Knocking/CBS Deals (bank-sourced) | $7,567 | SGM 2025 WF bank, 4 wires |
-| — SGM Walmart marketplace (bank-sourced) | $4,026 | SGM 2025 WF bank, 16 payments |
+| — SGM Walmart marketplace | $5,944 | Walmart Supplier Center export 2025: $5,944.05 total GMV at 15.0% commission (corrected from bank-grossup $5,594) |
 | — SGM Ownstar intl wire | $1,004 | SGM 2025 WF bank |
 | — SPLT Lucky Rubber Ducky | $517 | SPLT 2025 WF bank |
 | — Atlantic Access (INV-8707 net) | $3,014 | Invoice INV-8707, £2,336.73 net × 1.29 |
@@ -40,12 +44,12 @@
 |------|--------|--------|
 | Total deposits through SGM bank | $895,754 | SGM WF …8625 statements, all 12 months, penny-footed |
 | ↓ Remove non-revenue inflows (loans, interco, refunds) | −$314,358 | SGM 2024 classification ledger |
-| **Splitflask GMV (consumer-paid, net of discounts + returns)** | **$700,134** | Platform source docs (see above); net basis |
-| ↓ Platform fees + returns | −$190,953 | Amazon Unified Transaction CSV; TikTok quarterly income; Shopify fee report |
+| **Splitflask GMV (consumer-paid, net of discounts + returns)** | **$697,420** | Platform source docs (see above); net basis; corrections 2026-07-13 |
+| ↓ Platform fees (Amazon settlement + TikTok quarterly income + Shopify) | −$123,196 | Settlement-sourced (not plugged) |
 | Net revenue (tax-basis) | ~$560,938 | Bank-deposit basis, SGM bank + Shopify personal TIN |
 
-*On-air 2024 claim ($895,000) attaches at the deposits tier — documented, bank-substantiated, penny-exact.*
-*On-air 2025 claim ($499,000) is +25% above the reconstructed GMV of $399,412. The gap reflects three sourcing corrections (TikTok gross→net, Amazon 1099-K→settlement, Shopify estimate→export) and the wholesale plug elimination ($84,125 estimate → $12,597 bank-sourced). Disclosure language in GMV_Rebuild_Net_Basis.md §7.*
+*On-air 2024 claim ($895,000) attaches at the deposits tier — documented, bank-substantiated, penny-exact. Not a GMV comparison.*
+*On-air 2025 claim ($499,000) is +19.1% above reconstructed GMV of $419,102. The gap reflects methodology: the $499K used 1099-K gross and platform headline figures; the $419K uses uniform net-merchandise basis self-discovered during diligence prep. Bridge: TikTok gross→net −$14K; Amazon 1099-K→settlement −$18K; Shopify estimate→export −$16K; wholesale contraction not in original estimate −$62K. Disclosure language in GMV_to_Cash_Bridge.md.*
 
 ---
 

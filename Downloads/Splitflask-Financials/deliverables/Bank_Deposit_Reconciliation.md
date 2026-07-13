@@ -1,7 +1,11 @@
 # Bank Deposit vs Channel GMV Reconciliation
-**Date:** 2026-07-12  
+**Date:** 2026-07-12 (superseded note: 2026-07-13)  
 **Scope:** SGM 2024 (WF ···8625) · SGM 2025 (WF ···8625) · SPLT 2025 (WF ···0423)  
 **Status:** COMPLETE — GMV survives the deposit test
+
+> **⚠️ NOTE 2026-07-13:** The waterfalls below use an intermediate GMV baseline ($700,134 for 2024; $377,215 for SPLT 2025). The **authoritative** final GMV figures are in `handoff/Kendra_Diligence/GMV_to_Cash_Bridge.md`:  
+> **2024 = $697,420 | 2025 = $419,102**  
+> Corrections applied: Amazon US 2024 net-of-returns ($321,251→$297,589); SATS bad debt removed ($7,049); Walmart from export; Knocking at retail; CA/MX separate rows. The deposit-test verdict is unchanged — GMV survives.
 
 ---
 

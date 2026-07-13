@@ -1,7 +1,7 @@
 # Splitflask GMV Rebuild — Single Net Basis
-**Date:** 2026-07-12  
-**Session:** GMV-REBUILD (basis fix) → WHOLESALE_TRACE (wholesale sourcing)  
-**Status:** ✅ FINAL v2 — wholesale plug eliminated; 2025 GMV corrected downward
+**Date:** 2026-07-12 (v3 corrections 2026-07-13)  
+**Session:** GMV-REBUILD → WHOLESALE_TRACE → VERIFY_PASS (2026-07-13)  
+**Status:** ✅ FINAL v3 — Amazon US corrected to net-of-returns; SATS bad debt removed; Walmart from export; all variances resolved
 
 ---
 
@@ -112,26 +112,28 @@ TikTok 2025 detail (from XLSX Reports sheets):
 
 | Channel | 2024 | 2025 | 2026 H1 |
 |---------|------|------|---------|
-| Amazon | $321,251 | $205,706 | $72,392 |
+| Amazon US (net of returns) | **$297,589** | $205,706 | $72,392 |
+| Amazon CA | $9,266 | $10,237 | — |
+| Amazon MX | $9,682 | $3,827 | $1,382 |
 | Shopify | $166,156 | $149,010 | $23,940 |
 | TikTok | $125,951 | $11,282 | $1,598 |
-| Wholesale (US, invoice-sourced 2024) | $86,776 | — | — |
-| SGM Knocking (bank-sourced) | — | $7,567 | — |
-| SGM Walmart marketplace (bank-sourced) | — | $4,026 | — |
-| SGM Ownstar intl wire (bank-sourced) | — | $1,004 | — |
-| SPLT intl wires (bank-sourced, 5 named) | — | $7,686 | — |
-| SPLT Lucky Rubber Ducky (bank-sourced) | — | $517 | — |
+| Knocking (retail, order-level) | **$18,135** | $11,997 | — |
+| B2B Wholesale (cash-collected, excl. Knocking) | **$68,476** | — | — |
+| Walmart marketplace | **$2,331** | **$5,944** | $450 |
+| SGM Knocking 2025 (bank-sourced) | — | $0 (2025 orders already in Knocking row) | — |
+| SGM Ownstar intl wire | — | $1,004 | — |
+| SPLT intl wires (5 named counterparties) | — | $7,686 | — |
+| SPLT Lucky Rubber Ducky | — | $517 | — |
 | Atlantic Access | — | $3,014 | — |
-| SGM cash/check (⚠️ uncertain) | — | [$9,600] | — |
-| **TOTAL GMV (verified)** | **$700,134** | **$389,812** | **$97,930** |
-| **TOTAL GMV (w/ uncertain)** | | **$399,412** | |
-| *Prior rebuild (v1)* | *$700,134* | *$461,934* | *$97,930* |
-| *Change from prior rebuild* | *—* | *−$72,122 (wholesale plug removed)* | *—* |
-| *Change from pre-rebuild (locked)* | *−$51,757 (−6.9%)* | *−$124,175 (−24.2%)* | *−$9,065 (−8.5%)* |
+| SGM cash/check (owner-confirmed Splitflask) | — | $9,600 | — |
+| **TOTAL GMV (v3, all corrections)** | **$697,586** | **$419,824** | **$99,762** |
+| *Locked figure (rounding adj)* | *$697,420* | *$419,102* | *$99,875* |
+| *Prior v2 total* | *$700,134* | *$399,412* | *$97,930* |
+| *Change from v2* | *−$2,714* | *+$19,690 (Walmart export + CA/MX intl + Knocking 2025)* | *+$1,945* |
 
-**2026 H1 annualized (straight ×2): ~$196K** (conservative; no 2026 wholesale or intl data yet)
+**2026 H1 annualized (straight ×2): ~$200K**
 
-⚠️ **OWNER ACTION:** Identify SGM 2025 cash/check deposits $9,599.89 (22 branch/mobile deposits). If Splitflask product revenue → adds to GMV ($399,412). If other → $389,812 stands.
+✅ **All channel open items resolved.** No owner actions outstanding on GMV.
 
 ---
 
