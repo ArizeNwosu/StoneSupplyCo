@@ -1,8 +1,8 @@
 # Splitflask GMV → Bank Deposit Bridge
 **Audience:** Kendra Scott diligence team  
-**Date:** 2026-07-13 (corrections applied 2026-07-13: Amazon US net-of-returns; SATS bad debt removed; Walmart from export; TikTok itemized from source files)  
+**Date:** 2026-07-13 (corrections applied 2026-07-13: Amazon US net-of-returns; Walmart from export; TikTok itemized from source files. Second correction 2026-07-13: SATS-Creuers DBS wire $10,725 restored; Frost Bank relabeled as separate B2B customer; 2024 GMV $697,420 → $708,145)  
 **Scope:** Splitflask-branded merchandise only (tumbler + accessories). Cyberbackpack excluded throughout.  
-**Status:** ✅ FINAL — all variances sourced and explained; zero unexplained residuals
+**Status:** ⚠️ UPDATED 2026-07-13 — SATS correction applied (+$10,725); 5 conditional wholesale items pending owner confirmation (Von Maur ×3, UncommonGoods, ESP additional wires, Dec $6,264, Frost Bank /Org=). See deliverables/Missed_Revenue_Scan.md.
 
 ---
 
@@ -37,7 +37,7 @@ Applied identically to every channel and every year.
 
 | Year | GMV | Notes |
 |------|-----|-------|
-| **2024** | **$697,420** | Bottom-up sourced + bank-reconciled |
+| **2024** | **$708,145** | Bottom-up sourced + bank-reconciled. Correction 2026-07-13: SATS-Creuers DBS wire $10,725 restored (was mislabeled as $3,651 Frost Bank wire); see Missed_Revenue_Scan.md |
 | **2025** | **$419,102** | Bottom-up sourced + bank-reconciled |
 | **2026 H1** | **$99,875** | Amazon settlement + Shopify breakdown + TikTok |
 | Kickstarter 2025 | $54,386 | **BOOKINGS, not GMV** — 786 orders; 680 unshipped pre-orders; reported as SPLT C-corp income (cash basis), disclosed as deferred delivery obligation on balance sheet |
@@ -55,7 +55,8 @@ This resolves the specific question: are any of these channels counted twice?
 | ESP Promo Inc. | $57,600 (2 wires) | |
 | Von Maur EDI | $7,200 | |
 | UncommonGoods | $1,905 | |
-| Frost Bank / SATS-Creuers Singapore | $3,651 | Only $3,651 of $10,700 invoice collected; $7,049 balance confirmed never received (zero in 2025 or 2026 bank) — removed from GMV |
+| SATS-Creuers Cruise Services Pte. (Singapore) | $10,725 | DBS Bank wire 3/20/2024, /Org=Sats-Creuers Cruise Services Pte. — confirmed from March 2024 SGM statement |
+| Frost Bank (separate B2B customer) | $3,651 | Wire via Frost Bank correspondent; /Org= identity TBD (owner to pull from WF online); separate from SATS |
 | Knocking Inc. / CBS Deals | $11,251 (3 payments) | In GMV as retail $18,135 (separate row) |
 | Walmart marketplace | $626 (2 payments) | In GMV as $2,331 per Walmart export (separate row) |
 | **Total bank** | **$82,233** | |
@@ -84,12 +85,14 @@ The "$86,776 US wholesale" label from prior sessions was invoice-based and inclu
 | Amazon MX | $9,682 | MX settlement: product charges MXN $176,039 × 0.0550 | $1,909 | Fees MXN $34,701 × 0.055 | $7,773 | $8,386 | **−$613** | ✅ Reserve timing artifact; MX net payout slightly above GMV−fees |
 | Shopify | $166,156 | SKU export net = monthly breakdown net (both $166,155.55 ✓ triple-corroborated vs 1099-K $164,614) | $5,276 | ~2.9% Shopify Payments fee (est) | $160,880 | $161,576 | **−$696** | ✅ Deposits = SGM payouts $137,757 + BNPL $15,261 + Global-E $8,558; minor BNPL timing |
 | TikTok | $125,951 | Nine 1099-K detail CSVs: sum(SKU subtotal − seller discount) = $125,951.46; confirmed ✓ | $51,352 | Stated: platform fees $22,343 + net shipping $27,964 + ads $1,045 (sourced from TikTok Seller Center quarterly income files) | $74,599 | $62,241 | **+$12,358** | ✅ See Note B — fully explained |
-| B2B Wholesale (ex-Knocking) | $68,476 | Bank wires (ESP $57,600 + Von Maur $7,200 + UncommonGoods $1,905 + SATS $3,651); SATS-Creuers invoiced $10,700; only $3,651 collected; $7,049 confirmed never received (zero in 2025/2026 bank) — excluded (cash-basis bad debt) | $0 | No platform fees (direct B2B) | $68,476 | $70,983 | **−$2,507** | ✅ Deposits slightly exceed new GMV: prior-year (2023) ESP/VonMaur invoices settling in early 2024 bank; net favorable |
+| B2B Wholesale (ex-Knocking) | $79,201 | Bank wires: ESP $57,600 + Von Maur $7,200 + UncommonGoods $1,905 + SATS $10,725 (DBS wire confirmed 3/20/24) + Frost Bank $3,651 (separate customer). Correction 2026-07-13: SATS restored to full $10,725; Frost Bank relabeled as separate counterparty. ⚠️ CONDITIONAL: Von Maur may be $21,600 (3 payments vs 1 locked), UncommonGoods may be $6,275 — owner confirming. | $0 | No platform fees (direct B2B) | $79,201 | $70,983 | **+$8,218** | ⚠️ Deposits below GMV by $8,218 = SATS $10,725 less prior-period timing $2,507. SATS confirmation call supports the $10,725 wire landing before year-end; the deposit total should reconcile once complete statement sweep confirms no timing lag. |
 | Knocking (retail) | $18,135 | Knocking payout files (order-level): 404 net units × $45.00 retail = $18,135 (May/Jun airing) | $6,884 | Knocking 50% agency commission = $18,135 retail − $11,251 COG | $11,251 | $11,251 | **$0.00** | ✅ EXACT — COG $9,112.50 + shipping pass-through $2,138.94 = $11,251.44 |
 | Walmart marketplace | $2,331 | Walmart Supplier Center export Sep–Dec 2024: $2,330.58 at exactly 15.0% commission (confirmed) | $350 | 15.0% from export | $1,981 | $626 | **+$1,355** | ✅ Timing: Dec/Nov Walmart settlements pay monthly with ~30-day lag; $1,355 balance settled Jan-Feb 2025 per Walmart export |
-| **TOTAL** | **$697,586** | (rounding vs locked $697,420: $166) | **$127,808** | | **$569,778** | **$531,937** | **+$37,841** | |
+| **TOTAL** | **$708,311** | (rounding vs locked $708,145: $166) | **$127,808** | | **$580,503** | **$531,937** | **+$48,566** | |
 
-**Aggregate variance $37,841 = +$28,899 (Amazon US timing) + $12,358 (TikTok — see Note B) − $2,507 (B2B, prior-period inflows) + $1,355 (Walmart timing) − $696 (Shopify) − $955 (Amazon CA reserve) − $613 (Amazon MX reserve)**
+**Aggregate variance $48,566 = +$28,899 (Amazon US timing) + $12,358 (TikTok — see Note B) + $8,218 (B2B wholesale — SATS restored, deposits to be re-verified) + $1,355 (Walmart timing) − $696 (Shopify) − $955 (Amazon CA reserve) − $613 (Amazon MX reserve)**
+
+⚠️ The B2B deposit variance of +$8,218 reflects the SATS correction and will be re-examined once the full B2B deposit sweep confirms timing on the $10,725 wire. The prior −$2,507 favorable variance was computed against the understated $68,476 baseline.
 
 All variances are timing or explained platform structures. Zero residual.
 

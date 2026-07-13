@@ -2447,20 +2447,110 @@ collapsed were channels requiring constant chasing. **Arguably a STRONGER story.
 Pass cut: **FINAL_GMV_IMPLEMENT.md**
 
 
-## ✅ VERIFICATION PASS — Channel Swap + Amazon Intl (2026-07-12)
-**Job A — Channel Swap CONFIRMED (6th plug):** `$305,065.90` (Shopify 2024 gross) was mislabeled as Amazon in v11 build; `$238,467.80` (Shopify 2025 gross) same swap. v11 double-counted Shopify under two names — this inflated old GMV, NOT the current locked numbers. Deliverable already existed: `deliverables/Channel_Swap_And_Intl_Amazon_Verification_2026-07-12.md`. Confirmed to the penny.
+## ✅✅✅ FINAL — DEAL PACKET BUILT. GMV LOCKED.
+### 🔁 7th PLUG CAUGHT (mine): **Knocking 2025 = $0, not $15,134.**
+SGM's 2025 Knocking receipts ($7,567) were **Jan–Feb wires settling the DECEMBER 2024 CBSD airing** — NOT a
+new 2025 sale. **There was no 2025 Knocking event.** The bank has no record of one. Line correctly = $0.
+(I had written $15,134 into the table from a 2× of a transaction that never happened.)
+### FINAL GMV (bottom-up, every line sourced + bank-reconciled)
+| **2024 = $732,441** | **2025 = $406,755** | **2026 H1 = $99,875** |
+- Knocking 2024: **$22,503** (2× per owner: flash-sale media platform, dropship, ~50% media fee, title never
+  transfers). ⚠️ Schedule A says "the price Knocking pays for your product" → **DISCLOSED PREEMPTIVELY.**
+- Knocking 2025: **$0.**
+- Amazon CA/MX ADDED (settlement-sourced, net). Walmart + Best Buy grossed up (true marketplaces).
+- Sharper Image + Macy's gross-ups **REMOVED** (owner).
+### KICKSTARTER = SEPARATE **BOOKINGS** LINE (not GMV)
+**$54,386 — 786 backer orders, 106 fulfilled, 680 PENDING.** Total 2025 capital collected: **$461,141.**
+Deferred delivery obligation ≈ **$7,521** future COGS. (Tax: cash basis → still 2025 income. Unchanged.)
+### 🚨 ON-AIR: **$499K claimed vs $406,755 verified = +22.7%.** DISCLOSE FIRST, with the bridge.
+### 💡 THE REAL STORY (discount-adjusted view — this REFRAMES everything)
+**True gross merchandise value at LIST: 2024 = $1,048,660.** The business sold ~$1M of product and gave away
+**~30% in promotional discounts** to buy velocity (Shopify 45.5%, TikTok 56.8%).
+**→ The decline is NOT a demand collapse. It is what happens when you STOP buying volume with discounts.**
+Amazon HELD (−36%). Shopify HELD (−10%). What vanished: TikTok (57%-discount-dependent) and wholesale
+relationships that needed constant chasing (ESP $57.6K → $0).
+**→ 2026 H1 is already 96% of 2025's FULL YEAR in half the time. THAT is the lead.**
+Files: `handoff/Kendra_Diligence/` — Deal_Workbook.xlsx, Deal_Memo.md, Diligence_Source_Index.md. Wall clean.
 
-**Job B — All CA/MX/Intl Amazon settlement-verified:**
-Settlement files (`amazon/Canada-Total-settlement-Transactions until 2024-12-31.csv`, `amazon/Mexico-Total-Settlement-Transactions until 12_31_2024.csv` — both extend through 2026 despite filename dates) confirm all locked intl figures within exchange-rate rounding (<$175 on each):
-- CA 2024: 12,692.52 CAD net → $9,316 USD (locked $9,266 ✓)
-- MX 2024: 176,039 MXN net → ~$9,510 USD (locked $9,682 ✓)
-- CA 2025: **14,136.92 CAD net → $10,163 USD (locked $10,237 ✓) — NEW: prior pass had "no data"; Canada settlement file extends to 2026 and contains 210 CA orders + 44 refunds for 2025. Open item CLOSED.**
-- MX 2025: 76,183 MXN net → $3,809 USD (locked $3,827 ✓)
-- CA 2026 H1: 0 orders → $0 (locked $0 ✓ exact)
-- MX 2026 H1: 25,390 MXN net → $1,320 USD (locked $1,382 ✓)
 
-**Final locked GMV STANDS: 2024 $730,674 | 2025 $421,889 | 2026 H1 $99,700. No open CA/MX items.**
+## ✅✅ KNOCKING RESOLVED FROM ORDER-LEVEL DATA — **TWO AIRINGS. 2025 IS NOT ZERO.**
+Owner supplied the 7 Knocking Inc. **payout files** (order-level, in the folder). These SUPERSEDE both the
+"$0 in 2025" finding AND the 2× estimate. **We now have the ACTUAL RETAIL PRICE THE CONSUMER PAID — no
+gross-up inference needed.**
+| Airing | Retail/unit (consumer paid) | Price-to-Knocking | Take |
+| **1 — May/Jun 2024** | **$45.00** | $22.50 | **exactly 50%** |
+| **2 — scheduled Dec-2024, orders LANDED JAN-2025** | **$39.99** | $19.99 | **exactly 50%** |
+### KNOCKING BY ORDER DATE (net of refunds)
+| **2024: 404 net units → RETAIL $18,135** (payout to SGM $9,068) |
+| **2025: 301 net units → RETAIL $11,997** (payout to SGM $5,999) |
+| Total 705 units / $30,132 retail / $15,066 payout |
+### 🔁 THE PRIOR PASS WAS WRONG: it saw Jan/Feb 2025 **WIRES** and assumed they settled the Dec-2024 airing.
+**But the ORDERS are dated JANUARY 2025.** The Schedule A explicitly warns *"the airing date is subject to
+change at the direction of our media partners"* — **it shifted. The sales happened in January 2025.**
+### ✅ THIS IS FAR STRONGER EVIDENCE THAN A 2× GROSS-UP
+Order-level data showing the **actual consumer price** ($45.00 / $39.99) and Knocking's exactly-50% cut. The
+customer paid $39.99; Knocking kept $19.99. **Sourced from Knocking's own payout files — not an inference.**
+(It also validates the owner's "50% affiliate" characterization: the take is EXACTLY 50.0%, and the payout
+files list SPLITFLASK as the **Vendor** with per-order consumer prices — consistent with agency/dropship.)
+### REVISED GMV
+| **2024: $732,441 → $728,073** (Knocking $18,135, was the $22,503 estimate — the REAL figure is LOWER) |
+| **2025: $406,755 → $418,752** (Knocking $11,997, was $0) |
+| 2026 H1: $99,875 (unchanged) |
 
-**Job C — Shopify 2024 triple-corroborated:** SKU export $166,155.55 = monthly breakdown $166,155.55 (to the penny, two formats) vs 1099-K $164,613.99 (−1% = PayPal/non-Shopify-Payments, expected). State as diligence strength.
 
-**Job D — Cyberbrands EXCLUDED:** Confirmed clean. Two-denominator wall holds throughout.
+## ✅ BOTH BRIDGES BUILT — 8 variances FLAGGED, none absorbed. One is a REAL problem.
+**Bridge 1** → `handoff/Kendra_Diligence/GMV_to_Cash_Bridge.md` (Splitflask merchandise only).
+**Bridge 2** → `handoff/CPA_TJ/Gross_Receipts_Bridge.md` (ALL gross receipts — CP2000 protection).
+### ✅ THE KNOCKING QUESTION IS ANSWERED — the owner was RIGHT, with a better explanation
+**$11,251.44 bank = COG $9,112.50 + shipping $2,138.94. Variance = $0.44 (rounding).** There were **NO
+unstatemented payments.** The "other smaller payments" = the **20% HOLDBACK RELEASE** mechanism from Schedule A
+— Knocking withholds 20%, releases it in a later period; **within each airing it nets to exactly zero.**
+✅ **NO double-count:** Knocking retail ($18,135) REPLACES its COG representation inside the $86,776 wholesale.
+### 🚨 THE ONE REAL PROBLEM: **AMAZON US 2024 — +$46,836 UNEXPLAINED** (largest channel)
+GMV $321,251 − fees $65,191 = expected $256,060, but **only $209,224 deposited.** Note cites "timing + holdback
++ **GMV basis difference**."
+⚠️ **"GMV basis difference" is the tell. The real Unified Transaction CSV shows order product sales of
+$320,427 — and we NEVER explained where $321,251 came from.** Suspect a folded-in "1099-K adjustment for CA/MX
+basis" — **which would now be a DOUBLE-COUNT, since CA ($9,266) and MX ($9,682) are booked SEPARATELY.**
+**A $47K unexplained variance on the biggest channel is EXACTLY what an analyst circles. RESOLVE BEFORE KENDRA
+SEES IT.** Pass cut: **RESOLVE_AMAZON_2024_AND_SATS.md**
+### OTHER FLAGGED VARIANCES
+- **SATS +$4,542** — invoiced $10.7K, banked $3.7K. ⚠️ **WAS THE $7,000 BALANCE EVER COLLECTED? If not, it is
+  NOT revenue — remove from GMV.** Uncollected invoices are not sales.
+- **Walmart 2024 +$1,306** — a $626 deposit implies only ~$737 of GMV at 15%, but $2,273 is booked. **Source
+  the $2,273 or reduce 2024 GMV ~$1,536.**
+- **TikTok +$12,358 (2024) / +$5,950 (2025)** — platform co-promo deductions. Plausible, but "the platform kept
+  money we can't itemize" is NOT an answer an analyst accepts. **Itemize it from the detail CSVs.**
+- Amazon CA/MX negatives = prior-period reserve releases. ✅ Clean.
+### 🚨 BRIDGE 2 HEADLINE FOR TJ: **SGM 2024 filed $418,990 against a $521,762 Splitflask 1099-K FLOOR —
+~$103,000 of gross receipts reported BELOW what the platforms told the IRS.** That is the trigger condition
+for a **CP2000 matching notice.** The amendment fixes it. **Put this at the TOP of the CPA packet.**
+
+
+## ✅ MISSED REVENUE SCAN — SATS RESTORED; 5 CONDITIONALS PENDING (2026-07-13)
+Pass: deliverables/Missed_Revenue_Scan.md. Triggered by /Org= parser error: WF international wire format = "WT [ref] [CORRESPONDENT BANK] /Org=[ACTUAL SENDER]" — parse that stopped at the correspondent bank missed the real sender.
+
+**CONFIRMED CORRECTION — 2024 GMV: $697,420 → $708,145 (+$10,725)**
+- SATS-Creuers Cruise Services Pte. (Singapore): $10,725 DBS wire on 3/20/2024 confirmed from March 2024 SGM statement (verbatim: "WT 2024032000542768 Dbs Bank Ltd /Org=Sats-Creuers Cruise Services Pte."). Was wrongly labeled as "only $3,651 collected" — that $3,651 is a SEPARATE Frost Bank wire from a DIFFERENT customer.
+- Frost Bank wire $3,651 (May 2024): relabeled as separate unidentified B2B customer. Already in GMV. Net effect: +$0 (it was already counted). Owner to pull full /Org= descriptor from WF Business Online.
+- Bridge: GMV_to_Cash_Bridge.md corrected. SATS now $10,725; Frost Bank listed as separate line.
+
+**STATEMENT FOOTING: ALL CLEAN**
+- SGM 2024 (12 months): ✅ all foot
+- SGM 2025 (12 months): ✅ all foot
+- SPLT 2025 (12 months): ✅ all foot
+
+**CONDITIONAL ITEMS (owner confirmation required before GMV changes):**
+1. **Second SATS wire Sep 12, $10,725** — same /Org=, same correspondent. Second order or duplicate? Max +$10,725.
+2. **Von Maur 3×$7,200 = $21,600** vs locked $7,200. If 3 genuine POs: +$14,400.
+3. **UncommonGoods $6,275 bank** vs locked $1,905. Two wires: Aug $3,625 + Nov $2,650. +$4,370.
+4. **ESP additional wires ~$77,751 bank** vs locked $57,600. Some may be advances; wire-by-wire needed. Up to +$20,151.
+5. **December $6,264 branch eDeposit 12/19/2024** — no payer name. Owner to identify.
+6. **SPLT 2025 April deposits: $5,600 + $3,000** — no payer ID. If Splitflask sales: +$8,600 to 2025 GMV.
+**GMV ceiling if all conditional confirmed: $743,904 (2024), $427,702 (2025).**
+
+**NON-GMV INCOME DISCOVERY (tax, not deal):**
+- Teslarati in SGM 2024: Nov $4,508.37 + Dec $4,508.37 = $9,016.74. These are 2024 consulting income, not in any prior 2024 return discussion. TJ to verify SGM 2024 gross receipts include Teslarati, Shaed ($40K), Munro ($11,079 confirmed consulting). None count for Splitflask GMV.
+- SPLT 2025 international wires: all five confirmed with full /Org= descriptors; already in GMV. Kickstarter $54,385.08 confirmed (rounding $0.92 vs locked $54,386).
+
+**STANDING RULE (8th, from this pass): READ /Org= ON EVERY INTERNATIONAL WIRE. The correspondent bank is a pass-through, not the customer. For any wire where the PDF truncates the descriptor, pull full text from WF Business Online → Account Activity → wire detail.**
