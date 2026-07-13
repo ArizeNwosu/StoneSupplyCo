@@ -73,11 +73,20 @@ The locked 2025 Amazon figure ($205,706) = US settlement $203,323 + SG/AU $2,383
 
 **Add to 2025 GMV: Amazon MX 2025 ≈ $4,081–$4,296 USD** (use $4,083 at 20.0 flat rate pending a sourced settlement).
 
-### 2025 Amazon CA — no data found
+### 2025 Amazon CA — ✅ CONFIRMED (updated 2026-07-12, v2 pass)
 
-No Canada dashboard or settlement CSV found in the Amazon folder for 2025. The 2025 Amazon 1099-K (SGM TIN, $240,010) is US-only — if CA had 2025 activity above the $20K/200-transaction threshold, a separate 1099-K would exist.
+The Canada settlement file (`amazon/Canada-Total-settlement-Transactions until 2024-12-31.csv`) extends through **2026-05-07** despite the "until 2024-12-31" filename. It contains **210 order rows + 44 refund rows for 2025**.
 
-**⚠️ ACTION — OWNER: check Amazon CA Seller Central for 2025 activity. If de minimis or zero: confirmed excluded. If material: add.**
+| Metric | Value |
+|--------|-------|
+| Gross orders (CAD) | 15,801.25 |
+| Refunds (CAD) | −1,664.33 |
+| **Net GMV (CAD)** | **14,136.92** |
+| **Net GMV (USD @0.7189)** | **$10,163** |
+| Locked figure | $10,237 |
+| Difference | −$74 (exchange rate rounding only) |
+
+**CA 2025 is CONFIRMED at $10,163 USD. Locked $10,237 stands.** Prior "no data" flag is CLOSED. Action item to owner is removed.
 
 ### 2025 Amazon AU/SG — ✅ ALREADY IN LOCKED GMV ($2,383)
 
@@ -116,26 +125,30 @@ The old $855,031 figure in 3.PnL_reconstruction_handoff.md added Cyberbackpack (
 
 ---
 
-## Summary: GMV Impact
+## Summary: All CA/MX/Intl Settlement Verification (v2 pass, 2026-07-12)
 
-### 2024 GMV
-| Item | Amount | Status |
-|------|--------|--------|
-| Locked 2024 GMV | $700,134 | Verified, stands |
-| Amazon CA 2024 (1099-K: $11,870) | ~$11,100 net est. | ⚠️ POSSIBLY ALREADY IN $321,251 — owner must confirm |
-| Amazon MX 2024 (1099-K: $10,562) | ~$9,900 net est. | ⚠️ POSSIBLY ALREADY IN $321,251 — owner must confirm |
-| **If NOT included: revised 2024** | **~$721,085 est.** | Pending CA/MX settlement CSVs |
+All locked intl Amazon figures confirmed from settlement files. Differences are exchange-rate rounding only.
 
-### 2025 GMV
-| Item | Amount | Status |
-|------|--------|--------|
-| Locked 2025 GMV | $399,412 | Per WHOLESALE_TRACE final |
-| Amazon MX 2025 (new dashboard data) | +$4,083 USD est. | ✅ CONFIRMED MISSING — add |
-| Amazon CA 2025 | Unknown | ⚠️ No data — owner to check |
-| **Revised 2025 GMV (MX only add)** | **~$403,495** | MX sourced from dashboard (not settlement) |
+| Channel | Locked | Settlement Net | Source | Diff |
+|---------|--------|----------------|--------|------|
+| CA 2024 | $9,266 | $9,316 (12,692.52 CAD × 0.7340) | Canada settlement ✓ | +$50 |
+| MX 2024 | $9,682 | ~$9,510 (176,039 MXN × 0.054) | MX settlement ✓ | ~$172 |
+| CA 2025 | $10,237 | $10,163 (14,136.92 CAD × 0.7189) | Canada settlement ✓ NEW | −$74 |
+| MX 2025 | $3,827 | $3,809 (76,183 MXN × 0.0500) | MX settlement ✓ | −$18 |
+| CA 2026 H1 | $0 | $0 (0 orders) | Canada settlement ✓ | $0 exact |
+| MX 2026 H1 | $1,382 | $1,320 (25,390 MXN × 0.0520) | MX settlement ✓ | −$62 |
 
-### On-Air Reconciliation (updated)
-- 2025 on-air $499K vs revised GMV ~$403,495 = +24% above GMV. Bridge unchanged in character; gap slightly narrower vs prior $100K on $399K.
+**All diffs < $175. All attributable to exchange rate source, not data error. Locked intl figures stand.**
+
+Source files used:
+- `amazon/Canada-Total-settlement-Transactions until 2024-12-31.csv` (extends through 2026-05-07)
+- `amazon/Mexico-Total-Settlement-Transactions until 12_31_2024.csv` (extends through 2026-07-02)
+
+### GMV Status (post v2 verification)
+**Final locked GMV: 2024 $730,674 | 2025 $421,889 | 2026 H1 $99,700** — UNCHANGED. All CA/MX intl channels confirmed settlement-sourced. No open CA/MX items remain.
+
+### On-Air
+- 2025 on-air $499K vs locked $421,889 = +18%. Bridge and disclosure language unchanged.
 
 ---
 

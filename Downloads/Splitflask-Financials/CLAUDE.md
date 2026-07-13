@@ -2236,54 +2236,231 @@ $148K transfer. FOURTH instance.** Feeds the corrections log.
 Files: `deliverables/GMV_Rebuild_Net_Basis.md` (new primary reference), Deal_Memo + Diligence_Source_Index updated.
 
 
-## ✅ WHOLESALE TRACE DONE — $461,934 was another plug; CORRECTED 2025 GMV = **$389,812** (verified)
-**Full trace: deliverables/Wholesale_Trace_2025.md**
+## 🚨 2025 GMV DOES NOT RECONCILE — **$92,922 UNEXPLAINED**
+**2025 corrected GMV = $461,934.** Sourced channels: Amazon $205,706 + Shopify $149,010 + TikTok $11,282 +
+Atlantic $3,014 = **$369,012**. → **GAP = $92,922 with NO CHANNEL ATTACHED.**
+Owner says 2025 wholesale is only ~$20-30K → **$60-70K has NO SOURCE.**
+⚠️ **CANDIDATES: (a) the Kickstarter $54,386 — we said it was EXCLUDED as unshipped pre-orders. IS IT ACTUALLY
+EXCLUDED, or did it get counted into GMV? (b) a residual PLUG — was $461,934 built TOP-DOWN rather than summed
+from channels? (c) a double-count.**
+🚨 **If $461,934 was built top-down, it is ANOTHER PLUG and the TRUE 2025 GMV = $369,012 + sourced wholesale.**
+**A GMV total that doesn't reconcile to the sum of its own channels is the FIRST thing an analyst checks after
+units × price. TRACE IT.** Pass cut: WHOLESALE_TRACE.
+✅ **2024 TIES CLEANLY:** Amazon $321,251 + Shopify $166,156 + TikTok $125,951 + wholesale $86,776 = $700,134 ✓
+(But ⚠️ **is the $86,776 itself SOURCED, or an estimate?** Trace it to SGM wires too — same failure mode as the
+$188,569 Shopify plug.)
+### WHOLESALE = THE MOST VULNERABLE CHANNEL
+It has **NO platform export** — no settlement report, no SKU export, no CSV. Every other channel now has a
+document behind it. Wholesale is **wires into the bank**, and must be sourced that way.
+**Owner instruction: source wholesale from WIRES INTO THE SPLT ACCOUNT.**
+Known B2B counterparties: Von Maur, Hammacher Schlemmer, Macy's, Potpourri, Knocking/CBS Deals (may be others).
 
-The $92,922 non-platform component broke down as:
-- SPLT intl wires $7,686 ✅ REAL (5 named wires — Everything Kitchen AU, Waen JP, Citiesocial TW ×2, Kuwait)
-- Best Buy/Walmart $1,111 🚨 NOT IN BANK — pre-classification estimate; superseded by actual SGM Walmart $4,026
-- SGM wholesale $84,125 🚨 PLUG — Layer 1 pre-classification estimate; actual SGM B2B = $12,597
 
-**Kickstarter confirmed EXCLUDED**: $54,386 tagged DEFERRED_KICKSTARTER in ledger, not in any GMV channel.
+## 🚨🚨🚨 WHOLESALE WAS A PLUG. **2025 GMV = $389,812.** ON-AIR CLAIM IS NOW **+28% ABOVE ACTUAL**.
+### THE PLUG (5th instance of plug-carried-as-fact)
+**SGM 2025 wholesale was carried at $84,125 — a pre-classification ESTIMATE. THE ACTUAL, BANK-SOURCED FIGURE
+IS $12,597. Overstatement: $71,528.** ($461,934 was not top-down — it was channel-by-channel, but the
+WHOLESALE ROW was an unverified estimate.) Also: "Best Buy/Walmart $1,111" had NO bank entry (Walmart actual
+$4,026, already counted in SGM — not additive).
+### ✅ FINAL GMV — BOTTOM-UP, EVERY LINE BANK/PLATFORM-SOURCED
+| Channel | 2024 | 2025 | 2026 H1 |
+| Amazon | $321,251 | $205,706 | $72,392 |
+| Shopify | $166,156 | $149,010 | $23,940 |
+| TikTok | $125,951 | $11,282 | $1,598 |
+| US Wholesale | $86,776 | — | — |
+| SGM Knocking | — | $7,567 | — |
+| SGM Walmart mktpl | — | $4,026 | — |
+| SGM Ownstar wire | — | $1,004 | — |
+| SPLT intl wires (5, named) | — | $7,686 | — |
+| SPLT Lucky Rubber Ducky | — | $517 | — |
+| Atlantic Access | — | $3,014 | — |
+| **TOTAL (verified)** | **$700,134** | **$389,812** | **$97,930** |
+| (w/ uncertain cash/check) | | ($399,412) | |
+**TRUE YoY 2024→2025 = −44.3%** (was −34%, was −31.7%). ✅ Kickstarter $54,386 CONFIRMED **NOT** in GMV
+(tagged DEFERRED_KICKSTARTER). ✅ 2024's $86,776 is BANK-VERIFIED ($82,234 cleared: ESP $57.6K exact, Knocking
+$11.3K exact, Von Maur $7.2K exact, Frost/SATS $3.7K partial; $4,542 timing gap). **2024 $700,134 STANDS.**
+### 🚨 THE REAL STORY (the narrative must be REWRITTEN — it's harder, but it's TRUE and a buyer will find it)
+**It is NOT "we pulled back on marketing to protect IP."** It is: **THE WHOLESALE CHANNEL COLLAPSED −76%**
+($86,776 → $12,597). **ESP ($57.6K in 2024) went to ZERO. Von Maur, Hammacher, SATS, UncommonGoods — none
+returned.** **AND TikTok went to ~zero** ($125,951 → $11,282 → H2 2025 = $0). The IP pullback is ONE
+contributing factor, not the whole explanation. **Amazon −36% and Shopify −10% are the structural DTC core —
+those held up far better than the total suggests.**
+### 🚨🚨 ON-AIR: **$499K claimed vs $389,812 actual = +28% OVERSTATED.** (Was thought to be +8%, originally
+looked ~3% BELOW.) **This is a large gap on a number stated publicly to investors. It MUST be disclosed
+proactively, by the owner, with the full bridge — before Kendra's team computes it.** Disclosure language:
+`GMV_Rebuild_Net_Basis.md §7`.
+### ⚠️ OWNER ACTION: **identify the 22 SGM 2025 branch cash/check deposits ($9,599.89, no payer ID).** If
+Splitflask product revenue → GMV rises to **$399,412**. If not → **$389,812** stands.
 
-**2024 wholesale $86,776 BROADLY VERIFIED**: SGM bank shows $82,234 (ESP $57.6K + Knocking $11.3K + Von Maur $7.2K + Frost/SATS $3.7K + small others). ~$4.5K gap = timing. 2024 $700,134 STANDS.
 
-**Actual 2025 wholesale/B2B from bank (ALL entities):**
-| Entity | Channel | Amount |
-|--------|---------|--------|
-| SPLT | Lucky Rubber Ducky (wholesale) | $517 |
-| SPLT | Intl wires (5 counterparties) | $7,686 |
-| SGM | Knocking/CBS Deals | $7,567 |
-| SGM | Walmart marketplace | $4,026 |
-| SGM | Ownstar intl wire (TW, additive) | $1,004 |
-| SGM | Cash/check deposits (⚠️ payer unknown) | $9,600 |
-| **TOTAL VERIFIED** | | **$20,800** |
-| **TOTAL W/ UNCERTAIN** | | **$30,400** |
+## ✅✅✅ BANK DEPOSIT RECONCILIATION — **THE GMV SURVIVES.** All three waterfalls close on TIMING alone.
+| Entity-Year | GMV tested | Expected deposits | Actual deposits | Variance |
+| SGM 2024 | $700,134 | $555,476 | $560,938 | **+$5,462 (timing)** |
+| SGM 2025 | $27,818 | $20,747 | $20,747 | **$0 — EXACT** |
+| SPLT 2025 | $377,215 | $266,069 | ~$271,695 | **+$5,626 (timing)** |
+**Fees came from the SETTLEMENT REPORTS — no fee was back-derived as (GMV − deposits). The plug trap was
+avoided.** All variances = year-boundary timing (Dec sales landing in Jan). Right size, right direction.
+### ✅ THE FINDINGS THAT MATTER
+1. **GMV $700,134 (2024) and $389,812 (2025) SURVIVE.** After FIVE plugs found in this project, **every dollar
+   of claimed revenue now has cash in a bank account underneath it.** No channel has GMV without cash.
+2. **Atlantic Access $3,014** is the only GMV with no cash yet — an UNPAID RECEIVABLE per INV-8707. **Timing,
+   not fictional.** Correct.
+3. **NO hidden revenue missed** — no deposits found without an assigned channel.
+4. **Splitflask revenue in SGM 2025 = $27,818** (Amazon Jan 1–Feb 4 + Knocking + Walmart marketplace + Ownstar
+   wire). Already inside the $389,812 GMV; already disclosed via the nominee structure. **No surprise.**
+5. **SGM 2024 UNATTRIBUTED = $11,079** — one **Munro & Associates** wire, product unknown. **Correctly NOT
+   allocated.** ⚠️ **OWNER: who is Munro & Associates?** If Splitflask wholesale → 2024 GMV rises slightly. If
+   Cyberbackpack/other → stays out.
+6. ⚠️ **OWNER: identify the 22 SGM 2025 branch cash/check deposits ($9,599.89).** If Splitflask sales → 2025
+   GMV ceiling rises to **$399,412**.
+### 🎯 STATUS: the GMV is now **BOTTOM-UP SOURCED (platform settlements + SKU exports + bank wires) AND
+BANK-RECONCILED.** This is the strongest form the number can take.
 
-Major 2024 wholesale accounts (ESP $57.6K, Von Maur, SATS, UncommonGoods) absent entirely in 2025.
 
-**CORRECTED 2025 GMV (bottom-up, sourced only):**
-Amazon $205,706 + Shopify $149,010 + TikTok $11,282 + Atlantic $3,014 + SPLT intl $7,686 + Knocking $7,567 +
-Walmart mktpl $4,026 + Ownstar $1,004 + Lucky RD $517 = **$389,812**
-With uncertain cash/check: **$399,412**
+## ✅ FINAL GMV LOCKED — both open items resolved (owner)
+- ✅ **The 22 SGM 2025 branch cash/check deposits ($9,599.89) ARE SPLITFLASK SALES** → **2025 GMV = $399,412.**
+- ✅ **Munro & Associates ($11,079, SGM 2024) is CONSULTING — NOT Splitflask.** Stays OUT of GMV.
+  → **2024 GMV HOLDS at $700,134.**
+(The ambiguous item that would have INFLATED 2024 is excluded; the one that legitimately belongs is included.
+No thumb on the scale.)
+### 🎯 **FINAL DEAL GMV (bottom-up sourced + bank-reconciled):**
+**2024 = $700,134 | 2025 = $399,412 | 2026 H1 = $97,930**
+**TRUE YoY 2024→2025 ≈ −43.0%.**
+### 🚨 ON-AIR: **$499K claimed vs $399,412 actual = +25% overstated.** Must be disclosed proactively with the
+bridge, by the owner, before Kendra's team computes it.
+### ⚠️ NEW TAX ITEM (not a deal item) — **the Munro $11,079 is CONSULTING REVENUE in SGM 2024.**
+**It is still INCOME — all gross receipts get reported, tumbler or not.** ⚠️ **TJ: is the $11,079 IN SGM's 2024
+return, and correctly classified as CONSULTING (not product sales)?** Verify it's captured.
+(This is the two-denominator rule working exactly as intended: **consulting counts for TAX, not for Splitflask
+GMV** — same logic that keeps Cyberbackpack out.)
 
-**THIS IS THE SIXTH PLUG IN THIS PROJECT** ($430K 2026 GMV / phantom $148K / phantom SPLT Shopify Capital /
-$188,569 Shopify 2024 / $84,125 wholesale estimate / now caught).
 
-⚠️ **OWNER ACTION:** Identify SGM 2025 cash/check deposits $9,599.89 (22 branch deposits, payer unknown).
+## 🚨 V11-ERA LEGACY DOCS AUDITED — one error INFLATED the old GMV; one finding may LEGITIMATELY RAISE it
+### 1. 🚨 **THE CHANNEL SWAP — why the old GMV was too high**
+The v12 handoff itself says: *"'Amazon-Gross sales over time - 2024' is actually **SHOPIFY** data;
+'Shopify-SalesDashboard-4-23-26' is actually **AMAZON**."* **BUT the old GMV build then lists "Amazon US:
+$305,066 gross (documented)."**
+🚨 **$305,066 IS SHOPIFY'S 2024 GROSS BY SKU** (verified from the owner's own SKU export). **The old build
+labeled SHOPIFY's gross as AMAZON — then counted Shopify AGAIN at $275,184. SHOPIFY WAS DOUBLE-COUNTED UNDER
+TWO NAMES.** Same in 2025 ("Amazon US $238,468" = Shopify's 2025 gross).
+**→ The old GMV was higher because a channel was DOUBLE-COUNTED, not because it was more complete.**
+(Actual Amazon settlement: 2024 product sales $297,476.56; 2025 $203,322.68 — NOT $305,066/$238,468.)
+### 2. ✅ **POSSIBLE REAL GAIN: AMAZON INTERNATIONAL MAY BE MISSING FROM GMV**
+The 1099-K map (doc 3, third-party verified, SGM TIN …7502) shows 2024: **Amazon US $344,035.75 + Amazon CA
+$11,870.02 + Amazon MX $10,561.67**. **Our locked Amazon 2024 ($321,251) came from the US-ONLY settlement
+(amazon.com).** → **CA + MX = $22,431 possibly UNCOUNTED.** Check 2025 too (1099-K Amazon $240,009.89 — US-only
+or all marketplaces?). **PULL the CA/MX settlement data and add on the same net basis if genuinely missing.**
+### 3. ✅ **SHOPIFY CORROBORATED:** our Shopify 2024 NET ($166,156) vs the 1099-K ($164,613.99) — **within
+$1,542.** That figure is SOLID.
+### 4. ⚠️ OWNER DECISION (recorded): Knocking / Macy's / Sharper Image to be treated as MARKETPLACES and
+grossed up. **ORCHESTRATOR DISAGREES** (signed CBSD Schedule A says *"Price to Knocking: the price Knocking
+PAYS FOR YOUR PRODUCT"* — purchase language; take rates 50-55% vs 12-15% for real marketplaces). ⚠️ **BUT a
+PRIOR session read the same contract and AGREED WITH THE OWNER.** Genuinely ambiguous; owner knows the
+dropship facts; **his call stands.**
+**IMPLEMENTATION: TWO SEPARATE LABELLED FIGURES — never blended.**
+**(A) VERIFIED NET REVENUE** (bank-sourced; Best Buy/Walmart/Amazon grossed up from their OWN reported
+commission data — those ARE marketplaces at 12-15%). **(B) RETAIL VALUE OF GOODS SOLD** (adds the
+owner-directed Knocking/Macy's/Sharper Image gross-ups, **with every take rate disclosed on the face of the
+workbook**). Sharper Image: **$0 was actually collected** — must be stated. Macy's = the 22 branch check
+deposits; **owner has stubs — TIE EACH ONE; do not book any deposit without a stub.**
+⚠️ **TikTok: do NOT gross up.** Its "gross sales" is BEFORE the seller discount — money the customer NEVER
+PAID. Our current TikTok figure is already the customer-paid basis and is CORRECT.
 
-### LOCKED 2025 GMV = **$389,812** (verified) / up to **$399,412** (w/ uncertain cash/check)
 
-### UPDATED DEAL TREND
-| | 2024 | 2025 | 2026 H1 ann |
-|--|------|------|------------|
-| GMV | $700,134 | $389,812 | ~$196K |
-| YoY | — | **−44.3%** | — |
+## 🔍 V11-ERA HANDOFF PACKETS REVIEWED — one ERROR explained, one REAL FIND
+### 🚨 THE ERROR THAT INFLATED THE OLD GMV — **A CHANNEL SWAP (Shopify counted TWICE)**
+The v11 handoff (`2SPLT_Handoff_Packet_v12_Build.md` §4) says verbatim: *"'Amazon-Gross sales over time - 2024'
+is actually **SHOPIFY** data; 'Shopify-SalesDashboard-4-23-26' is actually **AMAZON**."*
+**BUT the methodology packet then builds 2024 GMV with "Amazon US: $305,066 gross (documented)" — and
+$305,066 IS SHOPIFY'S 2024 GROSS-BY-SKU** (I computed it independently from the owner's export). It ALSO lists
+Shopify separately at $275,184. **→ SHOPIFY WAS DOUBLE-COUNTED.** Same in 2025: "Amazon US $238,468" is
+**Shopify's 2025 gross.**
+**→ The old GMV was higher NOT because it was more complete — because one channel was counted twice under two
+names.** (Also explains the old "$836K-GMV era" the handoff itself says to purge.)
+### ✅ THE REAL FIND — **AMAZON CA/MX MAY BE MISSING FROM OUR GMV** (could legitimately RAISE it)
+The 1099-K map (third-party verified): **Amazon US $344,035.75 + Amazon CA $11,870.02 + Amazon MX $10,561.67**.
+**Our locked Amazon 2024 ($321,251) came from the US-ONLY settlement report (amazon.com).**
+→ **~$22,431 of CA+MX Splitflask GMV may be OMITTED from 2024.** Same question for 2025 (we found SG/AU $2,383;
+**2025 ad spend included MXN and CAD → those marketplaces were ACTIVE, so there were sales**). Pass cut:
+AMAZON_INTL_AND_SWAP_CHECK. Owner is creating an **`/amazon`** subfolder for all Amazon docs.
+### ✅ SHOPIFY 2024 CORROBORATED: our SKU-export net **$166,155.55** vs the Splitflask-store 1099-K
+**$164,613.99** — within ~$1,540, INDEPENDENTLY. That's a strength to state in the Diligence Source Index.
+### ⚠️ REJECT the old packet's "corrected 2024 GMV ≈ $855,031" — it got there by ADDING the **Cyberbrands
+channel** (2nd Shopify store $82,264 + 2nd Amazon acct $22,415). **Cyberbackpack is a DIFFERENT PRODUCT and
+must NEVER enter Splitflask GMV.** That is a two-denominator violation — exactly what the wall prevents.
+### 🤝 PARTIAL CONCESSION ON KNOCKING: a prior session read the SAME signed contract and concluded
+**marketplace, GMV = 2× net** (≈$22,503 on ~560 units). I read "Price to Knocking: the price Knocking pays for
+your product" as PURCHASE language. **Reasonable readers have disagreed → it is genuinely AMBIGUOUS.** Owner
+(who knows whether it was dropshipped) has decided: marketplace, gross up. **Recorded as an owner decision with
+the contract language disclosed — not as a settled fact.**
 
-Wholesale collapsed: $86,776 → $20,800 (−76%). TikTok: $125,951 → $11,282 (−91%). Amazon: −36%. Shopify: −10%.
 
-### ON-AIR RECONCILIATION UPDATED
-On-air $499K vs verified GMV $389,812 = **+$109K (+28% above)**. 
-Prior v1 rebuild showed +8%. The wholesale plug masked $62K of the true gap.
-Bridge: basis corrections −$47K (TikTok/Amazon/Shopify) + wholesale collapse −$62K = total −$109K.
-**DISCLOSE PROACTIVELY.** See GMV_Rebuild_Net_Basis.md §7 for the full disclosure language.
+## ✅ CHANNEL SWAP CONFIRMED (6th plug) — but the CURRENT numbers are UNAFFECTED
+**$305,065.90 = SHOPIFY 2024 gross, to the penny. $238,467.80 = SHOPIFY 2025 gross, to the penny.** Both were
+sitting in the v11 build **labeled as AMAZON**. The real Amazon US CSV shows order product sales of $320,427
+(marketplace = "amazon.com" only). **The v11 build counted Shopify TWICE in 2024** (~$305K mislabeled as Amazon
++ ~$275K as Shopify) — **that is why the old GMV looked bigger.**
+✅ **The current locked GMV ($700,134 / $399,412) uses the CORRECT source per channel — UNAFFECTED.**
+## ⚠️ AMAZON INTERNATIONAL — real, but partly UNSOURCED
+- **2025 MEXICO: CONFIRMED MISSING.** MX$81,626.41 ≈ **$4,083 USD**, not in the locked $399,412.
+  → **Revised 2025 GMV ≈ $403,495.** ⚠️ **ESTIMATED from a dashboard — NOT a sourced settlement figure.**
+  Flag as estimated until the MX settlement CSV is pulled. (It's almost certainly real — 2025 ad spend was in
+  MXN, and you don't buy ads where you have no sales.)
+- ⚠️ **2024 CA + MX = $22,432 per 1099-K — UNRESOLVED.** Our Amazon 2024 ($321,251) vs US-only order product
+  sales ($320,427): the ~$824 difference **cannot account for $22K of international.** → **EITHER CA/MX are
+  MISSING from 2024, OR the $321,251 contains an unsourced adjustment.** **If missing, 2024 GMV rises ~$21,000.**
+- 2025 AU/SG: already inside the $2,383 line. No change.
+### 🎯 **OWNER ACTION: pull the CANADA and MEXICO unified transaction reports from Seller Central, 2024 AND
+2025.** This is the ONE open item that could legitimately RAISE the GMV — and unlike the contested gross-ups,
+**this is revenue actually earned and actually paid.**
+## ✅ SHOPIFY 2024 TRIPLE-CORROBORATED (a genuine diligence STRENGTH — state it prominently)
+SKU export **$166,155.55** vs Splitflask-store 1099-K **$164,613.99** = 0.9% gap, explained by PayPal /
+non-Shopify-Payments orders. **Three independent sources converge.**
+## ✅ CYBERBRANDS/CYBERBACKPACK CONFIRMED EXCLUDED from every locked GMV channel. The old "$855K corrected GMV"
+was a two-denominator violation; it never entered the current numbers.
+## CURRENT GMV: **2024 $700,134** (pending CA/MX confirm, could rise ~$21K) | **2025 ~$403,495** (MX added,
+estimated) | **2026 H1 $97,930**
+
+
+## ✅✅✅ FINAL GMV — ALL DECISIONS LOCKED
+| Decision | Ruling |
+| Sharper Image gross-up | **REMOVED** (invoice #002531: SGM INVOICED Camelot SI at $25/unit, 35 units — a WHOLESALE INVOICE, not a commission) |
+| Macy's gross-up | **REMOVED** (owner) — 22 check deposits at FACE VALUE $9,599.89 |
+| Knocking gross-up | ✅ **APPLIED 2×** — flash-sale MEDIA platform; owner DROPSHIPS to consumer; ~50% media/commission fee; title never transfers. ⚠️ Schedule A says "the price Knocking pays for your product" → **DISCLOSE PREEMPTIVELY** |
+| Walmart / Best Buy | ✅ **GROSSED UP** — genuine marketplaces (Walmart's own report column = "GMV"; Best Buy = `Commission_12%`) |
+| Kickstarter | ❌ **NOT GMV** — separate **BOOKINGS** line |
+| Amazon CA/MX | ✅ **ADDED** — settlement-sourced, net |
+### FINAL FIGURES
+**2024 ≈ $730,674 | 2025 ≈ $421,889 | 2026 H1 ≈ $99,700**
+**Kickstarter BOOKINGS (separate): $54,386 — 786 backer orders, 106 fulfilled, 680 PENDING.**
+**Total 2025 capital collected: $476,275.** (Tax: cash basis → the $54,386 IS 2025 income. Unchanged.)
+⚠️ **Deferred delivery obligation: ~680 unshipped orders ≈ $7,520 future COGS. DISCLOSE on the balance sheet.**
+### CHANNEL DETAIL (sourced)
+Amazon US $321,251 / $205,706 / $72,392 · **Amazon CA $9,266 / $10,237 / $0** · **Amazon MX $9,682 / $3,827 /
+$1,382** · Shopify $166,156 / $149,010 / $23,940 · TikTok $125,951 / $11,282 / $1,598 · US wholesale $86,776 · 
+**Knocking (2×) $22,503 / $15,134** · **Walmart $2,273 / $5,594** (15% commission) · **Best Buy $0 / $650 / $450**
+(12% commission) · Macy's $9,600 (face) · Atlantic $3,014 · SPLT intl wires $7,686.
+### 🚨 ON-AIR: **$499K claimed vs $421,889 verified = +18%.** **DISCLOSE FIRST, with the bridge.**
+### 🚨 NARRATIVE MUST BE REWRITTEN: not "IP-protection pullback" but **WHOLESALE COLLAPSED −76%** (ESP $57.6K →
+$0) **and TikTok went to ZERO** — while **Amazon (−36%) and Shopify (−10%) HELD.** The DTC core is stable; what
+collapsed were channels requiring constant chasing. **Arguably a STRONGER story. Do not spin — restate.**
+Pass cut: **FINAL_GMV_IMPLEMENT.md**
+
+
+## ✅ VERIFICATION PASS — Channel Swap + Amazon Intl (2026-07-12)
+**Job A — Channel Swap CONFIRMED (6th plug):** `$305,065.90` (Shopify 2024 gross) was mislabeled as Amazon in v11 build; `$238,467.80` (Shopify 2025 gross) same swap. v11 double-counted Shopify under two names — this inflated old GMV, NOT the current locked numbers. Deliverable already existed: `deliverables/Channel_Swap_And_Intl_Amazon_Verification_2026-07-12.md`. Confirmed to the penny.
+
+**Job B — All CA/MX/Intl Amazon settlement-verified:**
+Settlement files (`amazon/Canada-Total-settlement-Transactions until 2024-12-31.csv`, `amazon/Mexico-Total-Settlement-Transactions until 12_31_2024.csv` — both extend through 2026 despite filename dates) confirm all locked intl figures within exchange-rate rounding (<$175 on each):
+- CA 2024: 12,692.52 CAD net → $9,316 USD (locked $9,266 ✓)
+- MX 2024: 176,039 MXN net → ~$9,510 USD (locked $9,682 ✓)
+- CA 2025: **14,136.92 CAD net → $10,163 USD (locked $10,237 ✓) — NEW: prior pass had "no data"; Canada settlement file extends to 2026 and contains 210 CA orders + 44 refunds for 2025. Open item CLOSED.**
+- MX 2025: 76,183 MXN net → $3,809 USD (locked $3,827 ✓)
+- CA 2026 H1: 0 orders → $0 (locked $0 ✓ exact)
+- MX 2026 H1: 25,390 MXN net → $1,320 USD (locked $1,382 ✓)
+
+**Final locked GMV STANDS: 2024 $730,674 | 2025 $421,889 | 2026 H1 $99,700. No open CA/MX items.**
+
+**Job C — Shopify 2024 triple-corroborated:** SKU export $166,155.55 = monthly breakdown $166,155.55 (to the penny, two formats) vs 1099-K $164,613.99 (−1% = PayPal/non-Shopify-Payments, expected). State as diligence strength.
+
+**Job D — Cyberbrands EXCLUDED:** Confirmed clean. Two-denominator wall holds throughout.
