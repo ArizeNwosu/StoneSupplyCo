@@ -8,6 +8,7 @@ import { SpecsGrid } from "@/components/detail/SpecsGrid";
 import { AvailabilityBadge } from "@/components/detail/AvailabilityBadge";
 import { RelatedMaterials } from "@/components/detail/RelatedMaterials";
 import { MaterialCTA } from "@/components/detail/MaterialCTA";
+import { SaveButton } from "@/components/projects/SaveButton";
 import { MaterialGrid } from "@/components/materials/MaterialGrid";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -269,6 +270,30 @@ export default async function MaterialPage({ params }: Props) {
             )}
 
             <MaterialCTA materialName={material.name} slug={material.slug} />
+
+            <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem", flexWrap: "wrap" }}>
+              <SaveButton slug={material.slug} />
+              <a
+                href={`/compare?slugs=${material.slug}`}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.4rem",
+                  background: "transparent",
+                  color: "var(--color-ink)",
+                  border: "1px solid var(--color-line)",
+                  borderRadius: "var(--radius-card)",
+                  padding: "0.55rem 1.1rem",
+                  fontSize: "0.82rem",
+                  letterSpacing: "0.03em",
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Compare
+              </a>
+            </div>
+
             <SpecsGrid material={material} />
 
             {material.bookmatch_available && (
