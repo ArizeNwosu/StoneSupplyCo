@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { FallbackImage } from "@/components/FallbackImage";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import {
@@ -18,6 +19,7 @@ import { AiFinderCTA } from "@/components/homepage/AiFinderCTA";
 import { business } from "@/data/business";
 import { authenticPhotos } from "@/data/gallery";
 import { featuredInventory, finishOptions } from "@/data/inventory";
+import { googleReviewSummary, reviews } from "@/data/reviews";
 import Link from "next/link";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -96,12 +98,14 @@ const selectionPrinciples = [
   },
 ];
 
-const audiences = [
-  ["Designers", "Compare undertone, movement, and finish at project scale."],
-  ["Builders", "Review current quantities and dimensions before scheduling the next step."],
-  ["Fabricators", "Start with full-slab specifications and confirm the exact material in person."],
-  ["Homeowners", "Move from saved inspiration to a surface you can actually stand in front of."],
+const visitSteps = [
+  ["01", "Browse", "Start with current slabs, dimensions, finishes, and asking prices."],
+  ["02", "Shortlist", "Save or compare the surfaces that fit the room and the budget."],
+  ["03", "Visit", "See the full slab in natural scale at the Northridge yard."],
+  ["04", "Confirm", "Verify quantity, condition, and final pricing before fabrication."],
 ] as const;
+
+const reviewProof = reviews.find((review) => review.featured) ?? reviews[0];
 
 export default function Home() {
   const [leadInventory, ...secondaryInventory] = featuredInventory;
@@ -128,20 +132,22 @@ export default function Home() {
             <div className="hero-actions">
               <TrackedLink
                 className="button button-light"
+                href="/materials"
+                eventName="inventory_click"
+                eventLabel="hero"
+              >
+                Browse current slabs <ArrowUpRight />
+              </TrackedLink>
+              <TrackedLink
+                className="text-link text-link-on-dark"
                 href={business.directionsUrl}
                 eventName="directions_click"
                 eventLabel="hero"
                 target="_blank"
                 rel="noreferrer"
               >
-                Get directions <ArrowUpRight />
+                Visit the yard <ArrowRight />
               </TrackedLink>
-              <Link
-                className="text-link text-link-on-dark"
-                href="/materials"
-              >
-                Browse all slabs <ArrowRight />
-              </Link>
             </div>
 
             <TrackedLink
@@ -195,6 +201,17 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="review-proof" aria-label="Customer rating" data-reveal>
+          <div className="review-proof-rating">
+            <span aria-hidden="true">★★★★★</span>
+            <strong>{googleReviewSummary.rating.toFixed(1)}</strong>
+            <span>on Google</span>
+          </div>
+          <blockquote>“{reviewProof.text.length > 150 ? `${reviewProof.text.slice(0, 150).trimEnd()}…` : reviewProof.text}”</blockquote>
+          <cite>{reviewProof.reviewer} · Google review</cite>
+          <Link className="text-link" href="#reviews">Read the customer experience <ArrowRight /></Link>
+        </section>
+
         <section id="inventory" className="inventory-section section-pad">
           <div className="section-heading inventory-heading" data-reveal>
             <p className="eyebrow">Current inventory / 01</p>
@@ -211,7 +228,7 @@ export default function Home() {
           <div className="inventory-editorial" data-reveal>
             <figure className="inventory-lead">
               <div className="inventory-image-wrap">
-                <Image
+                <FallbackImage
                   src={leadInventory.image}
                   alt={leadInventory.alt}
                   fill
@@ -234,7 +251,7 @@ export default function Home() {
               {secondaryInventory.slice(0, 2).map((item) => (
                 <figure key={`${item.name}-${item.finish}`}>
                   <div className="inventory-image-wrap">
-                    <Image
+                    <FallbackImage
                       src={item.image}
                       alt={item.alt}
                       fill
@@ -299,7 +316,7 @@ export default function Home() {
           <div className="selection-layout">
             <figure className="selection-photo" data-reveal>
               <div className="selection-photo-image">
-                <Image
+                <FallbackImage
                   src={authenticPhotos.yard}
                   alt="Full stone slabs stored upright inside Stone Supply Co."
                   fill
@@ -348,7 +365,7 @@ export default function Home() {
 
           <div className="gallery-mosaic" data-reveal>
             <figure className="gallery-item gallery-a">
-              <Image
+              <FallbackImage
                 src={authenticPhotos.hero}
                 alt="Backlit blue natural marble slab with amber veining"
                 fill
@@ -357,7 +374,7 @@ export default function Home() {
               <figcaption>Natural marble / light and movement</figcaption>
             </figure>
             <figure className="gallery-item gallery-b">
-              <Image
+              <FallbackImage
                 src={authenticPhotos.slabs[4].src}
                 alt={authenticPhotos.slabs[4].alt}
                 fill
@@ -365,7 +382,7 @@ export default function Home() {
               />
             </figure>
             <figure className="gallery-item gallery-c">
-              <Image
+              <FallbackImage
                 src={authenticPhotos.slabs[5].src}
                 alt={authenticPhotos.slabs[5].alt}
                 fill
@@ -373,7 +390,7 @@ export default function Home() {
               />
             </figure>
             <figure className="gallery-item gallery-d">
-              <Image
+              <FallbackImage
                 src={authenticPhotos.slabs[1].src}
                 alt={authenticPhotos.slabs[1].alt}
                 fill
@@ -386,17 +403,17 @@ export default function Home() {
 
         <section className="audience-section section-pad">
           <div className="audience-intro" data-reveal>
-            <p className="eyebrow">Built for the project / 04</p>
+            <p className="eyebrow">From search to slab / 04</p>
             <h2>
-              One yard for everyone carrying the work
+              A clearer way to move a material decision
               <em>forward.</em>
             </h2>
           </div>
 
           <div className="audience-list">
-            {audiences.map(([title, description], index) => (
+            {visitSteps.map(([number, title, description]) => (
               <article key={title} data-reveal>
-                <span>0{index + 1}</span>
+                <span>{number}</span>
                 <h3>{title}</h3>
                 <p>{description}</p>
               </article>
@@ -405,8 +422,8 @@ export default function Home() {
 
           <div className="audience-cta" data-reveal>
             <p>
-              Bring the dimensions, the room, and the reference. Start with
-              the full slab, then confirm what fits the project.
+              Bring the dimensions, the room, and the reference. We’ll help you
+              get from shortlist to the actual piece.
             </p>
             <TrackedLink
               className="text-link"
@@ -421,7 +438,7 @@ export default function Home() {
 
         <MaterialCategories />
 
-        <ReviewsSection />
+        <div id="reviews"><ReviewsSection /></div>
 
         <AiFinderCTA />
 

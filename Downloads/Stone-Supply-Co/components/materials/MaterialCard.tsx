@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
+import { FallbackImage } from "@/components/FallbackImage";
 import type { MaterialSummary } from "@/types/material";
 
 function formatPrice(price: number | null): string {
   if (price === null) return "Call for pricing";
-  return `$${price.toLocaleString()}/slab`;
+  return `$${price.toLocaleString()}/sf`;
 }
 
 type Props = {
@@ -26,14 +26,14 @@ export function MaterialCard({ material }: Props) {
     clearance,
   } = material;
 
-  const primaryImage = image_urls[0] ?? null;
+  const primaryImage = image_urls[0]?.replace(/\s+/g, "") ?? null;
   const displayPrice = clearance_price ?? price;
 
   return (
     <Link href={`/materials/${slug}`} className="material-card">
       <div className="material-card-image">
         {primaryImage ? (
-          <Image
+          <FallbackImage
             src={primaryImage}
             alt={name}
             fill
