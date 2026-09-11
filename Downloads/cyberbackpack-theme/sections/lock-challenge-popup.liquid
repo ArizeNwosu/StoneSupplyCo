@@ -20,14 +20,14 @@
         isLoggedIn: {{ customer != blank }},
         winCombo: ['{{ section.settings.combo_d1 }}', '{{ section.settings.combo_d2 }}', '{{ section.settings.combo_d3 }}'],
         timerSeconds: {{ section.settings.timer_seconds }},
-        headingLine1: '{{ section.settings.heading_line1 | escape }}',
-        headingLine2: '{{ section.settings.heading_line2 | escape }}',
-        challengeText: '{{ section.settings.challenge_text | escape }}',
-        winRewardText: '{{ section.settings.win_reward_text | escape }}',
-        loseRewardText: '{{ section.settings.lose_reward_text | escape }}',
-        ctaStart: '{{ section.settings.cta_start | escape }}',
-        ctaClaim: '{{ section.settings.cta_claim | escape }}',
-        klaviyoFormId: '{{ section.settings.klaviyo_form_id | escape }}'
+        headingLine1: {{ section.settings.heading_line1 | json }},
+        headingLine2: {{ section.settings.heading_line2 | json }},
+        challengeText: {{ section.settings.challenge_text | json }},
+        winRewardText: {{ section.settings.win_reward_text | json }},
+        loseRewardText: {{ section.settings.lose_reward_text | json }},
+        ctaStart: {{ section.settings.cta_start | json }},
+        ctaClaim: {{ section.settings.cta_claim | json }},
+        klaviyoFormId: {{ section.settings.klaviyo_form_id | json }}
       };
     </script>
     <div id="cyberlock-root"></div>

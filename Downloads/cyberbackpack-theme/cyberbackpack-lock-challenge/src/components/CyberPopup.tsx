@@ -200,7 +200,8 @@ export const CyberPopup = ({
 
   useEffect(() => {
     if (!isOpen) {
-      setTimeout(() => setGameState('intro'), 500);
+      const t = setTimeout(() => setGameState('intro'), 500);
+      return () => clearTimeout(t);
     }
   }, [isOpen]);
 

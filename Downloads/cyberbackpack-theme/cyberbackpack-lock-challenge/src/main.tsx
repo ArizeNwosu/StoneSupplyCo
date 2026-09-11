@@ -1,12 +1,12 @@
 import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { AnimatePresence } from 'motion/react';
 import { getConfig } from './config';
 import { CyberPopup } from './components/CyberPopup';
 import App from './App';
 import './index.css';
 
 const config = getConfig();
-
 const productionRoot = document.getElementById('cyberlock-root');
 
 if (productionRoot) {
@@ -19,13 +19,20 @@ if (productionRoot) {
   if (!shouldSkip) {
     const PopupWrapper = () => {
       const [isOpen, setIsOpen] = useState(true);
-      return <CyberPopup isOpen={isOpen} onClose={() => setIsOpen(false)} />;
+      const handleClose = () => {
+        if (config.showOnce) {
+          localStorage.setItem('cyberlock_shown', '1');
+        }
+        setIsOpen(false);
+      };
+      return (
+        <AnimatePresence>
+          {isOpen && <CyberPopup isOpen={isOpen} onClose={handleClose} />}
+        </AnimatePresence>
+      );
     };
 
     setTimeout(() => {
-      if (config.showOnce) {
-        localStorage.setItem('cyberlock_shown', '1');
-      }
       createRoot(productionRoot).render(
         <StrictMode>
           <PopupWrapper />

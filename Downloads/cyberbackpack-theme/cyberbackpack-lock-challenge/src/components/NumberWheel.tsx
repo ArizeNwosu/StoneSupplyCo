@@ -12,6 +12,8 @@ export const NumberWheel = ({
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = 500 * 64 - 64;
+      const digit = Math.round(scrollRef.current.scrollTop / 64) % 10;
+      onValueChange?.(digit);
     }
   }, []);
 
