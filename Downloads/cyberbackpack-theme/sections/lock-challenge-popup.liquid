@@ -1,0 +1,210 @@
+{%- if section.settings.enable -%}
+  {%- assign should_show = true -%}
+
+  {%- if section.settings.show_only_on_index and request.page_type != 'index' -%}
+    {%- assign should_show = false -%}
+  {%- endif -%}
+
+  {%- if section.settings.show_only_for_visitors and customer -%}
+    {%- assign should_show = false -%}
+  {%- endif -%}
+
+  {%- if should_show -%}
+    <script>
+      window.CYBERLOCK_CONFIG = {
+        delay: {{ section.settings.apparition_delay }},
+        showOnce: {{ section.settings.show_only_once }},
+        homeOnly: {{ section.settings.show_only_on_index }},
+        visitorsOnly: {{ section.settings.show_only_for_visitors }},
+        currentPage: '{{ request.page_type }}',
+        isLoggedIn: {{ customer != blank }},
+        winCombo: ['{{ section.settings.combo_d1 }}', '{{ section.settings.combo_d2 }}', '{{ section.settings.combo_d3 }}'],
+        timerSeconds: {{ section.settings.timer_seconds }},
+        headingLine1: '{{ section.settings.heading_line1 | escape }}',
+        headingLine2: '{{ section.settings.heading_line2 | escape }}',
+        challengeText: '{{ section.settings.challenge_text | escape }}',
+        winRewardText: '{{ section.settings.win_reward_text | escape }}',
+        loseRewardText: '{{ section.settings.lose_reward_text | escape }}',
+        ctaStart: '{{ section.settings.cta_start | escape }}',
+        ctaClaim: '{{ section.settings.cta_claim | escape }}',
+        klaviyoFormId: '{{ section.settings.klaviyo_form_id | escape }}'
+      };
+    </script>
+    <div id="cyberlock-root"></div>
+    {{ 'lock-challenge.css' | asset_url | stylesheet_tag }}
+    <script src="{{ 'lock-challenge.js' | asset_url }}" defer></script>
+  {%- endif -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Lock Challenge Popup",
+  "class": "shopify-section--lock-challenge",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "A gamified combination lock popup that captures emails via Klaviyo. Add your Klaviyo Form ID below and enable when ready."
+    },
+    {
+      "type": "checkbox",
+      "id": "enable",
+      "label": "Enable",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "apparition_delay",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "unit": "sec",
+      "label": "Delay until the popup appears",
+      "default": 5
+    },
+    {
+      "type": "checkbox",
+      "id": "show_only_on_index",
+      "label": "Show only on home page",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_only_for_visitors",
+      "label": "Disable for account holders",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_only_once",
+      "label": "Show once per visitor",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Lock Challenge"
+    },
+    {
+      "type": "select",
+      "id": "combo_d1",
+      "label": "Winning combo — digit 1",
+      "options": [
+        { "value": "0", "label": "0" },
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" },
+        { "value": "5", "label": "5" },
+        { "value": "6", "label": "6" },
+        { "value": "7", "label": "7" },
+        { "value": "8", "label": "8" },
+        { "value": "9", "label": "9" }
+      ],
+      "default": "3"
+    },
+    {
+      "type": "select",
+      "id": "combo_d2",
+      "label": "Winning combo — digit 2",
+      "options": [
+        { "value": "0", "label": "0" },
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" },
+        { "value": "5", "label": "5" },
+        { "value": "6", "label": "6" },
+        { "value": "7", "label": "7" },
+        { "value": "8", "label": "8" },
+        { "value": "9", "label": "9" }
+      ],
+      "default": "1"
+    },
+    {
+      "type": "select",
+      "id": "combo_d3",
+      "label": "Winning combo — digit 3",
+      "options": [
+        { "value": "0", "label": "0" },
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" },
+        { "value": "5", "label": "5" },
+        { "value": "6", "label": "6" },
+        { "value": "7", "label": "7" },
+        { "value": "8", "label": "8" },
+        { "value": "9", "label": "9" }
+      ],
+      "default": "4"
+    },
+    {
+      "type": "range",
+      "id": "timer_seconds",
+      "min": 5,
+      "max": 30,
+      "step": 1,
+      "unit": "sec",
+      "label": "Timer duration",
+      "default": 10
+    },
+    {
+      "type": "header",
+      "content": "Copy"
+    },
+    {
+      "type": "text",
+      "id": "heading_line1",
+      "label": "Heading — line 1",
+      "default": "BREAK INTO"
+    },
+    {
+      "type": "text",
+      "id": "heading_line2",
+      "label": "Heading — line 2",
+      "default": "THE BACKPACK"
+    },
+    {
+      "type": "text",
+      "id": "challenge_text",
+      "label": "Challenge description",
+      "default": "Think you can crack our TSA combination lock?"
+    },
+    {
+      "type": "text",
+      "id": "win_reward_text",
+      "label": "Win reward text",
+      "info": "Shown when visitor enters the correct combo",
+      "default": "FREE SHIPPING!"
+    },
+    {
+      "type": "text",
+      "id": "lose_reward_text",
+      "label": "Lose reward text",
+      "info": "Consolation prize shown when visitor fails or timer runs out",
+      "default": "FREE SHIPPING!"
+    },
+    {
+      "type": "text",
+      "id": "cta_start",
+      "label": "Start button text",
+      "default": "START MISSION"
+    },
+    {
+      "type": "text",
+      "id": "cta_claim",
+      "label": "Claim button text",
+      "default": "CLAIM FREE SHIPPING"
+    },
+    {
+      "type": "header",
+      "content": "Klaviyo"
+    },
+    {
+      "type": "text",
+      "id": "klaviyo_form_id",
+      "label": "Klaviyo Form ID",
+      "info": "Found in your Klaviyo form embed code. Example: XxXxXx. Leave blank to skip Klaviyo."
+    }
+  ]
+}
+{% endschema %}
