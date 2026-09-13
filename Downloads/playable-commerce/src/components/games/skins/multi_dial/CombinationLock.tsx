@@ -67,6 +67,7 @@ export function CombinationLock({ values, phase, onDigitChange, onSubmit, brandi
             onPointerDown={(e) => handlePointerDown(i, e)}
             onPointerMove={(e) => handlePointerMove(i, e)}
             onPointerUp={() => handlePointerUp(i)}
+            onPointerCancel={() => handlePointerUp(i)}
           >
             {/* Prev */}
             <span
