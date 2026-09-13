@@ -39,8 +39,13 @@ Rules:
     config: { responseMimeType: 'application/json' },
   });
 
-  const text = response.text ?? '';
-  return JSON.parse(text) as BrandProfile;
+  const text = response.text;
+  if (!text) throw new Error('analyzeBrand: empty response from Gemini');
+  try {
+    return JSON.parse(text) as BrandProfile;
+  } catch {
+    throw new Error(`analyzeBrand: failed to parse Gemini response: ${text.slice(0, 300)}`);
+  }
 }
 
 export async function generateConcepts(brandProfile: BrandProfile): Promise<Concept[]> {
@@ -103,8 +108,13 @@ Rules:
     config: { responseMimeType: 'application/json' },
   });
 
-  const text = response.text ?? '';
-  return JSON.parse(text) as Concept[];
+  const text = response.text;
+  if (!text) throw new Error('generateConcepts: empty response from Gemini');
+  try {
+    return JSON.parse(text) as Concept[];
+  } catch {
+    throw new Error(`generateConcepts: failed to parse Gemini response: ${text.slice(0, 300)}`);
+  }
 }
 
 export async function buildGameSpec(concept: Concept, brandProfile: BrandProfile): Promise<GameSpec> {
@@ -139,14 +149,7 @@ Return ONLY valid JSON matching this exact schema:
   "mechanic": {
     "primitive": "${concept.primitive}",
     "skin": "${concept.skin}",
-    "config": {
-      // For precision_stop/pour_drink: targetValue (0-100), maxValue (100), speed ("medium"), unit ("%"), vessel_shape ("flask")
-      // For multi_dial/combination_lock: digits (3), solution ([random 3 digits])
-      // For pick_one/mystery_box: count (3), box_labels (["Box A","Box B","Box C"])
-      // For hold_release/strength_meter: peak_zone_min (60), peak_zone_max (80), label ("POWER")
-      // For reaction/flash_tap: flash_color (hex), window_ms (800)
-      // For fill_meter/charge_bar: target_min (55), target_max (75), label ("CHARGE")
-    }
+    "config": {}
   },
   "result": {
     "headline": "string — 2-3 words, dramatic ALL CAPS",
@@ -166,7 +169,15 @@ Return ONLY valid JSON matching this exact schema:
   }
 }
 
-Important: fill config with actual values appropriate to the skin. Do not leave placeholder comments.`;
+Config field guidance by primitive (fill config with actual values — do not use comments):
+- precision_stop / pour_drink: { "vessel_shape": "flask", "targetValue": 50, "unit": "%", "maxValue": 100, "speed": "medium" }
+- multi_dial / combination_lock: { "digits": 3, "solution": [3, 7, 1] }
+- pick_one / mystery_box: { "count": 3, "box_labels": ["Box A", "Box B", "Box C"] }
+- hold_release / strength_meter: { "peak_zone_min": 60, "peak_zone_max": 80, "label": "POWER" }
+- reaction / flash_tap: { "flash_color": "#FF0000", "window_ms": 800 }
+- fill_meter / charge_bar: { "target_min": 55, "target_max": 75, "label": "CHARGE" }
+
+Important: fill config with actual values appropriate to the primitive and skin. Do not use comments inside JSON.`;
 
   const response = await ai.models.generateContent({
     model: MODEL,
@@ -174,6 +185,11 @@ Important: fill config with actual values appropriate to the skin. Do not leave 
     config: { responseMimeType: 'application/json' },
   });
 
-  const text = response.text ?? '';
-  return JSON.parse(text) as GameSpec;
+  const text = response.text;
+  if (!text) throw new Error('buildGameSpec: empty response from Gemini');
+  try {
+    return JSON.parse(text) as GameSpec;
+  } catch {
+    throw new Error(`buildGameSpec: failed to parse Gemini response: ${text.slice(0, 300)}`);
+  }
 }
