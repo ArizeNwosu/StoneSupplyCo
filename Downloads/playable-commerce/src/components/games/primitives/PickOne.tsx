@@ -1,5 +1,5 @@
 // src/components/games/primitives/PickOne.tsx
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { SkinConfig } from '../../../types';
 import { MysteryBox } from '../skins/pick_one/MysteryBox';
 
@@ -22,13 +22,22 @@ export function PickOne({ config, skin, branding, onResult }: Props) {
   const count = config.count ?? 3;
   const [selected, setSelected] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const timer1Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timer2Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timer1Ref.current !== null) clearTimeout(timer1Ref.current);
+      if (timer2Ref.current !== null) clearTimeout(timer2Ref.current);
+    };
+  }, []);
 
   const handlePick = useCallback((index: number) => {
     if (selected !== null) return;
     setSelected(index);
-    setTimeout(() => {
+    timer1Ref.current = setTimeout(() => {
       setRevealed(true);
-      setTimeout(() => onResult(false), 800);
+      timer2Ref.current = setTimeout(() => onResult(false), 800);
     }, 600);
   }, [selected, onResult]);
 
