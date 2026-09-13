@@ -1,6 +1,7 @@
 // src/components/games/primitives/PickOne.tsx
-// Stub — full implementation in Task 8
+import { useState, useCallback } from 'react';
 import type { SkinConfig } from '../../../types';
+import { MysteryBox } from '../skins/pick_one/MysteryBox';
 
 interface BrandingColors {
   primaryColor: string;
@@ -17,19 +18,44 @@ interface Props {
   onResult: (success: boolean) => void;
 }
 
-export function PickOne({ branding, onResult }: Props) {
+export function PickOne({ config, skin, branding, onResult }: Props) {
+  const count = config.count ?? 3;
+  const [selected, setSelected] = useState<number | null>(null);
+  const [revealed, setRevealed] = useState(false);
+
+  const handlePick = useCallback((index: number) => {
+    if (selected !== null) return;
+    setSelected(index);
+    setTimeout(() => {
+      setRevealed(true);
+      setTimeout(() => onResult(false), 800);
+    }, 600);
+  }, [selected, onResult]);
+
+  const skinProps = { count, selected, revealed, onPick: handlePick, config, branding };
+
+  if (skin === 'mystery_box') return <MysteryBox {...skinProps} />;
+
+  // Generic fallback
   return (
-    <div className="flex flex-col items-center justify-center h-full p-8 gap-6">
-      <p style={{ color: branding.textColor }} className="opacity-50 text-sm">
-        PickOne — coming in Task 8
-      </p>
-      <button
-        onClick={() => onResult(false)}
-        className="px-6 py-3 rounded-lg font-bold text-sm"
-        style={{ background: branding.primaryColor, color: branding.backgroundColor }}
-      >
-        PICK (STUB)
-      </button>
+    <div className="flex flex-col items-center justify-center h-full gap-6 p-8">
+      <p className="text-sm opacity-60" style={{ color: branding.textColor }}>Choose one:</p>
+      <div className="flex gap-4">
+        {Array.from({ length: count }, (_, i) => (
+          <button
+            key={i}
+            onClick={() => handlePick(i)}
+            className="w-20 h-20 rounded-xl font-bold text-lg border-2 transition-all"
+            style={{
+              borderColor: selected === i ? branding.primaryColor : branding.primaryColor + '40',
+              background: selected === i ? branding.primaryColor + '20' : 'transparent',
+              color: branding.textColor,
+            }}
+          >
+            {i + 1}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
