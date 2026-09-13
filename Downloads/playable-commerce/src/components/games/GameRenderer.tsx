@@ -1,5 +1,5 @@
 // src/components/games/GameRenderer.tsx
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import type { GameSpec } from '../../types';
 import { PrecisionStop } from './primitives/PrecisionStop';
@@ -16,6 +16,7 @@ interface GameRendererProps {
 export function GameRenderer({ spec, onComplete }: GameRendererProps) {
   const [phase, setPhase] = useState<Phase>('intro');
   const [isSuccess, setIsSuccess] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { branding, intro, result, reward, conversion, mechanic } = spec;
 
@@ -30,11 +31,17 @@ export function GameRenderer({ spec, onComplete }: GameRendererProps) {
         ? 'font-serif'
         : 'font-sans';
 
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) clearTimeout(timerRef.current);
+    };
+  }, []);
+
   const handleGameResult = useCallback(
     (success: boolean) => {
       setIsSuccess(success);
       setPhase('result');
-      setTimeout(() => setPhase('reward'), result.delayMs + 1500);
+      timerRef.current = setTimeout(() => setPhase('reward'), result.delayMs + 1500);
     },
     [result.delayMs],
   );
