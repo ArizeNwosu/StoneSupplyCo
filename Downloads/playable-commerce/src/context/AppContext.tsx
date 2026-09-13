@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useReducer } from 'react';
 import type { AppState, BrandProfile, Concept, GameSpec, StoreConfig } from '../types';
 
-type Action =
+export type Action =
   | { type: 'SET_STORE'; payload: StoreConfig }
   | { type: 'SET_ANALYZING'; payload: boolean }
   | { type: 'SET_BRAND_PROFILE'; payload: BrandProfile }
@@ -65,6 +65,12 @@ function reducer(state: AppState, action: Action): AppState {
           result: action.payload.result
             ? { ...state.gameSpec.result, ...action.payload.result }
             : state.gameSpec.result,
+          mechanic: action.payload.mechanic
+            ? { ...state.gameSpec.mechanic, ...action.payload.mechanic }
+            : state.gameSpec.mechanic,
+          conversion: action.payload.conversion
+            ? { ...state.gameSpec.conversion, ...action.payload.conversion }
+            : state.gameSpec.conversion,
         },
       };
     case 'SET_ERROR':
