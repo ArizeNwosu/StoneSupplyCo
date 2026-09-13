@@ -130,13 +130,15 @@ export interface StoreConfig {
   url: string;
 }
 
+export type ExperienceStatus = 'active' | 'draft' | 'paused';
+
 export interface AppState {
   store: StoreConfig | null;
   brandProfile: BrandProfile | null;
   concepts: Concept[];
   selectedConcept: Concept | null;
   gameSpec: GameSpec | null;
-  experience: { id: string; name: string; status: 'draft' | 'active' | 'paused' } | null;
+  experience: { id: string; name: string; status: ExperienceStatus } | null;
   analyzing: boolean;
   generatingConcepts: boolean;
   buildingSpec: boolean;
@@ -147,7 +149,7 @@ export interface AppState {
 export interface Experience {
   id: string;
   name: string;
-  status: 'active' | 'draft' | 'paused';
+  status: ExperienceStatus;
   placement: string;
   impressions: number;
   plays: number;
@@ -158,10 +160,10 @@ export interface Experience {
 }
 
 export interface PlayableConfig {
-  mechanic: string;
+  mechanic: MechanicPrimitive;
   duration: number;
   headline: string;
-  reward: { type: string; value?: string };
-  result: { type: string };
+  reward: { type: 'free_shipping' | 'percentage_off' | 'fixed_off' | 'free_product' | 'mystery'; value?: string };
+  result: { type: 'deny' | 'reveal' | 'near_miss' | 'success' };
   targeting: { delay: number; newVisitors: boolean };
 }
