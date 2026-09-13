@@ -32,6 +32,7 @@ export default function AnalyzeStore() {
       }
     };
     run();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleGenerateConcepts = async () => {
@@ -42,6 +43,7 @@ export default function AnalyzeStore() {
       dispatch({ type: 'SET_CONCEPTS', payload: concepts });
       navigate('/concepts');
     } catch (e) {
+      dispatch({ type: 'SET_GENERATING_CONCEPTS', payload: false });
       dispatch({ type: 'SET_ERROR', payload: 'Failed to generate concepts. Please try again.' });
     }
   };
