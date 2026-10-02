@@ -2,63 +2,136 @@
 .hero-phone{width:180px;flex:none;background:#111;border-radius:24px;padding:8px;border:2px solid #2a2a2a;box-shadow:0 20px 60px #0004;position:relative}
 .hero-phone::before{content:'';position:absolute;top:6px;left:50%;transform:translateX(-50%);width:40px;height:5px;background:#222;border-radius:3px;z-index:2}
 .hero-phone__screen{background:#10151b;border-radius:16px;aspect-ratio:9/17;overflow:hidden;position:relative}
-.hero-phone__poster{width:100%;height:100%;object-fit:cover;display:block}
 
-/* ── Animation overlay ── */
-.hero-anim{position:absolute;inset:0;pointer-events:none}
+/* ── Poster + scene layers ── */
+.hero-phone__poster,.hero-phone__scene{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero-phone__poster{z-index:1}
+.hero-phone__scene{z-index:0;object-position:center 20%}
 
-/* Corner glow — top-right target area of the poster */
-.hero-anim__glow--tr{position:absolute;width:16%;aspect-ratio:1;top:38%;right:12%;border-radius:50%;animation:hero-glow 5s ease infinite}
+/* ── Animation container ── */
+.hero-anim{position:absolute;inset:0;z-index:2;pointer-events:none}
 
-/* Puck — starts at center-bottom, fires to top-right corner */
-.hero-anim__puck{position:absolute;width:7%;aspect-ratio:1;background:#111;border:1px solid #555;border-radius:50%;z-index:2;animation:hero-puck 5s ease infinite}
+/*
+  TIMELINE — 8s loop
+  0.0–1.2s  poster visible (intro)
+  1.2–1.4s  poster fades → scene revealed
+  1.4–1.8s  "3" countdown
+  1.8–2.2s  "2" countdown
+  2.2–2.6s  "1" countdown
+  2.6–3.6s  target pulses + "SHOOT!" text
+  3.6–3.8s  target hit → goal flash
+  3.8–4.2s  flash fades
+  4.2–6.8s  result overlay
+  6.8–7.2s  result fades → poster returns
+  7.2–8.0s  poster idle before repeat
+*/
 
-/* Full-screen flash on goal */
-.hero-anim__flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:3;animation:hero-flash 5s ease infinite}
-
-/* Result overlay */
-.hero-anim__result{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:4;opacity:0;background:#000c;animation:hero-result 5s ease infinite}
-.hero-anim__time{font:700 11px/1 Impact,'Arial Narrow',sans-serif;color:#a3dcef;letter-spacing:.04em}
-.hero-anim__goal{font:italic 700 26px/1 Impact,'Arial Narrow',sans-serif;color:#32d96a;text-shadow:0 0 14px #0a7d3480;margin-top:4px}
-.hero-anim__reward{font:800 8px/1.4 Inter,sans-serif;color:#ff343a;margin-top:8px;letter-spacing:.06em;text-align:center}
-
-/* ── Keyframes ── */
-
-/* Target glow pulses */
-@keyframes hero-glow{
-  0%,18%{box-shadow:none;background:transparent}
-  22%,34%{box-shadow:0 0 18px 6px #a3dcef80;background:#a3dcef20}
-  40%,100%{box-shadow:none;background:transparent}
+/* ── Poster fade ── */
+.hero-anim-intro{animation:hero-poster 8s ease infinite}
+@keyframes hero-poster{
+  0%,14%{opacity:1}
+  17%{opacity:0}
+  83%{opacity:0}
+  90%,100%{opacity:1}
 }
 
-/* Puck fires from bottom-center to lit corner */
-@keyframes hero-puck{
-  0%,20%{bottom:22%;left:48%;opacity:1;transform:scale(1)}
-  32%{bottom:56%;left:78%;opacity:1;transform:scale(.5)}
-  36%{opacity:0}
-  92%{opacity:0}
-  100%{bottom:22%;left:48%;opacity:1;transform:scale(1)}
+/* ── Scene reveal (inverse of poster) ── */
+.hero-anim-scene{animation:hero-scene 8s ease infinite}
+@keyframes hero-scene{
+  0%,14%{opacity:0}
+  17%{opacity:1}
+  83%{opacity:1}
+  90%,100%{opacity:0}
 }
 
-/* Quick white flash on impact */
-@keyframes hero-flash{
-  0%,31%{opacity:0}
-  33%{opacity:.6}
-  38%{opacity:0}
+/* ── Countdown numbers ── */
+.hero-anim__countdown{position:absolute;inset:25% 0 30%;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:5}
+.hero-anim__countdown span{position:absolute;font:italic 900 42px/1 Impact,'Arial Narrow',sans-serif;color:#fff;text-shadow:0 3px 20px #000;opacity:0}
+.hero-anim__count3{animation:hero-count3 8s ease infinite}
+.hero-anim__count2{animation:hero-count2 8s ease infinite}
+.hero-anim__count1{animation:hero-count1 8s ease infinite}
+
+@keyframes hero-count3{
+  0%,17%{opacity:0;transform:scale(1.3)}
+  18%{opacity:1;transform:scale(1)}
+  22%{opacity:1}
+  23%{opacity:0}
+  100%{opacity:0}
+}
+@keyframes hero-count2{
+  0%,22%{opacity:0;transform:scale(1.3)}
+  23%{opacity:1;transform:scale(1)}
+  27%{opacity:1}
+  28%{opacity:0}
+  100%{opacity:0}
+}
+@keyframes hero-count1{
+  0%,27%{opacity:0;transform:scale(1.3)}
+  28%{opacity:1;transform:scale(1)}
+  32%{opacity:1}
+  33%{opacity:0}
   100%{opacity:0}
 }
 
-/* Result card fades in, holds, fades out */
-@keyframes hero-result{
-  0%,34%{opacity:0}
-  40%,68%{opacity:1}
-  78%,100%{opacity:0}
+/* ── Active target — top-right corner position matches real game (76.5%, 36.3%) ── */
+.hero-anim__target{position:absolute;width:11%;aspect-ratio:1;top:29%;right:14%;border-radius:50%;z-index:4;opacity:0;animation:hero-target 8s ease infinite}
+.hero-anim__target::before{content:'';position:absolute;inset:0;border:2px solid #fff;border-radius:50%;background:#f01821c9}
+.hero-anim__target::after{content:'+';position:absolute;inset:0;display:grid;place-items:center;color:#fff;font:700 12px/1 sans-serif;text-shadow:0 0 6px #fff}
+
+@keyframes hero-target{
+  0%,32%{opacity:0}
+  33%{opacity:1;box-shadow:0 0 8px 4px #ff3030,0 0 20px 8px #ff2020}
+  38%{box-shadow:0 0 12px 6px #ff3030,0 0 28px 12px #ff2020}
+  40%{box-shadow:0 0 8px 4px #ff3030,0 0 20px 8px #ff2020}
+  42%{box-shadow:0 0 12px 6px #ff3030,0 0 28px 12px #ff2020}
+  45%{opacity:1}
+  47%{opacity:0}
+  100%{opacity:0}
 }
+
+/* ── SHOOT! text ── */
+.hero-anim__shoot{position:absolute;z-index:5;top:52%;left:0;right:0;text-align:center;color:#fff;font:italic 900 18px/1 Impact,'Arial Narrow',sans-serif;text-shadow:0 2px 12px #000,0 2px 4px #000;opacity:0;animation:hero-shoot-text 8s ease infinite}
+
+@keyframes hero-shoot-text{
+  0%,32%{opacity:0}
+  34%,44%{opacity:1}
+  46%{opacity:0}
+  100%{opacity:0}
+}
+
+/* ── Goal flash on impact ── */
+.hero-anim__flash{position:absolute;inset:0;z-index:6;opacity:0;animation:hero-flash 8s ease infinite}
+
+@keyframes hero-flash{
+  0%,44%{opacity:0;background:transparent}
+  45%{opacity:1;background:#f0192966}
+  47%{opacity:1;background:#fff8}
+  50%{opacity:0;background:transparent}
+  100%{opacity:0}
+}
+
+/* ── Result overlay ── */
+.hero-anim__result{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(#060a10c0,#060a10ee 40%,#060a10f8);opacity:0;padding:8px;text-align:center;animation:hero-result 8s ease infinite}
+
+@keyframes hero-result{
+  0%,50%{opacity:0}
+  54%,82%{opacity:1}
+  88%,100%{opacity:0}
+}
+
+.hero-anim__eyebrow{font:800 5px/1 Inter,sans-serif;letter-spacing:1.5px;color:#e2e5e8;margin-bottom:2px}
+.hero-anim__goal{font:italic 900 24px/1 Impact,'Arial Narrow',sans-serif;color:#32d96a;text-shadow:0 0 14px #0a7d34,0 2px 8px #000;margin:2px 0}
+.hero-anim__time{font:900 italic 18px/1 Inter,sans-serif;color:#fff;letter-spacing:-0.5px;margin:2px 0}
+.hero-anim__time small{font-size:7px;letter-spacing:1px;font-style:normal;color:#aeb9c6}
+.hero-anim__msg{font:400 6px/1.3 Inter,sans-serif;color:#e2e5eb;margin:3px 0;max-width:90%}
+.hero-anim__unlocked{font:800 5px/1 Inter,sans-serif;letter-spacing:1.5px;color:#fff;margin-top:6px}
+.hero-anim__reward{font:italic 900 20px/1 Impact,'Arial Narrow',sans-serif;color:#ff343a;margin-top:2px}
 
 /* ── Reduced motion ── */
 @media(prefers-reduced-motion:reduce){
-  .hero-anim__glow--tr,.hero-anim__puck,.hero-anim__flash{animation:none!important;opacity:0!important}
-  .hero-anim__result{animation:none!important;opacity:1}
+  .hero-anim-intro,.hero-anim-scene,.hero-anim__countdown span,.hero-anim__target,.hero-anim__shoot,.hero-anim__flash,.hero-anim__result{animation:none!important}
+  .hero-anim-intro{opacity:1!important}
+  .hero-anim-scene{opacity:0!important}
 }
 
 /* ── Mobile ── */
