@@ -7,8 +7,8 @@ import './demoShowcase.css';
 import './demoShowcaseBrand.css';
 
 function DemoArtwork({id}:{id:ShowcaseDemoId}){
-  if(id==='swift-hockey')return <img src="/showcase/swift-poster.webp" alt="Swift Hockey’s playable goalie and four-corner target design" loading="lazy" width={390} height={844}/>;
-  if(id==='reekon')return <img src="/showcase/reekon-poster.webp" alt="REEKON’s industrial digital tape measure and precision challenge" loading="lazy" width={800} height={1200}/>;
+  if(id==='swift-hockey')return <img src="/showcase/swift-poster.webp" alt="Swift Hockey's playable goalie and four-corner target design" loading="lazy" width={390} height={844}/>;
+  if(id==='reekon')return <img src="/showcase/reekon-poster.webp" alt="REEKON's industrial digital tape measure and precision challenge" loading="lazy" width={800} height={1200}/>;
   if(id==='cyberbackpack')return <img src="/showcase/cyber-poster.webp" alt="Cyberbackpack's original combination-lock game screen" loading="lazy" width={390} height={844}/>;
   return <div className="sg-mini-split"><span className="sg-mini-wordmark">SPLITFLASK</span><span className="sg-mini-clock">10:00</span><strong>Try your luck</strong><p>Stop the clock at exactly <b>02:00</b><br/>to win a free Splitflask.</p><span className="sg-mini-cta">PUSH TO PLAY</span></div>;
 }
@@ -66,23 +66,23 @@ export default function DemoShowcase(){
   const [closePlayer]=useState(()=>()=>close.current());
   const open=(id:ShowcaseDemoId)=>setSearch(params=>{params.set('demo',id);return params;});
   const copyEmail=async()=>{try{await navigator.clipboard.writeText(CONTACT_EMAIL);setEmailCopied(true);clearTimeout(timer.current);timer.current=window.setTimeout(()=>setEmailCopied(false),2500);}catch{window.prompt('Copy our email address',CONTACT_EMAIL);}};
-  return <div className=”sg-page”>
-    <a href=”#demos” className=”sg-skip”>Skip to playable demos</a>
-    <header className=”sg-nav sg-wrap”><a className=”sg-brand” href=”/demos” aria-label=”PlayItAgain demo gallery”><span className=”sg-brand-mark”><Gamepad2 size={22}/></span>PlayItAgain<span className=”sg-brand-by”>by Social Gear</span></a>
-      <nav aria-label=”Gallery navigation”><a href=”#demos”>The demos</a><a href=”#how-it-works” className=”sg-nav-secondary”>How it works</a><a className=”sg-nav-contact” href={showcaseContactLink()}>Let’s build yours<ArrowUpRight size={16}/></a></nav></header>
+  return <div className="sg-page">
+    <a href="#demos" className="sg-skip">Skip to playable demos</a>
+    <header className="sg-nav sg-wrap"><a className="sg-brand" href="/demos" aria-label="PlayItAgain demo gallery"><span className="sg-brand-mark"><Gamepad2 size={22}/></span>PlayItAgain<span className="sg-brand-by">by Social Gear</span></a>
+      <nav aria-label="Gallery navigation"><a href="#demos">The demos</a><a href="#how-it-works" className="sg-nav-secondary">How it works</a><a className="sg-nav-contact" href={showcaseContactLink()}>Let's build yours<ArrowUpRight size={16}/></a></nav></header>
     <main>
       {/* ── Section 1: Hero ── */}
-      <section className=”sg-hero sg-wrap”>
-        <div className=”sg-hero-topline”>
-          <span className=”sg-kicker”><span className=”sg-status-dot”/>THE INTERACTIVE POPUP PLATFORM</span>
+      <section className="sg-hero sg-wrap">
+        <div className="sg-hero-topline">
+          <span className="sg-kicker"><span className="sg-status-dot"/>THE INTERACTIVE POPUP PLATFORM</span>
         </div>
-        <div className=”sg-hero-cols”>
-          <div className=”sg-hero-copy”>
+        <div className="sg-hero-cols">
+          <div className="sg-hero-copy">
             <h1>27% of visitors<br/>played the game.<br/><span>3% clicked a normal popup.</span></h1>
-            <p className=”sg-hero-sub”>Turn your product’s defining feature into a playable prize experience.</p>
-            <div className=”sg-hero-ctas”>
-              <a href=”#demos” className=”sg-button sg-button--blue”>Play the demos<ArrowDown size={18}/></a>
-              <a className=”sg-button sg-button--outline” href={showcaseContactLink()}>Let’s build yours<ArrowUpRight size={18}/></a>
+            <p className="sg-hero-sub">Turn your product's defining feature into a playable prize experience.</p>
+            <div className="sg-hero-ctas">
+              <a href="#demos" className="sg-button sg-button--blue">Play the demos<ArrowDown size={18}/></a>
+              <a className="sg-button sg-button--outline" href={showcaseContactLink()}>Let's build yours<ArrowUpRight size={18}/></a>
             </div>
           </div>
           <HeroGameLoop/>
@@ -90,8 +90,8 @@ export default function DemoShowcase(){
       </section>
 
       {/* ── Section 2: Social Proof Bar ── */}
-      <section className=”sg-proof sg-wrap” aria-label=”Performance metrics”>
-        <div className=”sg-proof-grid”>
+      <section className="sg-proof sg-wrap" aria-label="Performance metrics">
+        <div className="sg-proof-grid">
           <div><strong>847K+</strong><span>games played</span></div>
           <div><strong>27.1%</strong><span>avg play rate</span></div>
           <div><strong>$2.4M</strong><span>attributed revenue</span></div>
@@ -100,68 +100,68 @@ export default function DemoShowcase(){
       </section>
 
       {/* ── Section 3: Demo Gallery (upgraded) ── */}
-      <section className=”sg-gallery sg-wrap” id=”demos” aria-labelledby=”sg-gallery-title”>
-        <div className=”sg-section-heading”>
+      <section className="sg-gallery sg-wrap" id="demos" aria-labelledby="sg-gallery-title">
+        <div className="sg-section-heading">
           <div>
-            <p className=”sg-gallery-intro”>Four brands. Four product-specific games. All playable right now.</p>
-            <h2 id=”sg-gallery-title”>Pick your first challenge.</h2>
+            <p className="sg-gallery-intro">Four brands. Four product-specific games. All playable right now.</p>
+            <h2 id="sg-gallery-title">Pick your first challenge.</h2>
           </div>
           <span>No signup needed to play<ArrowDown size={14}/></span>
         </div>
-        <div className=”sg-demo-grid”>{showcaseDemos.map(demo=><article className={`sg-demo-card sg-demo-card--${demo.color}`} key={demo.id}>
-          <button className=”sg-demo-art” aria-label={`Play ${demo.brand} demo`} onClick={()=>open(demo.id)}><DemoArtwork id={demo.id}/><span className=”sg-art-label”><span>{demo.number} / PLAYABLE</span><span className=”sg-art-play”><Play size={19} fill=”currentColor”/></span></span></button>
-          <div className=”sg-card-body”><div className=”sg-card-title”><h3>{demo.brand}</h3><span>{demo.number}</span></div><p className=”sg-card-mechanic”>{demo.mechanic}</p><p>{demo.description}</p><button onClick={()=>open(demo.id)} className=”sg-play-link”>Play demo<ArrowUpRight size={19}/></button></div>
+        <div className="sg-demo-grid">{showcaseDemos.map(demo=><article className={`sg-demo-card sg-demo-card--${demo.color}`} key={demo.id}>
+          <button className="sg-demo-art" aria-label={`Play ${demo.brand} demo`} onClick={()=>open(demo.id)}><DemoArtwork id={demo.id}/><span className="sg-art-label"><span>{demo.number} / PLAYABLE</span><span className="sg-art-play"><Play size={19} fill="currentColor"/></span></span></button>
+          <div className="sg-card-body"><div className="sg-card-title"><h3>{demo.brand}</h3><span>{demo.number}</span></div><p className="sg-card-mechanic">{demo.mechanic}</p><p>{demo.description}</p><button onClick={()=>open(demo.id)} className="sg-play-link">Play demo<ArrowUpRight size={19}/></button></div>
         </article>)}</div>
-        <p className=”sg-gallery-caption”><span className=”sg-status-dot”/>These are playable demonstrations. Rewards and email capture are simulated; no purchase or signup is required.</p>
+        <p className="sg-gallery-caption"><span className="sg-status-dot"/>These are playable demonstrations. Rewards and email capture are simulated; no purchase or signup is required.</p>
       </section>
 
       {/* ── Section 4: Before / After ── */}
-      <section className=”sg-compare sg-wrap” aria-labelledby=”sg-compare-title”>
-        <h2 id=”sg-compare-title”>Your current popup vs. a PlayItAgain experience.</h2>
-        <div className=”sg-compare-grid”>
-          <article className=”sg-compare-card sg-compare-card--before”>
-            <span className=”sg-compare-label sg-compare-label--before”>BEFORE</span>
-            <div className=”sg-compare-visual sg-compare-visual--before”>
-              <div className=”sg-wheel” aria-hidden=”true”>
-                <div className=”sg-wheel__segment sg-wheel__segment--1”/>
-                <div className=”sg-wheel__segment sg-wheel__segment--2”/>
-                <div className=”sg-wheel__segment sg-wheel__segment--3”/>
-                <div className=”sg-wheel__segment sg-wheel__segment--4”/>
-                <div className=”sg-wheel__pointer”/>
+      <section className="sg-compare sg-wrap" aria-labelledby="sg-compare-title">
+        <h2 id="sg-compare-title">Your current popup vs. a PlayItAgain experience.</h2>
+        <div className="sg-compare-grid">
+          <article className="sg-compare-card sg-compare-card--before">
+            <span className="sg-compare-label sg-compare-label--before">BEFORE</span>
+            <div className="sg-compare-visual sg-compare-visual--before">
+              <div className="sg-wheel" aria-hidden="true">
+                <div className="sg-wheel__segment sg-wheel__segment--1"/>
+                <div className="sg-wheel__segment sg-wheel__segment--2"/>
+                <div className="sg-wheel__segment sg-wheel__segment--3"/>
+                <div className="sg-wheel__segment sg-wheel__segment--4"/>
+                <div className="sg-wheel__pointer"/>
               </div>
             </div>
-            <strong className=”sg-compare-stat”>~3% conversion</strong>
+            <strong className="sg-compare-stat">~3% conversion</strong>
             <p>Same wheel on every store. Visitors close on reflex.</p>
           </article>
-          <article className=”sg-compare-card sg-compare-card--after”>
-            <span className=”sg-compare-label sg-compare-label--after”>AFTER</span>
-            <div className=”sg-compare-visual sg-compare-visual--after”>
-              <div className=”sg-minilock” aria-hidden=”true”>
+          <article className="sg-compare-card sg-compare-card--after">
+            <span className="sg-compare-label sg-compare-label--after">AFTER</span>
+            <div className="sg-compare-visual sg-compare-visual--after">
+              <div className="sg-minilock" aria-hidden="true">
                 <span>3</span><span>1</span><span>4</span>
               </div>
             </div>
-            <strong className=”sg-compare-stat”>27% play rate</strong>
+            <strong className="sg-compare-stat">27% play rate</strong>
             <p>Built around YOUR product. Visitors lean in.</p>
           </article>
         </div>
       </section>
 
       {/* ── Section 5: How It Works ── */}
-      <section className=”sg-process sg-wrap” id=”how-it-works” aria-labelledby=”sg-process-title”>
-        <h2 id=”sg-process-title”>From your store URL to a live game in one conversation.</h2>
-        <div className=”sg-process-grid”>
-          <article className=”sg-process-step”>
-            <span className=”sg-process-num”>01</span>
+      <section className="sg-process sg-wrap" id="how-it-works" aria-labelledby="sg-process-title">
+        <h2 id="sg-process-title">From your store URL to a live game in one conversation.</h2>
+        <div className="sg-process-grid">
+          <article className="sg-process-step">
+            <span className="sg-process-num">01</span>
             <h3>Send us your URL</h3>
             <p>We analyze your product, brand, and what makes it playable.</p>
           </article>
-          <article className=”sg-process-step”>
-            <span className=”sg-process-num”>02</span>
+          <article className="sg-process-step">
+            <span className="sg-process-num">02</span>
             <h3>Pick your game</h3>
             <p>We design 3 concepts specific to your product. You choose.</p>
           </article>
-          <article className=”sg-process-step”>
-            <span className=”sg-process-num”>03</span>
+          <article className="sg-process-step">
+            <span className="sg-process-num">03</span>
             <h3>Go live</h3>
             <p>One script tag. Works with Klaviyo, Shopify, any stack.</p>
           </article>
@@ -169,22 +169,22 @@ export default function DemoShowcase(){
       </section>
 
       {/* ── Section 6: What Makes This Different ── */}
-      <section className=”sg-diff sg-wrap” aria-labelledby=”sg-diff-title”>
-        <h2 id=”sg-diff-title”>Not a template. Not a wheel. Not a scratch card.</h2>
-        <div className=”sg-diff-grid”>
-          <article className=”sg-diff-card”>
+      <section className="sg-diff sg-wrap" aria-labelledby="sg-diff-title">
+        <h2 id="sg-diff-title">Not a template. Not a wheel. Not a scratch card.</h2>
+        <div className="sg-diff-grid">
+          <article className="sg-diff-card">
             <h3>Brand-native design</h3>
-            <p>Matches your store’s look, not a generic overlay.</p>
+            <p>Matches your store's look, not a generic overlay.</p>
           </article>
-          <article className=”sg-diff-card”>
+          <article className="sg-diff-card">
             <h3>Product-driven mechanic</h3>
-            <p>The game IS your product’s story.</p>
+            <p>The game IS your product's story.</p>
           </article>
-          <article className=”sg-diff-card”>
+          <article className="sg-diff-card">
             <h3>Klaviyo-native</h3>
             <p>Triggers your existing forms — no new email tool.</p>
           </article>
-          <article className=”sg-diff-card”>
+          <article className="sg-diff-card">
             <h3>Real analytics</h3>
             <p>Play rate, completion, revenue per impression.</p>
           </article>
@@ -192,22 +192,22 @@ export default function DemoShowcase(){
       </section>
 
       {/* ── Section 7: Final CTA ── */}
-      <section className=”sg-contact sg-wrap” id=”contact” aria-labelledby=”sg-contact-title”>
+      <section className="sg-contact sg-wrap" id="contact" aria-labelledby="sg-contact-title">
         <div>
-          <span className=”sg-kicker”>YOUR BRAND COULD BE NEXT</span>
-          <h2 id=”sg-contact-title”>What would your<br/>customers love to play?</h2>
-          <p>Send us your store URL. We’ll show you what’s playable about your product.</p>
-          <a className=”sg-button sg-button--light” href={showcaseContactLink()}>Let’s build yours<ArrowUpRight size={20}/></a>
+          <span className="sg-kicker">YOUR BRAND COULD BE NEXT</span>
+          <h2 id="sg-contact-title">What would your<br/>customers love to play?</h2>
+          <p>Send us your store URL. We'll show you what's playable about your product.</p>
+          <a className="sg-button sg-button--light" href={showcaseContactLink()}>Let's build yours<ArrowUpRight size={20}/></a>
         </div>
-        <div className=”sg-contact-side”>
-          <span className=”sg-contact-symbol” aria-hidden=”true”><Gamepad2/></span>
+        <div className="sg-contact-side">
+          <span className="sg-contact-symbol" aria-hidden="true"><Gamepad2/></span>
           <a href={`mailto:${CONTACT_EMAIL}`}><Mail size={18}/>{CONTACT_EMAIL}</a>
-          <button onClick={copyEmail}><Copy size={14}/><span role=”status”>{emailCopied?’Email copied’:’Copy email address’}</span></button>
+          <button onClick={copyEmail}><Copy size={14}/><span role="status">{emailCopied?'Email copied':'Copy email address'}</span></button>
           <small>Contact opens your email app.</small>
         </div>
       </section>
     </main>
-    <footer className=”sg-footer sg-wrap”><span>PlayItAgain · by Social Gear</span><p>Brand-specific interactive demos. Sample offers are not redeemable.</p><a href=”#demos”>Back to the games<ArrowRight size={15}/></a></footer>
+    <footer className="sg-footer sg-wrap"><span>PlayItAgain · by Social Gear</span><p>Brand-specific interactive demos. Sample offers are not redeemable.</p><a href="#demos">Back to the games<ArrowRight size={15}/></a></footer>
     {active&&<DemoPlayer key={active} id={active} onClose={closePlayer}/>}
   </div>;
 }
