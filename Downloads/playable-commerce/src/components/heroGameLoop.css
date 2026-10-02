@@ -1,0 +1,96 @@
+/* ── Phone frame ── */
+.hero-phone{width:180px;flex:none;background:#111;border-radius:24px;padding:8px;border:2px solid #2a2a2a;box-shadow:0 20px 60px #0004;position:relative}
+.hero-phone::before{content:'';position:absolute;top:6px;left:50%;transform:translateX(-50%);width:40px;height:5px;background:#222;border-radius:3px;z-index:2}
+.hero-phone__screen{background:#10151b;border-radius:16px;aspect-ratio:9/17;overflow:hidden;position:relative}
+
+/* ── Rink layout ── */
+.hero-rink{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+
+/* ── Net ── */
+.hero-net{width:52%;aspect-ratio:1.6/1;border:2px solid #ffffff30;border-bottom:none;border-radius:8px 8px 0 0;position:relative;margin-bottom:4%}
+.hero-net::before{content:'';position:absolute;inset:2px;background:repeating-linear-gradient(90deg,transparent,transparent 5px,#ffffff12 5px,#ffffff12 6px),repeating-linear-gradient(0deg,transparent,transparent 5px,#ffffff12 5px,#ffffff12 6px)}
+
+/* ── Targets ── */
+.hero-targets{position:absolute;inset:0}.hero-target{position:absolute;width:14%;aspect-ratio:1;border-radius:50%;border:2px solid #ffffff20;display:grid;place-items:center}
+.hero-target--tl{top:24%;left:16%}.hero-target--tr{top:24%;right:16%}.hero-target--bl{bottom:28%;left:14%}.hero-target--br{bottom:28%;right:14%}
+.hero-target__ring{width:60%;height:60%;border-radius:50%;background:#ffffff10}
+
+/* ── Puck ── */
+.hero-puck{position:absolute;width:8%;aspect-ratio:1;background:#1a1a1a;border:1px solid #444;border-radius:50%;bottom:18%;left:50%;transform:translate(-50%,0);z-index:1}
+
+/* ── Result overlay ── */
+.hero-result{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:3;opacity:0;pointer-events:none}
+.hero-result__time{font:700 11px/1 Impact,'Arial Narrow',sans-serif;color:#a3dcef;letter-spacing:.04em}
+.hero-result__goal{font:italic 700 28px/1 Impact,'Arial Narrow',sans-serif;color:#32d96a;text-shadow:0 0 12px #0a7d3480;margin-top:4px}
+.hero-result__reward{font:800 9px/1.4 Inter,sans-serif;color:#ff343a;margin-top:6px;letter-spacing:.06em}
+
+/* ── Headline overlay ── */
+.hero-headline{position:absolute;top:8%;left:0;right:0;text-align:center;z-index:2;opacity:1}
+.hero-headline__title{font:800 10px/1.2 Inter,sans-serif;color:#fff;letter-spacing:-.02em;margin:0}
+.hero-headline__sub{font:800 6px/1.6 Inter,sans-serif;color:#cbd1d9;letter-spacing:.1em;text-transform:uppercase;margin:3px 0 0}
+
+/* ── CTA at bottom ── */
+.hero-minicta{position:absolute;bottom:6%;left:12%;right:12%;background:#ec1923;color:white;border-radius:4px;padding:6px 0;text-align:center;font:800 7px/1 Inter,sans-serif;letter-spacing:.08em;z-index:2}
+
+/* ── Animation states ── */
+.hero-rink--animated .hero-target--tr{animation:hero-light 4.5s ease infinite}
+.hero-rink--animated .hero-puck{animation:hero-shoot 4.5s ease infinite}
+.hero-rink--animated .hero-result{animation:hero-reveal 4.5s ease infinite}
+.hero-rink--animated .hero-headline{animation:hero-headline-fade 4.5s ease infinite}
+.hero-rink--animated .hero-minicta{animation:hero-cta-fade 4.5s ease infinite}
+
+/* Target lights up at 1s, dims at 1.8s */
+@keyframes hero-light{
+  0%,20%{border-color:#ffffff20;box-shadow:none}
+  22%,38%{border-color:#a3dcef;box-shadow:0 0 14px #a3dcef80,inset 0 0 8px #a3dcef40}
+  40%,100%{border-color:#ffffff20;box-shadow:none}
+}
+@keyframes hero-light-ring{
+  0%,20%{background:#ffffff10}
+  22%,38%{background:#a3dcef60}
+  40%,100%{background:#ffffff10}
+}
+
+/* Puck fires from center to top-right corner at 1.3s–1.8s */
+@keyframes hero-shoot{
+  0%,28%{bottom:18%;left:50%;transform:translate(-50%,0);opacity:1}
+  36%,42%{bottom:68%;left:76%;transform:translate(-50%,0) scale(0.5);opacity:1}
+  44%{opacity:0}
+  90%{opacity:0}
+  100%{bottom:18%;left:50%;transform:translate(-50%,0);opacity:1}
+}
+
+/* Result fades in at 1.8s, holds, fades out at 3.5s */
+@keyframes hero-reveal{
+  0%,38%{opacity:0}
+  44%,72%{opacity:1}
+  82%,100%{opacity:0}
+}
+
+/* Headline visible at start, fades when result shows, returns */
+@keyframes hero-headline-fade{
+  0%,20%{opacity:1}
+  22%,78%{opacity:0}
+  88%,100%{opacity:1}
+}
+
+/* CTA fades with headline */
+@keyframes hero-cta-fade{
+  0%,20%{opacity:1}
+  22%,78%{opacity:0}
+  88%,100%{opacity:1}
+}
+
+/* Ring follows the target light */
+.hero-rink--animated .hero-target--tr .hero-target__ring{animation:hero-light-ring 4.5s ease infinite}
+
+/* ── Reduced motion: show static result ── */
+@media(prefers-reduced-motion:reduce){
+  .hero-rink--animated .hero-target--tr,.hero-rink--animated .hero-puck,.hero-rink--animated .hero-result,.hero-rink--animated .hero-headline,.hero-rink--animated .hero-minicta{animation:none!important}
+  .hero-rink--animated .hero-result{opacity:1}
+  .hero-rink--animated .hero-headline{opacity:0}
+  .hero-rink--animated .hero-puck{opacity:0}
+}
+
+/* ── Mobile ── */
+@media(max-width:640px){.hero-phone{width:140px}}
