@@ -4,5 +4,62 @@
 .hero-phone__screen{background:#10151b;border-radius:16px;aspect-ratio:9/17;overflow:hidden;position:relative}
 .hero-phone__poster{width:100%;height:100%;object-fit:cover;display:block}
 
+/* ── Animation overlay ── */
+.hero-anim{position:absolute;inset:0;pointer-events:none}
+
+/* Corner glow — top-right target area of the poster */
+.hero-anim__glow--tr{position:absolute;width:16%;aspect-ratio:1;top:38%;right:12%;border-radius:50%;animation:hero-glow 5s ease infinite}
+
+/* Puck — starts at center-bottom, fires to top-right corner */
+.hero-anim__puck{position:absolute;width:7%;aspect-ratio:1;background:#111;border:1px solid #555;border-radius:50%;z-index:2;animation:hero-puck 5s ease infinite}
+
+/* Full-screen flash on goal */
+.hero-anim__flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:3;animation:hero-flash 5s ease infinite}
+
+/* Result overlay */
+.hero-anim__result{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:4;opacity:0;background:#000c;animation:hero-result 5s ease infinite}
+.hero-anim__time{font:700 11px/1 Impact,'Arial Narrow',sans-serif;color:#a3dcef;letter-spacing:.04em}
+.hero-anim__goal{font:italic 700 26px/1 Impact,'Arial Narrow',sans-serif;color:#32d96a;text-shadow:0 0 14px #0a7d3480;margin-top:4px}
+.hero-anim__reward{font:800 8px/1.4 Inter,sans-serif;color:#ff343a;margin-top:8px;letter-spacing:.06em;text-align:center}
+
+/* ── Keyframes ── */
+
+/* Target glow pulses */
+@keyframes hero-glow{
+  0%,18%{box-shadow:none;background:transparent}
+  22%,34%{box-shadow:0 0 18px 6px #a3dcef80;background:#a3dcef20}
+  40%,100%{box-shadow:none;background:transparent}
+}
+
+/* Puck fires from bottom-center to lit corner */
+@keyframes hero-puck{
+  0%,20%{bottom:22%;left:48%;opacity:1;transform:scale(1)}
+  32%{bottom:56%;left:78%;opacity:1;transform:scale(.5)}
+  36%{opacity:0}
+  92%{opacity:0}
+  100%{bottom:22%;left:48%;opacity:1;transform:scale(1)}
+}
+
+/* Quick white flash on impact */
+@keyframes hero-flash{
+  0%,31%{opacity:0}
+  33%{opacity:.6}
+  38%{opacity:0}
+  100%{opacity:0}
+}
+
+/* Result card fades in, holds, fades out */
+@keyframes hero-result{
+  0%,34%{opacity:0}
+  40%,68%{opacity:1}
+  78%,100%{opacity:0}
+}
+
+/* ── Reduced motion ── */
+@media(prefers-reduced-motion:reduce){
+  .hero-anim__glow--tr,.hero-anim__puck,.hero-anim__flash{animation:none!important;opacity:0!important}
+  .hero-anim__result{animation:none!important;opacity:1}
+}
+
 /* ── Mobile ── */
 @media(max-width:640px){.hero-phone{width:140px}}
