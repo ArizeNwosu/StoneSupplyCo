@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:parser": "node --import tsx --test tests/export-parser.test.ts",
+    "test:revenue": "node --import tsx --test tests/revenue-*.test.ts",
     "test:e2e": "playwright test",
     "backfill": "npx tsx --tsconfig tsconfig.json worker/backfill-runner.ts"
   },
