@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Logo } from '@/components/layout/Logo';
 import { PasswordInput } from '@/components/auth/PasswordInput';
+import { safeReturnTo } from '@/lib/revenue/checkout-intent';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -46,7 +47,7 @@ export default function SignupPage() {
       }
 
       // Redirect to dashboard — handle preservation happens there
-      window.location.href = '/dashboard';
+      window.location.href = safeReturnTo(new URLSearchParams(window.location.search).get('returnTo'));
     } catch {
       setError('Something went wrong. Please try again.');
       setLoading(false);

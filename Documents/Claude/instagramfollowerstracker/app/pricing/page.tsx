@@ -4,6 +4,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { PLAN_PRICES } from '@/lib/limits';
 import { CheckoutButton } from '@/components/pricing/CheckoutButton';
+import { PendingCheckout } from '@/components/pricing/PendingCheckout';
 
 export const metadata: Metadata = {
   title: 'Pricing',
@@ -86,6 +87,7 @@ export default function PricingPage() {
     <>
       <Navbar />
       <main>
+        <PendingCheckout />
         <section className="relative overflow-hidden border-b border-cyan-950/10 bg-sky-50">
           <div
             aria-hidden="true"

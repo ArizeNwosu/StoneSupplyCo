@@ -2,15 +2,18 @@
 
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { saveCheckoutIntent } from '@/lib/revenue/checkout-intent';
+import type { CheckoutSource } from '@/lib/revenue/types';
 
 interface CheckoutButtonProps {
   plan: 'PRO' | 'AGENCY';
   interval: 'monthly' | 'annual';
   className?: string;
   children: ReactNode;
+  source?: CheckoutSource;
 }
 
-export function CheckoutButton({ plan, interval, className, children }: CheckoutButtonProps) {
+export function CheckoutButton({ plan, interval, className, children, source = 'pricing' }: CheckoutButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,10 +24,11 @@ export function CheckoutButton({ plan, interval, className, children }: Checkout
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, interval }),
+        body: JSON.stringify({ plan, interval, source }),
       });
       if (res.status === 401) {
-        window.location.href = '/auth/signin';
+        saveCheckoutIntent({ plan, interval, source });
+        window.location.href = '/auth/signin?returnTo=%2Fpricing%3FresumeCheckout%3D1';
         return;
       }
       const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string; redirect?: string };

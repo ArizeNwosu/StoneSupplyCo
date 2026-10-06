@@ -6,6 +6,7 @@ import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Logo } from '@/components/layout/Logo';
 import { PasswordInput } from '@/components/auth/PasswordInput';
+import { safeReturnTo } from '@/lib/revenue/checkout-intent';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -34,7 +35,8 @@ export default function SignInPage() {
         return;
       }
 
-      router.push('/dashboard');
+      const returnTo = safeReturnTo(new URLSearchParams(window.location.search).get('returnTo'));
+      router.push(returnTo);
     } finally {
       setLoading(false);
     }
