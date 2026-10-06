@@ -3,10 +3,15 @@
 import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { PLAN_PRICES } from '@/lib/limits';
+import { saveCheckoutIntent } from '@/lib/revenue/checkout-intent';
+import { RevenueEventBeacon } from '@/components/pricing/RevenueEventBeacon';
+import type { CheckoutSource } from '@/lib/revenue/types';
 
 interface UpgradeModalProps {
   open: boolean;
   onClose: () => void;
+  source?: Extract<CheckoutSource, 'account_limit' | 'seven_day_summary'>;
+  context?: string;
 }
 
 type Interval = 'monthly' | 'annual';
@@ -27,7 +32,7 @@ const AGENCY_FEATURES = [
   'Priority support',
 ];
 
-export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
+export function UpgradeModal({ open, onClose, source = 'account_limit', context }: UpgradeModalProps) {
   const [interval, setInterval] = useState<Interval>('monthly');
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,10 +49,11 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, interval }),
+        body: JSON.stringify({ plan, interval, source }),
       });
       if (res.status === 401) {
-        window.location.href = '/auth/signin';
+        saveCheckoutIntent({ plan, interval, source });
+        window.location.href = '/auth/signin?returnTo=%2Fpricing%3FresumeCheckout%3D1';
         return;
       }
       const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
@@ -66,8 +72,9 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
   return (
     <Modal open={open} onClose={handleClose} title="Upgrade your plan">
       <div className="space-y-5">
+        <RevenueEventBeacon type="PAYWALL_VIEWED" source={source} eventKey={`upgrade-modal:${source}`} />
         <p className="text-sm text-slate-500">
-          You&apos;ve reached the 1-account limit on the Free plan. Choose a plan to keep tracking.
+          {context ?? "You've reached the 1-account limit on the Free plan. Choose a plan to keep tracking."}
         </p>
 
         {/* Interval toggle */}

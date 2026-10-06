@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { PLAN_LIMITS } from '@/lib/limits';
 import { FollowerHistoryChart } from '@/components/tracker/FollowerHistoryChart';
+import { ResultPaywall } from '@/components/tracker/ResultPaywall';
 
 interface Person {
   handle: string;
@@ -1214,7 +1215,14 @@ function ResultsStage({
               )}
             </div>
           ) : (
-            <PaywallNames lostCount={lostCount} newCount={newCount} unfollowedCount={unfollowedCount} ghostCount={ghostCount} fansNotFollowedCount={fansNotFollowedCount} />
+            <div className="space-y-3">
+              <PaywallNames lostCount={lostCount} newCount={newCount} unfollowedCount={unfollowedCount} ghostCount={ghostCount} fansNotFollowedCount={fansNotFollowedCount} />
+              <ResultPaywall
+                source="unfollowers"
+                title={`${(lostCount + newCount + unfollowedCount + ghostCount + fansNotFollowedCount).toLocaleString()} identities are ready`}
+                detail="The counts are yours. Pro unlocks the names and keeps future comparisons exportable."
+              />
+            </div>
           )}
         </>
 

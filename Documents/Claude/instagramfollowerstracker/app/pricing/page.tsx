@@ -5,6 +5,7 @@ import { Footer } from '@/components/layout/Footer';
 import { PLAN_PRICES } from '@/lib/limits';
 import { CheckoutButton } from '@/components/pricing/CheckoutButton';
 import { PendingCheckout } from '@/components/pricing/PendingCheckout';
+import { RevenueEventBeacon } from '@/components/pricing/RevenueEventBeacon';
 
 export const metadata: Metadata = {
   title: 'Pricing',
@@ -88,6 +89,7 @@ export default function PricingPage() {
       <Navbar />
       <main>
         <PendingCheckout />
+        <RevenueEventBeacon type="PRICING_VIEWED" source="pricing" eventKey="pricing-page" />
         <section className="relative overflow-hidden border-b border-cyan-950/10 bg-sky-50">
           <div
             aria-hidden="true"

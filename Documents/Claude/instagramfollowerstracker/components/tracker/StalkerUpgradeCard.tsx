@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { RevenueEventBeacon } from '@/components/pricing/RevenueEventBeacon';
 
 type StalkerFrequency = 'DAILY' | 'SIX_HOUR' | 'HOURLY';
 
@@ -20,6 +21,7 @@ export function StalkerUpgradeCard({
   const [selected, setSelected] = useState<StalkerFrequency>('DAILY');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showMore, setShowMore] = useState(false);
 
   const subscribe = async () => {
     setLoading(true);
@@ -28,7 +30,7 @@ export function StalkerUpgradeCard({
       const res = await fetch('/api/stalker/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trackedAccountId, frequency: selected }),
+        body: JSON.stringify({ trackedAccountId, frequency: selected, source: 'stalker' }),
       });
       const data = await res.json() as { url?: string; error?: string };
       if (!res.ok || data.error) {
@@ -45,6 +47,7 @@ export function StalkerUpgradeCard({
 
   return (
     <div className="rounded-xl border border-cyan-950/10 bg-white p-5 shadow-sm">
+      <RevenueEventBeacon type="PAYWALL_VIEWED" source="stalker" eventKey={`stalker:${trackedAccountId}`} />
       <div className="mb-4 flex items-center gap-2">
         <span className="text-lg">👁</span>
         <div>
@@ -57,7 +60,7 @@ export function StalkerUpgradeCard({
 
       <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Check frequency</p>
       <div className="space-y-2 mb-4">
-        {TIERS.map((tier) => (
+        {TIERS.filter((tier) => tier.frequency === 'DAILY' || showMore).map((tier) => (
           <button
             key={tier.frequency}
             onClick={() => setSelected(tier.frequency)}
@@ -78,6 +81,9 @@ export function StalkerUpgradeCard({
             </p>
           </button>
         ))}
+        <button type="button" onClick={() => setShowMore((value) => !value)} className="w-full py-1 text-xs font-bold text-cyan-700">
+          {showMore ? 'Hide extra frequencies' : 'More frequencies'}
+        </button>
       </div>
 
       {selected === 'DAILY' && (
@@ -85,6 +91,10 @@ export function StalkerUpgradeCard({
           💡 Daily is enough for 99% of cases — most bio and follow changes stay up for hours or days.
         </p>
       )}
+
+      <div className="mb-3 rounded-lg border border-cyan-100 bg-white px-3 py-2 text-xs text-slate-600">
+        <strong>Example alert:</strong> “@{handle} changed their bio.” Monitoring starts after checkout. We use public profile data and never ask for an Instagram password.
+      </div>
 
       {error && (
         <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">{error}</p>

@@ -21,6 +21,7 @@ import { UpgradeModal } from '@/components/tracker/UpgradeModal';
 import { UnfollowDetector } from '@/components/tracker/UnfollowDetector';
 import { StalkerModePanel } from '@/components/tracker/StalkerModePanel';
 import { NotificationBell } from '@/components/layout/NotificationBell';
+import { canShowPrompt, dismissPrompt, markPromptShown } from '@/lib/revenue/prompt-caps';
 
 interface Account {
   id: string;
@@ -138,7 +139,10 @@ export default function DashboardPage() {
     if (!res.ok) {
       if (res.status === 402) {
         setShowAddModal(false);
-        setShowUpgradeModal(true);
+        if (canShowPrompt('account_limit')) {
+          markPromptShown('account_limit');
+          setShowUpgradeModal(true);
+        }
         return {};
       }
       return { error: data.error ?? 'Something went wrong' };
@@ -446,7 +450,11 @@ export default function DashboardPage() {
 
       <UpgradeModal
         open={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
+        source="account_limit"
+        onClose={() => {
+          dismissPrompt('account_limit');
+          setShowUpgradeModal(false);
+        }}
       />
 
       {selected && (
