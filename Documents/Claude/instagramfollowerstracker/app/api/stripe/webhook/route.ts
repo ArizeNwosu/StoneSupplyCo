@@ -5,6 +5,7 @@ import type Stripe from 'stripe';
 import { planFromStripePriceId, type StripeBillingPlan } from '@/lib/stripe-prices';
 import type { StalkerFrequency } from '@prisma/client';
 import { recordRevenueEvent } from '@/lib/revenue/events';
+import { attributeOutreachConversion } from '@/lib/revenue/reconcile';
 
 export const runtime = 'nodejs';
 
@@ -150,6 +151,12 @@ export async function POST(req: NextRequest) {
           stripeCheckoutSessionId: session.id,
           stripeSubscriptionId: subId,
           idempotencyKey: `stripe:${event.id}:checkout-completed`,
+        });
+        await attributeOutreachConversion({
+          userId,
+          subscriptionId: subId,
+          outreachMessageId: session.metadata?.outreachMessageId,
+          campaignId: session.metadata?.campaignId,
         });
 
         if (type === 'STALKER') {
