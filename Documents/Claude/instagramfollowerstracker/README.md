@@ -35,6 +35,14 @@ The protected diagnostics page is `/dashboard/diagnostics`. In production, set
 `DIAGNOSTICS_EMAILS=you@example.com` so only owner accounts can view collector
 health, queue counts, and environment status.
 
+### Revenue and IONOS Outreach
+
+The subscription funnel records attributed checkout attempts, reconciles Stripe
+subscription state, and exposes Revenue, Campaigns, and Replies under `/admin`.
+Lifecycle email is disabled and dry-run-only by default. See
+[`docs/revenue-operations.md`](docs/revenue-operations.md) for migration, IONOS
+SMTP/IMAP setup, allowlist testing, enablement, reply handling, and rollback.
+
 ### Verification
 
 ```bash
