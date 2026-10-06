@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { PLAN_LIMITS, CHART_UNLOCK_THRESHOLD } from '@/lib/limits';
 import { parseHandle, isValidHandle } from '@/lib/handles';
 import { sendMilestoneEmail } from '@/lib/email';
+import { recordRevenueEvent } from '@/lib/revenue/events';
 import { parseFollowerCount } from '@/lib/counts';
 import {
   ensurePublicAccountForHandle,
@@ -254,6 +255,16 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error(`[accounts] First snapshot failed for @${handle}:`, err);
+  }
+
+  if (snapshotCount > 0) {
+    await recordRevenueEvent({
+      type: 'ACTIVATION_COMPLETED',
+      userId: user.id,
+      source: 'pricing',
+      properties: { trackedAccountId: account.id, handle },
+      idempotencyKey: `activation:${user.id}`,
+    });
   }
 
   return NextResponse.json(

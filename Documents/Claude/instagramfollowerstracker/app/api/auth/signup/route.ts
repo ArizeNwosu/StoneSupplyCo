@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { recordRevenueEvent } from '@/lib/revenue/events';
 
 const SignupSchema = z.object({
   email: z.string().email(),
@@ -32,8 +33,13 @@ export async function POST(req: NextRequest) {
   const hashedPassword = await bcrypt.hash(password, 12);
 
   try {
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: { email: normalizedEmail, password: hashedPassword },
+    });
+    await recordRevenueEvent({
+      type: 'SIGNUP_COMPLETED',
+      userId: user.id,
+      idempotencyKey: `signup:${user.id}`,
     });
   } catch (err: unknown) {
     if ((err as { code?: string }).code === 'P2002') {
