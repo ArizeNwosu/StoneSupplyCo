@@ -1,0 +1,2 @@
+import { NextRequest, NextResponse } from 'next/server'; import { authorizeAdminApi } from '@/lib/admin-auth'; import { getReplyInbox } from '@/lib/revenue/reporting';
+export async function GET(request: NextRequest) { const denied = await authorizeAdminApi(); if (denied) return denied; const p = request.nextUrl.searchParams; return NextResponse.json(await getReplyInbox({ status: p.get('status'), campaignId: p.get('campaignId'), page: Number(p.get('page') ?? 1) })); }

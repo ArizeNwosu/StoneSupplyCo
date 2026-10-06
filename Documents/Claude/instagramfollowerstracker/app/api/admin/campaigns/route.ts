@@ -1,0 +1,2 @@
+import { NextRequest, NextResponse } from 'next/server'; import { authorizeAdminApi } from '@/lib/admin-auth'; import { getCampaignReport, rangeValue } from '@/lib/revenue/reporting';
+export async function GET(request: NextRequest) { const denied = await authorizeAdminApi(); if (denied) return denied; return NextResponse.json(await getCampaignReport(rangeValue(request.nextUrl.searchParams.get('range')))); }
