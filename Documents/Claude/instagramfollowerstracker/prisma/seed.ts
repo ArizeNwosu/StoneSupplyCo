@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { CAMPAIGN_DEFINITIONS } from '../lib/outreach/campaigns';
 
 // Top Instagram accounts by follower count (approximate, for SEO seeding)
 const TOP_ACCOUNTS = [
@@ -108,6 +109,13 @@ async function main() {
   }
 
   console.log(`Done. Created/updated: ${created}, skipped: ${skipped}`);
+  for (const [key, name, triggerType, delayMinutes, transactional] of CAMPAIGN_DEFINITIONS) {
+    await prisma.outreachCampaign.upsert({
+      where: { key },
+      update: { name, triggerType, delayMinutes, transactional },
+      create: { key, name, triggerType, delayMinutes, transactional, enabled: false, subject: name, templateKey: key },
+    });
+  }
   await prisma.$disconnect();
 }
 
