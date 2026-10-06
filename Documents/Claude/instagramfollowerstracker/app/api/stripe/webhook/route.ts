@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import type Stripe from 'stripe';
 import { planFromStripePriceId, type StripeBillingPlan } from '@/lib/stripe-prices';
 import type { StalkerFrequency } from '@prisma/client';
+import { recordRevenueEvent } from '@/lib/revenue/events';
 
 export const runtime = 'nodejs';
 
@@ -99,6 +100,17 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    await prisma.processedStripeEvent.create({
+      data: { stripeEventId: event.id, eventType: event.type },
+    });
+  } catch (error) {
+    if ((error as { code?: string }).code === 'P2002') {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+    throw error;
+  }
+
+  try {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -115,6 +127,30 @@ export async function POST(req: NextRequest) {
           console.error('[webhook] checkout.session.completed missing metadata', { sessionId: session.id });
           break;
         }
+
+        const attemptId = session.metadata?.attemptId;
+        if (attemptId) {
+          await prisma.checkoutAttempt.updateMany({
+            where: { id: attemptId },
+            data: {
+              status: 'COMPLETED',
+              stripeSubscriptionId: subId,
+              completedAt: new Date(),
+            },
+          });
+        }
+        await recordRevenueEvent({
+          type: 'CHECKOUT_COMPLETED',
+          userId,
+          source: session.metadata?.source as never,
+          plan: session.metadata?.plan as never,
+          interval: session.metadata?.interval as never,
+          campaignId: session.metadata?.campaignId || null,
+          outreachMessageId: session.metadata?.outreachMessageId || null,
+          stripeCheckoutSessionId: session.id,
+          stripeSubscriptionId: subId,
+          idempotencyKey: `stripe:${event.id}:checkout-completed`,
+        });
 
         if (type === 'STALKER') {
           const trackedAccountId = session.metadata?.trackedAccountId;
@@ -161,6 +197,23 @@ export async function POST(req: NextRequest) {
         }
         break;
       }
+      case 'checkout.session.expired': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        await prisma.checkoutAttempt.updateMany({
+          where: { stripeCheckoutSessionId: session.id },
+          data: { status: 'EXPIRED', expiredAt: new Date() },
+        });
+        await recordRevenueEvent({
+          type: 'CHECKOUT_EXPIRED',
+          userId: session.metadata?.userId || null,
+          source: session.metadata?.source as never,
+          plan: session.metadata?.plan as never,
+          interval: session.metadata?.interval as never,
+          stripeCheckoutSessionId: session.id,
+          idempotencyKey: `stripe:${event.id}:checkout-expired`,
+        });
+        break;
+      }
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription;
         const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
@@ -179,6 +232,7 @@ export async function POST(req: NextRequest) {
         await clearPlan({ customerId, subId: sub.id });
         break;
       }
+      case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const sub = event.data.object as Stripe.Subscription;
         const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
@@ -226,6 +280,7 @@ export async function POST(req: NextRequest) {
       }
     }
   } catch (err) {
+    await prisma.processedStripeEvent.delete({ where: { stripeEventId: event.id } }).catch(() => undefined);
     console.error('[webhook] Handler error:', err);
     return NextResponse.json({ error: 'Handler error' }, { status: 500 });
   }

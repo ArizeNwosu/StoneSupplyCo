@@ -70,7 +70,7 @@ export function parseBrowserRevenueEvent(value: unknown) {
 
 export async function recordRevenueEvent(
   input: RevenueEventInput,
-  store: RevenueEventStore = prisma.revenueEvent
+  store: RevenueEventStore = prisma.revenueEvent as unknown as RevenueEventStore
 ) {
   try {
     return await store.create({ data: input });

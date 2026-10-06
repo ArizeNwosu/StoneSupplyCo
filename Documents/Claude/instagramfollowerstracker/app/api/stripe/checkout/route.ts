@@ -4,13 +4,17 @@ import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { getStripePriceId } from '@/lib/stripe-prices';
-import type Stripe from 'stripe';
+import { createAttributedCheckout } from '@/lib/revenue/checkout';
+import { isCheckoutSource } from '@/lib/revenue/types';
 
 export const runtime = 'nodejs';
 
 const CheckoutSchema = z.object({
   plan: z.enum(['PRO', 'AGENCY']),
   interval: z.enum(['monthly', 'annual']),
+  source: z.string().optional(),
+  campaignId: z.string().optional(),
+  outreachMessageId: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -25,7 +29,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 
-  const { plan, interval } = parsed.data;
+  const { plan, interval, campaignId, outreachMessageId } = parsed.data;
+  const source = isCheckoutSource(parsed.data.source) ? parsed.data.source : 'pricing';
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -61,29 +66,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Get or create Stripe customer
-  let customerId = user.stripeCustomerId;
-  if (!customerId) {
-    let customer: Stripe.Customer;
-    try {
-      customer = await stripe.customers.create({
-        email: user.email ?? undefined,
-        metadata: { userId: user.id },
-      });
-    } catch (err) {
-      console.error('[checkout] Failed to create Stripe customer:', formatStripeError(err));
-      return NextResponse.json(
-        { error: 'Could not create Stripe customer. Check STRIPE_SECRET_KEY.' },
-        { status: 500 }
-      );
-    }
-    customerId = customer.id;
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { stripeCustomerId: customerId },
-    });
-  }
-
   let priceId: string;
   try {
     priceId = getStripePriceId(plan, interval);
@@ -92,24 +74,41 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Stripe price is not configured' }, { status: 500 });
   }
 
-  let checkoutSession: Stripe.Checkout.Session;
   try {
-    checkoutSession = await stripe.checkout.sessions.create({
-      customer: customerId,
-      mode: 'subscription',
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/dashboard?upgraded=1&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/pricing`,
-      allow_promotion_codes: true,
-      customer_update: {
-        address: 'auto',
-        name: 'auto',
+    const checkoutSession = await createAttributedCheckout({
+      stripe,
+      store: {
+        createAttempt: (data) => prisma.checkoutAttempt.create({ data: data as never }),
+        saveCustomer: async (userId, customerId) => {
+          await prisma.user.update({ where: { id: userId }, data: { stripeCustomerId: customerId } });
+        },
+        markCreated: async (attemptId, data) => {
+          await prisma.checkoutAttempt.update({
+            where: { id: attemptId },
+            data: { status: 'CREATED', stripeCheckoutSessionId: data.sessionId, stripeCustomerId: data.customerId },
+          });
+        },
+        markFailed: async (attemptId, data) => {
+          await prisma.checkoutAttempt.update({
+            where: { id: attemptId },
+            data: { status: 'FAILED', failureCategory: data.category, failureMessage: data.message },
+          });
+        },
       },
-      metadata: { userId: user.id, plan, interval },
-      subscription_data: {
-        metadata: { userId: user.id, plan, interval },
-      },
+      priceId,
+      user,
+      plan,
+      interval,
+      source,
+      successUrl: `${appUrl}/dashboard?upgraded=1&session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${appUrl}/pricing`,
+      campaignId,
+      outreachMessageId,
     });
+    if (!checkoutSession.url) {
+      return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
+    }
+    return NextResponse.json({ url: checkoutSession.url });
   } catch (err) {
     const stripeError = formatStripeError(err);
     console.error('[checkout] Failed to create checkout session:', {
@@ -130,12 +129,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!checkoutSession.url) {
-    console.error('[checkout] Stripe returned null URL for session', checkoutSession.id);
-    return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
-  }
-
-  return NextResponse.json({ url: checkoutSession.url });
 }
 
 function formatStripeError(err: unknown) {
