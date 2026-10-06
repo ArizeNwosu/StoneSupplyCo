@@ -3,6 +3,8 @@
     { "path": "/api/cron/snapshot",  "schedule": "0 6 * * *" },
     { "path": "/api/cron/backfill",  "schedule": "0 8 * * *" },
     { "path": "/api/cron/drive-sync","schedule": "0 7 * * *" },
-    { "path": "/api/cron/stalker",   "schedule": "0 9 * * *" }
+    { "path": "/api/cron/stalker",   "schedule": "0 9 * * *" },
+    { "path": "/api/cron/outreach-evaluate", "schedule": "15 9 * * *" },
+    { "path": "/api/cron/outreach-send", "schedule": "*/15 * * * *" }
   ]
 }
