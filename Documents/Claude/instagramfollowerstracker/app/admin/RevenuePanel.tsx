@@ -1,0 +1,7 @@
+'use client';
+
+export function RevenuePanel({ data }: { data: any }) {
+  if (!data) return <p className="p-8 text-slate-400">No revenue data yet.</p>;
+  const cards = [['Active subscribers', data.summary.activeSubscribers], ['MRR', `$${data.summary.mrr}`], ['New subscriptions', data.summary.newSubscriptions], ['Cancellations', data.summary.cancellations], ['Expired checkouts', data.summary.expiredCheckouts]];
+  return <div className="space-y-6"><div className="grid grid-cols-2 gap-3 md:grid-cols-5">{cards.map(([label, value]) => <div key={String(label)} className="rounded-xl border border-white/10 bg-white/[.04] p-4"><p className="text-2xl font-black">{value}</p><p className="text-xs text-slate-500">{label}</p></div>)}</div><div className="overflow-hidden rounded-xl border border-white/10"><table className="w-full text-sm"><thead className="bg-white/[.04] text-left text-slate-400"><tr><th className="p-3">Funnel step</th><th>Numerator</th><th>Denominator</th><th>Rate</th></tr></thead><tbody>{data.funnel.map((row: any) => <tr key={row.label} className="border-t border-white/10"><td className="p-3 font-bold">{row.label}</td><td>{row.numerator}</td><td>{row.denominator}</td><td>{(row.rate * 100).toFixed(1)}%</td></tr>)}</tbody></table></div><div className="rounded-xl border border-white/10 p-4"><p className="font-bold">Stalker Mode funnel</p><p className="mt-1 text-sm text-slate-400">{data.stalker.completed} completed from {data.stalker.attempts} attempts</p></div></div>;
+}

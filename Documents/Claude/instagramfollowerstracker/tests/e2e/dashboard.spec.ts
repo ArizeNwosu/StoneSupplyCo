@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test('dashboard loads after dev login locally', async ({ page, baseURL }) => {
-  const hostname = new URL(baseURL).hostname;
+  const hostname = new URL(baseURL ?? 'http://localhost:3099').hostname;
   test.skip(hostname !== 'localhost' && hostname !== '127.0.0.1', 'dev login is only available locally');
 
   await page.goto('/api/dev-login?email=test%40ifttracker.local&redirectTo=/dashboard');

@@ -3,8 +3,8 @@ import { cookies } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { AdminPasswordGate } from './AdminPasswordGate';
-import { AdminTable } from './AdminTable';
 import type { AdminUser } from './AdminTable';
+import { AdminDashboard } from './AdminDashboard';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,5 +54,5 @@ export default async function AdminPage() {
     })),
   }));
 
-  return <AdminTable users={users} />;
+  return <AdminDashboard users={users} />;
 }
