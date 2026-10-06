@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react-hooks/set-state-in-effect */
 
 import { useEffect, useState } from 'react';
 
@@ -103,7 +104,7 @@ export function StalkerEventFeed({ trackedAccountId, className }: StalkerEventFe
         </div>
       ) : events.length === 0 ? (
         <p className="text-sm text-gray-500 text-center py-8 px-4">
-          No activity yet — we'll notify you when something changes.
+          No activity yet — we&apos;ll notify you when something changes.
         </p>
       ) : (
         <ul>

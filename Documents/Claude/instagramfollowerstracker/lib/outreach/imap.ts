@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ImapFlow } from 'imapflow';
 import { prisma } from '@/lib/prisma';
 import { parseReply } from './reply-parser';

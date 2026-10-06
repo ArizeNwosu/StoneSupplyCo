@@ -36,7 +36,7 @@ export function ContactForm() {
       <div className="mt-10 rounded-xl border border-teal-200 bg-teal-50 px-6 py-8 text-center">
         <p className="text-2xl">✓</p>
         <p className="mt-2 text-base font-bold text-teal-800">Message sent!</p>
-        <p className="mt-1 text-sm text-teal-700">We'll get back to you within 24 hours.</p>
+        <p className="mt-1 text-sm text-teal-700">We&apos;ll get back to you within 24 hours.</p>
       </div>
     );
   }

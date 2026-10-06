@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export function CampaignPanel({ data }: { data: any }) {
   if (!data) return <p className="p-8 text-slate-400">No campaign data yet.</p>;

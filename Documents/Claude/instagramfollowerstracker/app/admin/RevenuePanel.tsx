@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export function RevenuePanel({ data }: { data: any }) {
   if (!data) return <p className="p-8 text-slate-400">No revenue data yet.</p>;

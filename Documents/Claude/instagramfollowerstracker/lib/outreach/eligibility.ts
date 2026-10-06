@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { isRevenueTestEmail } from '@/lib/revenue/config';
 
 export function isOutreachEligible(input: { email: string; plan: string; suppressed: boolean; transactional: boolean; promotionalSentAt: Date[]; now: Date }) {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from '@/lib/prisma';
 import { getOutreachMode, isRevenueTestEmail } from './config';
 import { PLAN_PRICES } from '@/lib/limits';

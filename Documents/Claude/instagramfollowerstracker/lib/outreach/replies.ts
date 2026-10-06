@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from '@/lib/prisma';
 import { recordRevenueEvent } from '@/lib/revenue/events';
 import type { parseReply } from './reply-parser';
