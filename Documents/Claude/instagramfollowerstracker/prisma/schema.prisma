@@ -8,57 +8,60 @@ datasource db {
 }
 
 model User {
-  id               String           @id @default(cuid())
-  email            String           @unique
-  name             String?
-  plan             Plan             @default(FREE)
-  stripeCustomerId String?
-  stripeSubId      String?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  eyiConnected            Boolean          @default(false)
-  eyiConnectedAt          DateTime?
-  metaUserId              String?
-  apiKeyHash              String?
-  apiKeyPrefix            String?
-  password                String?
-  googleDriveConnected    Boolean          @default(false)
-  googleAccessToken       String?
-  googleRefreshToken      String?
-  googleTokenExpiry       DateTime?
-  googleDriveLastSync     DateTime?
-  accounts         Account[]
-  alerts           Alert[]
-  dataExports      DataExport[]
-  exportJobs       ExportJob[]
-  reportLinks      ReportLink[]
-  sessions         Session[]
-  trackedAccounts  TrackedAccount[]
-  stalkerSubs      StalkerSubscription[]
-  stalkerEvents    StalkerEvent[]
+  id                   String                @id @default(cuid())
+  email                String                @unique
+  name                 String?
+  plan                 Plan                  @default(FREE)
+  stripeCustomerId     String?
+  stripeSubId          String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  eyiConnected         Boolean               @default(false)
+  eyiConnectedAt       DateTime?
+  metaUserId           String?
+  apiKeyHash           String?
+  apiKeyPrefix         String?
+  password             String?
+  googleDriveConnected Boolean               @default(false)
+  googleAccessToken    String?
+  googleRefreshToken   String?
+  googleTokenExpiry    DateTime?
+  googleDriveLastSync  DateTime?
+  accounts             Account[]
+  alerts               Alert[]
+  dataExports          DataExport[]
+  exportJobs           ExportJob[]
+  reportLinks          ReportLink[]
+  sessions             Session[]
+  trackedAccounts      TrackedAccount[]
+  stalkerSubs          StalkerSubscription[]
+  stalkerEvents        StalkerEvent[]
+  revenueEvents        RevenueEvent[]
+  checkoutAttempts     CheckoutAttempt[]
+  outreachMessages     OutreachMessage[]
 }
 
 model TrackedAccount {
-  id                String       @id @default(cuid())
+  id                String                @id @default(cuid())
   userId            String
   handle            String
   displayName       String?
   avatarUrl         String?
-  isPublic          Boolean      @default(true)
-  createdAt         DateTime     @default(now())
+  isPublic          Boolean               @default(true)
+  createdAt         DateTime              @default(now())
   lastChecked       DateTime?
-  milestone1Sent    Boolean      @default(false)
-  milestone30Sent   Boolean      @default(false)
-  milestone3Sent    Boolean      @default(false)
-  milestone7Sent    Boolean      @default(false)
-  snapshotCount     Int          @default(0)
+  milestone1Sent    Boolean               @default(false)
+  milestone30Sent   Boolean               @default(false)
+  milestone3Sent    Boolean               @default(false)
+  milestone7Sent    Boolean               @default(false)
+  snapshotCount     Int                   @default(0)
   authenticityScore Int?
   alerts            Alert[]
   reportLinks       ReportLink[]
   snapshots         Snapshot[]
   stalkerSubs       StalkerSubscription[]
   stalkerProfile    StalkerProfile?
-  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, handle])
   @@index([handle])
@@ -302,9 +305,9 @@ model StalkerSubscription {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  trackedAccount   TrackedAccount   @relation(fields: [trackedAccountId], references: [id], onDelete: Cascade)
-  events           StalkerEvent[]
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackedAccount TrackedAccount @relation(fields: [trackedAccountId], references: [id], onDelete: Cascade)
+  events         StalkerEvent[]
 
   @@unique([userId, trackedAccountId])
   @@index([active, frequency])
@@ -313,42 +316,248 @@ model StalkerSubscription {
 // One row per TrackedAccount — stores last-known state for diffing.
 // Shared across all subscribers for the same account.
 model StalkerProfile {
-  id               String         @id @default(cuid())
-  trackedAccountId String         @unique
-  instagramUserId  String?        // numeric pk — locks identity across username changes
-  username         String?        // last known handle — for USERNAME_CHANGED detection
+  id               String   @id @default(cuid())
+  trackedAccountId String   @unique
+  instagramUserId  String? // numeric pk — locks identity across username changes
+  username         String? // last known handle — for USERNAME_CHANGED detection
   displayName      String?
   bio              String?
   externalUrl      String?
   avatarUrl        String?
   postCount        Int?
   highlightCount   Int?
-  isVerified       Boolean        @default(false)
+  isVerified       Boolean  @default(false)
   category         String?
-  pronouns         String[]       // e.g. ["she/her"] — max ~3 entries
-  recentFollowing  String[]       // top-50 most recently followed handles
-  isPrivate        Boolean        @default(false)
-  scrapedAt        DateTime       @default(now())
+  pronouns         String[] // e.g. ["she/her"] — max ~3 entries
+  recentFollowing  String[] // top-50 most recently followed handles
+  isPrivate        Boolean  @default(false)
+  scrapedAt        DateTime @default(now())
 
-  trackedAccount   TrackedAccount @relation(fields: [trackedAccountId], references: [id], onDelete: Cascade)
+  trackedAccount TrackedAccount @relation(fields: [trackedAccountId], references: [id], onDelete: Cascade)
 
   @@index([instagramUserId])
 }
 
 // One row per detected change, per subscriber. Powers the in-app feed.
 model StalkerEvent {
-  id              String              @id @default(cuid())
-  stalkerSubId    String
-  userId          String
-  signal          StalkerSignal
-  oldValue        String?
-  newValue        String?
-  read            Boolean             @default(false)
-  createdAt       DateTime            @default(now())
+  id           String        @id @default(cuid())
+  stalkerSubId String
+  userId       String
+  signal       StalkerSignal
+  oldValue     String?
+  newValue     String?
+  read         Boolean       @default(false)
+  createdAt    DateTime      @default(now())
 
-  stalkerSub      StalkerSubscription @relation(fields: [stalkerSubId], references: [id], onDelete: Cascade)
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stalkerSub StalkerSubscription @relation(fields: [stalkerSubId], references: [id], onDelete: Cascade)
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read, createdAt])
   @@index([stalkerSubId, createdAt])
+}
+
+enum RevenueEventType {
+  SIGNUP_COMPLETED
+  ACTIVATION_COMPLETED
+  PAYWALL_VIEWED
+  PRICING_VIEWED
+  CHECKOUT_CLICKED
+  CHECKOUT_CREATED
+  CHECKOUT_COMPLETED
+  CHECKOUT_EXPIRED
+  SUBSCRIPTION_ACTIVATED
+  SUBSCRIPTION_CANCELED
+  OUTREACH_QUEUED
+  OUTREACH_SENT
+  OUTREACH_FAILED
+  OUTREACH_REPLIED
+  OUTREACH_UNSUBSCRIBED
+}
+
+enum CheckoutAttemptStatus {
+  CLICKED
+  CREATED
+  COMPLETED
+  EXPIRED
+  FAILED
+}
+
+enum OutreachMessageStatus {
+  QUEUED
+  SENDING
+  SENT
+  FAILED
+  REPLIED
+  SUPPRESSED
+  CANCELED
+}
+
+enum OutreachReplyClassification {
+  PRICE
+  TRUST
+  VALUE
+  TECHNICAL
+  CHANGED_MIND
+  INTERESTED
+  OTHER
+}
+
+enum OutreachAdminStatus {
+  NEEDS_RESPONSE
+  RESPONDED
+  RESOLVED
+}
+
+enum OutreachSuppressionReason {
+  UNSUBSCRIBED
+  BOUNCED
+  COMPLAINT
+  ADMIN
+}
+
+model RevenueEvent {
+  id                      String            @id @default(cuid())
+  userId                  String?
+  type                    RevenueEventType
+  source                  String?
+  plan                    String?
+  interval                String?
+  campaignId              String?
+  outreachMessageId       String?
+  stripeCustomerId        String?
+  stripeCheckoutSessionId String?
+  stripeSubscriptionId    String?
+  properties              Json?
+  idempotencyKey          String?           @unique
+  occurredAt              DateTime          @default(now())
+  user                    User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  campaign                OutreachCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  outreachMessage         OutreachMessage?  @relation(fields: [outreachMessageId], references: [id], onDelete: SetNull)
+
+  @@index([userId, occurredAt])
+  @@index([type, occurredAt])
+  @@index([campaignId, occurredAt])
+}
+
+model CheckoutAttempt {
+  id                      String                @id @default(cuid())
+  userId                  String?
+  plan                    String
+  interval                String
+  source                  String
+  campaignId              String?
+  outreachMessageId       String?
+  status                  CheckoutAttemptStatus @default(CLICKED)
+  stripeCheckoutSessionId String?               @unique
+  stripeCustomerId        String?
+  stripeSubscriptionId    String?
+  failureCategory         String?
+  failureMessage          String?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  completedAt             DateTime?
+  expiredAt               DateTime?
+  user                    User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  campaign                OutreachCampaign?     @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  outreachMessage         OutreachMessage?      @relation(fields: [outreachMessageId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([campaignId, createdAt])
+}
+
+model ProcessedStripeEvent {
+  stripeEventId String   @id
+  eventType     String
+  processedAt   DateTime @default(now())
+}
+
+model OutreachCampaign {
+  id               String            @id @default(cuid())
+  key              String            @unique
+  name             String
+  triggerType      String
+  delayMinutes     Int               @default(0)
+  enabled          Boolean           @default(false)
+  transactional    Boolean           @default(false)
+  subject          String
+  templateKey      String
+  offerCode        String?
+  dailySendCap     Int               @default(50)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  messages         OutreachMessage[]
+  events           RevenueEvent[]
+  checkoutAttempts CheckoutAttempt[]
+}
+
+model OutreachMessage {
+  id                       String                       @id @default(cuid())
+  userId                   String?
+  campaignId               String
+  occurrenceKey            String
+  status                   OutreachMessageStatus        @default(QUEUED)
+  dryRun                   Boolean                      @default(true)
+  replyToken               String                       @unique
+  providerMessageId        String?
+  rfcMessageId             String?                      @unique
+  attemptCount             Int                          @default(0)
+  lastErrorCategory        String?
+  scheduledAt              DateTime
+  lockedAt                 DateTime?
+  sentAt                   DateTime?
+  repliedAt                DateTime?
+  convertedAt              DateTime?
+  resolvedAt               DateTime?
+  respondedAt              DateTime?
+  classification           OutreachReplyClassification?
+  adminStatus              OutreachAdminStatus          @default(NEEDS_RESPONSE)
+  attributedSubscriptionId String?
+  createdAt                DateTime                     @default(now())
+  updatedAt                DateTime                     @updatedAt
+  user                     User?                        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  campaign                 OutreachCampaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  replies                  OutreachReply[]
+  events                   RevenueEvent[]
+  checkoutAttempts         CheckoutAttempt[]
+
+  @@unique([campaignId, occurrenceKey])
+  @@index([userId, createdAt])
+  @@index([status, scheduledAt])
+  @@index([adminStatus, repliedAt])
+}
+
+model OutreachReply {
+  id                String          @id @default(cuid())
+  outreachMessageId String
+  mailbox           String
+  uidValidity       String
+  uid               Int
+  senderEmail       String
+  receivedAt        DateTime
+  bodyText          String
+  subject           String
+  inReplyTo         String?
+  references        String[]
+  createdAt         DateTime        @default(now())
+  outreachMessage   OutreachMessage @relation(fields: [outreachMessageId], references: [id], onDelete: Cascade)
+
+  @@unique([mailbox, uidValidity, uid])
+  @@index([outreachMessageId, receivedAt])
+  @@index([receivedAt])
+}
+
+model OutreachSuppression {
+  id              String                    @id @default(cuid())
+  email           String                    @unique
+  reason          OutreachSuppressionReason
+  sourceMessageId String?
+  createdAt       DateTime                  @default(now())
+}
+
+model OutreachMailboxCursor {
+  mailbox     String   @id
+  uidValidity String
+  lastUid     Int      @default(0)
+  updatedAt   DateTime @updatedAt
 }
