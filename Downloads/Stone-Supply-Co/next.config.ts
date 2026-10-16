@@ -15,12 +15,17 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "xjrlmcqlaqnktllvvaci.supabase.co",
-        pathname: "/storage/v1/object/public/listing-photos/**",
+        pathname: "/**",
       },
       {
         protocol: "https",
         hostname: "fvaivbcprpyqrmjauoov.supabase.co",
         pathname: "/storage/v1/object/public/**",
+      },
+      {
+        protocol: "https",
+        hostname: "oaidalleapiprodscus.blob.core.windows.net",
+        pathname: "/**",
       },
     ],
   },
