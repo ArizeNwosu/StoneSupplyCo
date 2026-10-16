@@ -1,127 +1,125 @@
+// app/visualizer/VisualizerClient.tsx
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import type { MaterialSummary } from "@/types/material";
+import { useState } from "react";
+import { PhotoUpload } from "@/components/visualizer/PhotoUpload";
+import { RoomPicker } from "@/components/visualizer/RoomPicker";
+import { SurfaceWizard } from "@/components/visualizer/SurfaceWizard";
+import { RenderResult } from "@/components/visualizer/RenderResult";
+import type { RoomType, SurfaceSelection } from "@/types/visualizer";
+import { MAX_RENDERS_SELF_SERVE } from "@/types/visualizer";
 
-const ROOMS = [
-  { value: "kitchen", label: "Kitchen" },
-  { value: "bathroom", label: "Bathroom" },
-  { value: "floor", label: "Floor" },
-  { value: "wall", label: "Feature wall" },
-  { value: "outdoor", label: "Outdoor" },
-];
-
-type PreviewData = {
-  type: "gradient";
-  colors: string[];
-  texture_url: string | null;
-  material_type: string;
-  finish: string;
-};
-
-type VisualizeResult = {
-  slug: string;
-  name: string;
-  room: string;
-  room_label: string;
-  preview: PreviewData;
-  note: string;
-};
+type WizardStep = "upload" | "room" | "surfaces" | "rendering" | "result";
 
 export function VisualizerClient() {
-  const searchParams = useSearchParams();
-  const initialSlug = searchParams.get("slug") ?? "";
-
-  const [query, setQuery] = useState(initialSlug);
-  const [suggestions, setSuggestions] = useState<MaterialSummary[]>([]);
-  const [selectedSlug, setSelectedSlug] = useState(initialSlug);
-  const [selectedName, setSelectedName] = useState("");
-  const [selectedRoom, setSelectedRoom] = useState("kitchen");
-  const [result, setResult] = useState<VisualizeResult | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<WizardStep>("upload");
+  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [roomType, setRoomType] = useState<RoomType | null>(null);
+  const [renderUrl, setRenderUrl] = useState<string | null>(null);
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [rendersRemaining, setRendersRemaining] = useState(MAX_RENDERS_SELF_SERVE);
+  const [surfaces, setSurfaces] = useState<SurfaceSelection[]>([]);
+  const [leadCaptured, setLeadCaptured] = useState(false);
   const [error, setError] = useState("");
-  const [searching, setSearching] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  // Auto-visualize if slug from URL
-  useEffect(() => {
-    if (initialSlug) {
-      handleVisualize(initialSlug, "kitchen");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleSearch = async (q: string) => {
-    setQuery(q);
-    if (q.length < 2) {
-      setSuggestions([]);
-      return;
-    }
-    setSearching(true);
-    try {
-      const res = await fetch(`/api/materials?q=${encodeURIComponent(q)}&limit=5`);
-      if (res.ok) {
-        const data = await res.json();
-        setSuggestions(data.materials ?? []);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setSearching(false);
-    }
+  // ── Upload photo + select room, then create session ──
+  const handlePhotoUpload = (dataUrl: string) => {
+    setPhotoDataUrl(dataUrl);
+    setStep("room");
   };
 
-  const selectMaterial = (mat: MaterialSummary) => {
-    setSelectedSlug(mat.slug);
-    setSelectedName(mat.name);
-    setQuery(mat.name);
-    setSuggestions([]);
-  };
-
-  const handleVisualize = async (slug = selectedSlug, room = selectedRoom) => {
-    if (!slug) return;
-    setLoading(true);
+  const handleRoomSelect = async (room: RoomType) => {
+    setRoomType(room);
+    setUploading(true);
     setError("");
-    setResult(null);
+
     try {
-      const res = await fetch("/api/visualize", {
+      const res = await fetch("/api/visualize/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ material_slug: slug, room }),
+        body: JSON.stringify({ photo_data: photoDataUrl, room_type: room }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to visualize.");
-      setResult(data);
+      if (!res.ok) throw new Error(data.error ?? "Upload failed.");
+      setSessionId(data.session_id);
+      setPhotoUrl(data.photo_url);
+      setStep("surfaces");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Please try again.");
+      setError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleVisualize();
+  // ── Render ──
+  const handleSurfacesComplete = async (selections: SurfaceSelection[]) => {
+    setSurfaces(selections);
+    setStep("rendering");
+    setError("");
+
+    try {
+      const res = await fetch("/api/visualize/render", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId, surfaces: selections }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.limit_reached) {
+          setError(data.error);
+          setRendersRemaining(0);
+          setStep("result");
+          return;
+        }
+        throw new Error(data.error ?? "Render failed.");
+      }
+      setRenderUrl(data.render_url);
+      setShareToken(data.share_token);
+      setRendersRemaining(data.renders_remaining);
+      setStep("result");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Render failed.");
+      setStep("surfaces");
+    }
   };
+
+  // ── Try different stone ──
+  const handleTryDifferent = () => {
+    setRenderUrl(null);
+    setShareToken(null);
+    setStep("surfaces");
+  };
+
+  // ── Step bar ──
+  const STEPS: WizardStep[] = ["upload", "room", "surfaces", "rendering", "result"];
+  const stepIndex = STEPS.indexOf(step);
 
   return (
     <>
       {/* Hero */}
       <div
         style={{
-          padding: "calc(var(--header-height) + clamp(4rem, 7vw, 7rem)) var(--gutter) clamp(3rem, 5vw, 5rem)",
+          padding:
+            "calc(var(--header-height) + clamp(4rem, 7vw, 7rem)) var(--gutter) clamp(3rem, 5vw, 5rem)",
           background: "var(--color-warm)",
           borderBottom: "1px solid var(--color-line)",
         }}
       >
         <nav className="breadcrumb breadcrumb-ink" aria-label="Breadcrumb">
           <Link href="/">Home</Link>
-          <span className="breadcrumb-sep" aria-hidden>›</span>
+          <span className="breadcrumb-sep" aria-hidden>
+            ›
+          </span>
           <Link href="/materials">Materials</Link>
-          <span className="breadcrumb-sep" aria-hidden>›</span>
-          <span className="breadcrumb-current">Room visualizer</span>
+          <span className="breadcrumb-sep" aria-hidden>
+            ›
+          </span>
+          <span className="breadcrumb-current">Stone Visualizer</span>
         </nav>
 
         <h1
@@ -137,272 +135,252 @@ export function VisualizerClient() {
         >
           See it in your space.
         </h1>
-        <p style={{ margin: "1.5rem 0 0", color: "var(--color-stone-dark)", fontSize: "1rem", lineHeight: 1.7, maxWidth: "38rem" }}>
-          Search for any slab in our library, choose a room type, and preview how the stone would look installed.
+        <p
+          style={{
+            margin: "1.5rem 0 0",
+            color: "var(--color-stone-dark)",
+            fontSize: "1rem",
+            lineHeight: 1.7,
+            maxWidth: "38rem",
+          }}
+        >
+          Upload a photo of your kitchen or bathroom, pick your stone for each
+          surface, and our AI will show you exactly how it looks — photorealistic,
+          in seconds.
         </p>
       </div>
 
-      {/* Controls */}
-      <section
+      {/* Step progress bar */}
+      <div
         style={{
-          padding: "clamp(3rem, 5vw, 5rem) var(--gutter)",
+          display: "flex",
+          gap: "4px",
+          padding: "0.75rem var(--gutter)",
           background: "var(--color-paper)",
           borderBottom: "1px solid var(--color-line)",
         }}
       >
-        <form onSubmit={handleSubmit} style={{ maxWidth: "42rem" }}>
-          {/* Material search */}
-          <div className="finder-field" style={{ marginBottom: "1.25rem", position: "relative" }}>
-            <label>Stone material</label>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search for a slab — e.g., Calacatta, Blue Bahia…"
-              autoComplete="off"
-            />
-            {suggestions.length > 0 && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: 0,
-                  right: 0,
-                  background: "var(--color-white)",
-                  border: "1px solid var(--color-line)",
-                  borderRadius: "var(--radius-card)",
-                  boxShadow: "var(--shadow-card)",
-                  zIndex: 20,
-                  overflow: "hidden",
-                }}
-              >
-                {suggestions.map((mat) => (
-                  <button
-                    key={mat.slug}
-                    type="button"
-                    onClick={() => selectMaterial(mat)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.75rem",
-                      width: "100%",
-                      padding: "0.75rem 1rem",
-                      background: "none",
-                      border: "none",
-                      borderBottom: "1px solid var(--color-line)",
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                  >
-                    {mat.image_urls?.[0] && (
-                      <div style={{ width: "2.5rem", height: "2.5rem", position: "relative", borderRadius: "2px", overflow: "hidden", flexShrink: 0 }}>
-                        <Image src={mat.image_urls[0]} alt={mat.name} fill sizes="40px" style={{ objectFit: "cover" }} />
-                      </div>
-                    )}
-                    <div>
-                      <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--color-ink)", fontWeight: 500 }}>{mat.name}</p>
-                      <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--color-stone-dark)" }}>{mat.material_type} · {mat.finish}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        {["Upload", "Room", "Surfaces", "Rendering", "Result"].map((label, i) => (
+          <div
+            key={label}
+            style={{
+              flex: 1,
+              height: "4px",
+              borderRadius: "2px",
+              background: i <= stepIndex ? "var(--color-ink)" : "var(--color-line)",
+              transition: "background 0.3s",
+            }}
+            title={label}
+          />
+        ))}
+      </div>
 
-          {/* Room selector */}
-          <div style={{ marginBottom: "1.5rem" }}>
-            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "0.6rem", color: "var(--color-stone-dark)" }}>
-              Room
-            </label>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              {ROOMS.map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setSelectedRoom(value)}
-                  style={{
-                    padding: "0.45rem 1rem",
-                    borderRadius: "999px",
-                    border: "1px solid",
-                    borderColor: selectedRoom === value ? "var(--color-ink)" : "var(--color-line)",
-                    background: selectedRoom === value ? "var(--color-ink)" : "transparent",
-                    color: selectedRoom === value ? "var(--color-white)" : "var(--color-ink)",
-                    fontSize: "0.82rem",
-                    cursor: "pointer",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="button button-ink"
-            disabled={!selectedSlug || loading}
-          >
-            {loading ? "Generating…" : "Visualize"}
-          </button>
-        </form>
-      </section>
-
-      {/* Result */}
-      {(result || loading || error) && (
-        <section
-          style={{
-            padding: "clamp(3rem, 5vw, 5rem) var(--gutter)",
-            background: "var(--color-white)",
-          }}
-        >
-          {error && (
-            <p style={{ color: "var(--color-error)", fontSize: "0.88rem" }}>{error}</p>
+      {/* Content */}
+      <section
+        style={{
+          padding: "clamp(3rem, 5vw, 5rem) var(--gutter)",
+          background: "var(--color-white)",
+          minHeight: "50vh",
+        }}
+      >
+        <div style={{ maxWidth: "52rem" }}>
+          {error && step !== "result" && (
+            <p
+              style={{
+                color: "var(--color-error)",
+                fontSize: "0.88rem",
+                marginBottom: "1rem",
+              }}
+            >
+              {error}
+            </p>
           )}
 
-          {loading && (
-            <div style={{ maxWidth: "42rem" }}>
-              <div className="skeleton" style={{ height: "24rem", borderRadius: "var(--radius-card)" }} />
+          {/* Step: Upload */}
+          {step === "upload" && (
+            <div>
+              <h2
+                style={{
+                  margin: "0 0 0.5rem",
+                  fontFamily: "var(--font-serif)",
+                  fontSize: "clamp(1.5rem, 3vw, 2rem)",
+                  fontWeight: 400,
+                }}
+              >
+                Upload your photo
+              </h2>
+              <p
+                style={{
+                  margin: "0 0 1.5rem",
+                  fontSize: "0.88rem",
+                  color: "var(--color-stone-dark)",
+                  lineHeight: 1.6,
+                }}
+              >
+                Take a photo of your kitchen or bathroom. For best results, shoot
+                straight on so the countertops and surfaces are clearly visible.
+              </p>
+              <PhotoUpload onUpload={handlePhotoUpload} />
             </div>
           )}
 
-          {result && !loading && (
-            <div style={{ maxWidth: "52rem" }}>
-              <div style={{ marginBottom: "1rem" }}>
-                <span className="eyebrow" style={{ color: "var(--color-bronze-ink)" }}>
-                  {result.room_label} · {result.name}
-                </span>
-              </div>
-
-              {/* Mock visualizer canvas */}
-              <div
+          {/* Step: Room */}
+          {step === "room" && (
+            <div>
+              <h2
                 style={{
-                  position: "relative",
-                  width: "100%",
-                  paddingBottom: "62.5%",
-                  borderRadius: "var(--radius-card)",
-                  overflow: "hidden",
-                  border: "1px solid var(--color-line)",
+                  margin: "0 0 0.5rem",
+                  fontFamily: "var(--font-serif)",
+                  fontSize: "clamp(1.5rem, 3vw, 2rem)",
+                  fontWeight: 400,
                 }}
               >
-                {/* Room silhouette background */}
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    background: `linear-gradient(160deg, #e8e0d4 0%, #d4ccc0 100%)`,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "flex-end",
-                  }}
-                >
-                  {/* Stone surface area */}
-                  <div
-                    style={{
-                      height: "35%",
-                      background: result.preview.texture_url
-                        ? `url(${result.preview.texture_url}) center/cover`
-                        : `linear-gradient(135deg, ${result.preview.colors[0]}, ${result.preview.colors[1]}, ${result.preview.colors[2]})`,
-                      borderTop: "2px solid rgba(0,0,0,0.08)",
-                    }}
-                  />
-                </div>
-
-                {/* Overlay label */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "1rem",
-                    left: "1rem",
-                    background: "rgba(23,24,21,0.75)",
-                    backdropFilter: "blur(6px)",
-                    color: "#fff",
-                    padding: "0.3rem 0.7rem",
-                    borderRadius: "999px",
-                    fontSize: "0.75rem",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  {result.room_label}
-                </div>
-
-                {/* Material thumbnail inset */}
-                {result.preview.texture_url && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: "1rem",
-                      right: "1rem",
-                      width: "5rem",
-                      height: "5rem",
-                      borderRadius: "4px",
-                      overflow: "hidden",
-                      border: "2px solid rgba(255,255,255,0.8)",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                    }}
-                  >
-                    <Image
-                      src={result.preview.texture_url}
-                      alt={result.name}
-                      fill
-                      sizes="80px"
-                      style={{ objectFit: "cover" }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <p style={{ marginTop: "1rem", fontSize: "0.8rem", color: "var(--color-stone-dark)", lineHeight: 1.6 }}>
-                {result.note}
+                What room is this?
+              </h2>
+              <p
+                style={{
+                  margin: "0 0 1.5rem",
+                  fontSize: "0.88rem",
+                  color: "var(--color-stone-dark)",
+                  lineHeight: 1.6,
+                }}
+              >
+                This helps us identify the right surfaces to visualize.
               </p>
 
-              <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                <Link href={`/materials/${result.slug}`} className="button button-ink" style={{ fontSize: "0.85rem" }}>
-                  View full slab details
-                </Link>
-                <Link href={`/compare?slugs=${result.slug}`} style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  background: "transparent",
-                  color: "var(--color-ink)",
-                  border: "1px solid var(--color-line)",
-                  borderRadius: "var(--radius-card)",
-                  padding: "0.55rem 1.1rem",
-                  fontSize: "0.82rem",
-                  textDecoration: "none",
-                }}>
-                  Compare
-                </Link>
-              </div>
+              {/* Photo preview */}
+              {photoDataUrl && (
+                <div
+                  style={{
+                    marginBottom: "1.5rem",
+                    borderRadius: "var(--radius-card)",
+                    overflow: "hidden",
+                    border: "1px solid var(--color-line)",
+                    maxWidth: "24rem",
+                  }}
+                >
+                  <Image
+                    src={photoDataUrl}
+                    alt="Your uploaded photo"
+                    width={400}
+                    height={300}
+                    style={{ width: "100%", height: "auto", display: "block" }}
+                    unoptimized
+                  />
+                </div>
+              )}
+
+              <RoomPicker value={roomType} onChange={handleRoomSelect} />
+
+              {uploading && (
+                <p
+                  style={{
+                    marginTop: "1rem",
+                    fontSize: "0.82rem",
+                    color: "var(--color-stone-dark)",
+                  }}
+                >
+                  Uploading photo…
+                </p>
+              )}
             </div>
           )}
-        </section>
-      )}
 
-      {/* Callout */}
-      {!result && !loading && (
-        <section
-          style={{
-            padding: "clamp(3rem, 5vw, 5rem) var(--gutter)",
-            background: "var(--color-white)",
-          }}
-        >
-          <div style={{ maxWidth: "38rem" }}>
-            <p className="eyebrow" style={{ color: "var(--color-stone-dark)", marginBottom: "1rem" }}>
-              How it works
-            </p>
-            <ol style={{ margin: 0, padding: "0 0 0 1.25rem", lineHeight: 2, color: "var(--color-ink)", fontSize: "0.92rem" }}>
-              <li>Search for any slab from our library</li>
-              <li>Choose a room type</li>
-              <li>See a preview of how the stone looks installed</li>
-              <li>Like it? Visit our yard in Northridge for a live look</li>
-            </ol>
-            <p style={{ marginTop: "1.5rem", fontSize: "0.82rem", color: "var(--color-stone-dark)" }}>
-              Full AI room visualization is coming soon — bringing real room photography with the exact stone texture composited in.
-            </p>
-          </div>
-        </section>
-      )}
+          {/* Step: Surfaces */}
+          {step === "surfaces" && roomType && (
+            <SurfaceWizard
+              roomType={roomType}
+              onComplete={handleSurfacesComplete}
+              onBack={() => setStep("room")}
+            />
+          )}
+
+          {/* Step: Rendering */}
+          {step === "rendering" && (
+            <div style={{ textAlign: "center", padding: "3rem 0" }}>
+              <div
+                className="skeleton"
+                style={{
+                  height: "24rem",
+                  borderRadius: "var(--radius-card)",
+                  maxWidth: "40rem",
+                  margin: "0 auto 1.5rem",
+                }}
+              />
+              <p
+                style={{
+                  fontSize: "1rem",
+                  color: "var(--color-ink)",
+                  fontWeight: 500,
+                }}
+              >
+                Generating your visualization…
+              </p>
+              <p
+                style={{
+                  fontSize: "0.82rem",
+                  color: "var(--color-stone-dark)",
+                  marginTop: "0.5rem",
+                }}
+              >
+                This usually takes 10–20 seconds. Our AI is compositing your
+                stone selections into the photo.
+              </p>
+            </div>
+          )}
+
+          {/* Step: Result */}
+          {step === "result" && renderUrl && photoUrl && shareToken && sessionId && (
+            <RenderResult
+              photoUrl={photoUrl}
+              renderUrl={renderUrl}
+              surfaces={surfaces}
+              shareToken={shareToken}
+              rendersRemaining={rendersRemaining}
+              sessionId={sessionId}
+              leadCaptured={leadCaptured}
+              onLeadCaptured={() => setLeadCaptured(true)}
+              onTryDifferent={handleTryDifferent}
+            />
+          )}
+
+          {/* Limit reached message */}
+          {step === "result" && rendersRemaining <= 0 && !renderUrl && (
+            <div style={{ textAlign: "center", padding: "2rem 0" }}>
+              <h2
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: "1.5rem",
+                  fontWeight: 400,
+                  margin: "0 0 1rem",
+                }}
+              >
+                You&rsquo;ve used all your free visualizations
+              </h2>
+              <p
+                style={{
+                  fontSize: "0.88rem",
+                  color: "var(--color-stone-dark)",
+                  lineHeight: 1.6,
+                  maxWidth: "32rem",
+                  margin: "0 auto",
+                }}
+              >
+                A Stone Supply Co representative will reach out to help you
+                explore more options. Visit us at our Northridge yard to see
+                these stones in person.
+              </p>
+              <Link
+                href="/materials"
+                className="button button-ink"
+                style={{ marginTop: "1.5rem", display: "inline-flex" }}
+              >
+                Browse all materials
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
     </>
   );
 }
