@@ -87,9 +87,21 @@ export async function POST(request: NextRequest) {
   try {
     const openai = getOpenAIClient();
 
+    // Photos are in a private bucket — create a signed URL to fetch them
+    const supabase = createServiceClient();
+    const photoPath = session.photo_url.split("/visualizer-photos/").pop();
+    if (!photoPath) throw new Error("Invalid photo URL");
+
+    const { data: signedData, error: signedError } = await supabase.storage
+      .from("visualizer-photos")
+      .createSignedUrl(photoPath, 300); // 5 min expiry
+    if (signedError || !signedData?.signedUrl) {
+      throw new Error(`Failed to create signed URL: ${signedError?.message}`);
+    }
+
     const response = await openai.images.edit({
       model: "gpt-image-1",
-      image: await fetchImageAsFile(session.photo_url),
+      image: await fetchImageAsFile(signedData.signedUrl),
       prompt,
       size: "1024x1024",
     });
@@ -100,7 +112,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Upload render to Supabase Storage
-    const supabase = createServiceClient();
     const renderFileName = `${crypto.randomUUID()}.png`;
     const renderBuffer = Buffer.from(imageBase64, "base64");
 
