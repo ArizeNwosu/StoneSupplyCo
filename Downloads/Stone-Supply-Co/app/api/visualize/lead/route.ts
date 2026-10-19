@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const RATE = { limit: 5, windowMs: 10 * 60 * 1000, key: "viz-lead" };
 
 export async function POST(request: NextRequest) {
-  if (isRateLimited(getIp(request), RATE)) {
+  if (await isRateLimited(getIp(request), RATE)) {
     return NextResponse.json(
       { error: "Too many requests." },
       { status: 429 }

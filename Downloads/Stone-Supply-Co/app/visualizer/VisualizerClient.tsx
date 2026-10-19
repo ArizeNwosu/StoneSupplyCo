@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PhotoUpload } from "@/components/visualizer/PhotoUpload";
 import { RoomPicker } from "@/components/visualizer/RoomPicker";
 import { SurfaceWizard } from "@/components/visualizer/SurfaceWizard";
@@ -14,6 +14,7 @@ import { MAX_RENDERS_SELF_SERVE } from "@/types/visualizer";
 type WizardStep = "upload" | "room" | "surfaces" | "rendering" | "result";
 
 export function VisualizerClient() {
+  const contentRef = useRef<HTMLElement>(null);
   const [step, setStep] = useState<WizardStep>("upload");
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -99,6 +100,14 @@ export function VisualizerClient() {
   const STEPS: WizardStep[] = ["upload", "room", "surfaces", "rendering", "result"];
   const stepIndex = STEPS.indexOf(step);
 
+  useEffect(() => {
+    if (step === "upload") return;
+    const frame = window.requestAnimationFrame(() => {
+      contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [step]);
+
   return (
     <>
       {/* Hero */}
@@ -177,6 +186,8 @@ export function VisualizerClient() {
 
       {/* Content */}
       <section
+        ref={contentRef}
+        className="visualizer-content visualizer-anchor"
         style={{
           padding: "clamp(3rem, 5vw, 5rem) var(--gutter)",
           background: "var(--color-white)",

@@ -91,6 +91,7 @@ export function Footer() {
         <p>© {new Date().getFullYear()} {business.displayName}</p>
         <div>
           <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
           <Link href="/accessibility">Accessibility</Link>
         </div>
         <a className="back-to-top" href="#top">

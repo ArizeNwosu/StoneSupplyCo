@@ -1,5 +1,5 @@
 const photoRoot =
-  "https://xjrlmcqlaqnktllvvaci.supabase.co/storage/v1/object/public/listing-photos/0401c957-c990-4ed3-aa86-e3dc94e0dfb7";
+  "https://fvaivbcprpyqrmjauoov.supabase.co/storage/v1/object/public/listing-photos/optimized-v2/0401c957-c990-4ed3-aa86-e3dc94e0dfb7";
 
 export type InventoryFeature = {
   name: string;

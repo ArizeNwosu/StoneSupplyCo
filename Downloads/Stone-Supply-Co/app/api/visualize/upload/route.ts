@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase";
 import { createVisualizerSession } from "@/lib/db/visualizer";
 import { isRateLimited, getIp } from "@/lib/rateLimiter";
+import { createVisualizerPhotoUrl } from "@/lib/visualizer-storage";
 import type { RoomType } from "@/types/visualizer";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,7 @@ const RATE = { limit: 10, windowMs: 60 * 60 * 1000, key: "viz-upload" };
 const VALID_ROOMS: RoomType[] = ["kitchen", "bathroom"];
 
 export async function POST(request: NextRequest) {
-  if (isRateLimited(getIp(request), RATE)) {
+  if (await isRateLimited(getIp(request), RATE)) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
       { status: 429 }
@@ -85,13 +86,16 @@ export async function POST(request: NextRequest) {
     .getPublicUrl(fileName);
 
   try {
+    // Keep the stable object URL as the server-side locator, but only expose a
+    // short-lived signed URL because customer room photos live in a private bucket.
+    const signedPhotoUrl = await createVisualizerPhotoUrl(supabase, fileName);
     const session = await createVisualizerSession({
       photo_url: urlData.publicUrl,
       room_type: roomType as RoomType,
     });
 
     return NextResponse.json(
-      { session_id: session.id, photo_url: urlData.publicUrl },
+      { session_id: session.id, photo_url: signedPhotoUrl },
       { status: 201 }
     );
   } catch (err) {

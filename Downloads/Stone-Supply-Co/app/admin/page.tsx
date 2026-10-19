@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { AdminClient } from "./AdminClient";
-import { siteName } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: `Admin | ${siteName}`,
+  title: "Admin",
   robots: { index: false, follow: false },
 };
 

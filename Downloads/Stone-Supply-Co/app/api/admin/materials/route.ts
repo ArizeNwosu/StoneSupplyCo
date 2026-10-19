@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient } from "@/lib/supabase";
+import { createServiceClient } from "@/lib/supabase";
 import type { Material } from "@/types/material";
 
 export const dynamic = "force-dynamic";
 
-// Simple bearer token guard — set ADMIN_SECRET in env
 function authorized(request: NextRequest): boolean {
   const secret = process.env.ADMIN_SECRET;
-  if (!secret) return false; // No secret = admin locked out by default
-
+  if (!secret) return false;
   const auth = request.headers.get("authorization") ?? "";
-  // Also accept ?token= in URL for browser convenience
-  const urlToken = new URL(request.url).searchParams.get("token");
-
-  return auth === `Bearer ${secret}` || urlToken === secret;
+  return auth === `Bearer ${secret}`;
 }
 
 /**
@@ -25,7 +20,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supabase = createPublicClient();
+  const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("materials")
     .select("*")
@@ -61,7 +56,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = createPublicClient();
+  const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("materials")
     .upsert(body, { onConflict: "slug" })

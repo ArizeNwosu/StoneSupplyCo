@@ -11,6 +11,7 @@ type Props = {
 
 export function BeforeAfterSlider({ beforeSrc, afterSrc, alt }: Props) {
   const [position, setPosition] = useState(50);
+  const [aspectRatio, setAspectRatio] = useState(3 / 2);
   const containerRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
 
@@ -44,7 +45,7 @@ export function BeforeAfterSlider({ beforeSrc, afterSrc, alt }: Props) {
       style={{
         position: "relative",
         width: "100%",
-        paddingBottom: "66.67%",
+        aspectRatio,
         borderRadius: "var(--radius-card)",
         overflow: "hidden",
         cursor: "col-resize",
@@ -58,7 +59,19 @@ export function BeforeAfterSlider({ beforeSrc, afterSrc, alt }: Props) {
 
       {/* Before (clipped) */}
       <div style={{ position: "absolute", inset: 0, width: `${position}%`, overflow: "hidden" }}>
-        <Image src={beforeSrc} alt={`${alt} — before`} fill sizes="(max-width: 768px) 100vw, 52rem" style={{ objectFit: "cover" }} />
+        <Image
+          src={beforeSrc}
+          alt={`${alt} — before`}
+          fill
+          sizes="(max-width: 768px) 100vw, 52rem"
+          style={{ objectFit: "cover" }}
+          onLoad={(event) => {
+            const image = event.currentTarget;
+            if (image.naturalWidth && image.naturalHeight) {
+              setAspectRatio(image.naturalWidth / image.naturalHeight);
+            }
+          }}
+        />
       </div>
 
       {/* Slider line */}

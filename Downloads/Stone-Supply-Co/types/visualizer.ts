@@ -29,6 +29,8 @@ export type SurfaceSelection = {
   surface: Surface;
   material_slug: string;
   material_name: string;
+  material_image_url?: string;
+  material_color_family?: string | null;
   waterfall?: boolean; // only for "island"
 };
 
