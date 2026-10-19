@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import type { Material, MaterialSummary } from "@/types/material";
+import { useState, useEffect, useCallback, startTransition } from "react";
+import type { Material } from "@/types/material";
 
 type Lead = {
   id: string;
@@ -14,7 +14,44 @@ type Lead = {
   created_at: string;
 };
 
+import type { MaterialType, ColorFamily, Availability } from "@/types/material";
+
 type Tab = "materials" | "leads";
+
+const MATERIAL_TYPES: MaterialType[] = ["Quartzite", "Marble", "Granite", "Quartz", "Onyx", "Other"];
+const COLOR_FAMILIES: ColorFamily[] = ["White", "Cream", "Grey", "Black", "Brown", "Green", "Blue", "Multi"];
+const AVAILABILITIES: Availability[] = ["available", "low", "unavailable"];
+
+type AddForm = {
+  name: string;
+  slug: string;
+  material_type: MaterialType;
+  finish: string;
+  color_family: ColorFamily | "";
+  origin: string;
+  dimensions: string;
+  thickness: string;
+  description: string;
+  price: string;
+  quantity: string;
+  availability: Availability;
+  image_urls: string;
+  tags: string;
+  featured: boolean;
+  new_arrival: boolean;
+  clearance: boolean;
+};
+
+const EMPTY_ADD_FORM: AddForm = {
+  name: "", slug: "", material_type: "Quartz", finish: "", color_family: "",
+  origin: "", dimensions: "", thickness: "", description: "",
+  price: "", quantity: "1", availability: "available",
+  image_urls: "", tags: "", featured: false, new_arrival: false, clearance: false,
+};
+
+function slugify(name: string) {
+  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
 
 function useAdminToken() {
   const [token, setToken] = useState("");
@@ -22,8 +59,10 @@ function useAdminToken() {
 
   useEffect(() => {
     const t = sessionStorage.getItem("admin_token") ?? "";
-    setToken(t);
-    setSaved(!!t);
+    startTransition(() => {
+      setToken(t);
+      setSaved(!!t);
+    });
   }, []);
 
   const saveToken = (t: string) => {
@@ -83,6 +122,9 @@ export function AdminClient() {
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [editFields, setEditFields] = useState<Partial<Material>>({});
   const [saving, setSaving] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
+  const [addForm, setAddForm] = useState<AddForm>(EMPTY_ADD_FORM);
+  const [addSaving, setAddSaving] = useState(false);
 
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
@@ -120,8 +162,10 @@ export function AdminClient() {
 
   useEffect(() => {
     if (!saved) return;
-    if (tab === "materials") loadMaterials();
-    else loadLeads();
+    startTransition(() => {
+      if (tab === "materials") loadMaterials();
+      else loadLeads();
+    });
   }, [saved, tab, loadMaterials, loadLeads]);
 
   const startEdit = (mat: Material) => {
@@ -172,32 +216,69 @@ export function AdminClient() {
     }
   };
 
+  const addMaterial = async () => {
+    if (!addForm.name || !addForm.slug || !addForm.material_type) {
+      setError("Name, slug, and type are required.");
+      return;
+    }
+    setAddSaving(true);
+    setError("");
+    try {
+      const payload = {
+        ...addForm,
+        color_family: addForm.color_family || null,
+        price: addForm.price ? parseFloat(addForm.price) : null,
+        quantity: parseInt(addForm.quantity, 10) || 0,
+        image_urls: addForm.image_urls
+          ? addForm.image_urls.split("\n").map((s) => s.trim()).filter(Boolean)
+          : [],
+        tags: addForm.tags
+          ? addForm.tags.split(",").map((s) => s.trim()).filter(Boolean)
+          : [],
+      };
+      const res = await fetch("/api/admin/materials", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setShowAdd(false);
+      setAddForm(EMPTY_ADD_FORM);
+      await loadMaterials();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Add failed.");
+    } finally {
+      setAddSaving(false);
+    }
+  };
+
   if (!saved) return <TokenGate onSave={saveToken} />;
 
   const TAB_STYLE = (active: boolean) => ({
-    padding: "0.5rem 1.25rem",
+    width: "100%",
+    padding: "0.55rem 1rem",
     background: active ? "var(--color-ink)" : "transparent",
     color: active ? "var(--color-white)" : "var(--color-ink)",
-    border: "1px solid var(--color-ink)",
+    border: "1px solid var(--color-line)",
     borderRadius: "var(--radius-card)",
     cursor: "pointer",
     fontSize: "0.82rem",
     letterSpacing: "0.04em",
     fontFamily: "var(--font-sans)",
+    textAlign: "left" as const,
   });
 
   return (
     <div className="admin-wrap">
       {/* Sidebar */}
       <aside className="admin-sidebar">
-        <p style={{ fontFamily: "var(--font-serif)", fontSize: "1.25rem", fontWeight: 500, margin: "0 0 2rem", letterSpacing: "-0.02em" }}>
+        <p style={{ fontFamily: "var(--font-serif)", fontSize: "1.2rem", fontWeight: 500, margin: "0 0 1rem", letterSpacing: "-0.02em" }}>
           Admin
         </p>
-        <nav style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          <button onClick={() => setTab("materials")} style={TAB_STYLE(tab === "materials")}>Materials</button>
-          <button onClick={() => setTab("leads")} style={TAB_STYLE(tab === "leads")}>Leads</button>
-        </nav>
-        <p style={{ marginTop: "auto", paddingTop: "2rem", fontSize: "0.75rem", color: "var(--color-stone-dark)" }}>
+        <button onClick={() => setTab("materials")} style={TAB_STYLE(tab === "materials")}>Materials</button>
+        <button onClick={() => setTab("leads")} style={TAB_STYLE(tab === "leads")}>Leads</button>
+        <p style={{ marginTop: "auto", paddingTop: "1.5rem", fontSize: "0.75rem", color: "var(--color-stone-dark)", borderTop: "1px solid var(--color-line)" }}>
           Token in session only.{" "}
           <button onClick={() => { sessionStorage.removeItem("admin_token"); window.location.reload(); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-bronze-ink)", fontSize: "0.75rem", padding: 0 }}>
             Sign out
@@ -219,10 +300,100 @@ export function AdminClient() {
               <h1 style={{ fontFamily: "var(--font-serif)", fontSize: "2rem", fontWeight: 400, letterSpacing: "-0.03em", margin: 0 }}>
                 Materials ({materials.length})
               </h1>
-              <button onClick={loadMaterials} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.82rem", color: "var(--color-stone-dark)" }}>
-                Refresh
-              </button>
+              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                <button onClick={loadMaterials} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.82rem", color: "var(--color-stone-dark)" }}>
+                  Refresh
+                </button>
+                <button onClick={() => { setShowAdd((v) => !v); setError(""); }} className="button button-ink" style={{ fontSize: "0.82rem", padding: "0.45rem 1rem" }}>
+                  {showAdd ? "Cancel" : "+ Add material"}
+                </button>
+              </div>
             </div>
+
+            {showAdd && (
+              <div style={{ gridColumn: "1/-1", background: "var(--color-paper)", border: "1px solid var(--color-line)", borderRadius: "var(--radius-card)", padding: "1.5rem", marginBottom: "1.5rem" }}>
+                <p style={{ fontFamily: "var(--font-serif)", fontSize: "1.1rem", fontWeight: 500, margin: "0 0 1.25rem", letterSpacing: "-0.02em" }}>New material</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(14rem, 1fr))", gap: "0.85rem" }}>
+                  <div className="finder-field">
+                    <label>Name *</label>
+                    <input value={addForm.name} onChange={(e) => {
+                      const name = e.target.value;
+                      setAddForm((p) => ({ ...p, name, slug: slugify(name) }));
+                    }} placeholder="e.g. Calacatta Gold" />
+                  </div>
+                  <div className="finder-field">
+                    <label>Slug *</label>
+                    <input value={addForm.slug} onChange={(e) => setAddForm((p) => ({ ...p, slug: e.target.value }))} placeholder="calacatta-gold" />
+                  </div>
+                  <div className="finder-field">
+                    <label>Type *</label>
+                    <select value={addForm.material_type} onChange={(e) => setAddForm((p) => ({ ...p, material_type: e.target.value as MaterialType }))}>
+                      {MATERIAL_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div className="finder-field">
+                    <label>Color family</label>
+                    <select value={addForm.color_family} onChange={(e) => setAddForm((p) => ({ ...p, color_family: e.target.value as ColorFamily | "" }))}>
+                      <option value="">— none —</option>
+                      {COLOR_FAMILIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="finder-field">
+                    <label>Finish</label>
+                    <input value={addForm.finish} onChange={(e) => setAddForm((p) => ({ ...p, finish: e.target.value }))} placeholder="Polished" />
+                  </div>
+                  <div className="finder-field">
+                    <label>Origin</label>
+                    <input value={addForm.origin} onChange={(e) => setAddForm((p) => ({ ...p, origin: e.target.value }))} placeholder="Italy" />
+                  </div>
+                  <div className="finder-field">
+                    <label>Dimensions</label>
+                    <input value={addForm.dimensions} onChange={(e) => setAddForm((p) => ({ ...p, dimensions: e.target.value }))} placeholder='126" × 63"' />
+                  </div>
+                  <div className="finder-field">
+                    <label>Thickness</label>
+                    <input value={addForm.thickness} onChange={(e) => setAddForm((p) => ({ ...p, thickness: e.target.value }))} placeholder="3cm" />
+                  </div>
+                  <div className="finder-field">
+                    <label>Price ($/sf)</label>
+                    <input type="number" min={0} step={0.01} value={addForm.price} onChange={(e) => setAddForm((p) => ({ ...p, price: e.target.value }))} placeholder="85" />
+                  </div>
+                  <div className="finder-field">
+                    <label>Quantity (slabs)</label>
+                    <input type="number" min={0} value={addForm.quantity} onChange={(e) => setAddForm((p) => ({ ...p, quantity: e.target.value }))} />
+                  </div>
+                  <div className="finder-field">
+                    <label>Availability</label>
+                    <select value={addForm.availability} onChange={(e) => setAddForm((p) => ({ ...p, availability: e.target.value as Availability }))}>
+                      {AVAILABILITIES.map((a) => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                  </div>
+                  <div className="finder-field" style={{ gridColumn: "1 / -1" }}>
+                    <label>Image URLs (one per line)</label>
+                    <textarea rows={3} value={addForm.image_urls} onChange={(e) => setAddForm((p) => ({ ...p, image_urls: e.target.value }))} placeholder={"https://example.com/image1.jpg\nhttps://example.com/image2.jpg"} style={{ resize: "vertical", fontFamily: "var(--font-sans)", fontSize: "0.82rem" }} />
+                  </div>
+                  <div className="finder-field" style={{ gridColumn: "1 / -1" }}>
+                    <label>Description</label>
+                    <textarea rows={2} value={addForm.description} onChange={(e) => setAddForm((p) => ({ ...p, description: e.target.value }))} style={{ resize: "vertical", fontFamily: "var(--font-sans)", fontSize: "0.82rem" }} />
+                  </div>
+                  <div className="finder-field" style={{ gridColumn: "1 / -1" }}>
+                    <label>Tags (comma-separated)</label>
+                    <input value={addForm.tags} onChange={(e) => setAddForm((p) => ({ ...p, tags: e.target.value }))} placeholder="veined, dramatic, white-kitchen" />
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "1.25rem", alignItems: "center", marginTop: "1.25rem", flexWrap: "wrap" }}>
+                  {(["featured", "new_arrival", "clearance"] as const).map((flag) => (
+                    <label key={flag} style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontSize: "0.82rem", cursor: "pointer" }}>
+                      <input type="checkbox" checked={addForm[flag]} onChange={(e) => setAddForm((p) => ({ ...p, [flag]: e.target.checked }))} />
+                      {flag.replace("_", " ")}
+                    </label>
+                  ))}
+                  <button onClick={addMaterial} className="button button-ink" disabled={addSaving} style={{ marginLeft: "auto", fontSize: "0.82rem", padding: "0.5rem 1.25rem" }}>
+                    {addSaving ? "Saving…" : "Save material"}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {loading ? (
               <div className="skeleton" style={{ gridColumn: "1/-1", height: "12rem", borderRadius: "var(--radius-card)" }} />

@@ -14,13 +14,13 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "xjrlmcqlaqnktllvvaci.supabase.co",
-        pathname: "/**",
+        hostname: "fvaivbcprpyqrmjauoov.supabase.co",
+        pathname: "/storage/v1/object/public/**",
       },
       {
         protocol: "https",
         hostname: "fvaivbcprpyqrmjauoov.supabase.co",
-        pathname: "/storage/v1/object/public/**",
+        pathname: "/storage/v1/object/sign/visualizer-photos/**",
       },
       {
         protocol: "https",

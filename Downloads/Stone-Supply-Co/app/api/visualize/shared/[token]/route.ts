@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getVisualizerRenderByToken } from "@/lib/db/visualizer";
 import { getMaterial } from "@/lib/db/materials";
+import { createServiceClient } from "@/lib/supabase";
+import { createVisualizerPhotoUrl } from "@/lib/visualizer-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -35,9 +37,13 @@ export async function GET(
         };
       })
     );
+    const photoUrl = await createVisualizerPhotoUrl(
+      createServiceClient(),
+      render.session.photo_url
+    );
 
     return NextResponse.json({
-      photo_url: render.session.photo_url,
+      photo_url: photoUrl,
       room_type: render.session.room_type,
       render_url: render.render_url,
       surfaces: materialDetails,

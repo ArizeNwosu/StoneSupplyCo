@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient } from "@/lib/supabase";
+import { createServiceClient } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -7,8 +7,7 @@ function authorized(request: NextRequest): boolean {
   const secret = process.env.ADMIN_SECRET;
   if (!secret) return false;
   const auth = request.headers.get("authorization") ?? "";
-  const urlToken = new URL(request.url).searchParams.get("token");
-  return auth === `Bearer ${secret}` || urlToken === secret;
+  return auth === `Bearer ${secret}`;
 }
 
 /**
@@ -24,7 +23,7 @@ export async function GET(request: NextRequest) {
   const source = url.searchParams.get("source");
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "100", 10), 500);
 
-  const supabase = createPublicClient();
+  const supabase = createServiceClient();
   let query = supabase
     .from("leads")
     .select("*")

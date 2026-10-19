@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, startTransition } from "react";
 import { getSavedSlugs, toggleSaved } from "@/lib/projects";
 
 type Props = {
@@ -13,8 +13,10 @@ export function SaveButton({ slug, label = true }: Props) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    setSaved(getSavedSlugs().includes(slug));
+    startTransition(() => {
+      setMounted(true);
+      setSaved(getSavedSlugs().includes(slug));
+    });
   }, [slug]);
 
   const handleToggle = () => {

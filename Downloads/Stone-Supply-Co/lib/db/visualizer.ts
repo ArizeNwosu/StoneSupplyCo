@@ -62,6 +62,19 @@ export async function incrementRenderCount(sessionId: string): Promise<void> {
   }
 }
 
+export async function reserveVisualizerRender(
+  sessionId: string,
+  limit: number
+): Promise<number | null> {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase.rpc("reserve_visualizer_render", {
+    target_session_id: sessionId,
+    render_limit: limit,
+  });
+  if (error) throw new Error(`reserveVisualizerRender: ${error.message}`);
+  return typeof data === "number" && data >= 0 ? data : null;
+}
+
 export async function markLeadCaptured(sessionId: string): Promise<void> {
   const supabase = createServiceClient();
   const { error } = await supabase

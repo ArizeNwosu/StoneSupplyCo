@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { ROOM_SURFACES } from "@/types/visualizer";
 import type { RoomType, SurfaceSelection, SurfaceOption } from "@/types/visualizer";
 import type { MaterialSummary } from "@/types/material";
 import { StoneSearch } from "./StoneSearch";
+import { StoneThumbnail } from "./StoneThumbnail";
 
 type Props = {
   roomType: RoomType;
@@ -21,6 +21,7 @@ type SurfaceStep = {
 };
 
 export function SurfaceWizard({ roomType, onComplete, onBack }: Props) {
+  const wizardRef = useRef<HTMLDivElement>(null);
   const surfaceOptions = ROOM_SURFACES[roomType];
   const [currentIndex, setCurrentIndex] = useState(0);
   const [steps, setSteps] = useState<SurfaceStep[]>(
@@ -68,6 +69,8 @@ export function SurfaceWizard({ roomType, onComplete, onBack }: Props) {
         surface: s.option.value,
         material_slug: s.material!.slug,
         material_name: s.material!.name,
+        material_image_url: s.material!.image_urls?.[0],
+        material_color_family: s.material!.color_family,
         waterfall: s.option.value === "island" ? s.waterfall : undefined,
       }));
     onComplete(selections);
@@ -77,11 +80,15 @@ export function SurfaceWizard({ roomType, onComplete, onBack }: Props) {
     (s) => s.action === "apply" && s.material
   ).length;
 
+  useEffect(() => {
+    wizardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [currentIndex, reviewing]);
+
   // ── Review screen ─────────────────────────────────────
   if (reviewing) {
     const applied = steps.filter((s) => s.action === "apply" && s.material);
     return (
-      <div>
+      <div ref={wizardRef} className="visualizer-anchor">
         <p className="eyebrow" style={{ color: "var(--color-stone-dark)", marginBottom: "0.75rem" }}>
           Review your selections
         </p>
@@ -105,26 +112,12 @@ export function SurfaceWizard({ roomType, onComplete, onBack }: Props) {
                   borderRadius: "var(--radius-card)",
                 }}
               >
-                {s.material!.image_urls?.[0] && (
-                  <div
-                    style={{
-                      width: "3rem",
-                      height: "3rem",
-                      position: "relative",
-                      borderRadius: "2px",
-                      overflow: "hidden",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Image
-                      src={s.material!.image_urls[0]}
-                      alt={s.material!.name}
-                      fill
-                      sizes="48px"
-                      style={{ objectFit: "cover" }}
-                    />
-                  </div>
-                )}
+                <StoneThumbnail
+                  name={s.material!.name}
+                  slug={s.material!.slug}
+                  imageUrl={s.material!.image_urls?.[0]}
+                  colorFamily={s.material!.color_family}
+                />
                 <div>
                   <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 600, color: "var(--color-ink)" }}>
                     {s.option.label}
@@ -170,7 +163,7 @@ export function SurfaceWizard({ roomType, onComplete, onBack }: Props) {
 
   // ── Surface step ──────────────────────────────────────
   return (
-    <div>
+    <div ref={wizardRef} className="visualizer-anchor">
       <p className="eyebrow" style={{ color: "var(--color-stone-dark)", marginBottom: "0.5rem" }}>
         Surface {currentIndex + 1} of {steps.length}
       </p>

@@ -6,7 +6,7 @@ import { Footer } from "@/components/Footer";
 import { siteName, siteUrl } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: `Room Visualizer | ${siteName}`,
+  title: "Room Visualizer",
   description: "See how any stone slab looks in your space. Preview marble, quartzite, and granite in kitchen, bathroom, and living room settings.",
   alternates: { canonical: `${siteUrl}/visualizer` },
   openGraph: {

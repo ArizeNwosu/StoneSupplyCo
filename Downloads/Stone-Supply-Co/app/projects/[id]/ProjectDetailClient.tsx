@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, startTransition } from "react";
 import {
   getProject,
   updateProject,
@@ -23,14 +23,16 @@ export function ProjectDetailClient() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const p = getProject(id);
     if (!p) {
       router.replace("/projects");
       return;
     }
-    setProject(p);
-    setNameValue(p.name);
+    startTransition(() => {
+      setMounted(true);
+      setProject(p);
+      setNameValue(p.name);
+    });
 
     // Fetch material summaries
     if (p.materialSlugs.length > 0) {

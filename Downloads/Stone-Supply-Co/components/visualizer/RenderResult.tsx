@@ -4,7 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { BeforeAfterSlider } from "./BeforeAfterSlider";
 import { LeadCaptureModal } from "./LeadCaptureModal";
+import { StoneThumbnail } from "./StoneThumbnail";
 import type { SurfaceSelection } from "@/types/visualizer";
+import type { ColorFamily } from "@/types/material";
 
 type Props = {
   photoUrl: string;
@@ -83,6 +85,24 @@ export function RenderResult({
         afterSrc={renderUrl}
         alt={`Stone visualization — ${surfaceLabel}`}
       />
+
+      <div className="visualizer-result-stones" aria-label="Stones used">
+        {surfaces.map((surface) => (
+          <div className="visualizer-result-stone" key={surface.surface}>
+            <StoneThumbnail
+              name={surface.material_name}
+              slug={surface.material_slug}
+              imageUrl={surface.material_image_url}
+              colorFamily={surface.material_color_family as ColorFamily | null | undefined}
+              size="large"
+            />
+            <span>
+              <small>{surface.surface.replace(/_/g, " ")}</small>
+              <strong>{surface.material_name}</strong>
+            </span>
+          </div>
+        ))}
+      </div>
 
       <p
         style={{

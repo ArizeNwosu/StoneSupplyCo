@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, startTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import type { Material } from "@/types/material";
 
@@ -54,10 +54,10 @@ export function CompareClient() {
 
   useEffect(() => {
     if (slugs.length === 0) {
-      setLoading(false);
+      startTransition(() => { setLoading(false); });
       return;
     }
-    setLoading(true);
+    startTransition(() => { setLoading(true); });
     Promise.all(
       slugs.map((slug) =>
         fetch(`/api/materials/${slug}`)

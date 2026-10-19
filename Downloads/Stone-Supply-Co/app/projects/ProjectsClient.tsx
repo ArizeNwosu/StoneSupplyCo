@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, startTransition } from "react";
 import {
   getProjects,
   createProject,
@@ -18,9 +18,11 @@ export function ProjectsClient() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    setProjects(getProjects());
-    setSavedCount(getSavedSlugs().length);
+    startTransition(() => {
+      setMounted(true);
+      setProjects(getProjects());
+      setSavedCount(getSavedSlugs().length);
+    });
   }, []);
 
   const handleCreate = (e: React.FormEvent) => {

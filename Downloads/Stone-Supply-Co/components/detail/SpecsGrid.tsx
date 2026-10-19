@@ -15,14 +15,14 @@ export function SpecsGrid({ material }: Props) {
     {
       label: "Applications",
       value:
-        material.applications.length > 0
+        material.applications?.length > 0
           ? material.applications.join(", ")
           : null,
     },
     {
       label: "Style",
       value:
-        material.recommended_styles.length > 0
+        material.recommended_styles?.length > 0
           ? material.recommended_styles.join(", ")
           : null,
     },

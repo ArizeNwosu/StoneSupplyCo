@@ -30,7 +30,7 @@ export const business = {
   directionsUrl:
     "https://www.google.com/maps/dir/?api=1&destination=Stone+Supply+Co%2C+9036+Winnetka+Ave%2C+Northridge%2C+CA+91324&destination_place_id=ChIJIWWtkzWbwoAR0SVy5AwYIeI",
   mapEmbedUrl:
-    "https://www.google.com/maps?q=place_id%3AChIJIWWtkzWbwoAR0SVy5AwYIeI&output=embed",
+    "https://maps.google.com/maps?q=34.2346526,-118.5701987&z=17&t=m&ie=UTF8&iwloc=near&output=embed",
   socialLinks: {
     instagram: "https://www.instagram.com/slabandtile/",
   },
@@ -55,9 +55,8 @@ export const business = {
   // than extrapolating unsupported hours.
   hours: null,
   hoursCta: "View current hours on Google Maps",
-  // The profile currently has no published aggregate rating or review data.
-  rating: null,
-  reviewCount: null,
+  rating: 5.0,
+  reviewCount: 17,
 } as const;
 
 export type Business = typeof business;

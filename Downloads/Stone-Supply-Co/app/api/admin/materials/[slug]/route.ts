@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient } from "@/lib/supabase";
+import { createServiceClient } from "@/lib/supabase";
 import type { Material } from "@/types/material";
 
 export const dynamic = "force-dynamic";
@@ -8,8 +8,7 @@ function authorized(request: NextRequest): boolean {
   const secret = process.env.ADMIN_SECRET;
   if (!secret) return false;
   const auth = request.headers.get("authorization") ?? "";
-  const urlToken = new URL(request.url).searchParams.get("token");
-  return auth === `Bearer ${secret}` || urlToken === secret;
+  return auth === `Bearer ${secret}`;
 }
 
 type Params = { params: Promise<{ slug: string }> };
@@ -35,7 +34,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   // Prevent slug reassignment via body
   delete (body as Record<string, unknown>).slug;
 
-  const supabase = createPublicClient();
+  const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("materials")
     .update({ ...body, updated_at: new Date().toISOString() })
@@ -59,7 +58,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   }
 
   const { slug } = await params;
-  const supabase = createPublicClient();
+  const supabase = createServiceClient();
   const { error } = await supabase.from("materials").delete().eq("slug", slug);
 
   if (error) {

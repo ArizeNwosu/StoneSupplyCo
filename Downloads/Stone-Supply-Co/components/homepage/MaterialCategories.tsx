@@ -1,40 +1,44 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "@/components/Icons";
+import { getCategoryThumbnails } from "@/lib/db/materials";
 
 const categories = [
   {
-    type: "quartzite",
+    type: "Quartzite",
     label: "Quartzite",
     tagline: "Marble look, granite strength",
-    image: null as string | null,
   },
   {
-    type: "marble",
+    type: "Marble",
     label: "Marble",
     tagline: "Timeless elegance",
-    image: null as string | null,
   },
   {
-    type: "granite",
+    type: "Granite",
     label: "Granite",
     tagline: "Built for life",
-    image: null as string | null,
   },
   {
-    type: "quartz",
+    type: "Quartz",
     label: "Quartz",
     tagline: "Engineered precision",
-    image: null as string | null,
   },
   {
-    type: "onyx",
+    type: "Onyx",
     label: "Onyx",
     tagline: "Rare & translucent",
-    image: null as string | null,
   },
 ] as const;
 
-export function MaterialCategories() {
+export async function MaterialCategories() {
+  let thumbs: Record<string, string> = {};
+  try {
+    thumbs = await getCategoryThumbnails();
+  } catch {
+    // DB unavailable — tiles render without images
+  }
+
   return (
     <section className="material-categories-section section-pad">
       <div className="material-categories-heading">
@@ -51,10 +55,17 @@ export function MaterialCategories() {
         {categories.map(({ type, label, tagline }) => (
           <Link
             key={type}
-            href={`/materials/${type}`}
+            href={`/materials?type=${type}`}
             className="material-category-tile"
           >
-            {/* Image would go here when available */}
+            {thumbs[type] && (
+              <Image
+                src={thumbs[type]}
+                alt={`${label} slab`}
+                fill
+                sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 20vw"
+              />
+            )}
             <div className="material-category-tile-inner">
               <h3>{label}</h3>
               <span>{tagline}</span>
@@ -62,7 +73,6 @@ export function MaterialCategories() {
           </Link>
         ))}
 
-        {/* View all tile */}
         <Link href="/materials" className="material-category-tile">
           <div className="material-category-tile-inner">
             <h3>All materials</h3>

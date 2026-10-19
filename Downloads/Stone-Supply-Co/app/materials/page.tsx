@@ -9,7 +9,7 @@ import { Footer } from "@/components/Footer";
 import { siteName } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: `Natural Stone & Quartz Slabs | ${siteName}`,
+  title: "Natural Stone & Quartz Slabs",
   description:
     "Browse our full inventory of natural stone and engineered quartz slabs — quartzite, marble, granite, and more. Northridge, Los Angeles.",
   openGraph: {
@@ -80,6 +80,9 @@ export default function MaterialsPage({ searchParams }: Props) {
             Every slab at Stone Supply Co is hand-selected from the world&apos;s
             finest quarries. Browse our full inventory — from dramatic quartzites
             to timeless marbles — and find your perfect stone.
+          </p>
+          <p style={{ marginTop: "0.75rem", fontSize: "0.82rem", color: "var(--color-stone-dark)" }}>
+            Prices shown are asking prices and subject to change. Confirm availability and final pricing at the yard.
           </p>
         </div>
 

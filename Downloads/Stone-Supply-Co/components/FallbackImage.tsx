@@ -11,7 +11,7 @@ type Props = React.ComponentProps<typeof Image>;
  * stone placeholder that fills its positioned parent (position: relative with
  * a set height, or a fill-mode container).
  */
-export function FallbackImage({ onError, ...props }: Props) {
+export function FallbackImage({ alt, onError, ...props }: Props) {
   const [failed, setFailed] = useState(false);
 
   if (failed) {
@@ -27,6 +27,7 @@ export function FallbackImage({ onError, ...props }: Props) {
   return (
     <Image
       {...props}
+      alt={alt}
       onError={(e) => {
         setFailed(true);
         onError?.(e);

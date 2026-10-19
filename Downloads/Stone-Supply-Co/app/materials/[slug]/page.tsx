@@ -60,13 +60,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Category page metadata
   const materialType = MATERIAL_TYPES[slug.toLowerCase()];
   if (materialType) {
-    const title = `${materialType} Slabs in Los Angeles | ${siteName}`;
+    const pageTitle = `${materialType} Slabs in Los Angeles`;
+    const ogTitle = `${pageTitle} | ${siteName}`;
     const description = `Shop ${materialType.toLowerCase()} slabs at Stone Supply Co — Northridge, Los Angeles. ${TYPE_DESCRIPTIONS[materialType]}`;
     return {
-      title,
+      title: pageTitle,
       description,
       alternates: { canonical: `${siteUrl}/materials/${slug}` },
-      openGraph: { title, description },
+      openGraph: { title: ogTitle, description },
     };
   }
 
@@ -79,20 +80,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
   if (!material) return {};
 
-  const title =
+  const pageTitle =
     material.seo_title ??
-    `${material.name} ${material.material_type} | ${siteName}`;
+    `${material.name} ${material.material_type}`;
+  const ogTitle = `${pageTitle} | ${siteName}`;
   const description =
     material.seo_description ??
     `${material.name} — ${material.finish} ${material.material_type} slab available at Stone Supply Co in Northridge, Los Angeles.`;
   const image = material.image_urls[0];
 
   return {
-    title,
+    title: pageTitle,
     description,
     alternates: { canonical: `${siteUrl}/materials/${slug}` },
     openGraph: {
-      title,
+      title: ogTitle,
       description,
       ...(image ? { images: [{ url: image, width: 1200, height: 900 }] } : {}),
     },
@@ -129,7 +131,7 @@ async function CategoryPage({ slug, materialType }: { slug: string; materialType
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <Header solid />
       <main>
@@ -178,7 +180,7 @@ export default async function MaterialPage({ params }: Props) {
   const related = await getRelatedMaterials(material, 3);
   const displayPrice = material.clearance_price ?? material.price;
   const formattedPrice = displayPrice
-    ? `$${displayPrice.toLocaleString()}/slab`
+    ? `$${displayPrice.toLocaleString()}/sf`
     : null;
 
   const jsonLd = {
@@ -205,7 +207,7 @@ export default async function MaterialPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <Header solid />
       <main className="material-detail-wrap">
@@ -244,17 +246,22 @@ export default async function MaterialPage({ params }: Props) {
             <h1>{material.name}</h1>
 
             {formattedPrice ? (
-              <div className="detail-price">
-                {material.clearance_price && material.price ? (
-                  <div className="detail-price-clearance">
-                    <span>{formattedPrice}</span>
-                    <span className="detail-price-original">
-                      ${material.price.toLocaleString()}/slab
-                    </span>
-                  </div>
-                ) : (
-                  formattedPrice
-                )}
+              <div>
+                <div className="detail-price">
+                  {material.clearance_price && material.price ? (
+                    <div className="detail-price-clearance">
+                      <span>{formattedPrice}</span>
+                      <span className="detail-price-original">
+                        ${material.price.toLocaleString()}/sf
+                      </span>
+                    </div>
+                  ) : (
+                    formattedPrice
+                  )}
+                </div>
+                <p style={{ margin: "0.25rem 0 0", fontSize: "0.78rem", color: "var(--color-stone-dark)" }}>
+                  Asking price — confirm final pricing at the yard.
+                </p>
               </div>
             ) : (
               <p

@@ -44,10 +44,13 @@ export function buildVisualizerPrompt(
     ...surfaceInstructions,
     "",
     "Important:",
+    "- Treat this as a precision material replacement, not a room redesign.",
+    "- Keep the camera position, lens, crop, framing, image orientation, perspective, and output aspect ratio identical to the input.",
+    "- Keep every edge, seam, appliance, cabinet, fixture, wall, floor, object, and shadow in the exact same pixel position.",
     "- Match the lighting, shadows, and reflections of the original photo.",
     "- Preserve the exact perspective and geometry of each surface.",
     "- Show realistic stone veining, texture, and color variation.",
-    "- Do NOT modify anything other than the specified surfaces.",
+    "- Do NOT add, remove, move, restyle, retouch, or modify anything other than the material appearance inside the specified surfaces.",
     "- The result should look like a professional interior design rendering.",
   ].join("\n");
 }

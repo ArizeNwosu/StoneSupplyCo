@@ -1,20 +1,23 @@
 // app/api/visualize/render/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase";
-import { getVisualizerSession, incrementRenderCount, createVisualizerRender } from "@/lib/db/visualizer";
+import { getVisualizerSession, reserveVisualizerRender, createVisualizerRender } from "@/lib/db/visualizer";
 import { getMaterial } from "@/lib/db/materials";
 import { getOpenAIClient } from "@/lib/openai";
 import { buildVisualizerPrompt } from "@/lib/visualizer-prompt";
+import { createVisualizerPhotoUrl } from "@/lib/visualizer-storage";
 import { isRateLimited, getIp } from "@/lib/rateLimiter";
 import type { SurfaceSelection } from "@/types/visualizer";
 import { MAX_RENDERS_SELF_SERVE } from "@/types/visualizer";
+import { ROOM_SURFACES } from "@/types/visualizer";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 120;
 
 const RATE = { limit: 10, windowMs: 60 * 60 * 1000, key: "viz-render" };
 
 export async function POST(request: NextRequest) {
-  if (isRateLimited(getIp(request), RATE)) {
+  if (await isRateLimited(getIp(request), RATE)) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
       { status: 429 }
@@ -40,6 +43,9 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
+  if (surfaces.length > 4) {
+    return NextResponse.json({ error: "Too many surfaces selected." }, { status: 400 });
+  }
 
   // Validate session exists and check render limit
   let session;
@@ -64,6 +70,21 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const allowedSurfaces = new Set(ROOM_SURFACES[session.room_type].map((option) => option.value));
+  const seenSurfaces = new Set<string>();
+  for (const selection of surfaces) {
+    if (
+      !selection ||
+      !allowedSurfaces.has(selection.surface) ||
+      seenSurfaces.has(selection.surface) ||
+      typeof selection.material_slug !== "string" ||
+      typeof selection.material_name !== "string"
+    ) {
+      return NextResponse.json({ error: "Invalid surface selection." }, { status: 400 });
+    }
+    seenSurfaces.add(selection.surface);
+  }
+
   // Fetch material data for each selected surface
   let materialLookups: { selection: SurfaceSelection; material: NonNullable<Awaited<ReturnType<typeof getMaterial>>> }[];
   try {
@@ -81,6 +102,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
+
+  // Reserve the paid render atomically before contacting OpenAI. Failed
+  // generations intentionally consume the slot so retries cannot bypass quota.
+  const reservedCount = await reserveVisualizerRender(sessionId, MAX_RENDERS_SELF_SERVE);
+  if (reservedCount === null) {
+    return NextResponse.json(
+      { error: "Render limit reached.", limit_reached: true },
+      { status: 402 }
+    );
+  }
+
   // Build prompt and call OpenAI
   const prompt = buildVisualizerPrompt(session.room_type, materialLookups);
 
@@ -89,21 +121,19 @@ export async function POST(request: NextRequest) {
 
     // Photos are in a private bucket — create a signed URL to fetch them
     const supabase = createServiceClient();
-    const photoPath = session.photo_url.split("/visualizer-photos/").pop();
-    if (!photoPath) throw new Error("Invalid photo URL");
-
-    const { data: signedData, error: signedError } = await supabase.storage
-      .from("visualizer-photos")
-      .createSignedUrl(photoPath, 300); // 5 min expiry
-    if (signedError || !signedData?.signedUrl) {
-      throw new Error(`Failed to create signed URL: ${signedError?.message}`);
-    }
+    const signedPhotoUrl = await createVisualizerPhotoUrl(
+      supabase,
+      session.photo_url,
+      300
+    );
 
     const response = await openai.images.edit({
-      model: "gpt-image-1",
-      image: await fetchImageAsFile(signedData.signedUrl),
+      model: "gpt-image-1.5",
+      image: await fetchImageAsFile(signedPhotoUrl),
       prompt,
-      size: "1024x1024",
+      size: "auto",
+      input_fidelity: "high",
+      quality: "high",
     });
 
     const imageBase64 = response.data?.[0]?.b64_json;
@@ -130,7 +160,7 @@ export async function POST(request: NextRequest) {
       .from("visualizer-renders")
       .getPublicUrl(renderFileName);
 
-    // Create render record + increment count
+    // Create the render record. The quota was reserved before generation.
     const shareToken = crypto.randomUUID().slice(0, 12);
     const render = await createVisualizerRender({
       session_id: sessionId,
@@ -139,16 +169,41 @@ export async function POST(request: NextRequest) {
       share_token: shareToken,
     });
 
-    await incrementRenderCount(sessionId);
-
     return NextResponse.json({
       render_id: render.id,
       render_url: urlData.publicUrl,
       share_token: shareToken,
-      renders_remaining: MAX_RENDERS_SELF_SERVE - (session.render_count + 1),
+      renders_remaining: MAX_RENDERS_SELF_SERVE - reservedCount,
     });
   } catch (err) {
     console.error("[POST /api/visualize/render] OpenAI/storage:", err);
+
+    const apiError = err as { status?: number; message?: string };
+    const creditsExhausted =
+      apiError.status === 429 &&
+      apiError.message?.toLowerCase().includes("no credits remaining");
+
+    if (creditsExhausted) {
+      return NextResponse.json(
+        {
+          error:
+            "The visualizer is temporarily unavailable because its image-generation credits are exhausted.",
+          code: "IMAGE_CREDITS_EXHAUSTED",
+        },
+        { status: 503 }
+      );
+    }
+
+    if (apiError.status === 429) {
+      return NextResponse.json(
+        {
+          error: "The visualizer is busy right now. Please wait a moment and try again.",
+          code: "IMAGE_RATE_LIMITED",
+        },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to generate visualization. Please try again." },
       { status: 500 }

@@ -75,6 +75,27 @@ export async function getMaterialSlugs(): Promise<string[]> {
   return (data ?? []).map((r: { slug: string }) => r.slug);
 }
 
+export async function getCategoryThumbnails(): Promise<Record<string, string>> {
+  const supabase = createPublicClient();
+  const types = ["Quartzite", "Marble", "Granite", "Quartz", "Onyx"];
+
+  const { data } = await supabase
+    .from("materials")
+    .select("material_type, image_urls")
+    .in("material_type", types)
+    .order("featured", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  const thumbs: Record<string, string> = {};
+  for (const row of (data ?? []) as { material_type: string; image_urls: string[] }[]) {
+    if (!thumbs[row.material_type] && row.image_urls?.length > 0) {
+      const url = row.image_urls[0]?.replace(/\s+/g, "");
+      if (url) thumbs[row.material_type] = url;
+    }
+  }
+  return thumbs;
+}
+
 export async function getRelatedMaterials(
   material: Material,
   limit = 3

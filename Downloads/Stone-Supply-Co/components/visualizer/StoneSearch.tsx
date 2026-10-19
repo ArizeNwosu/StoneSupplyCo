@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
-import { useState, useCallback } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { MaterialSummary } from "@/types/material";
+import { StoneThumbnail } from "./StoneThumbnail";
 
 type Props = {
   onSelect: (material: MaterialSummary) => void;
@@ -12,108 +12,111 @@ type Props = {
 
 export function StoneSearch({ onSelect, selected, label = "Stone material" }: Props) {
   const [query, setQuery] = useState(selected?.name ?? "");
-  const [suggestions, setSuggestions] = useState<MaterialSummary[]>([]);
+  const [materials, setMaterials] = useState<MaterialSummary[]>([]);
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const loaded = useRef(false);
 
-  const handleSearch = useCallback(async (q: string) => {
-    setQuery(q);
-    setOpen(true);
-    if (q.length < 2) {
-      setSuggestions([]);
-      return;
-    }
+  const loadMaterials = async () => {
+    if (loaded.current || loading) return;
+    setLoading(true);
     try {
-      const res = await fetch(`/api/materials?q=${encodeURIComponent(q)}&limit=6`);
-      if (res.ok) {
-        const data = await res.json();
-        setSuggestions(data ?? []);
-      }
-    } catch {
-      // ignore
+      const response = await fetch("/api/materials?availability=available&limit=100");
+      if (!response.ok) throw new Error("Unable to load stones");
+      setMaterials((await response.json()) ?? []);
+      loaded.current = true;
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  };
+
+  const suggestions = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized || normalized === selected?.name.toLowerCase()) return materials;
+    return materials.filter((material) =>
+      [material.name, material.material_type, material.color_family, material.finish, ...material.tags]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalized))
+    );
+  }, [materials, query, selected?.name]);
 
   const selectMaterial = (mat: MaterialSummary) => {
     setQuery(mat.name);
-    setSuggestions([]);
+    setActiveIndex(0);
     setOpen(false);
     onSelect(mat);
   };
 
   return (
-    <div className="finder-field" style={{ position: "relative" }}>
-      <label>{label}</label>
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => handleSearch(e.target.value)}
-        onFocus={() => suggestions.length > 0 && setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
-        placeholder="Search — e.g., Calacatta, Blue Bahia…"
-        autoComplete="off"
-      />
-      {open && suggestions.length > 0 && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            right: 0,
-            background: "var(--color-white)",
-            border: "1px solid var(--color-line)",
-            borderRadius: "var(--radius-card)",
-            boxShadow: "var(--shadow-card)",
-            zIndex: 20,
-            overflow: "hidden",
+    <div className="finder-field stone-search">
+      <label htmlFor="visualizer-stone-search">{label}</label>
+      <div className="stone-search__input-wrap">
+        <input
+          id="visualizer-stone-search"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls="visualizer-stone-options"
+          aria-autocomplete="list"
+          type="search"
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setActiveIndex(0);
+            setOpen(true);
+            void loadMaterials();
           }}
-        >
+          onFocus={() => {
+            setOpen(true);
+            void loadMaterials();
+          }}
+          onBlur={() => window.setTimeout(() => setOpen(false), 150)}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowDown") {
+              event.preventDefault();
+              setActiveIndex((index) => Math.min(index + 1, suggestions.length - 1));
+            } else if (event.key === "ArrowUp") {
+              event.preventDefault();
+              setActiveIndex((index) => Math.max(index - 1, 0));
+            } else if (event.key === "Enter" && open && suggestions[activeIndex]) {
+              event.preventDefault();
+              selectMaterial(suggestions[activeIndex]);
+            } else if (event.key === "Escape") {
+              setOpen(false);
+            }
+          }}
+          placeholder="Search or browse all available stones"
+          autoComplete="off"
+        />
+        <span className="stone-search__hint" aria-hidden="true">⌄</span>
+      </div>
+      {open && (
+        <div id="visualizer-stone-options" role="listbox" className="stone-search__menu">
+          <div className="stone-search__menu-heading">
+            <span>{query ? "Matching stones" : "All available stones"}</span>
+            {!loading && <span>{suggestions.length}</span>}
+          </div>
+          {loading && <p className="stone-search__status">Loading the collection…</p>}
+          {!loading && suggestions.length === 0 && (
+            <p className="stone-search__status">No stones match that search.</p>
+          )}
           {suggestions.map((mat) => (
             <button
               key={mat.slug}
               type="button"
+              role="option"
+              aria-selected={selected?.slug === mat.slug}
               onMouseDown={(e) => e.preventDefault()}
+              onMouseEnter={() => setActiveIndex(suggestions.indexOf(mat))}
               onClick={() => selectMaterial(mat)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-                width: "100%",
-                padding: "0.75rem 1rem",
-                background: "none",
-                border: "none",
-                borderBottom: "1px solid var(--color-line)",
-                cursor: "pointer",
-                textAlign: "left",
-              }}
+              className={`stone-search__option${suggestions[activeIndex]?.slug === mat.slug ? " is-active" : ""}`}
             >
-              {mat.image_urls?.[0] && (
-                <div
-                  style={{
-                    width: "2.5rem",
-                    height: "2.5rem",
-                    position: "relative",
-                    borderRadius: "2px",
-                    overflow: "hidden",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Image
-                    src={mat.image_urls[0]}
-                    alt={mat.name}
-                    fill
-                    sizes="40px"
-                    style={{ objectFit: "cover" }}
-                  />
-                </div>
-              )}
-              <div>
-                <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--color-ink)", fontWeight: 500 }}>
-                  {mat.name}
-                </p>
-                <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--color-stone-dark)" }}>
-                  {mat.material_type} · {mat.finish}
-                </p>
-              </div>
+              <StoneThumbnail name={mat.name} slug={mat.slug} imageUrl={mat.image_urls?.[0]} colorFamily={mat.color_family} size="large" />
+              <span className="stone-search__copy">
+                <strong>{mat.name}</strong>
+                <small>{mat.material_type} · {mat.color_family ?? "Natural"} · {mat.finish}</small>
+              </span>
+              {selected?.slug === mat.slug && <span className="stone-search__check">✓</span>}
             </button>
           ))}
         </div>

@@ -2,6 +2,21 @@
 
 import { useEffect } from "react";
 
+/**
+ * RevealController — scroll-driven fade-in animation system.
+ *
+ * Usage: add `data-reveal` to any element you want to animate in on scroll.
+ * The element starts invisible (opacity 0, translateY 16px) via CSS and
+ * gains `.is-visible` once it enters the viewport, triggering the transition.
+ *
+ * CSS counterpart lives in globals.css under `[data-reveal]` and `[data-reveal].is-visible`.
+ * Respects `prefers-reduced-motion`: on reduced-motion devices all elements
+ * become visible immediately with no animation.
+ *
+ * Example:
+ *   <section data-reveal>...</section>
+ *   <h2 data-reveal>...</h2>
+ */
 export function RevealController() {
   useEffect(() => {
     const elements = Array.from(
